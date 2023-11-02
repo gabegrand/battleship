@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 class Translator(object):
     def __init__(
             self,
-            model_name: str = "Salesforce/codegen-350M-nl",
+            model_name: str = "Salesforce/codegen-350M-multi",
             max_new_tokens: int = 128,
         ):
         hf_auth_token = os.environ.get("HF_AUTH_TOKEN")

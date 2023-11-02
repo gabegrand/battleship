@@ -1,0 +1,6 @@
+[submodule "EIG"]
+	path = EIG
+	url = https://github.com/gabegrand/EIG
+[submodule "question_dataset"]
+	path = question_dataset
+	url = https://github.com/anselmrothe/question_dataset.git

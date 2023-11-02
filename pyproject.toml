@@ -9,7 +9,7 @@ readme = "README.md"
 python = ">=3.11,<3.13"
 numpy = "^1.26.1"
 Cython = "^3.0.5"
-# expected-information-gain = { path = "../EIG/", develop = true }
+# expected-information-gain = { path = "./EIG/", develop = true }
 transformers = "^4.34.1"
 torch = "^2.1.0"
 
