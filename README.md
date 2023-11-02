@@ -2,6 +2,11 @@
 
 ## Installation
 
+Make sure to clone the repo with the `--recurse-submodules` flag:
+```
+git clone --recurse-submodules https://github.com/gabegrand/battleship
+```
+
 First, install all dependencies using `poetry`:
 ```
 poetry install
