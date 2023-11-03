@@ -13,9 +13,9 @@ class Translator(object):
 
     def __init__(
         self,
-        model_name: str = "Salesforce/codegen-350M-multi",
+        model_name: str = "WizardLM/WizardCoder-Python-7B-V1.0",
         max_new_tokens: int = 128,
-        stop_tokens: list = ["\n"],
+        stop_tokens: list = [],
     ):
         hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
 
@@ -29,6 +29,7 @@ class Translator(object):
 
         stop_token_ids = [self.tokenizer(t)["input_ids"] for t in stop_tokens]
         for token, token_ids in zip(stop_tokens, stop_token_ids):
+            # TODO: Certain models like WizardCoder represent \n with multiple tokens
             if len(token_ids) != 1:
                 raise ValueError(
                     f"Stop token {token} has length {len(token_ids)}, but should have length 1."
@@ -53,9 +54,8 @@ class Translator(object):
         completion = self.tokenizer.batch_decode(
             outputs[:, inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )[0]
-        completion = completion.strip().replace(
-            "\n", ""
-        )  # Remove leading space and newline
+        # Remove everything after the first newline and strip whitespace
+        completion = completion.split("\n")[0].strip()
         return completion
 
     def question_to_code(self, question: str) -> str:
