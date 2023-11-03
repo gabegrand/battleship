@@ -1,6 +1,8 @@
+import logging
 import os
 
 import pandas as pd
+import torch
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 
@@ -13,19 +15,35 @@ class Translator(object):
 
     def __init__(
         self,
-        model_name: str = "WizardLM/WizardCoder-Python-7B-V1.0",
-        max_new_tokens: int = 128,
+        model_name: str = None,
+        model: AutoModelForCausalLM = None,
+        tokenizer: AutoTokenizer = None,
+        max_new_tokens: int = 32,
         stop_tokens: list = [],
     ):
-        hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
-
         self.model_name = model_name
         self.max_new_tokens = max_new_tokens
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name, token=hf_auth_token
-        )
+        # Load model from HuggingFace Hub
+        if model_name:
+            if not torch.cuda.is_available():
+                logging.warning(
+                    "Warning: CUDA is not available. " "Model will be loaded on CPU."
+                )
+            hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
+            if not hf_auth_token:
+                logging.warning(
+                    "Warning: HF_AUTH_TOKEN environment variable is not set. "
+                    "This may cause issues when loading models from the HuggingFace Hub."
+                )
+            tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name, token=hf_auth_token, device_map="auto"
+            )
+        else:
+            assert model is not None
+            assert tokenizer is not None
+        self.model, self.tokenizer = model, tokenizer
 
         stop_token_ids = [self.tokenizer(t)["input_ids"] for t in stop_tokens]
         for token, token_ids in zip(stop_tokens, stop_token_ids):
@@ -43,7 +61,7 @@ class Translator(object):
         )
 
     def __call__(self, text: str) -> str:
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt").to(device=self.model.device)
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.max_new_tokens,
