@@ -21,3 +21,12 @@ NOTE: For Apple Silicon, you will need to specify the architecture in order for 
 ```
 ARCHFLAGS="-arch arm64" poetry run python -m pip install -e ./EIG --compile --no-cache-dir
 ```
+
+## Development tools
+
+### Pre-commit hooks
+
+We use `black` and `pre-commit` to enforce code style. To install the pre-commit hooks, run:
+```
+pre-commit install
+```
