@@ -28,7 +28,7 @@ class Translator(object):
         if model_name:
             if not torch.cuda.is_available():
                 logging.warning(
-                    "Warning: CUDA is not available. " "Model will be loaded on CPU."
+                    "Warning: CUDA is not available. Model will be loaded on CPU."
                 )
             hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
             if not hf_auth_token:

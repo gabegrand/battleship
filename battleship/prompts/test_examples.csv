@@ -1,0 +1,8 @@
+question,code
+"how long is the blue ship","(size Blue)"
+"Is the Red ship longer than 2?","(> (size Red) 2)"
+""Does the red and blue ships have the same number of pieces?","(== (size Red) (size Blue))"
+"Fire at C 4","(color C-4)"
+"Is the Red ship touching the Blue ship?","(touch Red Blue)"
+"Are all of the ships vertical?","(all (map (lambda x0 (vertical x0)) (set AllColors)))"
+"Are there more horizontal ships then vertical ships?","(> (++ (map (lambda x0 (== (orient x0) H)) (set AllColors))) (++ (map (lambda x0 (== (orient x0) V)) (set AllColors))))"

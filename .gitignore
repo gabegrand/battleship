@@ -161,3 +161,6 @@ cython_debug/
 
 # Scrap notebooks
 notebooks/
+
+# HuggingFace auth token
+.hf_auth_token
