@@ -16,6 +16,7 @@ pandas = "^2.1.2"
 accelerate = "^0.24.1"
 bitsandbytes = "^0.41.1"
 scipy = "^1.11.3"
+optimum = "^1.14.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"

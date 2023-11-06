@@ -3,8 +3,11 @@ import os
 
 import pandas as pd
 import torch
+from optimum.bettertransformer import BetterTransformer
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
+from transformers import StoppingCriteria
+from transformers import StoppingCriteriaList
 
 
 class Translator(object):
@@ -18,11 +21,15 @@ class Translator(object):
         model_name: str = None,
         model: AutoModelForCausalLM = None,
         tokenizer: AutoTokenizer = None,
-        max_new_tokens: int = 32,
-        stop_tokens: list = [],
+        max_new_tokens: int = 64,  # TODO: Add stopping criterion and increase this limit
+        stop_words: list = ["\n\n"],
+        use_bettertransformer: bool = True,
+        load_in_8bit: bool = True,
     ):
         self.model_name = model_name
         self.max_new_tokens = max_new_tokens
+
+        self.stop_words = stop_words
 
         # Load model from HuggingFace Hub
         if model_name:
@@ -38,23 +45,17 @@ class Translator(object):
                 )
             tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
             model = AutoModelForCausalLM.from_pretrained(
-                model_name, token=hf_auth_token, device_map="auto"
+                model_name,
+                token=hf_auth_token,
+                device_map="auto",
+                load_in_8bit=load_in_8bit,
             )
+            if use_bettertransformer:
+                model = BetterTransformer.transform(model, keep_original_model=False)
         else:
             assert model is not None
             assert tokenizer is not None
         self.model, self.tokenizer = model, tokenizer
-
-        stop_token_ids = [self.tokenizer(t)["input_ids"] for t in stop_tokens]
-        for token, token_ids in zip(stop_tokens, stop_token_ids):
-            # TODO: Certain models like WizardCoder represent \n with multiple tokens
-            if len(token_ids) != 1:
-                raise ValueError(
-                    f"Stop token {token} has length {len(token_ids)}, but should have length 1."
-                )
-        self.stop_token_ids = [t[0] for t in stop_token_ids] + [
-            self.tokenizer.eos_token_id
-        ]
 
         self.df_examples = self.load_examples(
             os.path.join(os.path.dirname(__file__), self.EXAMPLES_PATH)
@@ -65,7 +66,14 @@ class Translator(object):
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.max_new_tokens,
-            eos_token_id=self.stop_token_ids,
+            eos_token_id=self.tokenizer.eos_token_id,
+            stopping_criteria=StoppingCriteriaList(
+                [
+                    EndOfFunctionCriteria(
+                        inputs["input_ids"].shape[1], self.stop_words, self.tokenizer
+                    )
+                ]
+            ),
         )
 
         # Return only the completion
@@ -107,3 +115,32 @@ class Translator(object):
     @staticmethod
     def format_example(user_input: str, response: str = None):
         return f"User: {user_input}\n" f"Assistant:{' ' + response if response else ''}"
+
+
+class EndOfFunctionCriteria(StoppingCriteria):
+    """Adapted from: github.com/benlipkin/linc
+
+    Custom `StoppingCriteria` which checks if all generated functions in the batch are completed.
+    """
+
+    def __init__(self, start_length, eof_strings, tokenizer):
+        self.start_length = start_length
+        self.eof_strings = eof_strings
+        self.tokenizer = tokenizer
+
+    def __call__(self, input_ids, scores, **kwargs):
+        """Returns true if all generated sequences contain any of the end-of-function strings."""
+        decoded_generations = self.tokenizer.batch_decode(
+            input_ids[:, self.start_length :]
+        )
+        done = []
+        for decoded_generation in decoded_generations:
+            done.append(
+                any(
+                    [
+                        stop_string in decoded_generation
+                        for stop_string in self.eof_strings
+                    ]
+                )
+            )
+        return all(done)
