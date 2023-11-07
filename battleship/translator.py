@@ -22,7 +22,7 @@ class Translator(object):
         model_name: str = None,
         model: AutoModelForCausalLM = None,
         tokenizer: AutoTokenizer = None,
-        max_new_tokens: int = 64,  # TODO: Add stopping criterion and increase this limit
+        max_new_tokens: int = 128,
         stop_words: list = ["\n\n"],
         use_bettertransformer: bool = True,
         load_in_8bit: bool = True,
@@ -86,6 +86,7 @@ class Translator(object):
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.max_new_tokens,
+            pad_token_id=self.tokenizer.pad_token_id,
             eos_token_id=self.tokenizer.eos_token_id,
             stopping_criteria=StoppingCriteriaList(
                 [
@@ -106,23 +107,23 @@ class Translator(object):
 
     def question_to_code(self, question_inputs: List[str]) -> List[str]:
         return self._translate(
-            texts=question_inputs,
+            text_inputs=question_inputs,
             user_input_col=Translator.QUESTION,
             response_col=Translator.CODE,
         )
 
     def code_to_question(self, code_inputs: List[str]) -> List[str]:
         return self._translate(
-            texts=code_inputs,
+            text_inputs=code_inputs,
             user_input_col=Translator.CODE,
             response_col=Translator.QUESTION,
         )
 
     def _translate(
-        self, texts: List[str], user_input_col: str, response_col: str
-    ) -> str:
-        if isinstance(texts, str):
-            texts = [texts]
+        self, text_inputs: List[str], user_input_col: str, response_col: str
+    ) -> List[str]:
+        if isinstance(text_inputs, str):
+            text_inputs = [text_inputs]
 
         prompt_base = "\n\n".join(
             self.df_examples.apply(
@@ -134,7 +135,7 @@ class Translator(object):
         )
         prompts = [
             prompt_base + "\n\n" + self.format_example(user_input=text)
-            for text in texts
+            for text in text_inputs
         ]
         return self(prompts)
 
