@@ -33,25 +33,11 @@ class Translator(object):
 
         # Load model from HuggingFace Hub
         if model_name:
-            if not torch.cuda.is_available():
-                logging.warning(
-                    "Warning: CUDA is not available. Model will be loaded on CPU."
-                )
-            hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
-            if not hf_auth_token:
-                logging.warning(
-                    "Warning: HF_AUTH_TOKEN environment variable is not set. "
-                    "This may cause issues when loading models from the HuggingFace Hub."
-                )
-            tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                token=hf_auth_token,
-                device_map="auto",
+            tokenizer, model = self.load_tokenizer_and_model(
+                model_name=model_name,
+                use_bettertransformer=use_bettertransformer,
                 load_in_8bit=load_in_8bit,
             )
-            if use_bettertransformer:
-                model = BetterTransformer.transform(model, keep_original_model=False)
         else:
             assert model is not None
             assert tokenizer is not None
@@ -60,6 +46,33 @@ class Translator(object):
         self.df_examples = self.load_examples(
             os.path.join(os.path.dirname(__file__), self.EXAMPLES_PATH)
         )
+
+    @staticmethod
+    def load_tokenizer_and_model(
+        model_name: str,
+        use_bettertransformer: bool = True,
+        load_in_8bit: bool = True,
+    ):
+        if not torch.cuda.is_available():
+            logging.warning(
+                "Warning: CUDA is not available. Model will be loaded on CPU."
+            )
+        hf_auth_token = os.environ.get("HF_AUTH_TOKEN")
+        if not hf_auth_token:
+            logging.warning(
+                "Warning: HF_AUTH_TOKEN environment variable is not set. "
+                "This may cause issues when loading models from the HuggingFace Hub."
+            )
+        tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            token=hf_auth_token,
+            device_map="auto",
+            load_in_8bit=load_in_8bit,
+        )
+        if use_bettertransformer:
+            model = BetterTransformer.transform(model, keep_original_model=False)
+        return tokenizer, model
 
     def __call__(self, text: str) -> str:
         inputs = self.tokenizer(text, return_tensors="pt").to(device=self.model.device)
