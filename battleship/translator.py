@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import List
 
 import pandas as pd
 import torch
@@ -64,6 +65,7 @@ class Translator(object):
                 "This may cause issues when loading models from the HuggingFace Hub."
             )
         tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_auth_token)
+        tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             token=hf_auth_token,
@@ -74,8 +76,13 @@ class Translator(object):
             model = BetterTransformer.transform(model, keep_original_model=False)
         return tokenizer, model
 
-    def __call__(self, text: str) -> str:
-        inputs = self.tokenizer(text, return_tensors="pt").to(device=self.model.device)
+    def __call__(self, prompts: List[str]) -> List[str]:
+        if isinstance(prompts, str):
+            prompts = [prompts]
+
+        inputs = self.tokenizer(prompts, padding=True, return_tensors="pt").to(
+            device=self.model.device
+        )
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.max_new_tokens,
@@ -90,27 +97,34 @@ class Translator(object):
         )
 
         # Return only the completion
-        completion = self.tokenizer.batch_decode(
+        completions = self.tokenizer.batch_decode(
             outputs[:, inputs["input_ids"].shape[1] :], skip_special_tokens=True
-        )[0]
+        )
         # Remove everything after the first newline and strip whitespace
-        completion = completion.split("\n")[0].strip()
-        return completion
+        completions = [completion.split("\n")[0].strip() for completion in completions]
+        return completions
 
-    def question_to_code(self, question: str) -> str:
+    def question_to_code(self, question_inputs: List[str]) -> List[str]:
         return self._translate(
-            text=question,
+            texts=question_inputs,
             user_input_col=Translator.QUESTION,
             response_col=Translator.CODE,
         )
 
-    def code_to_question(self, code: str) -> str:
+    def code_to_question(self, code_inputs: List[str]) -> List[str]:
         return self._translate(
-            text=code, user_input_col=Translator.CODE, response_col=Translator.QUESTION
+            texts=code_inputs,
+            user_input_col=Translator.CODE,
+            response_col=Translator.QUESTION,
         )
 
-    def _translate(self, text: str, user_input_col: str, response_col: str) -> str:
-        prompt = "\n\n".join(
+    def _translate(
+        self, texts: List[str], user_input_col: str, response_col: str
+    ) -> str:
+        if isinstance(texts, str):
+            texts = [texts]
+
+        prompt_base = "\n\n".join(
             self.df_examples.apply(
                 lambda row: self.format_example(
                     user_input=row[user_input_col], response=row[response_col]
@@ -118,9 +132,11 @@ class Translator(object):
                 axis=1,
             )
         )
-        prompt += "\n\n"
-        prompt += self.format_example(user_input=text)
-        return self(prompt)
+        prompts = [
+            prompt_base + "\n\n" + self.format_example(user_input=text)
+            for text in texts
+        ]
+        return self(prompts)
 
     def load_examples(self, path: str):
         return pd.read_csv(path)
