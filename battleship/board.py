@@ -3,6 +3,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from IPython.display import display
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 
@@ -28,6 +29,9 @@ class Board(object):
             output += "\n"
         return output
 
+    def _ipython_display_(self):
+        display(self.to_figure())
+
     @staticmethod
     def from_symbolic_array(board: np.ndarray):
         """Instantiate a Board object from a string array."""
@@ -44,6 +48,21 @@ class Board(object):
 
     def to_text_file(self, path: str):
         pd.DataFrame(self.to_symbolic_array()).to_csv(path, header=False, index=False)
+
+    @staticmethod
+    def convert_to_numeric(board: np.ndarray):
+        """Convert a symbolic array to a numeric array."""
+        for c, v in BOARD_SYMBOL_MAPPING.items():
+            board = np.char.replace(board, c, str(v))
+        return board.astype(int)
+
+    @staticmethod
+    def convert_to_symbolic(board: np.ndarray):
+        """Convert a numeric array to a symbolic array."""
+        board = board.astype(str)
+        for c, v in BOARD_SYMBOL_MAPPING.items():
+            board = np.char.replace(board, str(v), c)
+        return board
 
     def to_figure(self):
         """Convert a Board object to a matplotlib figure."""
@@ -81,18 +100,3 @@ class Board(object):
 
         plt.close(fig)
         return fig
-
-    @staticmethod
-    def convert_to_numeric(board: np.ndarray):
-        """Convert a symbolic array to a numeric array."""
-        for c, v in BOARD_SYMBOL_MAPPING.items():
-            board = np.char.replace(board, c, str(v))
-        return board.astype(int)
-
-    @staticmethod
-    def convert_to_symbolic(board: np.ndarray):
-        """Convert a numeric array to a symbolic array."""
-        board = board.astype(str)
-        for c, v in BOARD_SYMBOL_MAPPING.items():
-            board = np.char.replace(board, str(v), c)
-        return board
