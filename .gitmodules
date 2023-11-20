@@ -4,3 +4,6 @@
 [submodule "question_dataset"]
 	path = question_dataset
 	url = https://github.com/anselmrothe/question_dataset.git
+[submodule "hfppl"]
+	path = hfppl
+	url = git@github.com:probcomp/hfppl.git

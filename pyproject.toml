@@ -10,7 +10,7 @@ python = ">=3.11,<3.13"
 numpy = "^1.26.1"
 Cython = "^3.0.5"
 # expected-information-gain = { path = "./EIG/", develop = true }
-transformers = "^4.34.1"
+transformers = "^4.30.0"
 torch = "^2.1.0"
 pandas = "^2.1.2"
 accelerate = "^0.24.1"
@@ -21,6 +21,7 @@ matplotlib = "^3.8.1"
 lark = "^1.1.8"
 nltk = "^3.8.1"
 synchromesh = {path = "../synchromesh", develop = true}
+hfppl = {path = "./hfppl", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"
