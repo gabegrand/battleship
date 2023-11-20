@@ -1,3 +1,4 @@
+"""Class for translating between natural language and code using HuggingFace models."""
 import logging
 import os
 from typing import List

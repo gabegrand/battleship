@@ -18,6 +18,9 @@ bitsandbytes = "^0.41.1"
 scipy = "^1.11.3"
 optimum = "^1.14.0"
 matplotlib = "^3.8.1"
+lark = "^1.1.8"
+nltk = "^3.8.1"
+synchromesh = {path = "../synchromesh", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"
