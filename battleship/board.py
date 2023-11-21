@@ -1,4 +1,6 @@
 """Wrapper class for working with battleship boards."""
+import os
+
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,8 +17,15 @@ class Board(object):
         assert board.dtype == np.dtype(int)
         assert board.shape[0] == board.shape[1]
 
-        self.board = board
-        self.size = board.shape[0]
+        self._board = board
+
+    @property
+    def board(self):
+        return self._board
+
+    @property
+    def size(self):
+        return self._board.shape[0]
 
     def __repr__(self):
         return str(self)
@@ -39,7 +48,7 @@ class Board(object):
 
     def to_symbolic_array(self):
         """Convert a Board object to a string array."""
-        return Board.convert_to_symbolic(self.board.copy())
+        return Board.convert_to_symbolic(self._board.copy())
 
     @staticmethod
     def from_text_file(path: str):
@@ -48,6 +57,16 @@ class Board(object):
 
     def to_text_file(self, path: str):
         pd.DataFrame(self.to_symbolic_array()).to_csv(path, header=False, index=False)
+
+    @staticmethod
+    def from_trial_id(trial_id: int):
+        board_path = os.path.join(
+            os.path.dirname(__file__),
+            "../question_dataset",
+            "contexts",
+            f"board_{trial_id}.txt",
+        )
+        return Board.from_text_file(board_path)
 
     @staticmethod
     def convert_to_numeric(board: np.ndarray):
@@ -68,7 +87,7 @@ class Board(object):
         """Convert a Board object to a matplotlib figure."""
         cmap = ListedColormap(["#eaeae4", "#9b9c97", "#2d7bac", "#ac2028", "#6d467b"])
         fig, ax = plt.subplots()
-        ax.matshow(self.board, cmap=cmap)
+        ax.matshow(self._board, cmap=cmap)
 
         # Add gridlines
         ax.set_xticks(np.arange(-0.5, self.size, 1), minor=True)

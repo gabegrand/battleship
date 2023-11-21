@@ -42,3 +42,7 @@ def test_to_text_file():
         board = Board(BOARD_NUMERIC)
         board.to_text_file(tmpfile.name)
         assert np.array_equal(Board.from_text_file(tmpfile.name).board, BOARD_NUMERIC)
+
+
+def test_from_trial_id():
+    board = Board.from_trial_id(1)
