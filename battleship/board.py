@@ -1,7 +1,7 @@
 """Wrapper class for working with battleship boards."""
 import os
 
-import matplotlib.cm as cm
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -10,6 +10,13 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "B": 1, "R": 2, "P": 3}
+BOARD_COLOR_MAPPING = {
+    -1: "#eaeae4",
+    0: "#9b9c97",
+    1: "#2d7bac",
+    2: "#ac2028",
+    3: "#6d467b",
+}
 
 
 class Board(object):
@@ -85,9 +92,12 @@ class Board(object):
 
     def to_figure(self):
         """Convert a Board object to a matplotlib figure."""
-        cmap = ListedColormap(["#eaeae4", "#9b9c97", "#2d7bac", "#ac2028", "#6d467b"])
+        cmap, norm = matplotlib.colors.from_levels_and_colors(
+            [-1, 0, 1, 2, 3, 4], list(BOARD_COLOR_MAPPING.values())
+        )
+
         fig, ax = plt.subplots()
-        ax.matshow(self._board, cmap=cmap)
+        ax.matshow(self._board, cmap=cmap, norm=norm)
 
         # Add gridlines
         ax.set_xticks(np.arange(-0.5, self.size, 1), minor=True)
