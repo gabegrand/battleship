@@ -12,12 +12,11 @@ from matplotlib.colors import ListedColormap
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "B": 1, "R": 2, "P": 3}
 BOARD_COLOR_MAPPING = {
     -1: "#eaeae4",
-    0: "#9b9c97",
+    0: "#9b9c97", 
     1: "#2d7bac",
     2: "#ac2028",
     3: "#6d467b",
 }
-
 
 class Board(object):
     def __init__(self, board: np.ndarray):
