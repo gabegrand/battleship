@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 from eig import compute_eig_fast
 from eig.battleship.program import ProgramSyntaxError
 
@@ -23,4 +24,4 @@ def compute_score(board: Board, program: str):
     except RuntimeError:
         score = 0
 
-    return score
+    return np.round(score, decimals=6)
