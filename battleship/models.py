@@ -39,7 +39,8 @@ class QuestionGenerationModel(Model):
         super().__init__()
         self.lm = lm
         self.context = LMContext(lm, question_prompt)
-        self.program = None
+        self.result = None
+        self.rollouts = []
 
         self.board = board
 
@@ -49,6 +50,11 @@ class QuestionGenerationModel(Model):
         self.n_rollouts = n_rollouts
         self.max_tokens = max_tokens
 
+    def get_final_results(self):
+        if not self.finished:
+            raise RuntimeError("Inference is not finished.")
+        return [self.result] + self.rollouts
+
     async def step(self):
         token = await self.sample(self.context.next_token())
 
@@ -56,11 +62,10 @@ class QuestionGenerationModel(Model):
         results = await asyncio.gather(
             *[self.rollout(str(self.context)) for _ in range(self.n_rollouts)]
         )
-        score_mean = np.mean([result["score"] for result in results])
+        self.rollouts.extend(results)
 
-        # TODO: Determine whether to use twist or score
-        # self.twist(score_mean)
-        self.score(score_mean)
+        score_mean = np.mean([result["score"] for result in results])
+        self.twist(score_mean)
 
         print(f"Partial question: {str(self.context)}")
         print(f"|- EIG mean: {score_mean:.4f}")
@@ -73,16 +78,28 @@ class QuestionGenerationModel(Model):
 
         if self.is_final_token(token) or self.is_final_context(self.context):
             translation = await self._translate_question(str(self.context))
-            self.program = translation
             score = compute_score(board=self.board, program=translation)
-            self.condition(score > 0)
+            self.score(score)
+            self.result = {
+                "prefix": str(self.context),
+                "completion": str(self.context),
+                "translation": translation,
+                "score": score,
+                "type": "final",
+            }
             self.finish()
 
     async def rollout(self, question: str):
         completion = await self._complete_question(question)
         translation = await self._translate_question(completion)
         score = compute_score(board=self.board, program=translation)
-        return {"completion": completion, "translation": translation, "score": score}
+        return {
+            "prefix": question,
+            "completion": completion,
+            "translation": translation,
+            "score": score,
+            "type": "rollout",
+        }
 
     async def _complete_question(self, question: str, temp: float = 0.7):
         # Complete the question
