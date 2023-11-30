@@ -22,15 +22,25 @@ B -> '(' '==' B B ')'
 B -> '(' '==' N N ')'
 B -> '(' '==' O O ')'
 B -> '(' '==' C C ')'
+# B -> '(' '==' setN ')' # not implemented in parser
+B -> '(' 'any' setB ')'
+B -> '(' 'all' setB ')'
+B -> '(' '>' N N ')'
+B -> '(' '<' N N ')'
+B -> '(' 'touch' S S ')'
+B -> '(' 'isSubset' setL setL ')'
 
 # Numbers
 N -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 N -> '(' '+' N N ')'
 N -> '(' '+' B B ')'
+N -> '(' '++' setN ')'
+N -> '(' '++' setB ')'
 N -> '(' '-' N N ')'
 N -> '(' 'size' S ')'
 N -> '(' 'rowL' L ')'
 N -> '(' 'colL' L ')'
+N -> '(' 'setSize' setL ')'
 
 # Colors
 C -> S | 'Water'
@@ -49,6 +59,18 @@ L -> '3A' | '3B' | '3C' | '3D' | '3E' | '3F'
 L -> '4A' | '4B' | '4C' | '4D' | '4E' | '4F'
 L -> '5A' | '5B' | '5C' | '5D' | '5E' | '5F'
 L -> '6A' | '6B' | '6C' | '6D' | '6E' | '6F'
+
+L -> '(' 'topleft' setL ')'
+L -> '(' 'bottomright' setL ')'
+
+# Sets
+setS -> '(' 'set' 'AllColors' ')'
+setL -> '(' 'set' 'AllTiles' ')'
+setL -> '(' 'coloredTiles' C ')'
+setL -> '(' 'setDifference' setL setL ')'
+setL -> '(' 'union' setL setL ')'
+setL -> '(' 'intersection' setL setL ')'
+setL -> '(' 'unique' setL ')'
 
 """
 )
