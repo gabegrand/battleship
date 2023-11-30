@@ -12,11 +12,12 @@ from matplotlib.colors import ListedColormap
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "B": 1, "R": 2, "P": 3}
 BOARD_COLOR_MAPPING = {
     -1: "#eaeae4",
-    0: "#9b9c97", 
+    0: "#9b9c97",
     1: "#2d7bac",
     2: "#ac2028",
     3: "#6d467b",
 }
+
 
 class Board(object):
     def __init__(self, board: np.ndarray):
@@ -37,9 +38,9 @@ class Board(object):
         return str(self)
 
     def __str__(self):
-        output = "  " + " ".join([str(x) for x in range(1, self.size + 1)]) + "\n"
+        output = "  " + " ".join([chr(ord("A") + i) for i in range(self.size)]) + "\n"
         for i, row in enumerate(self.to_symbolic_array()):
-            output += chr(ord("A") + i) + " "
+            output += str(i + 1) + " "
             output += " ".join([str(cell) for cell in row])
             output += "\n"
         return output
@@ -107,13 +108,13 @@ class Board(object):
         ax.set_xticks(np.arange(0, self.size, 1))
         ax.set_yticks(np.arange(0, self.size, 1))
         ax.set_xticklabels(
-            np.arange(1, self.size + 1, 1),
+            [chr(ord("A") + i) for i in np.arange(0, self.size, 1)],
             fontsize=24,
             fontweight="bold",
             color="#9b9c97",
         )
         ax.set_yticklabels(
-            [chr(ord("A") + i) for i in np.arange(0, self.size, 1)],
+            np.arange(1, self.size + 1, 1),
             fontsize=24,
             fontweight="bold",
             color="#9b9c97",
