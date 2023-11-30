@@ -17,7 +17,14 @@ BOARD_COLOR_MAPPING = {
     2: "#ac2028",
     3: "#6d467b",
 }
-SYMBOL_MEANING_MAPPING = {"H": "hidden", "W": "water", "B": "blue ship", "R": "red ship", "P": "purple ship"}
+SYMBOL_MEANING_MAPPING = {
+    "H": "hidden",
+    "W": "water",
+    "B": "blue ship",
+    "R": "red ship",
+    "P": "purple ship",
+}
+
 
 
 class Board(object):
@@ -58,16 +65,16 @@ class Board(object):
         """Convert a Board object to a string array."""
         return Board.convert_to_symbolic(self._board.copy())
 
-    @staticmethod
-    def serialized_representation(board: np.ndarray, conv=False):
+    def to_textual_description(self):
         """Convert a Board object into its serialized representation"""
         repr = []
-        for i, row in enumerate(board.to_symbolic_array()):
-            letter = chr(ord('A')+i)
+        for i, row in enumerate(self.to_symbolic_array()):
+            letter = chr(ord("A") + i)
             for j in range(len(row)):
-                repr.append(f"Tile {letter+str(j+1)} is a {SYMBOL_MEANING_MAPPING[row[j]]} tile.")
-        if conv:
-            repr = "\n".join(repr)
+                repr.append(
+                    f"Tile {letter+str(j+1)} is a {SYMBOL_MEANING_MAPPING[row[j]]} tile."
+                )
+        repr = "\n".join(repr)
         return repr
 
     @staticmethod
