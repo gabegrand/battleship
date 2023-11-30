@@ -52,7 +52,7 @@ O -> 'H' | 'V'
 O -> '(' 'orient' S ')'
 
 # Locations
-# Note: The parser requires enumerating each possible location
+# NOTE: The parser requires enumerating each possible location
 L -> '1A' | '1B' | '1C' | '1D' | '1E' | '1F'
 L -> '2A' | '2B' | '2C' | '2D' | '2E' | '2F'
 L -> '3A' | '3B' | '3C' | '3D' | '3E' | '3F'
@@ -62,6 +62,23 @@ L -> '6A' | '6B' | '6C' | '6D' | '6E' | '6F'
 
 L -> '(' 'topleft' setL ')'
 L -> '(' 'bottomright' setL ')'
+
+# Mapping
+setB -> '(' 'map' fyB setL ')'
+setB -> '(' 'map' fxB setS ')'
+setN -> '(' 'map' fxN setS ')'
+setL -> '(' 'map' fxL setS ')'
+
+# Lambda expressions
+fyB -> '(' 'lambda' 'y0' B ')'
+fxB -> '(' 'lambda' 'x0' B ')'
+fxN -> '(' 'lambda' 'x0' N ')'
+fxL -> '(' 'lambda' 'x0' L ')'
+
+# Lambda variables
+# NOTE: These will create invalid programs when used outside of a lambda expression
+S -> 'x0'
+L -> 'y0'
 
 # Sets
 setS -> '(' 'set' 'AllColors' ')'
