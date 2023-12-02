@@ -1,10 +1,17 @@
 from nltk import CFG
 
+
+def BattleshipCFG(include_lambdas: bool = False):
+    grammar = GRAMMAR_BASE
+    if include_lambdas:
+        grammar += GRAMMAR_LAMBDA
+    return CFG.fromstring(grammar)
+
+
 # Grammar for Battleship DSL
 # Adapted from https://arxiv.org/abs/1711.06351
 # See Table SI-1 and SI-2 in the supplementary material
-BattleshipCFG = CFG.fromstring(
-    """
+GRAMMAR_BASE = """
 # Answer types
 A -> B
 A -> N
@@ -63,6 +70,18 @@ L -> '6A' | '6B' | '6C' | '6D' | '6E' | '6F'
 L -> '(' 'topleft' setL ')'
 L -> '(' 'bottomright' setL ')'
 
+# Sets
+setS -> '(' 'set' 'AllColors' ')'
+setL -> '(' 'set' 'AllTiles' ')'
+setL -> '(' 'coloredTiles' C ')'
+setL -> '(' 'setDifference' setL setL ')'
+setL -> '(' 'union' setL setL ')'
+setL -> '(' 'intersection' setL setL ')'
+setL -> '(' 'unique' setL ')'
+"""
+
+# Grammar for lambda expressions
+GRAMMAR_LAMBDA = """
 # Mapping
 setB -> '(' 'map' fyB setL ')'
 setB -> '(' 'map' fxB setS ')'
@@ -79,15 +98,4 @@ fxL -> '(' 'lambda' 'x0' L ')'
 # NOTE: These will create invalid programs when used outside of a lambda expression
 S -> 'x0'
 L -> 'y0'
-
-# Sets
-setS -> '(' 'set' 'AllColors' ')'
-setL -> '(' 'set' 'AllTiles' ')'
-setL -> '(' 'coloredTiles' C ')'
-setL -> '(' 'setDifference' setL setL ')'
-setL -> '(' 'union' setL setL ')'
-setL -> '(' 'intersection' setL setL ')'
-setL -> '(' 'unique' setL ')'
-
 """
-)
