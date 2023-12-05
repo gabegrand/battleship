@@ -78,7 +78,7 @@ class QuestionGenerationModel(Model):
 
         if self.is_final_token(token) or self.is_final_context(self.context):
             translation = await self._translate_question(str(self.context))
-            score = compute_score(board=self.board, program=translation)
+            score = compute_score(program=translation, board=self.board)
             self.score(score)
             self.result = {
                 "prefix": str(self.context),
@@ -92,7 +92,7 @@ class QuestionGenerationModel(Model):
     async def rollout(self, question: str):
         completion = await self._complete_question(question)
         translation = await self._translate_question(completion)
-        score = compute_score(board=self.board, program=translation)
+        score = compute_score(program=translation, board=self.board)
         return {
             "prefix": question,
             "completion": completion,
