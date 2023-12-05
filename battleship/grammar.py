@@ -1,11 +1,88 @@
+import random
+import sys
+
+from eig.battleship import Parser
 from nltk import CFG
+from nltk.grammar import Nonterminal
+from nltk.parse.generate import generate
+from tqdm import tqdm
 
 
-def BattleshipCFG(include_lambdas: bool = False):
-    grammar = GRAMMAR_BASE
-    if include_lambdas:
-        grammar += GRAMMAR_LAMBDA
-    return CFG.fromstring(grammar)
+class BattleshipGrammar:
+    def __init__(self, include_lambdas: bool = False):
+        grammar_str = GRAMMAR_BASE
+        if include_lambdas:
+            grammar_str += GRAMMAR_LAMBDA
+        self.grammar = CFG.fromstring(grammar_str)
+
+    def generate(
+        self,
+        n: int = None,
+        depth: int = None,
+        start: Nonterminal = None,
+        enforce_type: bool = False,
+    ):
+        """Enumerates all possible programs in the grammar."""
+        valid, invalid = [], []
+
+        for tokens in tqdm(
+            generate(self.grammar, n=n, depth=depth, start=start), total=n
+        ):
+            program = " ".join(tokens)
+            try:
+                Parser.parse(program, enforce_type=enforce_type)
+                valid.append(program)
+            except:
+                invalid.append(program)
+
+        return valid, invalid
+
+    def sample(self, max_depth: int = 8):
+        """Returns a random sample from the grammar using uniform probabilities over the rules."""
+
+        def _sample(grammar, fragments, depth):
+            if depth <= 0:
+                raise RecursionError(f"Maximum recursion depth exceeded.")
+            for frag in fragments:
+                if isinstance(frag, str):
+                    yield frag
+                else:
+                    productions = grammar.productions(lhs=frag)
+                    if not productions:
+                        raise ValueError(f"Nonterminal {frag} not found in grammar.")
+                    production = random.choice(productions)
+                    for sym in _sample(grammar, production.rhs(), depth - 1):
+                        yield sym
+
+        try:
+            return " ".join(
+                _sample(
+                    grammar=self.grammar,
+                    fragments=[self.grammar.start()],
+                    depth=max_depth,
+                )
+            )
+        except RecursionError as error:
+            return None
+
+    # def sample(self):
+    #     """Returns a random sample from the grammar using uniform probabilities over the rules."""
+
+    #     def _sample(grammar, prod, frags):
+    #         print(prod, frags)
+    #         if prod in grammar._lhs_index:
+    #             derivations = grammar._lhs_index[prod]
+    #             derivation = random.choice(derivations)
+    #             print(derivation, derivations)
+    #             for d in derivation._rhs:
+    #                 _sample(grammar, d, frags)
+    #         elif prod in grammar._rhs_index:
+    #             frags.append(str(prod))
+    #             print("terminal", prod)
+
+    #     frags = []
+    #     _sample(grammar=self.grammar, prod=self.start(), frags=frags)
+    #     return ' '.join(frags)
 
 
 # Grammar for Battleship DSL
@@ -30,8 +107,6 @@ B -> '(' '==' N N ')'
 B -> '(' '==' O O ')'
 B -> '(' '==' C C ')'
 # B -> '(' '==' setN ')' # not implemented in parser
-B -> '(' 'any' setB ')'
-B -> '(' 'all' setB ')'
 B -> '(' '>' N N ')'
 B -> '(' '<' N N ')'
 B -> '(' 'touch' S S ')'
@@ -41,8 +116,6 @@ B -> '(' 'isSubset' setL setL ')'
 N -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 N -> '(' '+' N N ')'
 N -> '(' '+' B B ')'
-N -> '(' '++' setN ')'
-N -> '(' '++' setB ')'
 N -> '(' '-' N N ')'
 N -> '(' 'size' S ')'
 N -> '(' 'rowL' L ')'
@@ -82,6 +155,13 @@ setL -> '(' 'unique' setL ')'
 
 # Grammar for lambda expressions
 GRAMMAR_LAMBDA = """
+
+# Sets
+B -> '(' 'any' setB ')'
+B -> '(' 'all' setB ')'
+N -> '(' '++' setB ')'
+N -> '(' '++' setN ')'
+
 # Mapping
 setB -> '(' 'map' fyB setL ')'
 setB -> '(' 'map' fxB setS ')'
