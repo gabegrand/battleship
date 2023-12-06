@@ -65,25 +65,6 @@ class BattleshipGrammar:
         except RecursionError as error:
             return None
 
-    # def sample(self):
-    #     """Returns a random sample from the grammar using uniform probabilities over the rules."""
-
-    #     def _sample(grammar, prod, frags):
-    #         print(prod, frags)
-    #         if prod in grammar._lhs_index:
-    #             derivations = grammar._lhs_index[prod]
-    #             derivation = random.choice(derivations)
-    #             print(derivation, derivations)
-    #             for d in derivation._rhs:
-    #                 _sample(grammar, d, frags)
-    #         elif prod in grammar._rhs_index:
-    #             frags.append(str(prod))
-    #             print("terminal", prod)
-
-    #     frags = []
-    #     _sample(grammar=self.grammar, prod=self.start(), frags=frags)
-    #     return ' '.join(frags)
-
 
 # Grammar for Battleship DSL
 # Adapted from https://arxiv.org/abs/1711.06351
