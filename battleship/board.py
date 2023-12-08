@@ -26,7 +26,6 @@ SYMBOL_MEANING_MAPPING = {
 }
 
 
-
 class Board(object):
     def __init__(self, board: np.ndarray):
         assert board.dtype == np.dtype(int)
@@ -69,10 +68,11 @@ class Board(object):
         """Convert a Board object into its serialized representation"""
         repr = []
         for i, row in enumerate(self.to_symbolic_array()):
-            letter = chr(ord("A") + i)
             for j in range(len(row)):
+                letter = chr(ord("A") + j)
+                value = row[j]
                 repr.append(
-                    f"Tile {letter+str(j+1)} is a {SYMBOL_MEANING_MAPPING[row[j]]} tile."
+                    f"{i+1}-{letter} is a {SYMBOL_MEANING_MAPPING[value]} tile."
                 )
         repr = "\n".join(repr)
         return repr
