@@ -34,6 +34,7 @@ class QuestionGenerationModel(Model):
         question_prompt: str,
         translation_prompt: str,
         n_rollouts: int = 3,
+        use_score_max: bool = True,
         max_tokens: int = 32,
     ):
         super().__init__()
@@ -48,6 +49,7 @@ class QuestionGenerationModel(Model):
         self.translation_prompt = translation_prompt
 
         self.n_rollouts = n_rollouts
+        self.use_score_max = use_score_max
         self.max_tokens = max_tokens
 
     def get_final_results(self):
@@ -65,10 +67,14 @@ class QuestionGenerationModel(Model):
         self.rollouts.extend(results)
 
         score_mean = np.mean([result["score"] for result in results])
-        self.twist(score_mean)
+        score_max = np.max([result["score"] for result in results])
+
+        score_metric = score_max if self.use_score_max else score_mean
+        self.twist(score_metric)
 
         print(f"Partial question: {str(self.context)}")
         print(f"|- EIG mean: {score_mean:.4f}")
+        print(f"|- EIG max: {score_max:.4f}")
         print(f"|- Particle weight: {self.weight:.4f}")
         for result in results:
             print(f"  |- Completion: {result['completion']}")
@@ -78,7 +84,7 @@ class QuestionGenerationModel(Model):
 
         if self.is_final_token(token) or self.is_final_context(self.context):
             translation = await self._translate_question(str(self.context))
-            score = compute_score(board=self.board, program=translation)
+            score = compute_score(program=translation, board=self.board)
             self.score(score)
             self.result = {
                 "prefix": str(self.context),
@@ -92,7 +98,7 @@ class QuestionGenerationModel(Model):
     async def rollout(self, question: str):
         completion = await self._complete_question(question)
         translation = await self._translate_question(completion)
-        score = compute_score(board=self.board, program=translation)
+        score = compute_score(program=translation, board=self.board)
         return {
             "prefix": question,
             "completion": completion,
