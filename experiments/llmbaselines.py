@@ -4,15 +4,11 @@ from base64 import b64encode
 from enum import StrEnum
 
 import matplotlib.pyplot as plt
-import numpy as np
-import standard_prompts
-from eig import *
-from eig.battleship.program import ProgramSyntaxError
 from openai import OpenAI
 
-from battleship.board import *
-from battleship.scoring import *
-from battleship.translator import *
+from battleship.board import Board
+from battleship.prompts import standard_prompts
+from battleship.scoring import compute_score
 
 
 class OpenAIModels(StrEnum):
