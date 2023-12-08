@@ -17,6 +17,13 @@ BOARD_COLOR_MAPPING = {
     2: "#ac2028",
     3: "#6d467b",
 }
+SYMBOL_MEANING_MAPPING = {
+    "H": "hidden",
+    "W": "water",
+    "B": "blue ship",
+    "R": "red ship",
+    "P": "purple ship",
+}
 
 
 class Board(object):
@@ -56,6 +63,19 @@ class Board(object):
     def to_symbolic_array(self):
         """Convert a Board object to a string array."""
         return Board.convert_to_symbolic(self._board.copy())
+
+    def to_textual_description(self):
+        """Convert a Board object into its serialized representation"""
+        repr = []
+        for i, row in enumerate(self.to_symbolic_array()):
+            for j in range(len(row)):
+                letter = chr(ord("A") + j)
+                value = row[j]
+                repr.append(
+                    f"{i+1}-{letter} is a {SYMBOL_MEANING_MAPPING[value]} tile."
+                )
+        repr = "\n".join(repr)
+        return repr
 
     @staticmethod
     def from_text_file(path: str):
