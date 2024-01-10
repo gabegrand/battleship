@@ -1,0 +1,129 @@
+prefix,completion,translation,score,type,particle,model_type,trial_id
+How many blocks is the purple ship?,How many blocks is the purple ship?,(size Purple),1.283565,final,0,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,1,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,2,REGULAR,13
+**A sample of that answer sheet:** At this stage it is too early for the key stage 2 children to know what a block of land is.,**A sample of that answer sheet:** At this stage it is too early for the key stage 2 children to know what a block of land is.,(coloredTiles Red),0.0,final,3,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,4,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,5,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,6,REGULAR,13
+How many total tiles can be seen?,How many total tiles can be seen?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,7,REGULAR,13
+How many squares are occupied by ships?,How many squares are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,8,REGULAR,13
+There are a total of 12 ships.,There are a total of 12 ships.,(== (++ (map (lambda x0 (size x0)) (set AllColors))) 12),0.0,final,9,REGULAR,13
+"Hints:
+","Hints:
+",(hint),0.0,final,10,REGULAR,13
+"Now write the single letter answer for each question to this format:
+","Now write the single letter answer for each question to this format:
+",(answer 1),0.0,final,11,REGULAR,13
+"
+","
+",(== (size Red) 4),0.0,final,12,REGULAR,13
+How many are of type 2?,How many are of type 2?,(++ (map (lambda x0 (== (size x0) 2)) (set AllColors))),1.438733,final,13,REGULAR,13
+How many total blue squares are there?,How many total blue squares are there?,(++ (map (lambda x0 (== (color x0) Blue)) (set AllTiles))),0.0,final,14,REGULAR,13
+How many are of type 2?,How many are of type 2?,(++ (map (lambda x0 (== (size x0) 2)) (set AllColors))),1.438733,final,15,REGULAR,13
+"#519342455
+","#519342455
+",(== (color 1-A) Water),0.726736,final,16,REGULAR,13
+Is the purple ship the extra big ship?,Is the purple ship the extra big ship?,(== (size Purple) 5),0.0,final,17,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,18,REGULAR,13
+"\end{code}
+","\end{code}
+",(== (size Red) 3),0.0,final,19,REGULAR,13
+How many total tiles are ships?,How many total tiles are ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,20,REGULAR,13
+What is the XYZ coordinate of the center of the purple ship?,What is the XYZ coordinate of the center of the purple ship?,(center (coloredTiles Purple)),0.0,final,21,REGULAR,13
+Are the blue ship and red ship touching?,Are the blue ship and red ship touching?,(touch Blue Red),0.0,final,22,REGULAR,13
+How many blue squares are left on the board?,How many blue squares are left on the board?,(++ (map (lambda x0 (== (color x0) Blue)) (set AllSquares))),0.0,final,23,REGULAR,13
+List of squares occupied by ships.,List of squares occupied by ships.,(map (lambda x0 (coloredTiles x0)) (set AllColors)),0.0,final,24,REGULAR,13
+How many tiles in a 3x3 ship do you need?,How many tiles in a 3x3 ship do you need?,(++ (map (lambda x0 (== (size x0) 3)) (set AllColors))),1.381074,final,25,REGULAR,13
+What is the coordinate of the ship that is touching 6E?,What is the coordinate of the ship that is touching 6E?,(topleft (coloredTiles (touching 6-E))),0.0,final,26,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,27,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,28,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,29,REGULAR,13
+How many pieces could the purple deck fit into the ocean?,How many pieces could the purple deck fit into the ocean?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,30,REGULAR,13
+How many total tiles can be seen?,How many total tiles can be seen?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,31,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,32,REGULAR,13
+Total ships on board</s>,Total ships on board</s>,"Hello, how can I help you?",0.0,final,33,REGULAR,13
+How many total tiles can be seen?,How many total tiles can be seen?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,34,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,35,REGULAR,13
+How many tiles in a 3x3 ship do you need?,How many tiles in a 3x3 ship do you need?,(++ (map (lambda x0 (== (size x0) 3)) (set AllColors))),1.381074,final,36,REGULAR,13
+How many total tiles are ships?,How many total tiles are ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,37,REGULAR,13
+Can you tell me how many squares have at least one ship?,Can you tell me how many squares have at least one ship?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,38,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,39,REGULAR,13
+How many pieces could the purple deck fit into the ocean?,How many pieces could the purple deck fit into the ocean?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,40,REGULAR,13
+How many squares are occupied by ships?,How many squares are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,41,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,42,REGULAR,13
+"Re: Board Game Logic Tile Problem Unsolved
+","Re: Board Game Logic Tile Problem Unsolved
+",(define (coloredTiles color),0.0,final,43,REGULAR,13
+What is at 6D?,What is at 6D?,(color 6-D),0.835463,final,44,REGULAR,13
+How many blocks is the purple ship?,How many blocks is the purple ship?,(size Purple),1.283565,final,45,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,46,REGULAR,13
+Does the ship at 1B have at least 2 tiles?,Does the ship at 1B have at least 2 tiles?,(>= (size (color 1-B)) 2),0.0,final,47,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,48,REGULAR,13
+How many empty spaces are there?,How many empty spaces are there?,(++ (map (lambda x0 (== (color x0) Water)) (set AllCoords))),0.0,final,49,REGULAR,13
+"
+","
+",(== (size Red) 3),0.0,final,50,REGULAR,13
+"
+","
+",(== (size Red) 3),0.0,final,51,REGULAR,13
+How many ships are there?,How many ships are there?,(++ (set AllColors)),0.0,final,52,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,53,REGULAR,13
+How many ships are on row 4?,How many ships are on row 4?,(++ (map (lambda x0 (== (row x0) 4)) (set AllColors))),0.0,final,54,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,55,REGULAR,13
+How many pieces could the purple deck fit into the ocean?,How many pieces could the purple deck fit into the ocean?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,56,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,57,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,58,REGULAR,13
+How many ships touch water?,How many ships touch water?,(++ (map (lambda x0 (touch x0 Water)) (set AllColors))),0.0,final,59,REGULAR,13
+How many squares are occupied by ships?,How many squares are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,60,REGULAR,13
+How many total tiles are there?,How many total tiles are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,61,REGULAR,13
+How many pieces could the purple deck fit into the ocean?,How many pieces could the purple deck fit into the ocean?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,62,REGULAR,13
+How many total tiles are ships?,How many total tiles are ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,63,REGULAR,13
+Can you tell me how many squares have at least one ship?,Can you tell me how many squares have at least one ship?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,64,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,65,REGULAR,13
+What are the coordinates of the bottom left-most square occupied by the red ship?,What are the coordinates of the bottom left-most square occupied by the red ship?,(bottomleft (coloredTiles Red)),0.0,final,66,REGULAR,13
+How many blocks are occupied by ships?,How many blocks are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,67,REGULAR,13
+How many squares are occupied by ships?,How many squares are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,68,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,69,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,70,REGULAR,13
+How many blue squares are left on the board?,How many blue squares are left on the board?,(++ (map (lambda x0 (== (color x0) Blue)) (set AllSquares))),0.0,final,71,REGULAR,13
+How many excitedly yellow tiles are there?,How many excitedly yellow tiles are there?,(++ (map (lambda x0 (== (color x0) Yellow)) (set AllTiles))),0.0,final,72,REGULAR,13
+"
+","
+",(== (size Red) 3),0.0,final,73,REGULAR,13
+Note: Take cargo space into consideration.,Note: Take cargo space into consideration.,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,74,REGULAR,13
+"Re: Board Game Logic Tile Problem Unsolved
+","Re: Board Game Logic Tile Problem Unsolved
+",(define (coloredTiles color),0.0,final,75,REGULAR,13
+Is there a ship at 2E?,Is there a ship at 2E?,(not (== (color 2-E) Water)),0.0,final,76,REGULAR,13
+Can you tell me how many squares have at least one ship?,Can you tell me how many squares have at least one ship?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,77,REGULAR,13
+How many red ship tiles are next to ocean tiles?,How many red ship tiles are next to ocean tiles?,(++ (map (lambda x0 (== (color x0) Red)) (neighbors (coloredTiles Red)))),0.0,final,78,REGULAR,13
+How many tiles are in the ship surrounding the purple ship?,How many tiles are in the ship surrounding the purple ship?,(++ (map (lambda x0 (size x0)) (set (surrounding Purple)))),0.0,final,79,REGULAR,13
+How many coordinate pairs are above 3E?,How many coordinate pairs are above 3E?,(++ (map (lambda x0 (< (car x0) 3)) (set AllCoordinates))),0.0,final,80,REGULAR,13
+How many blocks are there?,How many blocks are there?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,81,REGULAR,13
+How many squares are occupied by ships?,How many squares are occupied by ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,82,REGULAR,13
+How many red ship tiles are next to ocean tiles?,How many red ship tiles are next to ocean tiles?,(++ (map (lambda x0 (== (color x0) Red)) (neighbors (coloredTiles Red)))),0.0,final,83,REGULAR,13
+What is the bottomrow coordinate for the first ship?,What is the bottomrow coordinate for the first ship?,(bottomrow (coloredTiles (car (set AllColors)))),0.0,final,84,REGULAR,13
+"\end{code}
+","\end{code}
+",,0.0,final,85,REGULAR,13
+What is at 1F?,What is at 1F?,(color 1-F),0.195451,final,86,REGULAR,13
+"
+","
+",(== (size Red) 3),0.0,final,87,REGULAR,13
+Who’s ship is at 3D?,Who’s ship is at 3D?,(coloredTiles 3-D),0.0,final,88,REGULAR,13
+How many pieces could the purple deck fit into the ocean?,How many pieces could the purple deck fit into the ocean?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,89,REGULAR,13
+How many ships are vertical?,How many ships are vertical?,(++ (map (lambda x0 (== (orient x0) V)) (set AllColors))),1.350107,final,90,REGULAR,13
+"
+","
+",(== (size Red) 3),0.0,final,91,REGULAR,13
+"Hints:
+","Hints:
+",(hint),0.0,final,92,REGULAR,13
+How many tiles are in the ship surrounding the purple ship?,How many tiles are in the ship surrounding the purple ship?,(++ (map (lambda x0 (size x0)) (set (surrounding Purple)))),0.0,final,93,REGULAR,13
+How many total tiles are ships?,How many total tiles are ships?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,94,REGULAR,13
+What is at 6D?,What is at 6D?,(color 6-D),0.835463,final,95,REGULAR,13
+Total ships on board</s>,Total ships on board</s>,"Hello, how can I help you?",0.0,final,96,REGULAR,13
+How many are of type 2?,How many are of type 2?,(++ (map (lambda x0 (== (size x0) 2)) (set AllColors))),1.438733,final,97,REGULAR,13
+How many total blocks on the board?,How many total blocks on the board?,(++ (map (lambda x0 (size x0)) (set AllColors))),2.029328,final,98,REGULAR,13
+How many ships are vertical?,How many ships are vertical?,(++ (map (lambda x0 (== (orient x0) V)) (set AllColors))),1.350107,final,99,REGULAR,13
