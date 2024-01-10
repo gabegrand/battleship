@@ -36,6 +36,7 @@ class QuestionGenerationModel(Model):
         n_rollouts: int = 3,
         use_score_max: bool = True,
         max_tokens: int = 32,
+        verbose: bool = True,
     ):
         super().__init__()
         self.lm = lm
@@ -51,6 +52,8 @@ class QuestionGenerationModel(Model):
         self.n_rollouts = n_rollouts
         self.use_score_max = use_score_max
         self.max_tokens = max_tokens
+
+        self.verbose = verbose
 
     def get_final_results(self):
         if not self.finished:
@@ -72,15 +75,16 @@ class QuestionGenerationModel(Model):
         score_metric = score_max if self.use_score_max else score_mean
         self.twist(score_metric)
 
-        print(f"Partial question: {str(self.context)}")
-        print(f"|- EIG mean: {score_mean:.4f}")
-        print(f"|- EIG max: {score_max:.4f}")
-        print(f"|- Particle weight: {self.weight:.4f}")
-        for result in results:
-            print(f"  |- Completion: {result['completion']}")
-            print(f"    |- Translation: {result['translation']}")
-            print(f"    |- Score: {result['score']:.4f}")
-        print()
+        if self.verbose:
+            print(f"Partial question: {str(self.context)}")
+            print(f"|- EIG mean: {score_mean:.4f}")
+            print(f"|- EIG max: {score_max:.4f}")
+            print(f"|- Particle weight: {self.weight:.4f}")
+            for result in results:
+                print(f"  |- Completion: {result['completion']}")
+                print(f"    |- Translation: {result['translation']}")
+                print(f"    |- Score: {result['score']:.4f}")
+            print()
 
         if self.is_final_token(token) or self.is_final_context(self.context):
             translation = await self._translate_question(str(self.context))
@@ -162,3 +166,27 @@ class QuestionGenerationModel(Model):
                 "max_tokens",
             ]
         )
+
+
+class SingleStepQuestionGenerationModel(QuestionGenerationModel):
+    async def step(self):
+        while True:
+            token = await self.sample(self.context.next_token())
+            if self.verbose:
+                print(self.context)
+            if self.is_final_token(token) or self.is_final_context(self.context):
+                break
+
+        translation = await self._translate_question(str(self.context))
+        score = compute_score(program=translation, board=self.board)
+        self.score(score)
+        self.result = {
+            "prefix": str(self.context),
+            "completion": str(self.context),
+            "translation": translation,
+            "score": score,
+            "type": "final",
+        }
+        if self.verbose:
+            print(self.result)
+        self.finish()
