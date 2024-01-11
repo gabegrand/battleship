@@ -1,5 +1,8 @@
 """Wrapper class for working with battleship boards."""
+import base64
+import io
 import os
+from enum import StrEnum
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -24,6 +27,13 @@ SYMBOL_MEANING_MAPPING = {
     "R": "red ship",
     "P": "purple ship",
 }
+TRIAL_IDS = list(range(1, 19))
+
+
+class BoardFormat(StrEnum):
+    GRID = "grid"
+    LINGUISTIC = "linguistic"
+    VISUAL = "visual"
 
 
 class Board(object):
@@ -76,6 +86,17 @@ class Board(object):
                 )
         repr = "\n".join(repr)
         return repr
+
+    def to_format(self, fmt: BoardFormat):
+        """Convert a Board object to a specified format."""
+        if fmt == BoardFormat.GRID:
+            return str(self)
+        elif fmt == BoardFormat.LINGUISTIC:
+            return self.to_textual_description()
+        elif fmt == BoardFormat.VISUAL:
+            return self.to_base64()
+        else:
+            raise ValueError(f"Unknown board format: {fmt}")
 
     @staticmethod
     def from_text_file(path: str):
@@ -149,3 +170,10 @@ class Board(object):
 
         plt.close(fig)
         return fig
+
+    def to_base64(self):
+        """Convert a Board object to a PNG image encoded in UTF-8. Uses BytesIO to avoid unnecessary I/O on disk."""
+        bytes = io.BytesIO()
+        self.to_figure().savefig(bytes, format="png")
+        bytes.seek(0)
+        return base64.b64encode(bytes.read()).decode("utf-8")
