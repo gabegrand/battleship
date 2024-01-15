@@ -7,6 +7,12 @@ from battleship.board import Board
 from battleship.board import BoardFormat
 from battleship.board import TRIAL_IDS
 
+HUMAN_DATASET_PATH = os.path.join(
+    f"{os.path.abspath(os.path.dirname(__file__))}",
+    "prompts",
+    "examples_full.csv",
+)
+
 # Optional system prompt for GPT agents
 PROMPT_SYSTEM = (
     "You are a game-playing agent. "
@@ -85,13 +91,7 @@ class Prompt(object):
             )
 
             # Load question dataset
-            df = pd.read_csv(
-                os.path.join(
-                    f"{os.path.abspath(os.path.dirname(__file__))}",
-                    "prompts",
-                    "examples_full.csv",
-                )
-            )
+            df = pd.read_csv(HUMAN_DATASET_PATH)
 
             # Sample questions from the question dataset
             self.examples = []
@@ -140,7 +140,7 @@ class Prompt(object):
 
         if self.board_format == BoardFormat.GRID:
             messages.append({"role": "user", "content": PROMPT_VARIANT_GRID})
-        elif self.board_format == BoardFormat.LINGUISTIC:
+        elif self.board_format == BoardFormat.TEXTUAL:
             messages.append({"role": "user", "content": PROMPT_VARIANT_LINGUISTIC})
         elif self.board_format == BoardFormat.VISUAL:
             # TODO: Requires a slightly different message format. Also, we should format the images to be 512px x 512px image for low-res mode with GPT-4V.

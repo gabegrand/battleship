@@ -32,7 +32,7 @@ TRIAL_IDS = list(range(1, 19))
 
 class BoardFormat(StrEnum):
     GRID = "grid"
-    LINGUISTIC = "linguistic"
+    TEXTUAL = "textual"
     VISUAL = "visual"
 
 
@@ -91,7 +91,7 @@ class Board(object):
         """Convert a Board object to a specified format."""
         if fmt == BoardFormat.GRID:
             return str(self)
-        elif fmt == BoardFormat.LINGUISTIC:
+        elif fmt == BoardFormat.TEXTUAL:
             return self.to_textual_description()
         elif fmt == BoardFormat.VISUAL:
             return self.to_base64()
