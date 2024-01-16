@@ -3,8 +3,8 @@ import asyncio
 import numpy as np
 
 from battleship.board import Board
+from battleship.prompting import TranslationPrompt
 from battleship.scoring import compute_score
-from battleship.translator import Translator
 from hfppl.distributions import LMContext
 from hfppl.llms import CachedCausalLM
 from hfppl.modeling import Model
@@ -128,7 +128,11 @@ class QuestionGenerationModel(Model):
         # Translate the question to code
         ctx = LMContext(
             self.lm,
-            self.translation_prompt + Translator.format_example(completion),
+            self.translation_prompt
+            + " "
+            + completion
+            + "\n"
+            + TranslationPrompt.PREFIX_CODE,
             temp=temp,
         )
         for _ in range(self.max_tokens):

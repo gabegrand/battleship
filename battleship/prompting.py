@@ -10,7 +10,7 @@ from battleship.board import TRIAL_IDS
 HUMAN_DATASET_PATH = os.path.join(
     f"{os.path.abspath(os.path.dirname(__file__))}",
     "prompts",
-    "examples_full.csv",
+    "human_question_dataset.csv",
 )
 
 
@@ -23,6 +23,9 @@ class BasePrompt(object):
     Set random_seed to ensure determinism. If random_seed is None, a random seed will be generated.
 
     """
+
+    PREFIX_QUESTION = "Question:"
+    PREFIX_CODE = "Code:"
 
     def __init__(
         self,
@@ -206,7 +209,7 @@ class QuestionGenerationPrompt(BasePrompt):
                         {
                             "role": "assistant",
                             "name": "example_agent",
-                            "content": "Question: " + example["question"],
+                            "content": self.PREFIX_QUESTION + " " + example["question"],
                         }
                     )
 
@@ -216,8 +219,8 @@ class QuestionGenerationPrompt(BasePrompt):
             {"role": "user", "content": f"{board.to_format(self.board_format)}\n"}
         )
 
-        # TODO: Awkward
-        messages.append({"role": "assistant", "content": "Question:"})
+        # TODO: Verify that this is the correct way to end the message list for GPT
+        messages.append({"role": "assistant", "content": self.PREFIX_QUESTION})
 
         return messages
 
@@ -234,7 +237,7 @@ class TranslationPrompt(BasePrompt):
 
     def __init__(
         self,
-        target_question: str,
+        target_question: str = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -255,22 +258,26 @@ class TranslationPrompt(BasePrompt):
                 {
                     "role": "user",
                     "name": "example_user",
-                    "content": f"Question: {example['question']}",
+                    "content": f"{self.PREFIX_QUESTION} {example['question']}",
                 }
             )
             messages.append(
                 {
                     "role": "assistant",
                     "name": "example_agent",
-                    "content": f"Code: {example['code']}",
+                    "content": f"{self.PREFIX_CODE} {example['code']}",
                 }
             )
 
         messages.append(
-            {"role": "user", "content": f"Question: {self.target_question}"}
+            {
+                "role": "user",
+                "content": f"{self.PREFIX_QUESTION}{' ' + self.target_question if self.target_question else ''}",
+            }
         )
 
-        # TODO: Awkward
-        messages.append({"role": "assistant", "content": f"Code:"})
+        if self.target_question:
+            # TODO: Verify that this is the correct way to end the message list for GPT
+            messages.append({"role": "assistant", "content": f"{self.PREFIX_CODE}"})
 
         return messages
