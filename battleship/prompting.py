@@ -24,8 +24,8 @@ class BasePrompt(object):
 
     """
 
-    PREFIX_QUESTION = "Question:"
-    PREFIX_CODE = "Code:"
+    PREFIX_QUESTION = "User:"
+    PREFIX_CODE = "Query:"
 
     def __init__(
         self,
@@ -33,6 +33,8 @@ class BasePrompt(object):
         board_format: BoardFormat = None,
         n_example_trials: int = 0,
         n_examples_per_trial: int = 1,
+        include_instructions: bool = True,
+        include_board: bool = True,
         include_system_prompt: bool = True,
         random_seed: int = None,
     ):
@@ -41,6 +43,8 @@ class BasePrompt(object):
         self.n_example_trials = n_example_trials
         self.n_questions_per_trial = n_examples_per_trial
         self.include_system_prompt = include_system_prompt
+        self.include_board = include_board
+        self.include_instructions = include_instructions
         self.random_seed = random_seed
 
         # Sample example trial ids, excluding the target trial id
@@ -77,6 +81,7 @@ class BasePrompt(object):
 
     def __str__(self):
         return "\n".join([message["content"] for message in self.to_chat_format()])
+        # return "\n".join([f"[{message['role']}]{message['content']}" for message in self.to_chat_format()])
 
     def __dict__(self):
         return {
@@ -99,6 +104,17 @@ class BasePrompt(object):
             random_seed=data["random_seed"],
             include_system_prompt=data["include_system_prompt"],
         )
+
+    @staticmethod
+    def optional_space(prefix: str = None, text: str = None):
+        output = ""
+        if prefix:
+            output += prefix
+        if prefix and text:
+            output += " "
+        if text:
+            output += text
+        return output
 
     def to_chat_format(self):
         """Returns a list of messages in OpenAI chat format.
@@ -164,6 +180,8 @@ PROMPT_TARGET_BOARD = "Now, it's your turn. Here is your board:\n"
 class QuestionGenerationPrompt(BasePrompt):
     """Prompt for generating questions for the Battleship task."""
 
+    PREFIX_QUESTION = "Question:"
+
     def __init__(
         self,
         **kwargs,
@@ -174,34 +192,43 @@ class QuestionGenerationPrompt(BasePrompt):
 
     def to_chat_format(self):
         messages = []
-        if self.include_system_prompt:
-            messages.append({"role": "system", "content": PROMPT_SYSTEM})
 
-        messages.append({"role": "user", "content": PROMPT_GAME})
-        messages.append({"role": "user", "content": PROMPT_TASK_QUESTION_GENERATION})
+        if self.include_instructions:
+            if self.include_system_prompt:
+                messages.append({"role": "system", "content": PROMPT_SYSTEM})
 
-        if self.board_format == BoardFormat.GRID:
-            messages.append({"role": "user", "content": PROMPT_VARIANT_GRID})
-        elif self.board_format == BoardFormat.TEXTUAL:
-            messages.append({"role": "user", "content": PROMPT_VARIANT_TEXTUAL})
-        elif self.board_format == BoardFormat.VISUAL:
-            # TODO: Requires a slightly different message format. Also, we should format the images to be 512px x 512px image for low-res mode with GPT-4V.
-            raise NotImplementedError("Visual board format not yet implemented.")
-        else:
-            raise ValueError(f"Unknown board format: {self.board_format}")
+            messages.append({"role": "user", "content": PROMPT_GAME})
+            messages.append(
+                {"role": "user", "content": PROMPT_TASK_QUESTION_GENERATION}
+            )
+
+            if self.include_board:
+                if self.board_format == BoardFormat.GRID:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_GRID})
+                elif self.board_format == BoardFormat.TEXTUAL:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_TEXTUAL})
+                elif self.board_format == BoardFormat.VISUAL:
+                    # TODO: Requires a slightly different message format. Also, we should format the images to be 512px x 512px image for low-res mode with GPT-4V.
+                    raise NotImplementedError(
+                        "Visual board format not yet implemented."
+                    )
+                else:
+                    raise ValueError(f"Unknown board format: {self.board_format}")
 
         if self.n_example_trials > 0:
-            messages.append({"role": "user", "content": PROMPT_EXAMPLES})
+            if self.include_instructions:
+                messages.append({"role": "user", "content": PROMPT_EXAMPLES})
 
             for trial_id in self.example_trial_ids:
-                board = Board.from_trial_id(trial_id)
-                messages.append(
-                    {
-                        "role": "user",
-                        "name": "example_user",
-                        "content": f"\nBoard:\n{board.to_format(self.board_format)}\n",
-                    }
-                )
+                if self.include_board:
+                    board = Board.from_trial_id(trial_id)
+                    messages.append(
+                        {
+                            "role": "user",
+                            "name": "example_user",
+                            "content": f"\nBoard:\n{board.to_format(self.board_format)}\n",
+                        }
+                    )
                 for example in filter(
                     lambda x: x["trial_id"] == trial_id, self.examples
                 ):
@@ -209,18 +236,25 @@ class QuestionGenerationPrompt(BasePrompt):
                         {
                             "role": "assistant",
                             "name": "example_agent",
-                            "content": self.PREFIX_QUESTION + " " + example["question"],
+                            "content": self.optional_space(
+                                self.PREFIX_QUESTION, example["question"]
+                            ),
                         }
                     )
 
-        messages.append({"role": "user", "content": PROMPT_TARGET_BOARD})
-        board = Board.from_trial_id(self.target_trial_id)
-        messages.append(
-            {"role": "user", "content": f"{board.to_format(self.board_format)}\n"}
-        )
+        if self.include_instructions:
+            messages.append({"role": "user", "content": PROMPT_TARGET_BOARD})
+            board = Board.from_trial_id(self.target_trial_id)
+
+        if self.include_board:
+            messages.append(
+                {"role": "user", "content": f"{board.to_format(self.board_format)}\n"}
+            )
 
         # TODO: Verify that this is the correct way to end the message list for GPT
-        messages.append({"role": "assistant", "content": self.PREFIX_QUESTION})
+        messages.append(
+            {"role": "assistant", "content": self.optional_space(self.PREFIX_QUESTION)}
+        )
 
         return messages
 
@@ -250,34 +284,39 @@ class TranslationPrompt(BasePrompt):
     def to_chat_format(self):
         messages = []
 
-        messages.append({"role": "user", "content": PROMPT_GAME})
-        messages.append({"role": "user", "content": PROMPT_TASK_TRANSLATION})
+        # messages.append({"role": "user", "content": PROMPT_GAME})
+        # messages.append({"role": "user", "content": PROMPT_TASK_TRANSLATION})
 
         for example in self.examples:
             messages.append(
                 {
                     "role": "user",
                     "name": "example_user",
-                    "content": f"{self.PREFIX_QUESTION} {example['question']}",
+                    "content": self.optional_space(
+                        self.PREFIX_QUESTION, example["question"]
+                    ),
                 }
             )
             messages.append(
                 {
                     "role": "assistant",
                     "name": "example_agent",
-                    "content": f"{self.PREFIX_CODE} {example['code']}",
+                    "content": self.optional_space(self.PREFIX_CODE, example["code"]),
                 }
             )
 
-        messages.append(
-            {
-                "role": "user",
-                "content": f"{self.PREFIX_QUESTION}{' ' + self.target_question if self.target_question else ''}",
-            }
-        )
-
         if self.target_question:
             # TODO: Verify that this is the correct way to end the message list for GPT
-            messages.append({"role": "assistant", "content": f"{self.PREFIX_CODE}"})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": self.optional_space(
+                        self.PREFIX_QUESTION, self.target_question
+                    ),
+                }
+            )
+            messages.append(
+                {"role": "user", "content": self.optional_space(self.PREFIX_CODE)}
+            )
 
         return messages

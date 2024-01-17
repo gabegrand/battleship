@@ -125,14 +125,21 @@ class QuestionGenerationModel(Model):
         return completion
 
     async def _translate_question(self, completion: str, temp: float = 0.1):
+        completion = completion.strip()
+
         # Translate the question to code
+        translation_prompt_with_question = (
+            self.translation_prompt
+            + "\n"
+            + TranslationPrompt.optional_space(
+                TranslationPrompt.PREFIX_QUESTION, completion + "\n"
+            )
+            + TranslationPrompt.optional_space(TranslationPrompt.PREFIX_CODE)
+            # + TranslationPrompt.optional_space(TranslationPrompt.PREFIX_CODE, "(")
+        )
         ctx = LMContext(
             self.lm,
-            self.translation_prompt
-            + " "
-            + completion
-            + "\n"
-            + TranslationPrompt.PREFIX_CODE,
+            translation_prompt_with_question,
             temp=temp,
         )
         for _ in range(self.max_tokens):
@@ -143,6 +150,7 @@ class QuestionGenerationModel(Model):
                 break
         translation = str(ctx).split("\n")[0]
         translation = translation.strip()
+        # translation = "(" + translation
         return translation
 
     def is_final_token(
