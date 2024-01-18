@@ -135,7 +135,6 @@ class QuestionGenerationModel(Model):
                 TranslationPrompt.PREFIX_QUESTION, completion + "\n"
             )
             + TranslationPrompt.optional_space(TranslationPrompt.PREFIX_CODE)
-            # + TranslationPrompt.optional_space(TranslationPrompt.PREFIX_CODE, "(")
         )
         ctx = LMContext(
             self.lm,
@@ -150,7 +149,6 @@ class QuestionGenerationModel(Model):
                 break
         translation = str(ctx).split("\n")[0]
         translation = translation.strip()
-        # translation = "(" + translation
         return translation
 
     def is_final_token(

@@ -27,6 +27,8 @@ class BasePrompt(object):
     PREFIX_QUESTION = "User:"
     PREFIX_CODE = "Query:"
 
+    EXAMPLE_DELIMITER = "#" * 4
+
     def __init__(
         self,
         target_trial_id: int,
@@ -221,12 +223,16 @@ class QuestionGenerationPrompt(BasePrompt):
 
             for trial_id in self.example_trial_ids:
                 if self.include_board:
-                    board = Board.from_trial_id(trial_id)
+                    board_str = Board.from_trial_id(trial_id).to_format(
+                        self.board_format
+                    )
+                    if not board_str.endswith("\n"):
+                        board_str += "\n"
                     messages.append(
                         {
                             "role": "user",
                             "name": "example_user",
-                            "content": f"\nBoard:\n{board.to_format(self.board_format)}\n",
+                            "content": f"\n{self.EXAMPLE_DELIMITER}\n\n{board_str}",
                         }
                     )
                 for example in filter(
@@ -242,13 +248,17 @@ class QuestionGenerationPrompt(BasePrompt):
                         }
                     )
 
-        if self.include_instructions:
-            messages.append({"role": "user", "content": PROMPT_TARGET_BOARD})
-            board = Board.from_trial_id(self.target_trial_id)
-
         if self.include_board:
+            if self.include_instructions:
+                messages.append({"role": "user", "content": "\n" + PROMPT_TARGET_BOARD})
+
+            board_str = Board.from_trial_id(self.target_trial_id).to_format(
+                self.board_format
+            )
+            if not board_str.endswith("\n"):
+                board_str += "\n"
             messages.append(
-                {"role": "user", "content": f"{board.to_format(self.board_format)}\n"}
+                {"role": "user", "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}"}
             )
 
         # TODO: Verify that this is the correct way to end the message list for GPT
@@ -263,7 +273,9 @@ class QuestionGenerationPrompt(BasePrompt):
 Translation prompt for the Battleship task.
 """
 
-PROMPT_TASK_TRANSLATION = "Your task is to translate each question into code.\n"
+PROMPT_TASK_TRANSLATION = (
+    "Your task is to translate each of the user's questions into a query program.\n"
+)
 
 
 class TranslationPrompt(BasePrompt):
@@ -284,8 +296,9 @@ class TranslationPrompt(BasePrompt):
     def to_chat_format(self):
         messages = []
 
-        # messages.append({"role": "user", "content": PROMPT_GAME})
-        # messages.append({"role": "user", "content": PROMPT_TASK_TRANSLATION})
+        if self.include_instructions:
+            messages.append({"role": "user", "content": PROMPT_GAME})
+            messages.append({"role": "user", "content": PROMPT_TASK_TRANSLATION})
 
         for example in self.examples:
             messages.append(
