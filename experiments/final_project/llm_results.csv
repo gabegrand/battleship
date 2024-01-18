@@ -1,0 +1,545 @@
+mode,context,question,code,eig
+ascii,1,Is the blue battleship placed horizontally on the board?,(== (orient Blue) H),0.993542
+ascii,1,Is the blue battleship located at cell C2?,(isSubset (set C-2) (coloredTiles Blue)),0
+ascii,1,Is the red battleship located in any of the hidden cells?,(isSubset (set HiddenCells) (coloredTiles Red)),0
+ascii,1,Is the purple battleship located in row 1?,(== (rowL (topleft (coloredTiles Purple))) 1),0.758682
+ascii,1,Is the red battleship located in column F?,(isSubset (set F-* ) (coloredTiles Red)),0
+ascii,1,Is the cell C1 part of a battleship?,(not (== (color C-1) Water)),0.777775
+ascii,1,Is the red battleship located at C1?,(isSubset (set C-1) (coloredTiles Red)),0.390162
+ascii,1,Is the ship located at C4 part of the purple battleship?,(isSubset (set C-4) (coloredTiles Purple)),0.549831
+ascii,1,Is there a battleship in row 1 or column D?,(or (not (== (filter (lambda x0 (== (rowL x0) 1)) (set AllTiles)) (set))) (not (== (filter (lambda x0 (== (colL x0) D)) (set AllTiles)) (set)))),0
+ascii,1,Is the red battleship located at C1?,(isSubset (set C-1) (coloredTiles Red)),0.390162
+ascii,2,Is the purple battleship located at cell C3 oriented vertically?,(and (isSubset (set C-3) (coloredTiles Purple)) (== (orient Purple) V)),0.867056
+ascii,2,Is the purple battleship located at C3 horizontally positioned?,(and (isSubset (set C-3) (coloredTiles Purple)) (== (orient Purple) H)),0.867056
+ascii,2,Is the Purple battleship located at cell C2 or C4?,(isSubset (set C-2 C-4) (coloredTiles Purple)),0
+ascii,2,Is the purple battleship located at C3 oriented vertically on the grid?,(and (isSubset (set C-3) (coloredTiles Purple)) (== (orient Purple) V)),0.867056
+ascii,2,Is the cell B3 a part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0.98375
+ascii,2,Is the purple battleship located in cell C2?,(isSubset (set C-2) (coloredTiles Purple)),0
+ascii,2,Is the hidden cell at C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0
+ascii,2,Is the purple battleship located at C3 vertical?,(and (isSubset (set C-3) (coloredTiles Purple)) (== (orient Purple) V)),0.867056
+ascii,2,Is the purple battleship located at C3 and D3?,(isSubset (set C-3 D-3) (coloredTiles Purple)),0.997782
+ascii,2,Is the purple battleship located at C3 oriented horizontally?,(and (isSubset (set C-3) (coloredTiles Purple)) (== (orient Purple) H)),0.867056
+ascii,3,Is the blue battleship positioned vertically in the E5 and E6 cells?,(and (== (orient Blue) V) (isSubset (set E-5 E-6) (coloredTiles Blue))),0
+ascii,3,Is the red battleship located in row 1 or 2?,(isSubset (set 1-1 2-1) (coloredTiles Red)),0.23126
+ascii,3,Does the Blue battleship extend vertically down to F5 and F6?,(and (isSubset (set F-5) (coloredTiles Blue)) (isSubset (set F-6) (coloredTiles Blue))),0
+ascii,3,Is the purple battleship located in row 1 or 2?,(isSubset (set 1-2) (coloredTiles Purple)),0.499656
+ascii,3,Is the red battleship placed in a yet undiscovered location on the board?,(isSubset (set Discover) (coloredTiles Red)),0
+ascii,3,Is the purple battleship located on row 1 or 2?,(isSubset (set R-1 R-2) (rowAll (coloredTiles Purple))),0
+ascii,3,Is the blue battleship located vertically on the board?,(== (orient Blue) V),0
+ascii,3,Is the blue battleship vertically aligned on column E?,(== (orient Blue) V),0
+ascii,3,Is the purple battleship placed vertically or horizontally on the board?,(orient Purple),0.991299
+ascii,3,Is the blue battleship oriented vertically?,(== (orient Blue) V),0
+ascii,4,Is there a battleship at D3?,(not (== (color D-3) Water)),0
+ascii,4,Is the blue battleship located at D4 oriented vertically?,(and (isSubset (set D-4) (coloredTiles Blue)) (== (orient Blue) V)),0
+ascii,4,Is the blue battleship (B) placed vertically on the grid?,(== (orient Blue) V),0.910715
+ascii,4,Is the blue battleship located at D4 the only part of the blue battleship that has been hit so far?,(isSubset (set D-4) (coloredTiles Blue)),0
+ascii,4,Is the blue battleship located at D4?,(isSubset (set D-4) (coloredTiles Blue)),0
+ascii,4,Is the blue battleship (B) vertically or horizontally oriented?,(orient Blue),0.910715
+ascii,4,Is the blue battleship positioned vertically on the board?,(== (orient Blue) V),0.910715
+ascii,4,Is there a part of the blue battleship at D3?,(isSubset (set D-3) (coloredTiles Blue)),0
+ascii,4,Is there a battleship at position E2?,(not (== (color E-2) Water)),0.621725
+ascii,4,Is the blue battleship located at D4 the only part of the ship that has been hit?,(isSubset (set D-4) (coloredTiles Blue)),0
+ascii,5,Is the purple battleship oriented horizontally?,(== (orient Purple) H),0
+ascii,5,Is the Purple battleship at cell C1 a hit marking one end of that ship?,(isSubset (set C-1) (coloredTiles Purple)),0
+ascii,5,Is the red battleship placed vertically?,(== (orient Red) V),0.881504
+ascii,5,Is the purple battleship vertically or horizontally oriented?,(orient Purple),0
+ascii,5,Is the purple battleship at position C1 only one cell big?,(== (size (intersect (set C-1) (coloredTiles Purple))) 1),0
+ascii,5,Is the Purple battleship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0.957125
+ascii,5,Does the purple battleship extend horizontally from C1?,(and (== (orient Purple) H) (isSubset (set C-1) (coloredTiles Purple))),0
+ascii,5,Is the purple battleship located at C1?,(isSubset (set C-1) (coloredTiles Purple)),0
+ascii,5,Is the blue battleship vertically oriented?,(== (orient Blue) V),0
+ascii,5,"Is the blue battleship located vertically at D4, D5, and D6?",(isSubset (set D-4 D-5 D-6) (coloredTiles Blue)),0
+ascii,6,Is the Purple Battleship located at C1?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the hidden cell at C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the Purple battleship positioned horizontally at A1 and A2?,(and (== (orient Purple) H) (isSubset (set A-1 A-2) (coloredTiles Purple))),0
+ascii,6,Is the hidden cell at C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the hidden cell at C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the hidden cell at C1 a part of the Purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the purple battleship located at C1 and D1?,(isSubset (set C-1 D-1) (coloredTiles Purple)),0.904885
+ascii,6,Is the hidden cell in position C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the hidden cell at C1 part of the purple battleship?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,6,Is the purple battleship located at C1?,(isSubset (set C-1) (coloredTiles Purple)),0.931807
+ascii,7,Is the purple battleship placed vertically in column D?,(and (== (orient Purple) V) (subset (coloredTiles Purple) (set D-AllRows))),0
+ascii,7,Is the red battleship located vertically on the board?,(== (orient Red) V),0.766405
+ascii,7,Is the purple battleship at D4 oriented vertically?,(== (orient D-4) V),0
+ascii,7,Is the blue battleship located at F6?,(isSubset (set F-6) (coloredTiles Blue)),0.938722
+ascii,7,Is the blue battleship located in F6?,(isSubset (set F-6) (coloredTiles Blue)),0.938722
+ascii,7,Is the blue battleship located at F6?,(isSubset (set F-6) (coloredTiles Blue)),0.938722
+ascii,7,Is the red battleship located vertically on the board?,(== (orient Red) V),0.766405
+ascii,7,Is the Red battleship positioned vertically on the board?,(== (orient Red) V),0.766405
+ascii,7,Is the purple battleship located at D3?,(isSubset (set D-3) (coloredTiles Purple)),0
+ascii,7,Is the red battleship oriented vertically?,(== (orient Red) V),0.766405
+ascii,8,Is the blue battleship at position F6 oriented vertically?,(== (orient F-6) V),0
+ascii,8,Is the red battleship oriented vertically?,(== (orient Red) V),0.845351
+ascii,8,Is the red battleship vertically positioned?,(== (orient Red) V),0.845351
+ascii,8,"Is the purple battleship located vertically at cells E3, E4, and E5?",(and (== (orient Purple) V) (isSubset (set E-3 E-4 E-5) (coloredTiles Purple))),0
+ascii,8,Is the Purple battleship located vertically in columns E and F?,(and (== (orient Purple) V) (isSubset (set E F) (colL (coloredTiles Purple)))),0
+ascii,8,Is the purple battleship oriented vertically?,(== (orient Purple) V),0
+ascii,8,Is the purple battleship vertically aligned?,(== (orient Purple) V),0
+ascii,8,Is the Purple battleship oriented vertically?,(== (orient Purple) V),0
+ascii,8,Is the purple battleship located vertically on the board?,(== (orient Purple) V),0
+ascii,8,Is the blue battleship located vertically at F6?,(and (== (orient Blue) V) (isSubset (set F-6) (coloredTiles Blue))),0
+ascii,9,Is the Red battleship vertically aligned on the board?,(== (orient Red) V),0
+ascii,9,Is the hidden cell between the two red hits (D4) a part of the red battleship?,(isSubset (set D-4) (coloredTiles Red)),0.992267
+ascii,9,Is the red battleship oriented vertically?,(== (orient Red) V),0
+ascii,9,Is the red battleship oriented vertically on the board?,(== (orient Red) V),0
+ascii,9,Is the blue battleship located at cell E1?,(isSubset (set E-1) (coloredTiles Blue)),0
+ascii,9,Is there a battleship hidden at D1?,(isSubset (set D-1) (coloredTiles AllColors)),0
+ascii,9,Is the red battleship oriented horizontally?,(== (orient Red) H),0
+ascii,9,Is the blue battleship positioned vertically at E5?,(and (== (orient Blue) V) (isSubset (set E-5) (coloredTiles Blue))),0
+ascii,9,Is the red battleship oriented vertically?,(== (orient Red) V),0
+ascii,9,Is the red battleship placed horizontally in row 4?,(and (== (orient Red) H) (== (rowL (topleft (coloredTiles Red))) 4)),0
+ascii,10,Is the red battleship located in row 2 or row 4?,(or (isSubset (set 2) (rowL (coloredTiles Red))) (isSubset (set 4) (rowL (coloredTiles Red)))),0
+ascii,10,Is the blue battleship in row 2 or column F?,(or (isSubset (set (rowTiles 2)) (coloredTiles Blue)) (isSubset (set (colTiles F)) (coloredTiles Blue))),0
+ascii,10,Is the blue battleship located at cell B1?,(isSubset (set B-1) (coloredTiles Blue)),0.461129
+ascii,10,Is the blue battleship located at B1?,(isSubset (set B-1) (coloredTiles Blue)),0.461129
+ascii,10,Is the purple battleship located on row 1?,(isSubset (set 1-*-*) (coloredTiles Purple)),0
+ascii,10,Is there a battleship at position B1?,(not (== (color B-1) Water)),0.872059
+ascii,10,Is the blue battleship located at E3?,(isSubset (set E-3) (coloredTiles Blue)),0
+ascii,10,Is the blue battleship located in the cells C2 and C4?,(isSubset (set C-2 C-4) (coloredTiles Blue)),0
+ascii,10,Is the cell A2 a part of the battleship?,(isSubset (set A-2) (coloredTiles Battleship)),0
+ascii,10,"Based on the current pattern of the board, is the blue battleship placed at B2, C3, D4, and E5?",(isSubset (set B-2 C-3 D-4 E-5) (coloredTiles Blue)),0
+ascii,11,Is the blue battleship located vertically on the board?,(== (orient Blue) V),0
+ascii,11,Is the Blue battleship located horizontally on the board?,(== (orient Blue) H),0
+ascii,11,Is the blue battleship positioned horizontally on the board?,(== (orient Blue) H),0
+ascii,11,Is the blue battleship (B) located at C3 oriented vertically?,(and (isSubset (set C-3) (coloredTiles B)) (== (orient B) V)),0
+ascii,11,Is the blue battleship located at C3 only one cell in size?,(== (size (set C-3)) 1),0
+ascii,11,Is the cell at C3 part of the blue battleship?,(isSubset (set C-3) (coloredTiles Blue)),0
+ascii,11,Does the blue battleship extend vertically from C3?,(isSubset (set C-3) (coloredTiles Blue)),0
+ascii,11,Is the blue battleship located at C3 the last remaining unhit part of that ship?,(isSubset (set C-3) (coloredTiles Blue)),0
+ascii,11,Is the blue battleship located at C3 the only segment revealed so far?,(isSubset (set C-3) (coloredTiles Blue)),0
+ascii,11,Does the red battleship occupy any of the hidden cells?,(isSubset (set Hidden) (coloredTiles Red)),0
+ascii,12,Is the purple battleship placed vertically in columns D and E from rows 4 to 6?,(isSubset (set D-4 D-5 D-6 E-4 E-5 E-6) (coloredTiles Purple)),0
+ascii,12,Is the purple battleship located vertically on the board?,(== (orient Purple) V),0
+ascii,12,Is the purple battleship vertically oriented?,(== (orient Purple) V),0
+ascii,12,Is the purple battleship oriented vertically?,(== (orient Purple) V),0
+ascii,12,Is the purple battleship located vertically in column D?,(and (== (orient Purple) V) (isSubset (set D) (col (coloredTiles Purple)))),0
+ascii,12,Is the purple battleship vertically oriented?,(== (orient Purple) V),0
+ascii,12,Is the purple battleship located in the vertical direction from C4 to C6?,(isSubset (set C-4 C-5 C-6) (coloredTiles Purple)),0
+ascii,12,Is the purple battleship located vertically on the board?,(== (orient Purple) V),0
+ascii,12,Is the purple battleship located vertically on column B?,(and (== (orient Purple) V) (isSubset (set B) (col Purple))),0
+ascii,12,"Is the purple battleship located at cells D4, D5, and D6?",(isSubset (set D-4 D-5 D-6) (coloredTiles Purple)),0
+ascii,13,Is the red battleship located in cells D2 and E2?,(isSubset (set D-2 E-2) (coloredTiles Red)),0
+ascii,13,Is the Red battleship positioned vertically in columns D and E?,(and (== (orient Red) V) (subset? (coloredTiles Red) (concatenate (coloredTiles D) (coloredTiles E)))),0
+ascii,13,Is the red battleship vertically aligned starting from cell D2 and ending at cell D3?,(and (== (topleft (coloredTiles Red)) D-2) (== (bottomright (coloredTiles Red)) D-3)),0
+ascii,13,Is the cell D2 part of the red battleship?,(isSubset (set D-2) (coloredTiles Red)),0
+ascii,13,Is the red battleship vertically oriented?,(== (orient Red) V),0
+ascii,13,Is the Red ship vertically oriented seeing that cell D2 and D3 contains 'R'?,(isSubset (set D-2 D-3) (coloredTiles Red)),0
+ascii,13,Is the red battleship oriented vertically on the board?,(== (orient Red) V),0
+ascii,13,"Is the second ship I've hit, the red one, oriented vertically?",(== (orient Red) V),0
+ascii,13,Is the cell at coordinates D2 part of the Red Battleship?,(isSubset (set D-2) (coloredTiles Red)),0
+ascii,13,Is the red battleship (R) placed vertically on the board?,(== (orient Red) V),0
+ascii,14,Does the Red battleship occupy cell D2?,(isSubset (set D-2) (coloredTiles Red)),0.413817
+ascii,14,Is the red battleship located at C1?,(isSubset (set C-1) (coloredTiles Red)),0.183122
+ascii,14,Is the blue battleship in cell F6?,(isSubset (set F-6) (coloredTiles Blue)),0
+ascii,14,Is the purple battleship located at C3 and D3 in a horizontal position?,(and (isSubset (set C-3 D-3) (coloredTiles Purple)) (== (orient Purple) H)),0
+ascii,14,Is the blue battleship positioned vertically at F6?,(and (== (orient Blue) V) (isSubset (set F-6) (coloredTiles Blue))),0
+ascii,14,Is the purple battleship located at C3 and D3 completely sunk?,(isSubset (set C-3 D-3) (coloredTiles Purple)),0
+ascii,14,Is the blue battleship located at F6?,(isSubset (set F-6) (coloredTiles Blue)),0
+ascii,14,"Is the purple battleship, which we have two hits on in coordinates C3 and D3, placed horizontally?",(and (isSubset (set C-3 D-3) (coloredTiles Purple)) (== (orient Purple) H)),0
+ascii,14,Is the Blue battleship positioned vertically at F6?,(and (== (orient Blue) V) (isSubset (set F-6) (coloredTiles Blue))),0
+ascii,14,Is the blue battleship positioned vertically?,(== (orient Blue) V),0.927278
+ascii,15,Is the cell D2 part of the purple battleship?,(isSubset (set D-2) (coloredTiles Purple)),0
+ascii,15,Is the blue battleship oriented vertically?,(== (orient Blue) V),0
+ascii,15,Is the purple battleship oriented vertically on the board?,(== (orient Purple) V),0
+ascii,15,Is the Purple Battleship positioned vertically in cells B2 and C2?,(and (== (orient Purple) V) (isSubset (set B-2 C-2) (coloredTiles Purple))),0
+ascii,15,Is the purple battleship aligned vertically on cells C2 and C3?,(and (== (orient Purple) V) (isSubset (set C-2 C-3) (coloredTiles Purple))),0
+ascii,15,Is the purple battleship located at B2 and C2?,(isSubset (set B-2 C-2) (coloredTiles Purple)),0
+ascii,15,Is the Red Battleship positioned at D1?,(isSubset (set D-1) (coloredTiles Red)),0.398459
+ascii,15,Is the purple battleship placed vertically on cells C2 and C3?,(and (== (orient Purple) V) (isSubset (set C-2 C-3) (coloredTiles Purple))),0
+ascii,15,Is the blue battleship located at D4 and E5 oriented vertically?,(and (isSubset (set D-4 E-5) (coloredTiles Blue)) (== (orient Blue) V)),0
+ascii,15,Is the entire purple battleship revealed in cells C2 and C3?,(isSubset (set C-2 C-3) (coloredTiles Purple)),0
+ascii,16,Is the blue battleship positioned horizontally?,(== (orient Blue) H),0.811278
+ascii,16,Is the cell at D2 part of a battleship?,(not (== (color D-2) Water)),0
+ascii,16,Is the red battleship in cell D2 positioned vertically?,(== (orient Red) V),0.863121
+ascii,16,Is the Blue Battleship located at C2?,(isSubset (set C-2) (coloredTiles Blue)),0
+ascii,16,Is the purple battleship located at A2?,(isSubset (set A-2) (coloredTiles Purple)),0
+ascii,16,Is the blue battleship at cell D2?,(isSubset (set D-2) (coloredTiles Blue)),0
+ascii,16,Is there a battleship in cell D1?,(not (== (color D-1) Water)),0.985228
+ascii,16,Is there a probability that the purple battleship extends to A2 or A6?,(isSubset (set A-2 A-6) (coloredTiles Purple)),0
+ascii,16,Is the Red battleship located at D2?,(isSubset (set D-2) (coloredTiles Red)),0
+ascii,16,Is the blue battleship located at C2?,(isSubset (set C-2) (coloredTiles Blue)),0
+ascii,17,Is the rest of the red battleship located at D2 and D3?,(isSubset (set D-2 D-3) (coloredTiles Red)),0.721928
+ascii,17,Is the red battleship located at D1?,(isSubset (set D-1) (coloredTiles Red)),0
+ascii,17,Is the red battleship located vertically in row 1?,(and (== (orient Red) V) (== (rowL (topleft (coloredTiles Red))) 1)),0.970951
+ascii,17,"Is the entire red battleship uncovered, given that cells D1 and E1 have been hit?",(isSubset (set D-1 E-1) (coloredTiles Red)),0
+ascii,17,Does the red battleship extend to D1 or F1?,(or (isSubset (set D-1) (coloredTiles Red)) (isSubset (set F-1) (coloredTiles Red))),0
+ascii,17,Is the purple battleship located at D1?,(isSubset (set D-1) (coloredTiles Purple)),0
+ascii,17,Is the purple battleship only one cell big?,(== (size Purple) 1),0
+ascii,17,Is the remaining part of the Red battleship located at D1?,(isSubset (set D-1) (coloredTiles Red)),0
+ascii,17,Is the red battleship located at D1 and E1?,(isSubset (set D-1 E-1) (coloredTiles Red)),0
+ascii,17,Is the whole Red battleship revealed at cells D1 and E1?,(isSubset (set D-1 E-1) (coloredTiles Red)),0
+ascii,18,Is the red battleship located at cells E3 and F3?,(isSubset (set E-3 F-3) (coloredTiles Red)),0
+ascii,18,Is the entire red battleship revealed at coordinates E3 and F3?,(isSubset (set E-3 F-3) (coloredTiles Red)),0
+ascii,18,Is the entire purple battleship revealed at cell B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the purple battleship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the purple battleship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the purple battleship located at B2?,(isSubset (set B-2) (coloredTiles Purple)),0.954434
+ascii,18,Is the purple battleship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the purple battleship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the purple battleship located on B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+ascii,18,Is the Purple battleship located in cell B2?,(isSubset (set B-2) (coloredTiles Purple)),0.954434
+serial,1,Is it possible that a battleship is placed vertically between tiles 1-C and 3-C?,"(and (== (rowL (topleft (coloredTiles (color 1-C)))) 1)
+     (== (colL (topleft (coloredTiles (color 1-C)))) C)
+     (== (rowL (bottomright (coloredTiles (color 3-C)))) 3)
+     (== (colL (bottomright (coloredTiles (color 3-C)))) C)
+     (== (orient (color 1-C)) V))",0
+serial,1,Are there any battleships located in row D?,(any (map (lambda x0 (isSubset (set (concat D- (intToStr x0))) (coloredTiles x0))) (set AllColors))),0
+serial,1,Is there a possibility that a ship could be in the C row since it contains a water tile?,(not (isSubset (set C) (coloredTiles Water))),0
+serial,1,Is there potentially a battleship hidden in the first column?,(exists (lambda x0 (isSubset (coloredTiles x0) (selectedTiles 1st))) (set AllColors)),0
+serial,1,Are any of the battleships located in the first column?,(any (map (lambda x0 (isSubset (set (colA 1)) (coloredTiles x0))) (set AllColors))),0
+serial,1,Is there a battleship hidden in row A?,(not (== (color A) Water)),0
+serial,1,Is it possible that any of the battleships are placed in column 1?,(any (map (lambda x0 (isSubset (set 1) (col x0))) (set AllColors))),0
+serial,1,Is it a good strategy to target the hidden tiles in column 1 next?,"Your question does not comply with the given translation examples because it's not in an interpretable form according to the provided examples. The domain-specific language translation should be strictly based on the examples given above. Thus, I recommend asking questions compliant with the format illustrated in the examples above.",0
+serial,1,Is it beneficial to target the hidden tiles adjacent to the known water tiles first to reveal any potential battleships?,"This question is not translatable to the domain-specific language, as it requires a strategic decision or AI logic reasoning, and not a direct computation or lookup operation that can be performed in this language. The language does not seem to support such decision-making or prioritizing operations.",0
+serial,1,Is there a pattern to the placement of the water tiles?,(pattern (coloredTiles Water)),0
+serial,2,Is the Purple Ship occupying more than one tile on the 3rd row?,(> (setSize (intersection (row 3) (coloredTiles Purple))) 1),0
+serial,2,Should I aim for tile 3-D next to the purple ship tile at 3-C?,(isSubset (set 3-D) (adjacent (coloredTiles Purple))),0
+serial,2,Does the purple ship continue on either 3-B or 3-D?,(or (isSubset (set 3-B) (coloredTiles Purple)) (isSubset (set 3-D) (coloredTiles Purple))),0.867056
+serial,2,Is the purple ship tile at 3-C part of a larger ship?,(isSubset (set 3-C) (coloredTiles Purple)),0
+serial,2,Is 3-C part of a bigger Purple Ship that is hidden?,(isSubset (set 3-C) (coloredTiles Purple)),0
+serial,2,Is the Purple Ship oriented vertically on the game board?,(== (orient Purple) V),0.867056
+serial,2,Is the hidden tile at 2-D part of the purple ship?,(isSubset (set 2-D) (coloredTiles Purple)),0
+serial,2,Should I target the coordinates 3-D next considering it directly borders a purple ship tile?,(isSubset (set 3-D) (borderingTiles (coloredTiles Purple))),0
+serial,2,Does the Purple ship occupy more than one tile in the C column?,(> (setSize (intersection (coloredTiles Purple) (column C))) 1),0
+serial,2,Is the Purple Ship more likely located vertically on the board?,(== (orient Purple) V),0.867056
+serial,3,Does the blue ship span vertically along the 5-E and 6-E tiles?,(isSubset (set 5-E 6-E) (coloredTiles Blue)),0
+serial,3,Is the blue ship oriented vertically?,(== (orient Blue) V),0
+serial,3,Is the Blue Ship on tiles 5-E and 6-E vertical?,(and (isSubset (set 5-E 6-E) (coloredTiles Blue)) (== (orient Blue) V)),0
+serial,3,Is the Blue Ship oriented vertically?,(== (orient Blue) V),0
+serial,3,Is the Blue Ship located in row E two tiles long?,(== (size (filter (lambda x0 (== (rowL x0) E)) (coloredTiles Blue))) 2),0
+serial,3,Is the Blue Ship vertically aligned on the board?,(== (orient Blue) V),0
+serial,3,Is the blue ship only located in rows E and F?,(isSubset (coloredTiles Blue) (setUnion (set E) (set F))),0
+serial,3,Does the blue ship extend beyond 5-E and 6-E?,(isSubset (set 5-E 6-E) (coloredTiles Blue)),0
+serial,3,"Is the blue ship located at 5-E and 6-E complete, or are there any remaining hidden parts of this ship?",(isSubset (set 5-E 6-E) (coloredTiles Blue)),0
+serial,3,Is the blue ship oriented vertically?,(== (orient Blue) V),0
+serial,4,Is the blue ship at 4-B part of a larger ship extending into the currently hidden tiles?,(isSubset (set 4-B) (coloredTiles Blue)),0
+serial,4,Does the red ship only occupy the cell 4-C?,(isSubset (set 4-C) (coloredTiles Red)),0
+serial,4,Is 4-C the only revealed tile of the red ship?,(isSubset (set 4-C) (coloredTiles Red)),0
+serial,4,Is the blue ship located at 4-B part of a larger ship extending to the hidden tiles?,(isSubset (set 4-B) (coloredTiles Blue)),0
+serial,4,Is the blue ship tile at 4-B part of a vertically oriented ship?,(isSubset (set 4-B) (map (lambda x0 (if (== (orient x0) V) (coloredTiles x0) (set))) (set AllColors))),0
+serial,4,Is the blue ship tile at 4-B part of the same ship as the red ship tile at 4-C?,(isEqual (color 4-B) (color 4-C)),0
+serial,4,Is the red ship at least two tiles long?,(>= (size Red) 2),0
+serial,4,Is 4-C the last tile of the red ship?,(isSubset (set 4-C) (bottomright (coloredTiles Red))),0
+serial,4,Is the Blue Ship at 4-B part of a larger ship occupying more than one tile?,(isSubset (set 4-B) (coloredTiles Blue)),0
+serial,4,Is the Blue Ship only located at 4-B?,(isSubset (set 4-B) (coloredTiles Blue)),0
+serial,5,"Is the blue ship located in tiles 4-D, 5-D, and 6-D a single battleship?",(isSubset (set 4-D 5-D 6-D) (coloredTiles Blue)),0
+serial,5,Is the Purple Ship at 1-C only one tile large?,(== (size (intersect (set 1-C) (coloredTiles Purple))) 1),0
+serial,5,Is the Blue Ship vertically aligned on the grid?,(== (orient Blue) V),0
+serial,5,"Is the blue ship located at positions 4-D, 5-D, and 6-D?",(isSubset (set 4-D 5-D 6-D) (coloredTiles Blue)),0
+serial,5,Is the Purple Ship located vertically on the board?,(== (orient Purple) V),0
+serial,5,"Is the blue ship located vertically in columns 4, 5, and 6?",(and (== (orient Blue) V) (isSubset (set 4 5 6) (map colL (coloredTiles Blue)))),0
+serial,5,Does the blue ship span vertically from 4-D to 6-D?,(== (coloredTiles Blue) (set 4-D 5-D 6-D)),0
+serial,5,Is the blue ship in a vertical orientation?,(== (orient Blue) V),0
+serial,5,Does the Purple Ship extend to cell 1-B or 1-D?,(or (isSubset (set 1-B) (coloredTiles Purple)) (isSubset (set 1-D) (coloredTiles Purple))),0
+serial,5,"Is the blue ship located at 4-D, 5-D, and 6-D the same ship?",(isSubset (set 4-D 5-D 6-D) (coloredTiles Blue)),0
+serial,6,Is the Purple Ship located vertically on the grid?,(== (orient Purple) V),0
+serial,6,Does the purple ship continue onto tile 1-C?,(isSubset (set 1-C) (coloredTiles Purple)),0.931807
+serial,6,Is the purple ship in 1-C or 1-D?,(isSubset (set 1-C 1-D) (coloredTiles Purple)),0.904885
+serial,6,Is the purple ship in a vertical orientation?,(== (orient Purple) V),0
+serial,6,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+serial,6,Is the Purple Ship located in 1-C?,(isSubset (set 1-C) (coloredTiles Purple)),0.931807
+serial,6,Is the Purple Ship continuing vertically on tile 1-C?,(== (orient Purple) V),0
+serial,6,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+serial,6,Is 1-C a part of the purple ship?,(isSubset (set 1-C) (coloredTiles Purple)),0.931807
+serial,6,Is the purple ship only two tiles long?,(== (size Purple) 2),0.931807
+serial,7,Is the red ship longer than one tile?,(> (size Red) 1),0
+serial,7,Is the red ship in 2-D part of a horizontal layout?,(isSubset (set 2-D) (coloredTiles Red) (orient Red) H),0
+serial,7,Is the red ship located vertically in column 2?,(and (== (orient Red) V) (isSubset (coloredTiles Red) (col 2))),0
+serial,7,Is the 2-D red ship tile part of a vertical battleship?,(isSubset (set 2-D) (coloredTiles Red)),0
+serial,7,Is the Red Ship located vertically on the board?,(== (orient Red) V),0.766405
+serial,7,Is 2-E a part of the Red Ship that is present at 2-D?,(and (isSubset (set 2-E) (coloredTiles Red)) (isSubset (set 2-D) (coloredTiles Red))),0.99999
+serial,7,Is the hidden tile at 4-D a part of the Purple Ship?,(isSubset (set 4-D) (coloredTiles Purple)),0.997821
+serial,7,Is the red ship in cell 2-D part of a horizontal ship?,(isSubset (set 2-D) (coloredTiles Red)),0
+serial,7,Is the red ship positioned vertically?,(== (orient Red) V),0.766405
+serial,7,Does the Red Ship extend to tile 2-E?,(isSubset (set 2-E) (coloredTiles Red)),0.99999
+serial,8,Is the purple ship in a vertical line on the board?,(== (orient Purple) V),0
+serial,8,Is the red ship at 4-A part of a ship that extends either vertically or horizontally?,(isSubset (set 4-A) (coloredTiles Red)),0
+serial,8,Is the blue ship in 6-E part of a larger ship that spans multiple tiles?,(isSubset (set 6-E) (coloredTiles Blue)),0
+serial,8,Is there a chance that the purple ship extends to tile 3-D?,(isSubset (set 3-D) (coloredTiles Purple)),0
+serial,8,Is the red ship in 4-A part of a larger ship that extends to the hidden tiles next to it?,(isSubset (set 4-A) (coloredTiles Red)),0
+serial,8,Is the red ship only located at cell 4-A?,(isSubset (set 4-A) (coloredTiles Red)),0
+serial,8,Is the purple ship spanning vertically on the right-most side?,(and (== (orient Purple) V) (== (colL (bottomright (coloredTiles Purple))) (colL (bottomright (set AllTiles))))),0
+serial,8,Is the purple ship located in a vertical position?,(== (orient Purple) V),0
+serial,8,Is the purple ship located vertically on the board?,(== (orient Purple) V),0
+serial,8,Is the blue ship at 6-E a single-tile ship?,(== (size Blue) 1),0
+serial,9,Is the red battleship in row 4 only two tiles long?,(== (size (filter (lambda x0 (== (rowL x0) 4)) (coloredTiles Red))) 2),0
+serial,9,Is the red ship on the board horizontally oriented?,(== (orient Red) H),0
+serial,9,Is the red ship at least three tiles long?,(>= (size Red) 3),0
+serial,9,Does the red ship extend to 4-D?,(isSubset (set 4-D) (coloredTiles Red)),0.992267
+serial,9,Is the red ship positioned vertically on the board?,(== (orient Red) V),0
+serial,9,Is the Red Ship vertically placed in columns B and C on the 4th row?,(and (== (orient Red) V) (isSubset (set 4-B 4-C) (coloredTiles Red))),0
+serial,9,Is the tile at 4-E a part of the Red Ship?,(isSubset (set 4-E) (coloredTiles Red)),0.479832
+serial,9,Is the red ship extending vertically from B4 to C4?,(isSubset (set B-4 C-4) (coloredTiles Red)),0
+serial,9,Is the red ship only composed of the tiles 4-B and 4-C?,(isSubset (set 4-B 4-C) (coloredTiles Red)),0
+serial,9,Is the Red Ship in column 4 positioned vertically?,(== (orient Red) V),0
+serial,10,Is 1-B a part of a battleship?,(not (== (color 1-B) Water)),0.872059
+serial,10,Is 2-A a ship tile?,(not (== (color 2-A) Water)),0.857886
+serial,10,Is 1-B a part of a battleship?,(not (== (color 1-B) Water)),0.872059
+serial,10,Is there a battleship at position 1-B?,(not (== (color 1-B) Water)),0.872059
+serial,10,Is there a battleship underneath any of the hidden tiles in the 1st column?,(any (map (lambda x0 (not (== (color x0) Water))) (col L-1))),0
+serial,10,Is a battleship located at 1-B?,(not (== (color 1-B) Water)),0.872059
+serial,10,Is there a battleship in the first column?,(any (map (lambda x0 (== (colL x0) 1)) (set AllColors))),0
+serial,10,Is there a ship in row B?,(any (map (lambda x0 (== (rowL x0) B)) (coloredTiles (set AllColors)))),0
+serial,10,Is there a battleship starting at coordinate 1-B?,(isSubset (set 1-B) (topleft (set AllColors))),0
+serial,10,Is the tile at 1-B a part of a battleship?,(not (== (color 1-B) Water)),0.872059
+serial,11,Is the blue ship located at 3-B part of a larger ship occupying hidden tiles?,(isSubset (set 3-B) (coloredTiles Blue)),0
+serial,11,Is the Blue Ship only occupying 3-B or does it occupy another adjacent hidden tile?,(and (isSubset (set 3-B) (coloredTiles Blue)) (neighborE (set 3-B) (coloredTiles Blue))),0
+serial,11,Is the blue ship located at 3-B vertically positioned?,(and (isSubset (set 3-B) (coloredTiles Blue)) (== (orient Blue) V)),0
+serial,11,Is the Blue Ship at 3-B longer than one tile?,(> (size Blue) 1),0
+serial,11,"Is the Blue Ship only on tile 3-B, or are there other hidden tiles that are part of the Blue Ship?",(== (coloredTiles Blue) (set 3-B)),0
+serial,11,Is the 3-B blue ship tile part of a larger ship or is it a single-tile ship?,(== (size Blue) 1),0
+serial,11,Is the blue ship located at 3-B a part of a larger ship or is it just a single tile ship?,(== (size Blue) 1),0
+serial,11,Is the blue ship at 3-B a part of a larger ship or is it a single-tile ship?,(== (size Blue) 1),0
+serial,11,Is the Blue Ship located at 3-B part of a larger ship extending into any hidden tiles?,(isSubset (set 3-B) (coloredTiles Blue)),0
+serial,11,Is the 3-B blue ship tile part of a larger battleship that extends into either of the hidden tiles to its immediate left or right (3-A or 3-C)?,(isSubset (set 3-B) (coloredTiles (adjacent (set 3-A 3-C)))),0
+serial,12,Is the purple ship only vertically oriented?,(== (orient Purple) V),0
+serial,12,"Is the purple ship located at 4-B, 5-B, and 6-B only two tiles long?",(== (size (intersect (set 4-B 5-B 6-B) (coloredTiles Purple))) 2),0
+serial,12,Is the purple ship oriented vertically on the board?,(== (orient Purple) V),0
+serial,12,"Would it be strategic to investigate tile 4-C next, as it's surrounded by purple ship tiles and a water tile?",(isSubset (set 4-C) (union (coloredTiles Purple) (coloredTiles Water))),0
+serial,12,Is the purple ship vertical?,(== (orient Purple) V),0
+serial,12,Is the purple ship three tiles long?,(== (size Purple) 3),0
+serial,12,"Is the purple ship located at cells 4-B, 5-B, and 6-B a three-tile long ship?",(isSubset (set 4-B 5-B 6-B) (coloredTiles Purple)),0
+serial,12,"Is the Purple Ship located at 4-B, 5-B, and 6-B a horizontal or vertical ship?",(isSubset (set 4-B 5-B 6-B) (coloredTiles Purple)),0
+serial,12,Is the Purple Ship three cells long?,(== (size Purple) 3),0
+serial,12,"Is the purple ship located at tiles 4-B, 5-B, and 6-B three tiles long?",(isSubset (set 4-B 5-B 6-B) (coloredTiles Purple)),0
+serial,13,Is there a possibility that the red ship extends to either 2-F or 3-D?,(or (isSubset (set 2-F) (coloredTiles Red)) (isSubset (set 3-D) (coloredTiles Red))),0
+serial,13,Is the blue ship on 4-A a part of a larger ship extending vertically or horizontally?,(isSubset (set 4-A) (coloredTiles Blue)),0
+serial,13,Is 2-F a part of the red ship?,(isSubset (set 2-F) (coloredTiles Red)),0
+serial,13,Is 4-B a part of the blue ship?,(isSubset (set 4-B) (coloredTiles Blue)),0.744303
+serial,13,Is the Blue Ship located at 4-A part of a larger ship extending to the hidden tile at 4-B?,(isSubset (set 4-A 4-B) (coloredTiles Blue)),0.744303
+serial,13,"Is the red ship located vertically, covering tiles 2-E and 3-E?",(and (== (orient Red) V) (isSubset (set 2-E 3-E) (coloredTiles Red))),0
+serial,13,Is the red ship located vertically on the board?,(== (orient Red) V),0
+serial,13,Is the blue ship in 4-A part of a larger ship spanning multiple cells?,(isSubset (set 4-A) (coloredTiles Blue)),0
+serial,13,Is the blue ship located only in cell 4-A?,(isSubset (set 4-A) (coloredTiles Blue)),0
+serial,13,Is the blue ship located entirely in column 4?,(isSubset (coloredTiles Blue) (column 4)),0
+serial,14,Is the purple ship at 3-C and 3-D only two tiles long?,(== (size (intersection (set 3-C 3-D) (coloredTiles Purple))) 2),0
+serial,14,Is the purple ship only made up of the tiles 3-C and 3-D?,(isSubset (set 3-C 3-D) (coloredTiles Purple)),0
+serial,14,Is the rest of the purple ship in the third row hidden in cells either 3-B or 3-F?,(isSubset (set 3-B 3-F) (coloredTiles Purple)),0
+serial,14,Does the purple ship extend to tile 3-B or 3-F?,(or (isSubset (set 3-B) (coloredTiles Purple)) (isSubset (set 3-F) (coloredTiles Purple))),0
+serial,14,"Is the purple ship fully revealed in the 3-C and 3-D tiles, or should I expect more tiles of the purple ship in the hidden tiles?",(isSubset (set 3-C 3-D) (coloredTiles Purple)),0
+serial,14,Is the purple ship only two tiles long?,(== (size Purple) 2),0
+serial,14,Is the Purple Ship only two tiles in size?,(== (size Purple) 2),0
+serial,14,Is the Purple Ship at 3-C and 3-D completely revealed?,(isSubset (set 3-C 3-D) (coloredTiles Purple)),0
+serial,14,Is the purple ship only composed of the tiles at 3-C and 3-D?,(isSubset (set 3-C 3-D) (coloredTiles Purple)),0
+serial,14,Does the purple ship extend to 3-B or 3-F?,(isSubset (set 3-B 3-F) (coloredTiles Purple)),0
+serial,15,Is the Purple Ship vertically arranged in columns 2 and 3?,(and (== (orient Purple) V) (isSubset (coloredTiles Purple) (coloredTiles 2)) (isSubset (coloredTiles Purple) (coloredTiles 3))),0
+serial,15,Is the purple ship located in tiles 2-C and 3-C?,(isSubset (set 2-C 3-C) (coloredTiles Purple)),0
+serial,15,"Based on the visible purple ship tiles, is the purple ship lined vertically?",(== (orient Purple) V),0
+serial,15,Is the blue ship located vertically on the board?,(== (orient Blue) V),0
+serial,15,Is the purple ship located vertically on the board?,(== (orient Purple) V),0
+serial,15,Is the Purple Ship only located in the cells 2-C and 3-C?,(isSubset (set 2-C 3-C) (coloredTiles Purple)),0
+serial,15,Is the purple ship located vertically given that there are purple ship tiles at 2-C and 3-C?,(and (== (orient Purple) V) (isSubset (set 2-C 3-C) (coloredTiles Purple))),0
+serial,15,Is 2-D a part of the purple ship?,(isSubset (set 2-D) (coloredTiles Purple)),0
+serial,15,Is the purple ship located vertically starting from cell 2-C?,(and (== (orient Purple) V) (isSubset (set 2-C) (coloredTiles Purple))),0
+serial,15,Is the purple ship possibly located on tiles 2-B and 3-B?,(isSubset (set 2-B 3-B) (coloredTiles Purple)),0
+serial,16,Is the purple ship on tile 1-B part of a larger ship that might extend to any hidden tiles?,(isSubset (set 1-B) (coloredTiles Purple)),0
+serial,16,Is 1-B the only coordinate revealed as a part of the Purple ship?,(isSubset (set 1-B) (coloredTiles Purple)),0
+serial,16,Is 2-D part of the Blue Ship?,(isSubset (set 2-D) (coloredTiles Blue)),0
+serial,16,"Is the purple ship, starting at 1-B, arranged vertically?",(and (isSubset (set 1-B) (coloredTiles Purple)) (== (orient Purple) V)),0.985228
+serial,16,Is the purple ship in 1-B part of a larger ship extending into any surrounding hidden tiles?,(isSubset (set 1-B) (coloredTiles Purple)),0
+serial,16,Is the purple ship located at 1-B part of a larger ship extending to other cells?,(isSubset (set 1-B) (coloredTiles Purple)),0
+serial,16,Is the red ship at 2-D part of a vertically or horizontally arranged ship?,(orient Red),0.863121
+serial,16,Is the red ship located at 2-D part of a larger ship spanning multiple tiles?,(isSubset (set 2-D) (coloredTiles Red)),0
+serial,16,Is the tile at 1-B part of the same ship whose tile is at 2-D?,(== (color 1-B) (color 2-D)),0
+serial,16,Is the purple ship at 1-B part of a larger hidden ship?,(isSubset (set 1-B) (coloredTiles Purple)),0
+serial,17,Is the red ship in cell 1-D part of a larger battleship that is oriented vertically on the board?,(and (isSubset (set 1-D) (coloredTiles Red)) (== (orient Red) V)),0.970951
+serial,17,Is the red ship tile at 1-D part of a vertical ship?,(== (orient Red) V),0.970951
+serial,17,Is the red ship positioned vertically?,(== (orient Red) V),0.970951
+serial,17,Is the red ship vertically oriented?,(== (orient Red) V),0.970951
+serial,17,Could the red ship extend to 1-C?,(isSubset (set 1-C) (coloredTiles Red)),0.970951
+serial,17,Is the red ship located vertically on the board?,(== (orient Red) V),0.970951
+serial,17,Is the blue ship that is partially revealed at 6-D and 6-E a two-tile ship?,(== (size Blue) 2),0.811278
+serial,17,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.918296
+serial,17,"Is the red ship vertical and placed in the cells 1-C, 1-D and 1-E?",(and (== (orient Red) V) (isSubset (set 1-C 1-D 1-E) (coloredTiles Red))),0
+serial,17,Is the hidden tile at 1-C part of the red ship?,(isSubset (set 1-C) (coloredTiles Red)),0.970951
+serial,18,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.954434
+serial,18,Is the hidden tile at 2-B part of the purple ship?,(isSubset (set 2-B) (coloredTiles Purple)),0.954434
+serial,18,Is the hidden tile at 2-B part of the purple ship?,(isSubset (set 2-B) (coloredTiles Purple)),0.954434
+serial,18,Is the purple ship at 2-A part of a larger ship positioned vertically?,(isSubset (set 2-A) (coloredTiles Purple)),0
+serial,18,Is the purple ship tile at 2-A part of a ship that extends vertically?,(== (orient Purple) V),0.954434
+serial,18,Is the purple ship vertically placed starting from 2-A?,(and (== (orient Purple) V) (isSubset (set 2-A) (coloredTiles Purple))),0.954434
+serial,18,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.954434
+serial,18,Is the hidden tile at 2-B part of a larger ship?,(isSubset (set 2-B) (coloredTiles (color 2-B))),0
+serial,18,Is the purple ship on 2-A part of a larger ship?,(isSubset (set 2-A) (coloredTiles Purple)),0
+serial,18,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.954434
+vision,1,Is the ship located at B2 vertically aligned?,(== (orient (color B-2)) V),0
+vision,1,Is the ship located at C2 horizontal?,(== (orient (color C-2)) H),0
+vision,1,Is the ship segment located on B3 part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0.556857
+vision,1,Is the ship segment in cell B3 part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0.556857
+vision,1,Is the ship that occupies cell B3 oriented vertically?,(== (orient (color B-3)) V),0
+vision,1,Is there a battleship segment in grid space D3?,(not (== (color D-3) Water)),0
+vision,1,Is the ship located at B3 oriented vertically?,(== (orient (color B-3)) V),0
+vision,1,Is cell D3 a part of a battleship?,(not (== (color D-3) Water)),0
+vision,1,Is the ship hit at B3 oriented vertically?,(== (orient (color B-3)) V),0
+vision,1,Is cell C3 a part of the battleship?,(isSubset (set C-3) (coloredTiles Battleship)),0
+vision,2,Is the purple ship located horizontally adjacent to the hit on D3?,(adjacent (orient Purple) H (set D-3)),0
+vision,2,Is the ship hit at C3 oriented vertically?,(== (orient (color C-3)) V),0.867056
+vision,2,Is the ship that the purple tile at C3 belongs to oriented vertically?,(== (orient (color C-3)) V),0.867056
+vision,2,Is the ship that occupies cell C3 oriented vertically?,(== (orient (color C-3)) V),0.867056
+vision,2,Is the purple ship oriented vertically?,(== (orient Purple) V),0.867056
+vision,2,Is the ship hit at C3 oriented vertically?,(== (orient (color C-3)) V),0.867056
+vision,2,Is the ship hit at C3 oriented vertically?,(== (orient (color C-3)) V),0.867056
+vision,2,Is the segment of the purple battleship vertical?,(== (orient Purple) V),0.867056
+vision,2,Is the tile at C4 part of the purple battleship?,(isSubset (set C-4) (coloredTiles Purple)),0.867056
+vision,2,Is cell B3 a part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0.98375
+vision,3,Is there a part of the blue battleship in cell E4?,(isSubset (set E-4) (coloredTiles Blue)),0
+vision,3,Is the ship located at D6 and E6 a blue ship?,(isSubset (set D-6 E-6) (coloredTiles Blue)),0
+vision,3,Is there a part of the blue battleship on tile C5?,(isSubset (set C-5) (coloredTiles Blue)),0
+vision,3,Is there a part of the blue battleship on B5?,(isSubset (set B-5) (coloredTiles Blue)),0
+vision,3,Is there a part of the blue battleship in cell D5?,(isSubset (set D-5) (coloredTiles Blue)),0
+vision,3,Is there a ship located at D5?,(not (== (color D-5) Water)),0.477386
+vision,3,Is there a part of the blue battleship in cell E5?,(isSubset (set E-5) (coloredTiles Blue)),0
+vision,3,Is there a battleship on tile E5?,(not (== (color E-5) Water)),0
+vision,3,Is the ship segment in cell E5 part of the blue battleship?,(isSubset (set E-5) (coloredTiles Blue)),0
+vision,3,Is E5 a part of a battleship?,(not (== (color E-5) Water)),0
+vision,4,Is the blue ship oriented horizontally?,(== (orient Blue) H),0.910715
+vision,4,Is the ship located at C4 a purple ship?,(== (color C-4) Purple),0
+vision,4,Is the ship hit at B4 positioned vertically?,(== (orient (color B-4)) V),0.910715
+vision,4,Is cell C4 a part of the blue battleship?,(isSubset (set C-4) (coloredTiles Blue)),0
+vision,4,Is the ship located at C4 a blue battleship?,(== (color C-4) Blue),0
+vision,4,Is the blue battleship oriented horizontally?,(== (orient Blue) H),0.910715
+vision,4,Is the ship located at D4 a blue ship?,(== (color D-4) Blue),0
+vision,4,Is the ship located at B4 a purple battleship?,(isSubset (set B-4) (coloredTiles Purple)),0
+vision,4,Is the ship hit at C4 positioned vertically?,(== (orient (color C-4)) V),0
+vision,4,Is the ship located at B4 a battleship that extends vertically?,(== (orient (color B-4)) V),0.910715
+vision,5,Is the purple ship placed horizontally?,(== (orient Purple) H),0
+vision,5,Is the purple ship located at A1 vertical?,(and (isSubset (set A-1) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,5,Is the ship located at B1 vertical?,(== (orient (color B-1)) V),0
+vision,5,Is the purple ship located horizontally on row 1?,(and (== (orient Purple) H) (== (rowL (topleft (coloredTiles Purple))) 1)),0
+vision,5,Is the ship located at B2 oriented horizontally?,(== (orient (color B-2)) H),0
+vision,5,Is the ship located at B1 horizontal?,(== (orient (color B-1)) H),0
+vision,5,Is the ship located at C3 vertical?,(== (orient (color C-3)) V),0
+vision,5,Is the purple ship located horizontally on the board?,(== (orient Purple) H),0
+vision,5,Is the ship located at B1 vertical?,(== (orient (color B-1)) V),0
+vision,5,Is the ship located at B1 vertical?,(== (orient (color B-1)) V),0
+vision,6,Is the tile at B1 part of the purple battleship?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the ship located at B1 vertical?,(== (orient (color B-1)) V),0
+vision,6,Is the purple ship positioned vertically starting from B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the purple ship located at B1 vertical?,(and (isSubset (set B-1) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,6,Is there a part of the purple battleship on B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the purple ship located vertically on B1 and B2?,(and (== (orient Purple) V) (isSubset (set B-1 B-2) (coloredTiles Purple))),0
+vision,6,Is the part of the ship located on B1 part of the purple battleship,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the next segment of the purple ship located at B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the hidden tile at B1 part of the purple battleship?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,6,Is the purple ship located at B1 vertical?,(and (isSubset (set B-1) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,7,Is cell D2 part of a battleship?,(not (== (color D-2) Water)),0
+vision,7,Is the blue battleship located at E6?,(isSubset (set E-6) (coloredTiles Blue)),0
+vision,7,Is there a part of the red battleship at B3?,(isSubset (set B-3) (coloredTiles Red)),0
+vision,7,Is the ship segment located at E2 part of the red battleship?,(isSubset (set E-2) (coloredTiles Red)),0.99999
+vision,7,Is the segment of the red ship located at B2 vertical?,(== (orient (ship B-2 Red)) V),0
+vision,7,Is the hidden cell at B2 part of the red battleship?,(isSubset (set B-2) (coloredTiles Red)),0.848164
+vision,7,Is the red ship positioned horizontally?,(== (orient Red) H),0.766405
+vision,7,Is the ship located at C2 oriented horizontally?,(== (orient (color C-2)) H),0
+vision,7,Is there a part of a ship located at D3?,(not (== (color D-3) Water)),0.766405
+vision,7,Is the adjacent cell to the red tile at B2 in the direction of B,(adjacent B-2 (dir B) Red),0
+vision,8,Is the ship located at D4 horizontal?,(== (orient (color D-4)) H),0
+vision,8,Is the purple battleship oriented vertically?,(== (orient Purple) V),0
+vision,8,Is the red battleship oriented vertically?,(== (orient Red) V),0.845351
+vision,8,Is the ship located at D4 oriented vertically?,(== (orient (color D-4)) V),0
+vision,8,Is the red ship oriented vertically?,(== (orient Red) V),0.845351
+vision,8,Is the ship located at D4 oriented horizontally?,(== (orient (color D-4)) H),0
+vision,8,Is the ship located at C3 a purple ship?,(== (color C-3) Purple),0
+vision,8,Is the ship located at D4 oriented vertically?,(== (orient (color D-4)) V),0
+vision,8,Is the purple battleship located vertically at column F?,(and (== (orient Purple) V) (isSubset (set (map (lambda x0 (concat F - (str x0))) (range 0 (size Purple)))) (coloredTiles Purple))),0
+vision,8,Is the purple battleship oriented vertically?,(== (orient Purple) V),0
+vision,9,Is the ship segment on B4 part of the red ship?,(isSubset (set B-4) (coloredTiles Red)),0
+vision,9,Is cell D4 a part of the red ship?,(isSubset (set D-4) (coloredTiles Red)),0.992267
+vision,9,Is the ship located at D4 oriented vertically?,(== (orient (color D-4)) V),0
+vision,9,Is the tile at E4 a part of the red battleship?,(isSubset (set E-4) (coloredTiles Red)),0.479832
+vision,9,Is the hidden tile at C4 part of the red ship?,(isSubset (set C-4) (coloredTiles Red)),0
+vision,9,Is the ship segment located at D5 part of the blue battleship?,(isSubset (set D-5) (coloredTiles Blue)),0.6084
+vision,9,Is the purple ship positioned vertically on the board?,(== (orient Purple) V),0
+vision,9,Is the blue battleship oriented horizontally?,(== (orient Blue) H),0.992267
+vision,9,Is the ship in cell D4 oriented vertically?,(== (orient (color D-4)) V),0
+vision,9,Is the ship that occupies cell E4 oriented horizontally?,(== (orient (color E-4)) H),0
+vision,10,Is the ship located at B3 oriented horizontally?,(== (orient (color B-3)) H),0
+vision,10,Is there a battleship on tile D3?,(not (== (color D-3) Water)),0
+vision,10,Is the ship that occupies B3 oriented vertically?,(== (orient (color B-3)) V),0
+vision,10,Is the ship located at D3 a purple ship?,(== (color D-3) Purple),0
+vision,10,Is the ship located at D3 aligned horizontally?,(== (orient (color D-3)) H),0
+vision,10,Is the ship located at E2 part of the purple battleship?,(isSubset (set E-2) (coloredTiles Purple)),0.421676
+vision,10,Is cell D3 a battleship tile?,(not (== (color D-3) Water)),0
+vision,10,Is there a part of a ship located at B3?,(not (== (color B-3) Water)),0.535636
+vision,10,Is the ship located at D3 oriented horizontally?,(== (orient (color D-3)) H),0
+vision,10,Is cell E4 a part of a battleship?,(not (== (color E-4) Water)),0
+vision,11,Is the ship located at C3 oriented vertically?,(== (orient (color C-3)) V),0
+vision,11,Is the ship located at C3 a battleship that is oriented horizontally?,(and (== (orient (color C-3)) H) (battleship (color C-3))),0
+vision,11,Is the blue ship located vertically starting at C3?,(and (== (orient Blue) V) (== (topleft (coloredTiles Blue)) C-3)),0
+vision,11,Is there a ship segment in cell B3?,(not (== (color B-3) Water)),0
+vision,11,Is the blue ship located horizontally adjacent to the hit on D3?,(adjacent D-3 (coloredTiles Blue) H),0
+vision,11,Is the ship located at C3 oriented vertically?,(== (orient (color C-3)) V),0
+vision,11,Is the ship located at B3 oriented vertically?,(== (orient (color B-3)) V),0
+vision,11,Is B4 a part of the blue battleship?,(isSubset (set B-4) (coloredTiles Blue)),0
+vision,11,Is the blue ship located vertically adjacent to the hit at C3?,(adjacent C-3 (coloredTiles Blue) V),0
+vision,11,Is the blue ship oriented horizontally?,(== (orient Blue) H),0
+vision,12,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,12,Is the purple ship located vertically starting at B4 and ending at B5?,(and (== (orient Purple) V) (isSubset (set B-4 B-5) (coloredTiles Purple))),0
+vision,12,Is the ship located at B4 part of the purple battleship?,(isSubset (set B-4) (coloredTiles Purple)),0
+vision,12,Is cell B4 a part of the purple ship?,(isSubset (set B-4) (coloredTiles Purple)),0
+vision,12,Is the segment of the purple battleship located at B5 vertical?,(== (orient (color B-5)) V),0
+vision,12,Is the segment of the purple battleship located on D4 horizontal?,(== (orient D-4) H),0
+vision,12,Is the purple ship located vertically starting at B4?,(and (== (orient Purple) V) (isSubset (set B-4) (topleft (coloredTiles Purple)))),0
+vision,12,Is the ship located at C4 part of the purple battleship?,(isSubset (set C-4) (coloredTiles Purple)),0
+vision,12,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,12,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,13,Is the ship hit at D3 oriented vertically?,(== (orient (color D-3)) V),0
+vision,13,Is the blue ship positioned horizontally?,(== (orient Blue) H),0.744303
+vision,13,Is the red ship oriented vertically?,(== (orient Red) V),0
+vision,13,Is the ship that occupies cell D3 placed vertically?,(== (orient (color D-3)) V),0
+vision,13,Is cell D3 a part of the red ship?,(isSubset (set D-3) (coloredTiles Red)),0
+vision,13,Is the red ship positioned vertically?,(== (orient Red) V),0
+vision,13,Is the ship hit at D3 oriented vertically?,(== (orient (color D-3)) V),0
+vision,13,Is cell D3 a part of the red ship?,(isSubset (set D-3) (coloredTiles Red)),0
+vision,13,Is the ship located at D3 a red ship?,(== (color D-3) Red),0
+vision,13,Is the ship located at D3 oriented vertically?,(== (orient (color D-3)) V),0
+vision,14,Is C3 a part of a battleship?,(not (== (color C-3) Water)),0
+vision,14,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,14,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,14,Is the purple ship located vertically on the board?,(== (orient Purple) V),0
+vision,14,Is the purple ship located vertically on the board?,(== (orient Purple) V),0
+vision,14,Is the ship segment in B4 a part of the purple battleship?,(isSubset (set B-4) (coloredTiles Purple)),0
+vision,14,Is the purple ship located vertically on C3 and C4?,(and (== (orient Purple) V) (isSubset (set C-3 C-4) (coloredTiles Purple))),0
+vision,14,Is the purple ship oriented horizontally?,(== (orient Purple) H),0
+vision,14,Is the hidden tile at C4 part of the purple battleship?,(isSubset (set C-4) (coloredTiles Purple)),0
+vision,14,Is the purple battleship oriented vertically?,(== (orient Purple) V),0
+vision,15,Is B3 a part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0
+vision,15,Is the segment of the purple battleship located at B2 vertical?,(== (orient Purple) V),0
+vision,15,Is the purple ship located at B2 vertical?,(and (isSubset (set B-2) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,15,Is the blue ship oriented vertically?,(== (orient Blue) V),0
+vision,15,Is there a ship part at D1?,(not (== (color D-1) Water)),0.398459
+vision,15,Is the ship located at B3 vertical?,(== (orient (color B-3)) V),0
+vision,15,Is the square at B3 a part of the purple battleship?,(isSubset (set B-3) (coloredTiles Purple)),0
+vision,15,Is the purple ship oriented vertically?,(== (orient Purple) V),0
+vision,15,Is the blue battleship located vertically at C5?,(and (isSubset (set C-5) (coloredTiles Blue)) (== (orient Blue) V)),0
+vision,15,Is the blue ship located horizontally on the board?,(== (orient Blue) H),0
+vision,16,Is the ship represented by the purple tile oriented vertically?,(== (orient Purple) V),0.985228
+vision,16,Is the ship located at B1 oriented vertically?,(== (orient (color B-1)) V),0.985228
+vision,16,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.985228
+vision,16,Is the red ship located horizontally starting at B1?,(and (== (orient Red) H) (isSubset (set B-1) (coloredTiles Red))),0
+vision,16,Is the continuation of the red ship located at C1?,(isSubset (set C-1) (coloredTiles Red)),0
+vision,16,Is the red ship positioned vertically?,(== (orient Red) V),0.863121
+vision,16,Is cell A2 a part of the purple battleship?,(isSubset (set A-2) (coloredTiles Purple)),0
+vision,16,Is the purple ship located vertically starting from B1?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,16,Is cell B1 a part of the purple ship?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,16,Is the purple ship located at A1 vertical?,(and (isSubset (set A-1) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,17,Is the purple battleship vertically aligned?,(== (orient Purple) V),0.918296
+vision,17,Is E1 a part of the red battleship?,(isSubset (set E-1) (coloredTiles Red)),0
+vision,17,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.918296
+vision,17,Is the purple ship located horizontally on the board?,(== (orient Purple) H),0.918296
+vision,17,Is column D a potential location for part of the red ship?,(isSubset (set D) (coloredTiles Red)),0
+vision,17,Is the red ship oriented vertically?,(== (orient Red) V),0.970951
+vision,17,Is the blue ship located horizontally on row 6?,(and (== (rowL (topleft (coloredTiles Blue))) 6) (== (orient Blue) H)),0
+vision,17,Is the purple ship located vertically on the board?,(== (orient Purple) V),0.918296
+vision,17,Is the red ship positioned vertically?,(== (orient Red) V),0.970951
+vision,17,Is B3 a part of the red ship?,(isSubset (set B-3) (coloredTiles Red)),0
+vision,18,Is the ship located at B5 part of the blue battleship?,(isSubset (set B-5) (coloredTiles Blue)),0
+vision,18,Is the purple ship located at B2 horizontal?,(and (isSubset (set B-2) (coloredTiles Purple)) (== (orient Purple) H)),0.954434
+vision,18,Is the purple battleship located at B1 horizontal?,(and (isSubset (set B-1) (coloredTiles Purple)) (== (orient Purple) H)),0
+vision,18,Is the purple ship located at D1?,(isSubset (set D-1) (coloredTiles Purple)),0
+vision,18,Is the purple ship located at A3 vertical?,(and (isSubset (set A-3) (coloredTiles Purple)) (== (orient Purple) V)),1
+vision,18,Is the ship located at B1 purple?,(isSubset (set B-1) (coloredTiles Purple)),0
+vision,18,Is the red ship located vertically on the E column?,(and (== (orient Red) V) (isSubset (coloredTiles Red) (coloredTiles (column E)))),0
+vision,18,Is the purple ship located at B1 vertical?,(and (isSubset (set B-1) (coloredTiles Purple)) (== (orient Purple) V)),0
+vision,18,Is the purple battleship oriented vertically?,(== (orient Purple) V),0.954434
+vision,18,Is the ship indicated by the purple tile on A2 oriented vertically?,(== (orient (color A-2)) V),0.954434
