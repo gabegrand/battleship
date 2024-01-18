@@ -74,16 +74,17 @@ class Board(object):
         """Convert a Board object to a string array."""
         return Board.convert_to_symbolic(self._board.copy())
 
-    def to_textual_description(self):
+    def to_textual_description(self, include_hidden: bool = False):
         """Convert a Board object into its serialized representation"""
         repr = []
         for i, row in enumerate(self.to_symbolic_array()):
             for j in range(len(row)):
                 letter = chr(ord("A") + j)
                 value = row[j]
-                repr.append(
-                    f"{i+1}-{letter} is a {SYMBOL_MEANING_MAPPING[value]} tile."
-                )
+                if include_hidden or value != "H":
+                    repr.append(
+                        f"{i+1}-{letter} is a {SYMBOL_MEANING_MAPPING[value]} tile."
+                    )
         repr = "\n".join(repr)
         return repr
 
