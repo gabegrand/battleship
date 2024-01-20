@@ -37,12 +37,17 @@ class BattleshipGrammar:
 
         return valid, invalid
 
-    def sample(self, max_depth: int = 8):
+    def sample(self, min_depth: int = 3, max_depth: int = 8):
         """Returns a random sample from the grammar using uniform probabilities over the rules."""
+        program_max_depth, generated_depth = 1000, 0
 
         def _sample(grammar, fragments, depth):
+            nonlocal program_max_depth
             if depth <= 0:
                 raise RecursionError(f"Maximum recursion depth exceeded.")
+            program_max_depth = (
+                depth - 1 if depth - 1 < program_max_depth else program_max_depth
+            )
             for frag in fragments:
                 if isinstance(frag, str):
                     yield frag
@@ -54,16 +59,25 @@ class BattleshipGrammar:
                     for sym in _sample(grammar, production.rhs(), depth - 1):
                         yield sym
 
-        try:
-            return " ".join(
-                _sample(
-                    grammar=self.grammar,
-                    fragments=[self.grammar.start()],
-                    depth=max_depth,
+        while generated_depth < min_depth:
+            try:
+                program = (
+                    " ".join(
+                        _sample(
+                            grammar=self.grammar,
+                            fragments=[self.grammar.start()],
+                            depth=max_depth,
+                        )
+                    ),
+                    max_depth - program_max_depth,
                 )
-            )
-        except RecursionError as error:
-            return None
+
+                generated_depth = program[1]
+
+                if generated_depth >= min_depth:
+                    return program
+            except RecursionError as error:
+                return None
 
 
 # Grammar for Battleship DSL
