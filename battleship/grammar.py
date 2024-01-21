@@ -15,6 +15,10 @@ class BattleshipGrammar:
             grammar_str += GRAMMAR_LAMBDA
         self.grammar = CFG.fromstring(grammar_str)
 
+        # Difference between the program AST depth and the grammar depth
+        # The grammar always follows A -> B -> <program> so it has +2 depth relative to the AST
+        self.GRAMMAR_DEPTH_OFFSET = 2
+
     def generate(
         self,
         n: int = None,
@@ -37,8 +41,19 @@ class BattleshipGrammar:
 
         return valid, invalid
 
-    def sample(self, max_depth: int = 8):
-        """Returns a random sample from the grammar using uniform probabilities over the rules."""
+    def sample(
+        self, min_depth: int = 1, max_depth: int = 8, allow_single_token: bool = True
+    ):
+        """Returns a random sample from the grammar using uniform probabilities over the rules.
+
+        Return: (program, depth)
+
+        NOTE: min_depth and max_depth are specified in terms of the program AST depth, not the grammar depth.
+        Similarly, the return depth is the program AST depth, not the grammar depth.
+
+        """
+        min_depth += self.GRAMMAR_DEPTH_OFFSET
+        max_depth += self.GRAMMAR_DEPTH_OFFSET
 
         def _sample(grammar, fragments, depth):
             if depth <= 0:
@@ -54,16 +69,23 @@ class BattleshipGrammar:
                     for sym in _sample(grammar, production.rhs(), depth - 1):
                         yield sym
 
-        try:
-            return " ".join(
-                _sample(
-                    grammar=self.grammar,
-                    fragments=[self.grammar.start()],
-                    depth=max_depth,
+        while True:
+            try:
+                program = " ".join(
+                    _sample(
+                        grammar=self.grammar,
+                        fragments=[self.grammar.start()],
+                        depth=max_depth,
+                    )
                 )
-            )
-        except RecursionError as error:
-            return None
+            except RecursionError as error:
+                return None
+
+            generated_depth = Parser.depth(program)
+            if generated_depth >= min_depth:
+                # Single-token programs have no parentheses; e.g., "TRUE", "B4", etc.
+                if "(" in program or allow_single_token:
+                    return (program, generated_depth)
 
 
 # Grammar for Battleship DSL
