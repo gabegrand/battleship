@@ -15,6 +15,10 @@ class BattleshipGrammar:
             grammar_str += GRAMMAR_LAMBDA
         self.grammar = CFG.fromstring(grammar_str)
 
+        # Difference between the program AST depth and the grammar depth
+        # The grammar always follows A -> B -> <program> so it has +2 depth relative to the AST
+        self.GRAMMAR_DEPTH_OFFSET = 2
+
     def generate(
         self,
         n: int = None,
@@ -37,17 +41,23 @@ class BattleshipGrammar:
 
         return valid, invalid
 
-    def sample(self, min_depth: int = 3, max_depth: int = 8, allow_single_token: bool = True):
-        """Returns a random sample from the grammar using uniform probabilities over the rules."""
-        generated_depth = 0
+    def sample(
+        self, min_depth: int = 1, max_depth: int = 8, allow_single_token: bool = True
+    ):
+        """Returns a random sample from the grammar using uniform probabilities over the rules.
+
+        Return: (program, depth)
+
+        NOTE: min_depth and max_depth are specified in terms of the program AST depth, not the grammar depth.
+        Similarly, the return depth is the program AST depth, not the grammar depth.
+
+        """
+        min_depth += self.GRAMMAR_DEPTH_OFFSET
+        max_depth += self.GRAMMAR_DEPTH_OFFSET
 
         def _sample(grammar, fragments, depth):
-            nonlocal program_max_depth
             if depth <= 0:
                 raise RecursionError(f"Maximum recursion depth exceeded.")
-            generated_depth = (
-                (max_depth - depth-1) if (max_depth - depth-1) > generated_depth else generated_depth
-            )
             for frag in fragments:
                 if isinstance(frag, str):
                     yield frag
@@ -68,16 +78,14 @@ class BattleshipGrammar:
                         depth=max_depth,
                     )
                 )
-
-                if generated_depth >= min_depth:
-                    if not allow_single_token:
-                        if "(" in program: #filters for non-single-token programs if the flag is set. can't do this through depth because some single-token answers have depth 3 and others have depth 4, so we have to take the lack of brackets (showing a lack of an operation being performed) instead.
-                            return (program, generated_depth)
-                        else:
-                            return None
-                    return (program, generated_depth)
             except RecursionError as error:
                 return None
+
+            generated_depth = Parser.depth(program)
+            if generated_depth >= min_depth:
+                # Single-token programs have no parentheses; e.g., "TRUE", "B4", etc.
+                if "(" in program or allow_single_token:
+                    return (program, generated_depth)
 
 
 # Grammar for Battleship DSL
