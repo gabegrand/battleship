@@ -329,7 +329,7 @@ class TranslationPrompt(BasePrompt):
                 }
             )
             messages.append(
-                {"role": "user", "content": self.optional_space(self.PREFIX_CODE)}
+                {"role": "assistant", "content": self.optional_space(self.PREFIX_CODE)}
             )
 
         return messages
