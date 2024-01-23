@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import copy
+import json
 import os
 import sys
 import time
@@ -16,8 +17,10 @@ from battleship.prompting import QuestionGenerationPrompt
 from battleship.prompting import TranslationPrompt
 from hfppl.llms import CachedCausalLM
 
+
 RESULTS_FILENAME = "results.csv"
 COMMAND_FILENAME = "command.txt"
+PROMPTS_FILENAME = "prompts.json"
 
 
 async def main(args):
@@ -49,6 +52,7 @@ async def main(args):
     n_queries = args.n_samples // args.batch_size
 
     results_trial = []
+    question_prompts, translation_prompts = [], []
     for trial_id in args.trial_ids:
         print("-" * 80)
         print(f"TRIAL {trial_id}")
@@ -78,6 +82,10 @@ async def main(args):
                 random_seed=rng,
             )
 
+            question_prompt_data = question_prompt.to_dict()
+            question_prompt_data["prompt_id"] = query
+            question_prompts.append(question_prompt_data)
+
             translation_prompt = TranslationPrompt(
                 target_trial_id=trial_id,
                 target_question=None,
@@ -87,6 +95,10 @@ async def main(args):
                 include_instructions=args.include_instructions,
                 random_seed=rng,
             )
+
+            translation_prompt_data = translation_prompt.to_dict()
+            translation_prompt_data["prompt_id"] = query
+            translation_prompts.append(translation_prompt_data)
 
             # Caching speeds up performance, but may result in CUDA out of memory error.
             if args.q_cache_prompt:
@@ -106,10 +118,8 @@ async def main(args):
             particles = [copy.deepcopy(model) for _ in range(args.batch_size)]
             results = await asyncio.gather(*[p.step() for p in particles])
             for data in results:
-                # TODO: Save prompt data to separate JSON files
                 data["prompt_id"] = query
-                data["prompt_question"] = question_prompt.to_dict()
-                data["prompt_translation"] = translation_prompt.to_dict()
+
             results_trial.extend(results)
 
         df = pd.DataFrame(results_trial)
@@ -117,6 +127,17 @@ async def main(args):
         print(df[["trial_id", "completion", "translation", "score"]])
 
         df.to_csv(results_filepath, index=False)
+
+        # Save prompt data to JSON file
+        with open(os.path.join(experiment_dir, PROMPTS_FILENAME), "w") as f:
+            json.dump(
+                {
+                    "question_prompts": question_prompts,
+                    "translation_prompts": translation_prompts,
+                },
+                f,
+                indent=4,
+            )
 
     time_end = time.time()
     print(f"Total time: {time_end - time_start:.2f} seconds")

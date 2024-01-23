@@ -60,7 +60,7 @@ class BasePrompt(object):
                 ],
                 size=self.n_example_trials,
                 replace=False,
-            )
+            ).tolist()
 
             # Load question dataset
             df = pd.read_csv(HUMAN_DATASET_PATH)
