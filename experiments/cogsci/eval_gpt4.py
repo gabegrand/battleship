@@ -123,9 +123,13 @@ async def main(args):
                 score = compute_score(
                     program=program_temp, board=Board.from_trial_id(trial_id)
                 )
-                results.append(
-                    [trial_id, args.board_format, questions[i], program_temp, score]
-                )
+                result = {
+                    "trial_id": trial_id,
+                    "question": questions[i],
+                    "program": program_temp,
+                    "score": score,
+                }
+                results.append(result)
 
         df = pd.DataFrame(results)
         print(df)
