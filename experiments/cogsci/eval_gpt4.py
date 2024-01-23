@@ -90,6 +90,7 @@ async def main(args):
                 messages=question_prompt.to_chat_format(),
                 n=args.batch_size,
                 temperature=0.7,
+                stop="\n",
             )
 
             questions = [
@@ -107,6 +108,7 @@ async def main(args):
                     messages=translation_prompt.to_chat_format(),
                     n=1,
                     temperature=0.7,
+                    stop="\n",
                 )
                 program_temp = (
                     str(completion.choices[0].message.content)
@@ -118,6 +120,7 @@ async def main(args):
                 )
                 result = {
                     "trial_id": trial_id,
+                    "prompt_id": query,
                     "question": questions[i],
                     "program": program_temp,
                     "score": score,
