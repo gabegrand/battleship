@@ -118,12 +118,12 @@ async def main(args):
             particles = [copy.deepcopy(model) for _ in range(args.batch_size)]
             results = await asyncio.gather(*[p.step() for p in particles])
             for data in results:
+                data["trial_id"] = trial_id
                 data["prompt_id"] = query
 
             results_trial.extend(results)
 
         df = pd.DataFrame(results_trial)
-        df.insert(0, "trial_id", trial_id)
         print(df)
 
         df.to_csv(results_filepath, index=False)
