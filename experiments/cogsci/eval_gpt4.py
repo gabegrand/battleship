@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import os
 import time
 from enum import StrEnum
@@ -10,7 +11,6 @@ import pandas as pd
 from eig.battleship import Parser
 from openai import OpenAI
 from tqdm import tqdm
-import json
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("--q_n_example_trials", type=int, default=3)
     parser.add_argument("--q_n_examples_per_trial", type=int, default=3)
     parser.add_argument(
-        "--include_system_prompt", action=argparse.BooleanOptionalAction, default=False
+        "--include_system_prompt", action=argparse.BooleanOptionalAction, default=True
     )
     parser.add_argument(
         "--include_instructions", action=argparse.BooleanOptionalAction, default=True
@@ -174,13 +174,6 @@ if __name__ == "__main__":
     # Translation prompt
     parser.add_argument("--t_n_example_trials", type=int, default=12)
     parser.add_argument("--t_n_examples_per_trial", type=int, default=1)
-    # Caching
-    parser.add_argument(
-        "--q_cache_prompt", action=argparse.BooleanOptionalAction, default=False
-    )
-    parser.add_argument(
-        "--t_cache_prompt", action=argparse.BooleanOptionalAction, default=False
-    )
 
     args = parser.parse_args()
     asyncio.run(main(args))
