@@ -158,7 +158,7 @@ if __name__ == "__main__":
     # Question generation prompt
     parser.add_argument("--board_format", type=str, default="textual")
     parser.add_argument("--q_n_example_trials", type=int, default=3)
-    parser.add_argument("--q_n_examples_per_trial", type=int, default=3)
+    parser.add_argument("--q_n_examples_per_trial", type=int, default=10)
     parser.add_argument(
         "--include_system_prompt", action=argparse.BooleanOptionalAction, default=False
     )
