@@ -4,11 +4,9 @@ import json
 import os
 import time
 from enum import StrEnum
-from math import ceil
 
 import numpy as np
 import pandas as pd
-from eig.battleship import Parser
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -28,11 +26,6 @@ PROMPTS_FILENAME = "prompts.json"
 class OpenAIModels(StrEnum):
     TEXT = "gpt-4"
     VISION = "gpt-4-vision-preview"
-
-
-class Prefixes(StrEnum):
-    QUESTIONPREFIX = "Question:"
-    CODEPREFIX = "Query:"
 
 
 async def main(args):
@@ -101,7 +94,7 @@ async def main(args):
 
             questions = [
                 str(completion.choices[i].message.content)
-                .replace(Prefixes.QUESTIONPREFIX, "")
+                .replace(QuestionGenerationPrompt.PREFIX_QUESTION, "")
                 .strip()
                 for i in range(args.batch_size)
             ]
@@ -117,7 +110,7 @@ async def main(args):
                 )
                 program_temp = (
                     str(completion.choices[0].message.content)
-                    .replace(Prefixes.CODEPREFIX, "")
+                    .replace(TranslationPrompt.PREFIX_CODE, "")
                     .strip()
                 )
                 score = compute_score(
