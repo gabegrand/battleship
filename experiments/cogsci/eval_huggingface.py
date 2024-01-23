@@ -29,7 +29,7 @@ async def main(args):
 
     # Bookkeeping
     timestamp = time.strftime("%Y-%m-%d-%H-%M-%S")
-    model_name_escaped = args.model_name.split("/")[0]
+    model_name_escaped = args.model_name.split("/")[1]
     experiment_dir = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         args.output_dir,
@@ -124,7 +124,7 @@ async def main(args):
 
         df = pd.DataFrame(results_trial)
         df.insert(0, "trial_id", trial_id)
-        print(df[["trial_id", "completion", "translation", "score"]])
+        print(df)
 
         df.to_csv(results_filepath, index=False)
 
