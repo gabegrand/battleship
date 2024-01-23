@@ -180,19 +180,12 @@ class QuestionGenerationModel(Model):
 
 class SingleStepQuestionGenerationModel(QuestionGenerationModel):
     async def step(self):
-        while True:
-            token = await self.sample(self.context.next_token())
-            if self.verbose:
-                print(self.context)
-            if self.is_final_token(token) or self.is_final_context(self.context):
-                break
-
-        translation = await self._translate_question(str(self.context))
+        question = await self._complete_question("")
+        translation = await self._translate_question(question)
         score = compute_score(program=translation, board=self.board)
         self.score(score)
         self.result = {
-            "prefix": str(self.context),
-            "completion": str(self.context),
+            "completion": question,
             "translation": translation,
             "score": score,
             "type": "final",
@@ -200,3 +193,4 @@ class SingleStepQuestionGenerationModel(QuestionGenerationModel):
         if self.verbose:
             print(self.result)
         self.finish()
+        return self.result
