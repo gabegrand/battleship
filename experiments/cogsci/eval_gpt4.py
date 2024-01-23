@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import os
+import sys
 import time
 from enum import StrEnum
 
@@ -42,6 +43,10 @@ async def main(args):
     results_filepath = os.path.join(experiment_dir, RESULTS_FILENAME)
     print(f"Results will be saved to: {results_filepath}")
 
+    # Write the command to a file
+    with open(os.path.join(experiment_dir, COMMAND_FILENAME), "w") as f:
+        f.write(" ".join(sys.argv) + "\n")
+
     assert args.n_samples % args.batch_size == 0
     n_queries = args.n_samples // args.batch_size
 
@@ -63,6 +68,7 @@ async def main(args):
                 include_system_prompt=args.include_system_prompt,
                 include_instructions=args.include_instructions,
                 include_board=args.include_board,
+                include_final_prefix=False,
                 random_seed=rng,
             )
 
@@ -75,21 +81,29 @@ async def main(args):
                 target_trial_id=trial_id,
                 n_example_trials=args.t_n_example_trials,
                 n_examples_per_trial=args.t_n_examples_per_trial,
-                random_seed=rng,
                 include_system_prompt=args.include_system_prompt,
                 include_instructions=args.include_instructions,
                 include_board=args.include_board,
+                include_final_prefix=False,
+                random_seed=rng,
             )
 
             translation_prompt_data = translation_prompt.to_dict()
             translation_prompt_data["prompt_id"] = query
             translation_prompts.append(str(translation_prompt_data))
 
+            if args.verbose:
+                print("-" * 80)
+                print(question_prompt)
+                print("-" * 80)
+                print(translation_prompt)
+                print("-" * 80)
+
             completion = client.chat.completions.create(
                 model=OpenAIModels.TEXT,
                 messages=question_prompt.to_chat_format(),
                 n=args.batch_size,
-                temperature=0.7,
+                temperature=args.q_temperature,
                 stop="\n",
             )
 
@@ -107,7 +121,7 @@ async def main(args):
                     model=OpenAIModels.TEXT,
                     messages=translation_prompt.to_chat_format(),
                     n=1,
-                    temperature=0.7,
+                    temperature=args.t_temperature,
                     stop="\n",
                 )
                 program_temp = (
@@ -156,12 +170,15 @@ if __name__ == "__main__":
     parser.add_argument("--random_seed", type=int, default=123)
     parser.add_argument("--output_dir", type=str, default="results")
     parser.add_argument(
-        "--verbose", action=argparse.BooleanOptionalAction, default=True
+        "--verbose", action=argparse.BooleanOptionalAction, default=False
     )
+    # Temperatures
+    parser.add_argument("--q_temperature", type=float, default=1.0)
+    parser.add_argument("--t_temperature", type=float, default=0.1)
     # Question generation prompt
     parser.add_argument("--board_format", type=str, default="textual")
     parser.add_argument("--q_n_example_trials", type=int, default=3)
-    parser.add_argument("--q_n_examples_per_trial", type=int, default=3)
+    parser.add_argument("--q_n_examples_per_trial", type=int, default=10)
     parser.add_argument(
         "--include_system_prompt", action=argparse.BooleanOptionalAction, default=True
     )
