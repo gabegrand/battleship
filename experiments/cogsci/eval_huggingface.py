@@ -30,7 +30,7 @@ async def main(args):
         args.output_dir,
         f"{model_name_escaped}-{timestamp}.csv",
     )
-    print(f"Script will save results to: {output_path}")
+    print(f"Results will be saved to: {output_path}")
 
     rng = np.random.default_rng(args.random_seed)
 
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument("--q_n_example_trials", type=int, default=3)
     parser.add_argument("--q_n_examples_per_trial", type=int, default=3)
     parser.add_argument(
-        "--include_system_prompt", action=argparse.BooleanOptionalAction, default=True
+        "--include_system_prompt", action=argparse.BooleanOptionalAction, default=False
     )
     parser.add_argument(
         "--include_instructions", action=argparse.BooleanOptionalAction, default=True
