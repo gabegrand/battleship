@@ -1,81 +1,100 @@
 import argparse
 import asyncio
+import copy
 import os
+import sys
 import time
-from math import ceil
 
 import numpy as np
 import pandas as pd
-from eig.battleship import Parser
 from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
-from battleship.huggingface_llms import HuggingFaceModel
 from battleship.models import SingleStepQuestionGenerationModel
 from battleship.prompting import QuestionGenerationPrompt
 from battleship.prompting import TranslationPrompt
-from battleship.scoring import compute_score
-from battleship.scoring import compute_score_parallel
 from hfppl.llms import CachedCausalLM
+
+RESULTS_FILENAME = "results.csv"
+COMMAND_FILENAME = "command.txt"
 
 
 async def main(args):
-    # Bookkeeping
+    # Timekeeping
     time_start = time.time()
+
+    # Bookkeeping
     timestamp = time.strftime("%Y-%m-%d-%H-%M-%S")
     model_name_escaped = args.model_name.split("/")[0]
-    output_path = os.path.join(
+    experiment_dir = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         args.output_dir,
-        f"{model_name_escaped}-{timestamp}.csv",
+        f"{model_name_escaped}-{timestamp}",
     )
-    print(f"Results will be saved to: {output_path}")
+    os.makedirs(experiment_dir, exist_ok=True)
+    results_filepath = os.path.join(experiment_dir, RESULTS_FILENAME)
+    print(f"Results will be saved to: {results_filepath}")
 
-    rng = np.random.default_rng(args.random_seed)
+    # Write the command to a file
+    with open(os.path.join(experiment_dir, COMMAND_FILENAME), "w") as f:
+        f.write(" ".join(sys.argv) + "\n")
 
     # Instantiate LLM
     lm = CachedCausalLM.from_pretrained(args.model_name)
     lm.batch_size = args.batch_size
 
-    results = []
+    # Divide samples into n_queries batches
+    assert args.n_samples % args.batch_size == 0
+    n_queries = args.n_samples // args.batch_size
+
+    results_trial = []
     for trial_id in args.trial_ids:
         print("-" * 80)
         print(f"TRIAL {trial_id}")
         print("-" * 80)
 
+        # Reset random seed
+        rng = np.random.default_rng(args.random_seed)
+
+        # Clear LM Trie cache
         lm.clear_cache()
-        lm.clear_kv_cache()
 
-        question_prompt = QuestionGenerationPrompt(
-            target_trial_id=trial_id,
-            board_format=args.board_format,
-            n_example_trials=args.q_n_example_trials,
-            n_examples_per_trial=args.q_n_examples_per_trial,
-            include_system_prompt=args.include_system_prompt,
-            include_instructions=args.include_instructions,
-            include_board=args.include_board,
-            random_seed=rng,
-        )
+        for query in range(n_queries):
+            print(f"Query {query+1}/{n_queries}")
 
-        translation_prompt = TranslationPrompt(
-            target_trial_id=trial_id,
-            target_question=None,
-            n_example_trials=args.t_n_example_trials,
-            n_examples_per_trial=args.t_n_examples_per_trial,
-            include_system_prompt=args.include_system_prompt,
-            include_instructions=args.include_instructions,
-            random_seed=rng,
-        )
+            # Clear LM vector cache
+            lm.clear_kv_cache()
 
-        # Caching speeds up performance, but may result in CUDA out of memory error.
-        if args.q_cache_prompt:
-            lm.cache_kv(lm.tokenizer.encode(str(question_prompt)))
-        if args.t_cache_prompt:
-            # Additionally, this currently degrades the quality of the translations for an unknown reason.
-            lm.cache_kv(lm.tokenizer.encode(str(translation_prompt)))
+            # Each batch gets a new prompt
+            question_prompt = QuestionGenerationPrompt(
+                target_trial_id=trial_id,
+                board_format=args.board_format,
+                n_example_trials=args.q_n_example_trials,
+                n_examples_per_trial=args.q_n_examples_per_trial,
+                include_system_prompt=args.include_system_prompt,
+                include_instructions=args.include_instructions,
+                include_board=args.include_board,
+                random_seed=rng,
+            )
 
-        for _ in range(args.n_samples):
+            translation_prompt = TranslationPrompt(
+                target_trial_id=trial_id,
+                target_question=None,
+                n_example_trials=args.t_n_example_trials,
+                n_examples_per_trial=args.t_n_examples_per_trial,
+                include_system_prompt=args.include_system_prompt,
+                include_instructions=args.include_instructions,
+                random_seed=rng,
+            )
+
+            # Caching speeds up performance, but may result in CUDA out of memory error.
+            if args.q_cache_prompt:
+                lm.cache_kv(lm.tokenizer.encode(str(question_prompt)))
+            if args.t_cache_prompt:
+                # Additionally, this currently degrades the quality of the translations for an unknown reason.
+                lm.cache_kv(lm.tokenizer.encode(str(translation_prompt)))
+
             model = SingleStepQuestionGenerationModel(
                 lm=lm,
                 board=Board.from_trial_id(trial_id),
@@ -84,15 +103,20 @@ async def main(args):
                 verbose=args.verbose,
             )
 
-            result = await model.step()
+            particles = [copy.deepcopy(model) for _ in range(args.batch_size)]
+            results = await asyncio.gather(*[p.step() for p in particles])
+            for data in results:
+                # TODO: Save prompt data to separate JSON files
+                data["prompt_id"] = query
+                data["prompt_question"] = question_prompt.to_dict()
+                data["prompt_translation"] = translation_prompt.to_dict()
+            results_trial.extend(results)
 
-            results.append(result)
-
-        df = pd.DataFrame(results)
+        df = pd.DataFrame(results_trial)
         df.insert(0, "trial_id", trial_id)
-        print(df)
+        print(df[["trial_id", "completion", "translation", "score"]])
 
-        df.to_csv(output_path, index=False)
+        df.to_csv(results_filepath, index=False)
 
     time_end = time.time()
     print(f"Total time: {time_end - time_start:.2f} seconds")

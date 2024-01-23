@@ -85,12 +85,14 @@ class BasePrompt(object):
         return "\n".join([message["content"] for message in self.to_chat_format()])
         # return "\n".join([f"[{message['role']}]{message['content']}" for message in self.to_chat_format()])
 
-    def __dict__(self):
+    def to_dict(self):
         return {
             "target_trial_id": self.target_trial_id,
             "n_example_trials": self.n_example_trials,
             "n_questions_per_trial": self.n_questions_per_trial,
-            "random_seed": self.random_seed,
+            "random_seed": self.random_seed
+            if isinstance(self.random_seed, int)
+            else None,
             "example_trial_ids": self.example_trial_ids,
             "examples": self.examples,
             "include_system_prompt": self.include_system_prompt,
