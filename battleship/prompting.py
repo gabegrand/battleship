@@ -38,6 +38,7 @@ class BasePrompt(object):
         include_instructions: bool = True,
         include_board: bool = True,
         include_system_prompt: bool = True,
+        include_final_prefix: bool = True,
         random_seed: int = None,
     ):
         self.target_trial_id = target_trial_id
@@ -47,6 +48,7 @@ class BasePrompt(object):
         self.include_system_prompt = include_system_prompt
         self.include_board = include_board
         self.include_instructions = include_instructions
+        self.include_final_prefix = include_final_prefix
         self.random_seed = random_seed
 
         # Sample example trial ids, excluding the target trial id
@@ -60,7 +62,7 @@ class BasePrompt(object):
                 ],
                 size=self.n_example_trials,
                 replace=False,
-            )
+            ).tolist()
 
             # Load question dataset
             df = pd.read_csv(HUMAN_DATASET_PATH)
@@ -85,12 +87,14 @@ class BasePrompt(object):
         return "\n".join([message["content"] for message in self.to_chat_format()])
         # return "\n".join([f"[{message['role']}]{message['content']}" for message in self.to_chat_format()])
 
-    def __dict__(self):
+    def to_dict(self):
         return {
             "target_trial_id": self.target_trial_id,
             "n_example_trials": self.n_example_trials,
             "n_questions_per_trial": self.n_questions_per_trial,
-            "random_seed": self.random_seed,
+            "random_seed": self.random_seed
+            if isinstance(self.random_seed, int)
+            else None,
             "example_trial_ids": self.example_trial_ids,
             "examples": self.examples,
             "include_system_prompt": self.include_system_prompt,
@@ -261,10 +265,14 @@ class QuestionGenerationPrompt(BasePrompt):
                 {"role": "user", "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}"}
             )
 
-        # TODO: Verify that this is the correct way to end the message list for GPT
-        messages.append(
-            {"role": "assistant", "content": self.optional_space(self.PREFIX_QUESTION)}
-        )
+        # Set to false if using GPT-4; the model will generate this message itself
+        if self.include_final_prefix:
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": self.optional_space(self.PREFIX_QUESTION),
+                }
+            )
 
         return messages
 
@@ -319,7 +327,6 @@ class TranslationPrompt(BasePrompt):
             )
 
         if self.target_question:
-            # TODO: Verify that this is the correct way to end the message list for GPT
             messages.append(
                 {
                     "role": "user",
@@ -328,8 +335,13 @@ class TranslationPrompt(BasePrompt):
                     ),
                 }
             )
-            messages.append(
-                {"role": "user", "content": self.optional_space(self.PREFIX_CODE)}
-            )
+            # Set to false if using GPT-4; the model will generate this message itself
+            if self.include_final_prefix:
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": self.optional_space(self.PREFIX_CODE),
+                    }
+                )
 
         return messages

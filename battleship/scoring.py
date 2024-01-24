@@ -24,9 +24,9 @@ def compute_score(program: str, board: Board):
             orientations=["V", "H"],
         )
     except ProgramSyntaxError:
-        score = 0
+        return None
     except RuntimeError:
-        score = 0
+        return None
 
     return np.round(score, decimals=6)
 
