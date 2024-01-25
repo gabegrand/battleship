@@ -59,7 +59,7 @@ async def main(args):
         print(f"TRIAL {trial_id}")
         print("-" * 80)
 
-        for query in range(n_queries):
+        for query in tqdm(range(n_queries)):
             question_prompt = QuestionGenerationPrompt(
                 target_trial_id=trial_id,
                 board_format=args.board_format,
