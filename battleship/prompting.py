@@ -244,7 +244,6 @@ class QuestionGenerationPrompt(BasePrompt):
                             },
                         )
                     else:
-                        # I'm afraid adding \n to the end of the visual base64-encoded string will mess it up, so moved here for now
                         if not board_str.endswith("\n"):
                             board_str += "\n"
                         messages.append(
@@ -291,7 +290,6 @@ class QuestionGenerationPrompt(BasePrompt):
                     },
                 )
             else:
-                # same \n placement logic as above
                 if not board_str.endswith("\n"):
                     board_str += "\n"
                 messages.append(
