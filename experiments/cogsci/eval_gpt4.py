@@ -99,22 +99,15 @@ async def main(args):
                 print(translation_prompt)
                 print("-" * 80)
 
-            if args.board_format == "visual":
-                completion = client.chat.completions.create(
-                    model=OpenAIModels.VISION,
-                    messages=question_prompt.to_chat_format(),
-                    n=args.batch_size,
-                    temperature=args.q_temperature,
-                    stop="\n",
-                )
-            else:
-                completion = client.chat.completions.create(
-                    model=OpenAIModels.TEXT,
-                    messages=question_prompt.to_chat_format(),
-                    n=args.batch_size,
-                    temperature=args.q_temperature,
-                    stop="\n",
-                )
+            completion = client.chat.completions.create(
+                model=OpenAIModels.VISION
+                if args.board_format == "visual"
+                else OpenAIModels.TEXT,
+                messages=question_prompt.to_chat_format(),
+                n=args.batch_size,
+                temperature=args.q_temperature,
+                stop="\n",
+            )
 
             questions = [
                 str(completion.choices[i].message.content)
