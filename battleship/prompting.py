@@ -82,6 +82,9 @@ class BasePrompt(object):
                             "code": example["code"],
                         }
                     )
+        else:
+            self.example_trial_ids = []
+            self.examples = []
 
     def __str__(self):
         return "\n".join([str(message["content"]) for message in self.to_chat_format()])
