@@ -132,13 +132,13 @@ class Board(object):
             board = np.char.replace(board, str(v), c)
         return board
 
-    def to_figure(self):
+    def to_figure(self, inches: int = 6, dpi: int = 128):
         """Convert a Board object to a matplotlib figure."""
         cmap, norm = matplotlib.colors.from_levels_and_colors(
             [-1, 0, 1, 2, 3, 4], list(BOARD_COLOR_MAPPING.values())
         )
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(inches, inches), dpi=dpi)
         ax.matshow(self._board, cmap=cmap, norm=norm)
 
         # Add gridlines
@@ -175,6 +175,6 @@ class Board(object):
     def to_base64(self):
         """Convert a Board object to a PNG image encoded in UTF-8. Uses BytesIO to avoid unnecessary I/O on disk."""
         bytes = io.BytesIO()
-        self.to_figure().savefig(bytes, format="png")
+        self.to_figure().savefig(bytes, format="png", bbox_inches="tight")
         bytes.seek(0)
         return base64.b64encode(bytes.read()).decode("utf-8")

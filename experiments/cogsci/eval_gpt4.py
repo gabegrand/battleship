@@ -100,7 +100,9 @@ async def main(args):
                 print("-" * 80)
 
             completion = client.chat.completions.create(
-                model=OpenAIModels.TEXT,
+                model=OpenAIModels.VISION
+                if args.board_format == "visual"
+                else OpenAIModels.TEXT,
                 messages=question_prompt.to_chat_format(),
                 n=args.batch_size,
                 temperature=args.q_temperature,
