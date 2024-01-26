@@ -84,7 +84,7 @@ class BasePrompt(object):
                     )
 
     def __str__(self):
-        return "\n".join([message["content"] for message in self.to_chat_format()])
+        return "\n".join([str(message["content"]) for message in self.to_chat_format()])
         # return "\n".join([f"[{message['role']}]{message['content']}" for message in self.to_chat_format()])
 
     def to_dict(self):
@@ -214,10 +214,7 @@ class QuestionGenerationPrompt(BasePrompt):
                 elif self.board_format == BoardFormat.TEXTUAL:
                     messages.append({"role": "user", "content": PROMPT_VARIANT_TEXTUAL})
                 elif self.board_format == BoardFormat.VISUAL:
-                    # TODO: Requires a slightly different message format. Also, we should format the images to be 512px x 512px image for low-res mode with GPT-4V.
-                    raise NotImplementedError(
-                        "Visual board format not yet implemented."
-                    )
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_VISUAL})
                 else:
                     raise ValueError(f"Unknown board format: {self.board_format}")
 
@@ -230,15 +227,33 @@ class QuestionGenerationPrompt(BasePrompt):
                     board_str = Board.from_trial_id(trial_id).to_format(
                         self.board_format
                     )
-                    if not board_str.endswith("\n"):
-                        board_str += "\n"
-                    messages.append(
-                        {
-                            "role": "user",
-                            "name": "example_user",
-                            "content": f"\n{self.EXAMPLE_DELIMITER}\n\n{board_str}",
-                        }
-                    )
+                    if self.board_format == BoardFormat.VISUAL:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "name": "example_user",
+                                "content": [
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/png;base64,{board_str}",
+                                            "detail": "low",
+                                        },
+                                    },
+                                ],
+                            },
+                        )
+                    else:
+                        # I'm afraid adding \n to the end of the visual base64-encoded string will mess it up, so moved here for now
+                        if not board_str.endswith("\n"):
+                            board_str += "\n"
+                        messages.append(
+                            {
+                                "role": "user",
+                                "name": "example_user",
+                                "content": f"\n{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                            }
+                        )
                 for example in filter(
                     lambda x: x["trial_id"] == trial_id, self.examples
                 ):
@@ -259,11 +274,32 @@ class QuestionGenerationPrompt(BasePrompt):
             board_str = Board.from_trial_id(self.target_trial_id).to_format(
                 self.board_format
             )
-            if not board_str.endswith("\n"):
-                board_str += "\n"
-            messages.append(
-                {"role": "user", "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}"}
-            )
+            if self.board_format == BoardFormat.VISUAL:
+                messages.append(
+                    {
+                        "role": "user",
+                        "name": "example_user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{board_str}",
+                                    "detail": "low",
+                                },
+                            }
+                        ],
+                    },
+                )
+            else:
+                # same \n placement logic as above
+                if not board_str.endswith("\n"):
+                    board_str += "\n"
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                    }
+                )
 
         # Set to false if using GPT-4; the model will generate this message itself
         if self.include_final_prefix:
