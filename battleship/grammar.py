@@ -42,7 +42,7 @@ class BattleshipGrammar:
         return valid, invalid
 
     def sample(
-        self, min_depth: int = 1, max_depth: int = 8, allow_single_token: bool = True
+        self, min_depth: int = 1, max_depth: int = 16, allow_single_token: bool = False
     ):
         """Returns a random sample from the grammar using uniform probabilities over the rules.
 
@@ -52,8 +52,6 @@ class BattleshipGrammar:
         Similarly, the return depth is the program AST depth, not the grammar depth.
 
         """
-        min_depth += self.GRAMMAR_DEPTH_OFFSET
-        max_depth += self.GRAMMAR_DEPTH_OFFSET
 
         def _sample(grammar, fragments, depth):
             if depth <= 0:
@@ -75,7 +73,7 @@ class BattleshipGrammar:
                     _sample(
                         grammar=self.grammar,
                         fragments=[self.grammar.start()],
-                        depth=max_depth,
+                        depth=max_depth + self.GRAMMAR_DEPTH_OFFSET,
                     )
                 )
             except RecursionError as error:
