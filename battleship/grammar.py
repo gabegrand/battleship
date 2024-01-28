@@ -41,9 +41,7 @@ class BattleshipGrammar:
 
         return valid, invalid
 
-    def sample(
-        self, min_depth: int = 1, max_depth: int = 16, allow_single_token: bool = False
-    ):
+    def sample(self, min_depth: int = 1, max_depth: int = 16):
         """Returns a random sample from the grammar using uniform probabilities over the rules.
 
         Return: (program, depth)
@@ -81,9 +79,7 @@ class BattleshipGrammar:
 
             generated_depth = Parser.depth(program)
             if generated_depth >= min_depth:
-                # Single-token programs have no parentheses; e.g., "TRUE", "B4", etc.
-                if "(" in program or allow_single_token:
-                    return (program, generated_depth)
+                return (program, generated_depth)
 
 
 # Grammar for Battleship DSL
