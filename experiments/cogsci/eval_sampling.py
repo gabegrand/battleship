@@ -78,7 +78,7 @@ def sample_baseline(
                     show_progress=False,
                 )
                 for index in range(len(program_scores)):
-                    cache[(program_selection[index], id)] = program_scores[index]
+                    cache[(unique_programs[index], id)] = program_scores[index]
                     result = {
                         "program": program_selection[index],
                         "board_id": id,
