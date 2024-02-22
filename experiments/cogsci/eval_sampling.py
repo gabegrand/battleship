@@ -10,6 +10,7 @@ from tqdm import tqdm
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
 from battleship.grammar import BattleshipGrammar
+from battleship.scoring import _compute_score_batch
 from battleship.scoring import compute_score_parallel
 
 
@@ -35,19 +36,22 @@ def main(args):
     )
     unique_programs = list(set([item[0] for item in all_programs]))
     print(
-        f"Finished sampling {args.n_samples} programs in {time.time() - time_start:.2f}s"
+        f"Sampled {args.n_samples} programs ({len(unique_programs)} unique) in {time.time() - time_start:.2f}s"
     )
 
     results = []
     for trial_id in args.trial_ids:
         board_start_time = time.time()
         print(f"Running scoring for board {trial_id}")
+
         program_scores = compute_score_parallel(
             programs=unique_programs,
             board=Board.from_trial_id(trial_id),
             processes=args.processes,
+            chunksize=args.chunksize,
             show_progress=True,
         )
+
         program_to_score = dict(zip(unique_programs, program_scores))
 
         for program, depth in all_programs:
@@ -92,6 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("--trial_ids", type=str, nargs="+", default=TRIAL_IDS)
     parser.add_argument("--output_dir", type=str, default="results")
     parser.add_argument("--processes", type=int, default=os.cpu_count())
+    parser.add_argument("--chunksize", type=int, default=16)
     args = parser.parse_args()
 
     main(args)
