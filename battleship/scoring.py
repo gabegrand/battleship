@@ -49,7 +49,13 @@ def compute_score_parallel(
     chunksize: int = 10,
     show_progress: bool = True,
 ):
-    """Compute scores for a list of programs in parallel."""
+    """Compute scores for a list of programs in parallel.
+
+    `chunksize` is the number of programs to process in each worker (single CPU core).
+
+    To reduce memory overhead, we periodically collect the results from the workers and
+    free the memory to create a fresh Pool.
+    """
 
     if processes is None:
         processes = os.cpu_count()
