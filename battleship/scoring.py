@@ -1,5 +1,6 @@
 import itertools
 import os
+from multiprocessing import get_context
 from multiprocessing import Pool
 
 import numpy as np
@@ -45,26 +46,41 @@ def compute_score_parallel(
     programs: list,
     board: Board,
     processes: int = None,
-    n_chunks_per_process: int = 4,
+    chunksize: int = 10,
     show_progress: bool = True,
 ):
-    """Compute scores for a list of programs in parallel."""
+    """Compute scores for a list of programs in parallel.
+
+    `chunksize` is the number of programs to process in each worker (single CPU core).
+
+    To reduce memory overhead, we periodically collect the results from the workers and
+    free the memory to create a fresh Pool.
+    """
 
     if processes is None:
         processes = os.cpu_count()
 
-    # Split programs into chunks using np.array_split
-    program_chunks = np.array_split(programs, int(processes * n_chunks_per_process))
+    meta_chunks = split_list(programs, chunksize * processes)
+    if show_progress:
+        meta_chunks = tqdm(meta_chunks)
 
-    with Pool(processes=processes) as pool:
-        job_list = [
-            pool.apply_async(_compute_score_batch, (chunk, board, False))
-            for chunk in program_chunks
-        ]
-        if show_progress:
-            job_list = tqdm(job_list)
-        scores_chunks = [job.get() for job in job_list]
+    scores_chunks = []
+    for meta_chunk in meta_chunks:
+        chunks = split_list(meta_chunk, chunksize)
+        with get_context("spawn").Pool(processes=processes) as pool:
+            job_list = [
+                pool.apply_async(_compute_score_batch, (chunk, board, False))
+                for chunk in chunks
+            ]
+            scores_chunks.extend([job.get() for job in job_list])
 
     scores = list(itertools.chain.from_iterable(scores_chunks))
 
     return scores
+
+
+def split_list(arr, chunksize):
+    """Split a list into chunks of chunksize."""
+    # Ensure the chunksize is at least 1 and not larger than the list itself
+    chunksize = max(1, min(chunksize, len(arr)))
+    return [arr[i : i + chunksize] for i in range(0, len(arr), chunksize)]
