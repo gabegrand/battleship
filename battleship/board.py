@@ -12,14 +12,14 @@ from IPython.display import display
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 
-BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "G": 1, "R": 2, "P": 3, "O":4}
+BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "G": 1, "R": 2, "P": 3, "O": 4}
 BOARD_COLOR_MAPPING = {
     -1: "#eaeae4",
     0: "#9b9c97",
     1: "#04af70",
     2: "#ac2028",
     3: "#6d467b",
-    4: "#ffa500"
+    4: "#ffa500",
 }
 SYMBOL_MEANING_MAPPING = {
     "H": "hidden",
@@ -27,7 +27,7 @@ SYMBOL_MEANING_MAPPING = {
     "G": "green ship",
     "R": "red ship",
     "P": "purple ship",
-    "O": "orange ship"
+    "O": "orange ship",
 }
 TRIAL_IDS = list(range(1, 19))
 
@@ -75,7 +75,7 @@ class Board(object):
     def to_symbolic_array(self):
         """Convert a Board object to a string array."""
         return Board.convert_to_symbolic(self._board.copy())
-    
+
     def to_serialized(self):
         """Convert a Board object into a JSON serializable string."""
         return str(self.to_symbolic_array().tolist())
