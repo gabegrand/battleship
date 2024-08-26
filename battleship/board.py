@@ -12,20 +12,22 @@ from IPython.display import display
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 
-BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "B": 1, "R": 2, "P": 3}
+BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "G": 1, "R": 2, "P": 3, "O":4}
 BOARD_COLOR_MAPPING = {
     -1: "#eaeae4",
     0: "#9b9c97",
-    1: "#2d7bac",
+    1: "#04af70",
     2: "#ac2028",
     3: "#6d467b",
+    4: "#ffa500"
 }
 SYMBOL_MEANING_MAPPING = {
     "H": "hidden",
     "W": "water",
-    "B": "blue ship",
+    "G": "green ship",
     "R": "red ship",
     "P": "purple ship",
+    "O": "orange ship"
 }
 TRIAL_IDS = list(range(1, 19))
 
@@ -73,6 +75,16 @@ class Board(object):
     def to_symbolic_array(self):
         """Convert a Board object to a string array."""
         return Board.convert_to_symbolic(self._board.copy())
+    
+    def to_serialized(self):
+        """Convert a Board object into a JSON serializable string."""
+        return str(self.to_symbolic_array().tolist())
+
+    def from_serialized(serialized_board):
+        """Converts a JSON serializable string back into a Board object"""
+        s = eval(serialized_board)
+        symb = np.array(s)
+        return Board.from_symbolic_array(symb)
 
     def to_textual_description(self, include_hidden: bool = False):
         """Convert a Board object into its serialized representation"""
@@ -135,7 +147,7 @@ class Board(object):
     def to_figure(self, inches: int = 6, dpi: int = 128):
         """Convert a Board object to a matplotlib figure."""
         cmap, norm = matplotlib.colors.from_levels_and_colors(
-            [-1, 0, 1, 2, 3, 4], list(BOARD_COLOR_MAPPING.values())
+            [-1, 0, 1, 2, 3, 4, 5], list(BOARD_COLOR_MAPPING.values())
         )
 
         fig, ax = plt.subplots(figsize=(inches, inches), dpi=dpi)
