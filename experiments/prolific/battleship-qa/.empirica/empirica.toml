@@ -1,9 +1,9 @@
 name = "battleship"
 
 [tajriba.auth]
-srtoken = "RZiTiIIFKzofAhEZ"
+srtoken = "[INSERT TAJRIBA AUTH TOKEN HERE]"
 
 [[tajriba.auth.users]]
 name = "Admin"
 username = "admin"
-password = "ASuhkIEP"
+password = "[INSERT EMPIRICA ADMIN CONSOLE PASSWORD HERE]"
