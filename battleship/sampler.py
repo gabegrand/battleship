@@ -1,10 +1,12 @@
-from board import Board
-import numpy as np
-from copy import deepcopy
-import matplotlib.pyplot as plt
-import matplotlib
 import math
 import random
+from copy import deepcopy
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+
+from battleship.board import Board
 
 
 class SeenShip(object):
@@ -72,7 +74,7 @@ def occlusion_fixing(starting_board: Board, ship_labels):
 
 
 def grow_ship(partial_board: Board, ship_picked, length_picked, max_length_dict):
-    partial_board = partial_board.to_symbolic_array()
+    # partial_board = partial_board.to_symbolic_array()
     # print(f"[GS] attempting to grow {ship_picked.label}, orientation {ship_picked.orientation}")
     if ship_picked.length == 1:
         allowable_orientations = [
@@ -192,7 +194,6 @@ def sample_board(partial_board: Board, ship_labels, ship_lengths):
     while any(
         [assigned_length == None for assigned_length in assigned_length_dict.values()]
     ):
-
         if partial_board is None:
             return None
 
