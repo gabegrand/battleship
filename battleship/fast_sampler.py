@@ -114,20 +114,21 @@ class FastSampler:
 
         available_span_ids_global = set(self.spans_by_id.keys())
 
+        # Discard all spans that contain a water tile (0)
+        for tile in zip(*np.where(new_board == 0)):
+            for span_id in self.spans_by_tile[tile]:
+                available_span_ids_global.discard(span_id)
+
         for ship_id, ship_length in enumerate(self.ship_lengths):
             # ship_id is 1-indexed
             ship_id += 1
+
+            print(ship_id)
 
             # Start with all spans matching the ship's length
             available_span_ids = available_span_ids_global.intersection(
                 self.spans_by_length[ship_length]
             )
-
-            # Discard all spans that contain a water or other ship tile
-            # Only hidden tiles (-1) or tiles matching ship_id are allowed
-            for tile in zip(*np.where(~np.isin(new_board, [-1, ship_id]))):
-                for span_id in self.spans_by_tile[tile]:
-                    available_span_ids.discard(span_id)
 
             # If the ship is already (partially) placed on the board, discard all spans that do not contain the ship
             if ship_id in new_board:
