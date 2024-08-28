@@ -80,6 +80,7 @@ class FastSampler:
         self.rng = np.random.default_rng(seed)
 
         self._init_spans()
+        self._compute_available_spans()
 
     def _init_spans(self):
         """Computes a data structure that stores all possible spans for ships with the specified lengths."""
@@ -121,30 +122,31 @@ class FastSampler:
         for tile in span.tiles:
             self._spans_by_tile[tile].add(span.id)
 
-    def complete_board(self):
-        """Randomly places all ships on the board, ensuring that ships are placed in unoccupied spans."""
-        new_board = self.board.board.copy()
+    def _compute_available_spans(self):
+        board = self.board.board.copy()
 
-        available_span_ids_global = set(self._spans_by_id.keys())
+        # Initialize the set of spans available across the whole board
+        self.available_span_ids_global = set(self._spans_by_id.keys())
 
         # Discard all spans that contain a water tile (0)
-        for tile in zip(*np.where(new_board == 0)):
+        for tile in zip(*np.where(board == BOARD_SYMBOL_MAPPING["W"])):
             for span_id in self._spans_by_tile[tile]:
-                available_span_ids_global.discard(span_id)
+                self.available_span_ids_global.discard(span_id)
 
+        # Independently compute the set of available spans for each ship
+        self.available_span_ids_by_ship = {}
         for ship_length, ship_label in zip(self.ship_lengths, self.ship_labels):
-            # ship_id is 1-indexed
             ship_id = BOARD_SYMBOL_MAPPING[ship_label]
 
             # Start with all spans matching the ship's length
-            available_span_ids = available_span_ids_global.intersection(
+            available_span_ids = self.available_span_ids_global.intersection(
                 self._spans_by_length[ship_length]
             )
 
             # If the ship is already (partially) placed on the board, discard all spans that do not contain the ship
-            if ship_id in new_board:
+            if ship_id in board:
                 # Find all spans that contain all of the ship's visible tiles
-                ship_tiles = list(zip(*np.where(new_board == ship_id)))
+                ship_tiles = list(zip(*np.where(board == ship_id)))
                 ship_span_ids = set.intersection(
                     *[self._spans_by_tile[tile] for tile in ship_tiles]
                 )
@@ -156,6 +158,28 @@ class FastSampler:
             if len(available_span_ids) == 0:
                 return None
 
+            self.available_span_ids_by_ship[ship_label] = available_span_ids
+
+    def complete_board(self):
+        """Randomly places all ships on the board, ensuring that ships are placed in unoccupied spans."""
+
+        # Initialize the new board
+        new_board = self.board.board.copy()
+
+        # Copy the set of available spans - this will be modified as ships are placed
+        available_span_ids_local = self.available_span_ids_global.copy()
+
+        # Place each ship on the board in order from most-to-least constrained
+        for ship_label in sorted(
+            self.ship_labels,
+            key=lambda ship_label: len(self.available_span_ids_by_ship[ship_label]),
+        ):
+            ship_id = BOARD_SYMBOL_MAPPING[ship_label]
+
+            available_span_ids = self.available_span_ids_by_ship[
+                ship_label
+            ].intersection(available_span_ids_local)
+
             # Randomly select a span to place the ship
             span_id = self.rng.choice(list(available_span_ids))
             span = self._spans_by_id[span_id]
@@ -166,6 +190,6 @@ class FastSampler:
 
                 # Discard all spans that contain this tile
                 for span_id in self._spans_by_tile[tile]:
-                    available_span_ids_global.discard(span_id)
+                    available_span_ids_local.discard(span_id)
 
         return Board(new_board)
