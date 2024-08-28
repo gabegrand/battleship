@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 
 from battleship.board import Board
+from battleship.board import BOARD_SYMBOL_MAPPING
 
 
 class Orientation(StrEnum):
@@ -58,15 +59,25 @@ class Span:
 
 
 class FastSampler:
-    def __init__(self, board: Board, ship_lengths: List[int], seed: int = 0):
+    def __init__(
+        self,
+        board: Board,
+        ship_lengths: List[int],
+        ship_labels: List[str],
+        seed: int = 0,
+    ):
         self.board = board
         self.ship_lengths = ship_lengths
+        self.ship_labels = ship_labels
+
+        assert len(ship_lengths) == len(ship_labels)
+        assert len(set(ship_labels)) == len(ship_labels)
 
         self.rng = np.random.default_rng(seed)
 
-        self._compute_spans()
+        self._init_spans()
 
-    def _compute_spans(self):
+    def _init_spans(self):
         """Computes a data structure that stores all possible spans for ships with the specified lengths."""
 
         # Stores all unique spans
@@ -119,11 +130,9 @@ class FastSampler:
             for span_id in self.spans_by_tile[tile]:
                 available_span_ids_global.discard(span_id)
 
-        for ship_id, ship_length in enumerate(self.ship_lengths):
+        for ship_length, ship_label in zip(self.ship_lengths, self.ship_labels):
             # ship_id is 1-indexed
-            ship_id += 1
-
-            print(ship_id)
+            ship_id = BOARD_SYMBOL_MAPPING[ship_label]
 
             # Start with all spans matching the ship's length
             available_span_ids = available_span_ids_global.intersection(
