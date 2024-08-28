@@ -50,7 +50,7 @@ class Span:
 
     @property
     def length(self):
-        if self.orientation == Orientation.HORIZONTAL:
+        if self.orientation == Orientation.VERTICAL:
             return self.bottomright[0] - self.topleft[0] + 1
         else:
             return self.bottomright[1] - self.topleft[1] + 1
@@ -63,6 +63,20 @@ class Span:
 
 
 class FastSampler:
+    """
+    A fast sampler for placing ships on a (partially complete) board.
+
+    Args:
+        board (Board): The board on which the ships will be placed.
+        ship_lengths (List[int]): The lengths of the ships to be placed; e.g., [2, 3, 4, 5].
+        ship_labels (List[str]): The labels of the ships to be placed; e.g., ["R", "G", "P", "0"].
+        seed (int, optional): The seed for the random number generator. Defaults to 0.
+    Attributes:
+        rng (numpy.random.Generator): The random number generator. Setting the state of this object can be used to reproduce the same board.
+    Methods:
+        populate_board(): Randomly places all ships on the board, ensuring that ships are placed in unoccupied spans.
+    """
+
     def __init__(
         self,
         board: Board,
@@ -104,7 +118,7 @@ class FastSampler:
                     topleft = (i, j)
                     bottomright = (i + length - 1, j)
                     span = Span(len(self._spans), topleft, bottomright)
-                    self._add_span(span, length)
+                    self._add_span(span)
 
             # Add horizontal spans
             for i in range(self.board.size):
@@ -112,12 +126,12 @@ class FastSampler:
                     topleft = (i, j)
                     bottomright = (i, j + length - 1)
                     span = Span(len(self._spans), topleft, bottomright)
-                    self._add_span(span, length)
+                    self._add_span(span)
 
-    def _add_span(self, span, length):
+    def _add_span(self, span):
         self._spans.add(span)
         self._spans_by_id[span.id] = span
-        self._spans_by_length[length].add(span.id)
+        self._spans_by_length[span.length].add(span.id)
 
         for tile in span.tiles:
             self._spans_by_tile[tile].add(span.id)
@@ -154,13 +168,15 @@ class FastSampler:
                 # Restrict the set of possible spans for the ship
                 available_span_ids.intersection_update(ship_span_ids)
 
-            # If there is nowhere to place the ship, return None
+            # If there is nowhere to place the ship, raise an error
             if len(available_span_ids) == 0:
-                return None
+                raise ValueError(
+                    f"Ship `{ship_label}` has no possible placement locations."
+                )
 
             self.available_span_ids_by_ship[ship_label] = available_span_ids
 
-    def complete_board(self):
+    def populate_board(self):
         """Randomly places all ships on the board, ensuring that ships are placed in unoccupied spans."""
 
         # Initialize the new board
