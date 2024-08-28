@@ -3,6 +3,7 @@ import base64
 import io
 import os
 from enum import StrEnum
+from typing import List
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -145,30 +146,43 @@ class Board(object):
         return board
 
     def to_figure(self, inches: int = 6, dpi: int = 128):
+        return Board._to_figure(board_array=self.board, inches=inches, dpi=dpi)
+
+    @staticmethod
+    def _to_figure(
+        board_array: np.ndarray, inches: int = 6, dpi: int = 128, mode: str = "default"
+    ):
         """Convert a Board object to a matplotlib figure."""
-        cmap, norm = matplotlib.colors.from_levels_and_colors(
-            [-1, 0, 1, 2, 3, 4, 5], list(BOARD_COLOR_MAPPING.values())
-        )
+
+        if mode == "default":
+            cmap, norm = matplotlib.colors.from_levels_and_colors(
+                [-1, 0, 1, 2, 3, 4, 5], list(BOARD_COLOR_MAPPING.values())
+            )
+        elif mode == "heatmap":
+            cmap = matplotlib.cm.get_cmap("viridis")
+            norm = None
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
 
         fig, ax = plt.subplots(figsize=(inches, inches), dpi=dpi)
-        ax.matshow(self._board, cmap=cmap, norm=norm)
+        ax.matshow(board_array, cmap=cmap, norm=norm)
 
         # Add gridlines
-        ax.set_xticks(np.arange(-0.5, self.size, 1), minor=True)
-        ax.set_yticks(np.arange(-0.5, self.size, 1), minor=True)
+        ax.set_xticks(np.arange(-0.5, len(board_array), 1), minor=True)
+        ax.set_yticks(np.arange(-0.5, len(board_array), 1), minor=True)
         ax.grid(which="minor", color="w", linestyle="-", linewidth=2)
 
         # Add labels
-        ax.set_xticks(np.arange(0, self.size, 1))
-        ax.set_yticks(np.arange(0, self.size, 1))
+        ax.set_xticks(np.arange(0, len(board_array), 1))
+        ax.set_yticks(np.arange(0, len(board_array), 1))
         ax.set_xticklabels(
-            [chr(ord("A") + i) for i in np.arange(0, self.size, 1)],
+            [chr(ord("A") + i) for i in np.arange(0, len(board_array), 1)],
             fontsize=24,
             fontweight="bold",
             color="#9b9c97",
         )
         ax.set_yticklabels(
-            np.arange(1, self.size + 1, 1),
+            np.arange(1, len(board_array) + 1, 1),
             fontsize=24,
             fontweight="bold",
             color="#9b9c97",

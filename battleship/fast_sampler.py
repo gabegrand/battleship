@@ -209,3 +209,19 @@ class FastSampler:
                     available_span_ids_local.discard(span_id)
 
         return Board(new_board)
+
+    def compute_posterior(self, n_samples: int):
+        """Computes an approximate posterior distribution over ship locations."""
+        # Initialize the count of each board
+        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
+
+        for _ in range(n_samples):
+            new_board = self.populate_board()
+            board_counts += (new_board.board > 0).astype(int)
+
+        return board_counts / n_samples
+
+    def heatmap(self, n_samples: int, **fig_kwargs):
+        """Computes a heatmap of the approximate posterior distribution over ship locations."""
+        posterior = self.compute_posterior(n_samples)
+        return Board._to_figure(posterior, mode="heatmap", **fig_kwargs)
