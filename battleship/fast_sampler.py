@@ -105,9 +105,6 @@ class FastSampler:
         # Maps span_id to Span object
         self._spans_by_id = {}
 
-        # Maps ship_length to Span objects
-        self._spans_by_length = defaultdict(set)
-
         # Maps tile to span_id of all spans that contain that tile
         self._spans_by_tile = defaultdict(set)
 
@@ -131,7 +128,6 @@ class FastSampler:
     def _add_span(self, span):
         self._spans.add(span)
         self._spans_by_id[span.id] = span
-        self._spans_by_length[span.length].add(span.id)
 
         for tile in span.tiles:
             self._spans_by_tile[tile].add(span.id)
@@ -148,14 +144,12 @@ class FastSampler:
                 self.available_span_ids_global.discard(span_id)
 
         # Independently compute the set of available spans for each ship
-        self.available_span_ids_by_ship = {}
-        for ship_length, ship_label in zip(self.ship_lengths, self.ship_labels):
+        self.available_span_ids_by_ship_id = {}
+        for ship_label in self.ship_labels:
             ship_id = BOARD_SYMBOL_MAPPING[ship_label]
 
-            # Start with all spans matching the ship's length
-            available_span_ids = self.available_span_ids_global.intersection(
-                self._spans_by_length[ship_length]
-            )
+            # Start with all spans available
+            available_span_ids = self.available_span_ids_global.copy()
 
             # If the ship is already (partially) placed on the board, discard all spans that do not contain the ship
             if ship_id in board:
@@ -171,10 +165,10 @@ class FastSampler:
             # If there is nowhere to place the ship, raise an error
             if len(available_span_ids) == 0:
                 raise ValueError(
-                    f"Ship `{ship_label}` has no possible placement locations."
+                    f"Ship `{ship_label}` has no possible placement locations on the given board."
                 )
 
-            self.available_span_ids_by_ship[ship_label] = available_span_ids
+            self.available_span_ids_by_ship_id[ship_id] = available_span_ids
 
     def populate_board(self):
         """Randomly places all ships on the board, ensuring that ships are placed in unoccupied spans."""
@@ -188,13 +182,19 @@ class FastSampler:
         # Place each ship on the board in order from most-to-least constrained
         for ship_label in sorted(
             self.ship_labels,
-            key=lambda ship_label: len(self.available_span_ids_by_ship[ship_label]),
+            key=lambda ship_label: len(
+                self.available_span_ids_by_ship_id[BOARD_SYMBOL_MAPPING[ship_label]]
+            ),
         ):
             ship_id = BOARD_SYMBOL_MAPPING[ship_label]
 
-            available_span_ids = self.available_span_ids_by_ship[
-                ship_label
+            available_span_ids = self.available_span_ids_by_ship_id[
+                ship_id
             ].intersection(available_span_ids_local)
+
+            # If there is nowhere to place the ship, return None
+            if len(available_span_ids) == 0:
+                return None
 
             # Randomly select a span to place the ship
             span_id = self.rng.choice(list(available_span_ids))
