@@ -1,0 +1,130 @@
+factors:
+    - name: playerCount
+      desc: playerCount determines the number of Players are in a Game.
+      values:
+        - value: 1
+        - value: 2
+    - name: testNumber
+      desc: testNumber determines the number of test rounds.
+      values:
+        - value: 0
+        - value: 1
+        - value: 2
+        - value: 4
+    - name: totalQuestions
+      desc: totalQuestions determines the total number of questions the captain can ask across a Round.
+      values:
+        - value: 0
+        - value: 1
+        - value: 2
+        - value: 3
+        - value: 4
+        - value: 5
+    - name: categorical
+      desc: categorical determines whether the spotter is Boolean or free-response.
+      values:
+        - value: true
+        - value: false
+    - name: questionEveryTime
+      desc: questionEveryTime governs if participants have to answer one question per turn or can choose when to take their questions.
+      values:
+        - value: true
+        - value: false
+    - name: spotterRatesQuestions
+      desc: spotterRatesQuestions governs if the spotter is asked to rate the captain's questions or not.
+      values:
+        - value: true
+        - value: false
+    - name: compcode
+      desc: compcode is the empirica completion code for the experiment.
+      values:
+        - value: foobar
+        - value: foobar_debug
+        - value: foobar_experiment
+    - name: maxTime
+      desc: maxTime determines how long each stage is.
+      values:
+        - value: 120
+        - value: 300
+        - value: 3600
+        - value: 150
+    - name: realNumber
+      desc: realNumber determines the number of real rounds.
+      values:
+        - value: 0
+        - value: 1
+        - value: 2
+        - value: 4
+        - value: 6
+        - value: 3
+    - name: compcodeStuck
+      desc: the completion code participants put in if stuck.
+      values:
+        - value: foobar_stuck
+    - name: uniformStart
+      desc: if boards start fully gray or not.
+      values:
+        - value: true
+        - value: false
+    - name: startingBonus
+      desc: max bonus, in dollars
+      values:
+        - value: 5
+        - value: 10
+    - name: missPenalty
+      desc: percent of bonus lost per miss
+      values:
+        - value: 10
+        - value: 12
+        - value: 15
+    - name: bonusFloor
+      desc: lowest percent value the bonus can go to
+      values:
+        - value: 0
+        - value: 10
+        - value: 15
+treatments:
+    - name: Experiment
+      desc: True Conditions
+      factors:
+        categorical: true
+        compcode: foobar_experiment
+        compcodeStuck: foobar_stuck
+        maxTime: 150
+        playerCount: 2
+        questionEveryTime: false
+        realNumber: 6
+        spotterRatesQuestions: true
+        testNumber: 2
+        totalQuestions: 10
+        uniformStart: true
+        startingBonus: 10
+        missPenalty: 12
+        bonusFloor: 10
+    - name: skiptoexitscreen
+      desc: Debug Conditions
+      factors:
+        categorical: true
+        compcode: foobar_debug
+        compcodeStuck: foobar_stuck
+        maxTime: 3600
+        playerCount: 2
+        totalQuestions: 5
+        startingBonus: 10
+        missPenalty: 12
+        bonusFloor: 10
+        uniformStart: true
+    - name: Debug
+      desc: Debug Conditions
+      factors:
+        categorical: true
+        compcode: foobar_debug
+        maxTime: 3600
+        playerCount: 2
+        realNumber: 2
+        spotterRatesQuestions: true
+        testNumber: 1
+        startingBonus: 10
+        missPenalty: 12
+        bonusFloor: 10
+        totalQuestions: 5
