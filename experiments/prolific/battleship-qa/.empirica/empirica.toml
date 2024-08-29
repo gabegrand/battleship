@@ -1,9 +1,0 @@
-name = "battleship"
-
-[tajriba.auth]
-srtoken = "RZiTiIIFKzofAhEZ"
-
-[[tajriba.auth.users]]
-name = "Admin"
-username = "admin"
-password = "ASuhkIEP"
