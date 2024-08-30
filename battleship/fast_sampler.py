@@ -208,18 +208,35 @@ class FastSampler:
                 for span_id in self._spans_by_tile[tile]:
                     available_span_ids_local.discard(span_id)
 
+        # Set all remaining hidden tiles to water
+        new_board[new_board == BOARD_SYMBOL_MAPPING["H"]] = BOARD_SYMBOL_MAPPING["W"]
+
         return Board(new_board)
 
-    def compute_posterior(self, n_samples: int):
+    def compute_posterior(self, n_samples: int, normalize: bool = True):
         """Computes an approximate posterior distribution over ship locations."""
         # Initialize the count of each board
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
 
+        n_samples_valid = 0
         for _ in range(n_samples):
             new_board = self.populate_board()
-            board_counts += (new_board.board > 0).astype(int)
+            if new_board is not None:
+                board_counts += (new_board.board > 0).astype(int)
+                n_samples_valid += 1
 
-        return board_counts / n_samples
+        if n_samples_valid == 0:
+            print("Warning: Unable to compute posterior; returning uniform array.")
+
+        if normalize:
+            if n_samples_valid == 0:
+                return (
+                    np.ones((self.board.size, self.board.size)) / self.board.size**2
+                )
+            else:
+                return board_counts / n_samples_valid
+        else:
+            return board_counts
 
     def heatmap(self, n_samples: int, **fig_kwargs):
         """Computes a heatmap of the approximate posterior distribution over ship locations."""

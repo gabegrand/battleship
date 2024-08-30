@@ -161,6 +161,9 @@ class Board(object):
         elif mode == "heatmap":
             cmap = matplotlib.cm.get_cmap("viridis")
             norm = None
+        elif mode == "heatmap_fixed_scale":
+            cmap = matplotlib.cm.get_cmap("viridis")
+            norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
