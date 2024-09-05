@@ -12,7 +12,7 @@ import { SharedStage_3 } from "./stages/SharedStage_3.jsx";
 import { Instructions } from "./stages/Instructions.jsx";
 import { EndOfTests } from "./stages/EndOfTests.jsx";
 import { EndOfInstructions } from "./stages/EndOfInstructions.jsx";
-import { RoundWin } from "./stages/RoundWin";
+import { TimeoutStage } from "./stages/TimeoutStage.jsx";
 
 export function Stage() {
   const player = usePlayer();
@@ -54,14 +54,14 @@ export function Stage() {
         return <SharedStage_2 />;
     case "shared_stage_3":
         return <SharedStage_3 />;
-    case "round_win":
-      return <RoundWin />;
     case "instructions":
       return <Instructions />;
     case "end_of_tests":
       return <EndOfTests />;
     case "end_of_instructions":
       return <EndOfInstructions />;
+    case "timeout":
+      return <TimeoutStage />;
     default:
       return <div>Unknown task</div>;
   }

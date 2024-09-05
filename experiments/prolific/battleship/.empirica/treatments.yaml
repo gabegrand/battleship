@@ -41,13 +41,6 @@ factors:
         - value: foobar
         - value: foobar_debug
         - value: foobar_experiment
-    - name: maxTime
-      desc: maxTime determines how long each stage is.
-      values:
-        - value: 120
-        - value: 300
-        - value: 3600
-        - value: 150
     - name: realNumber
       desc: realNumber determines the number of real rounds.
       values:
@@ -83,48 +76,73 @@ factors:
         - value: 0
         - value: 10
         - value: 15
+    - name: compcodeTimeoutGuilty
+      values:
+        - value: foobar_guilty
+    - name: compcodeTimeoutInnocent
+      values:
+        - value: foobar_innocent
+    - name: skipTutorial
+      values:
+        - value: true
+    - name: maxTime
+      desc: maxTime determines how long each stage is.
+      values:
+        - value: 120
+        - value: 300
+        - value: 3600
+        - value: 150
+        - value: 20
+        - value: 200
+        - value: 15
 treatments:
     - name: Experiment
       desc: True Conditions
       factors:
+        bonusFloor: 10
         categorical: true
         compcode: foobar_experiment
         compcodeStuck: foobar_stuck
         maxTime: 150
+        missPenalty: 12
         playerCount: 2
         questionEveryTime: false
         realNumber: 6
+        skipTutorial: false
         spotterRatesQuestions: true
-        testNumber: 2
-        totalQuestions: 10
-        uniformStart: true
         startingBonus: 10
-        missPenalty: 12
-        bonusFloor: 10
+        testNumber: 0
+        totalQuestions: 10
+        timeoutDuration: 30
+        uniformStart: true
     - name: skiptoexitscreen
       desc: Debug Conditions
       factors:
+        bonusFloor: 10
         categorical: true
         compcode: foobar_debug
         compcodeStuck: foobar_stuck
         maxTime: 3600
-        playerCount: 2
-        totalQuestions: 5
-        startingBonus: 10
         missPenalty: 12
-        bonusFloor: 10
+        playerCount: 2
+        startingBonus: 10
+        totalQuestions: 5
         uniformStart: true
     - name: Debug
       desc: Debug Conditions
       factors:
+        bonusFloor: 10
         categorical: true
         compcode: foobar_debug
-        maxTime: 3600
+        compcodeStuck: foobar_stuck
+        compcodeTimeoutGuilty: foobar_guilty
+        compcodeTimeoutInnocent: foobar_innocent
+        maxTime: 15
+        missPenalty: 12
         playerCount: 2
         realNumber: 2
+        timeoutDuration: 6
+        skipTutorial: true
         spotterRatesQuestions: true
-        testNumber: 1
         startingBonus: 10
-        missPenalty: 12
-        bonusFloor: 10
         totalQuestions: 5

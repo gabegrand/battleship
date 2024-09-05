@@ -20,29 +20,8 @@ export function SharedStage() {
     const [showTextbox, setShowTextbox] = useState(false);
     const [questionRating, setQuestionRating] = useState(3);
 
-    function handleQuestionRatingChange(e) {
-        setQuestionRating(e.target.value);
-    }
-
-    function getAdditionalText(index) {
-        switch (index) {
-            case 0:
-                return "(Not at all helpful)";
-            case 1:
-                return "(Slightly helpful)";
-            case 2:
-                return "(Somewhat helpful)";
-            case 3:
-                return "(Very helpful)";
-            case 4:
-                return "(Extremely helpful)";
-          default:
-            return ""
-        }
-    }
-
     function hasThinkingTimePassed(){
-        return timer && timer.remaining < ((game.get("roundDuration")-2)*1000);
+        return timer && timer.remaining < ((game.get("roundDuration")-1.5)*1000);
     }
 
     function handleAskQuestion() {
@@ -61,6 +40,7 @@ export function SharedStage() {
 
     function handleGameOver() {
         round.set("gameOver",true);
+        player.stage.set("timedOut",false);
         player.stage.set("submit",true);
     }
 
@@ -122,75 +102,40 @@ export function SharedStage() {
     
                 }
             } else {
-                return (<div><p style={{margin: "20px"}}><i>Please think about your action for 2.5 seconds...</i> </p></div>); 
+                return (<div><p style={{margin: "20px"}}><i></i> </p></div>); 
             }
 
             
         }
     }
 
-    function handleSpotterSubmission(){
-        round.set("spotterRatings",[...round.get("spotterRatings"), [round.get("question"), questionRating]]);
-        stage.set("questionRated",true);
-        player.stage.set("submit",true);
-    }
-    
-    function handleSpotterLikert(){
-        var lastQuestion = round.get("question");
-        console.log("last q", lastQuestion);
-            if (lastQuestion != noQuestion && lastQuestion != undefined) {
-                if (!stage.get("questionRated")) {
-                return (<div style={{display:"flex", flexDirection:"row", justifyItems:"center"}}><div>
-                    <label className={"block text-sm font-medium text-gray-700 my-2"}>
-                    <p style={{fontSize:"1.25vw", marginRight:"0.5vw"}}>Rate the spotter's last question. <b>How helpful was the question:</b> "{lastQuestion}"?</p>
-                    </label>
-                    <div className="flex space-x-4" style={{justifyContent:"center"}}>
-                      {[...Array(5)].map((_, index) => (
-                    <label key={index} className="flex items-center space-x-1">
-                      <input
-                        type="radio"
-                        name="questionRating"
-                        value={index + 1}
-                        checked={questionRating === (index + 1).toString()}
-                        onChange={handleQuestionRatingChange}
-                      />
-                      {index + 1} {getAdditionalText(index)}
-                    </label>
-                  ))}
-                    </div>
-                  </div>
-                    <div style={{margin:"1vw"}}>
-                    <Button handleClick={handleSpotterSubmission} width="8vw" height="6vh">Rate</Button>
-                    </div>    
-                </div>);
-                }
-                else {
-                    return (<div><i>Thank you for rating. The captain is thinking of a question...</i></div>);
-                }
-            } else {
-                player.stage.set("submit",true);
-                return (<div style={{margin: "20px", fontSize:"1vw"}}><i>The captain is thinking of a question...</i></div>);
-            }
-    }
-
     function askQuestion() {
         var inputText = document.getElementById('question').value;
         inputText = inputText.trim();
         if ((inputText.length >= 1 && inputText.length < 100) && round.get("questionsRemaining") > 0) {
-            SendMessage(inputText, "question", round, game, timer);
-            round.set("questionsRemaining", round.get("questionsRemaining")-1);
-            stage.set("questionAsked",true);
+            if (!stage.get("questionAsked")){
+                SendMessage(inputText, "question", round, game, timer);
+                round.set("questionsRemaining", round.get("questionsRemaining")-1);
+                stage.set("questionAsked",true);
+            }
+            player.stage.set("timedOut",false);
             player.stage.set("submit",true);
         }
     }
 
     function skipToFiring() {
-        SendMessage(noQuestion, "question", round, game, timer);
+        if (!stage.get("questionAsked")) {
+            SendMessage(noQuestion, "question", round, game, timer);
+            round.set("skippedToFiring",true);
+            stage.set("questionAsked",true);
+        }
+        player.stage.set("timedOut",false);
         player.stage.set("submit",true);
     }
 
     switch (player.round.get("role")) {
         case "spotter":
+            player.stage.set("timedOut",false);
             player.stage.set("submit", true);
             return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             

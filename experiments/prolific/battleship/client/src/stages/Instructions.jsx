@@ -39,5 +39,10 @@ export function Instructions() {
       [0,2,0,1,0],
       [0,0,0,0,0]]);
 
+  if (game.get("skipTutorial")) {
+    player.stage.set("timedOut",false);
+    player.stage.set("submit",true);
+  }
+
     return (<IntroStage1></IntroStage1>);
 }

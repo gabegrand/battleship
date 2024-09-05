@@ -40,10 +40,10 @@ export function Profile() {
     }
 
     var bonus = (Math.max(100-penalty*misses,game.get("bonusFloor"))/100)*(game.get("startingBonus")/(game.get("totalRounds")-game.get("testRounds")));
-    bonus = Math.round(bonus*100)/100
+    bonus = bonus.toFixed(2);
 
     round.set("bonus", bonus);
-    return bonus+"$";
+    return "$"+bonus;
   }
 
   function getSignal() {

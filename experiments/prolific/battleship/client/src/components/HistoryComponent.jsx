@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { usePlayer, useRound, useStage } from "@empirica/core/player/classic/react";
-import { noQuestion, noQuestionAnswer, timeoutAnswer } from '../../../utils/systemText.js';
 
 export function HistoryComponent(grid) {
   const round = useRound();
@@ -31,14 +30,7 @@ export function HistoryComponent(grid) {
   }
 
   function handleText(message) {
-    var text = message.text;
-    if ((text == noQuestion || text == noQuestionAnswer) || text == timeoutAnswer) {
-      if (message.type == "question") {
-      return <div><b>[Question skipped or timed out]</b></div>
-      }
-    } else {
       return <div style={{marginBottom: message.type == "move" ? "20px" : "0px"}}><b>{capitalize(getAuthor(message.type))}</b>: <i>{capitalize(message.text)}</i></div>
-    }
   }
 
   var histHeight = 0;

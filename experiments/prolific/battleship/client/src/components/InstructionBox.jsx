@@ -47,10 +47,15 @@ export function InstructionBox(textStage, onClick) {
       case 8:
         return (<p>This is the Spotter's view: the Spotter can see the entire board, with tiles the captain cannot see marked with a <b>diagonal pattern</b>.</p>);
       case 9:
-        return (<p>The Spotter's role is to answer the Captain's questions accurately: to finish the tutorial, answer the question the Captain asked. It should look pretty familiar...</p>);
+        return (<p>The Spotter's role is to answer the Captain's questions accurately: to end the tutorial, answer the question the Captain asked. It should look pretty familiar...</p>);
       case 10:
         return (<p>Good job! This concludes the Tutorial. Press the button below to continue to your first game!</p>);
     }
+  }
+
+  function handleEnd(){
+    player.stage.set("timedOut",false);
+    player.stage.set("submit",true);
   }
 
   function chooseButtons(stage) {
@@ -60,7 +65,7 @@ export function InstructionBox(textStage, onClick) {
       {(!([5,6,9].includes(player.stage.get("textStage"))) || (player.stage.get("textStage") == 7 && player.stage.get("forcedUpdate") == undefined)) ? <Button height="2vw" width="6vw" fontSize="0.9vw" handleClick={() => player.stage.set("textStage",player.stage.get("textStage")+1)}>Continue</Button> : <div></div>}
       </div> );
     } else {
-      return (<NextGameButton handleClick={player.stage.set("submit",true)}>Continue</NextGameButton>);
+      return (<NextGameButton handleClick={handleEnd()}>Continue</NextGameButton>);
     }
   }
 

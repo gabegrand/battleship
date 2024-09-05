@@ -2,7 +2,12 @@ export function SendMessage(input, message_type, round, game, timer) {
 
     round.set(message_type,input);
 
-    var stage_time = game.get("roundDuration")*1000 - timer?.remaining;
+    var stage_time = 0;
+    if (game == "timeout") {
+        stage_time = 0;
+    } else {
+        stage_time = game.get("roundDuration")*1000 - timer?.remaining;
+    }
 
     var newMessage = new Map();
     newMessage.set("text", input);
@@ -17,7 +22,7 @@ export function SendMessageIntro(input, message_type, player) {
 
     player.stage.set(message_type,input);
 
-    var stage_time = -2005;
+    var stage_time = 0;
 
     var newMessage = new Map();
     newMessage.set("text", input);

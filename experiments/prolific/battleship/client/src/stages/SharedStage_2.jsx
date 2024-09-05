@@ -15,7 +15,7 @@ export function SharedStage_2() {
     const timer = useStageTimer();
     const round = useRound();
     const player = usePlayer();
-    const [questionRating, setQuestionRating] = useState(3);
+    const [questionRating, setQuestionRating] = useState("");
 
     function handleQuestionRatingChange(e) {
         setQuestionRating(e.target.value);
@@ -33,16 +33,63 @@ export function SharedStage_2() {
                 return "(Very helpful)";
             case 4:
                 return "(Extremely helpful)";
-          default:
-            return ""
+            default:
+                return ""
         }
     }
+
+    function handleSpotterSubmission(){
+        if (questionRating === "" || questionRating === "(No Rating)") {
+            alert("Please select a valid rating before submitting.");
+            return;
+        }
+        round.set("spotterRatings", [...round.get("spotterRatings"), [round.get("question"), parseInt(questionRating, 10)]]);
+        stage.set("questionRated",true);
+    }
+    
+    function handleSpotterLikert(){
+        if (!round.get("skippedToFiring")) { //&& lastQuestion != undefined
+            if (!stage.get("questionRated")) {
+                return (
+                    <div style={{display:"flex", flexDirection:"row", justifyItems:"center"}}>
+                        <div>
+                            <label className={"block text-sm font-medium text-gray-700 my-2"}>
+                                
+                            </label>
+                            <div className="flex space-x-4" style={{justifyContent:"center", flexDirection:"row"}}>
+                            <p style={{fontSize:"1.25vw", marginRight:"0.5vw"}}>How helpful is this question?</p>
+                                <select 
+                                    value={questionRating} 
+                                    onChange={handleQuestionRatingChange} 
+                                    style={{ fontSize: "1vw", padding: "5px" }}
+                                >
+                                    <option value="(No Rating)">Select a rating...</option>
+                                    {[...Array(5)].map((_, index) => (
+                                        <option key={index} value={index + 1}>
+                                            {index + 1} {getAdditionalText(index)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>  
+                    </div>
+                );
+            } else {
+                return (<div><i>Thank you for rating. The captain is thinking of a question...</i></div>);
+            }
+        } else {
+            player.stage.set("timedOut",false);
+            player.stage.set("submit",true);
+            return (<div style={{margin: "20px", fontSize:"1vw"}}><i>The captain is thinking of a question...</i></div>);
+        }
+    }
+
     function getPossibleAnswers() {
         if (game.get("categoricalAnswers")) {
             return (
             <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                <Button className="m-5" handleClick={() => answerQuestion("categorical", "yes")}>Yes</Button>
-                <Button className="m-5" handleClick={() => answerQuestion("categorical", "no")}>No</Button>
+                <Button className="m-2" height="3vw" width="8vw" handleClick={() => answerQuestion("categorical", "yes")}>Yes</Button>
+                <Button className="m-2" height="3vw" width="8vw" handleClick={() => answerQuestion("categorical", "no")}>No</Button>
             </div>
             );
         } else {
@@ -54,159 +101,121 @@ export function SharedStage_2() {
         }
     }
 
-    function handleSpotterSubmission(){
-        round.set("spotterRatings",[...round.get("spotterRatings"), [round.get("question"), questionRating]]);
-        stage.set("questionRated",true);
-    }
-    
-    function handleSpotterLikert(){
-        var lastQuestion = round.get("question");
-        console.log("last q", lastQuestion);
-            if (lastQuestion != noQuestion && lastQuestion != undefined) {
-                if (!stage.get("questionRated")) {
-                return (<div style={{display:"flex", flexDirection:"row", justifyItems:"center"}}><div>
-                    <label className={"block text-sm font-medium text-gray-700 my-2"}>
-                    <p style={{fontSize:"1.25vw", marginRight:"0.5vw"}}> <b>How helpful is this question?:</b></p>
-                    </label>
-                    <div className="flex space-x-4" style={{justifyContent:"center"}}>
-                      {[...Array(5)].map((_, index) => (
-                    <label key={index} className="flex items-center space-x-1">
-                      <input
-                        type="radio"
-                        name="questionRating"
-                        value={index + 1}
-                        checked={questionRating === (index + 1).toString()}
-                        onChange={handleQuestionRatingChange}
-                      />
-                      {index + 1} {getAdditionalText(index)}
-                    </label>
-                  ))}
-                    </div>
-                  </div>
-                    <div style={{margin:"1vw"}}>
-                    <Button handleClick={handleSpotterSubmission} width="8vw" height="6vh">Rate</Button>
-                    </div>    
-                </div>);
-                }
-                else {
-                    return (<div><i>Thank you for rating. The captain is thinking of a question...</i></div>);
-                }
-            } else {
-                player.stage.set("submit",true);
-                return (<div style={{margin: "20px", fontSize:"1vw"}}><i>The captain is thinking of a question...</i></div>);
-            }
-    }
-
     function answerQuestion(inputType, hardcodedAnswer) {
-        if (round.get("question") == noQuestion) {
-            var inputText = "";
-        } else {
+        let inputText = "";
+        if (!round.get("skippedToFiring") && !game.get("timeoutGuiltAssigned")) {
             switch (inputType) {
                 case "free":
-                    var inputText = document.getElementById('answer').value;
-                    inputText = inputText.trim();
+                    inputText = document.getElementById('answer').value.trim();
                     break;
                 case "categorical":
-                    var inputText = hardcodedAnswer;
+                    inputText = hardcodedAnswer;
+                    break;
+                default:
+                    break;
             }
         }
 
         if (inputText.length > 1 && inputText.length < 20) {
-            SendMessage(inputText, "answer", round, game, timer);
-            stage.set("answered",true);
-        } 
-        if (inputText.length == 0) {
-            if (round.get("question") == noQuestion) {
-                inputText = noQuestionAnswer;
-            } else {
-                inputText = timeoutAnswer;
+            handleSpotterSubmission();
+            if (questionRating === "" || questionRating === "(No Rating)") {
+                return;
             }
+            if (!stage.get("answered")){
             SendMessage(inputText, "answer", round, game, timer);
-            stage.set("answered",true);
+            stage.set("answered", true);
+            }
+        } 
+        if (inputText.length === 0) {
+            inputText = round.get("skippedToFiring") ? noQuestionAnswer : "(captain timed out)";
+            if (!stage.get("answered")){
+                SendMessage(inputText, "answer", round, game, timer);
+                stage.set("answered", true);
+            }
         }
     }
 
-    if (round.get("question") == undefined) {
+    if (round.get("question") === undefined) {
         round.set("question", noQuestion);
     }
 
     switch (player.round.get("role")) {
         case "spotter":
-        if ((stage.get("questionRated") && stage.get("answered")) || (stage.get("answered") && !game.get("spotterRatesQuestions"))) {
-            player.stage.set("submit",true);
+        if (stage.get("answered") || (round.get("skippedToFiring") || game.get("timeoutGuiltAssigned"))){
+            player.stage.set("timedOut",false);
+            player.stage.set("submit", true);
         }
-        if (!game.get("spotterRatesQuestions")) {
-            if (round.get("question") != noQuestion) {
-                return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-                
+            if (!game.get("spotterRatesQuestions")) {
+                if (!round.get("skippedToFiring") && !game.get("timeoutGuiltAssigned")) {
+                    return (
+                        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                            <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
+                                <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>
+                                    <ShipsRemainingComponent shipsStatus={round.get("shipsSunk")} />
+                                </div>
+                                <SpotterBoardComponent 
+                                    occ_tiles={round.get("occTiles")}
+                                    init_tiles={round.get("trueTiles")}
+                                    ships={round.get("ships")}
+                                />
+                                <HistoryComponent grid={round.get("occTiles")[0].length} />
+                            </div>
+                            <p style={{margin: "10px", fontSize:"1.5vw"}}>Captain: <i>"{round.get("question")}"</i>.</p> <p>Please answer below:</p>
+                            {getPossibleAnswers()}
+                        </div>
+                    );
+                } else {
+                    answerQuestion();
+                }
+            } else {
+                if (!round.get("skippedToFiring") && !game.get("timeoutGuiltAssigned")) {
+                    return (
+                        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                            <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
+                                <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>
+                                    <ShipsRemainingComponent shipsStatus={round.get("shipsSunk")} />
+                                </div>
+                                <SpotterBoardComponent 
+                                    occ_tiles={round.get("occTiles")}
+                                    init_tiles={round.get("trueTiles")}
+                                    ships={round.get("ships")}
+                                />
+                                <HistoryComponent grid={round.get("occTiles")[0].length} />
+                            </div>
+                            <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                                <p style={{margin: "10px", fontSize:"1.5vw"}}>Captain: <i>"{round.get("question")}"</i>.</p> 
+                                <p>Please answer below:</p>
+                                 <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+                                    {getPossibleAnswers()}
+                                    {handleSpotterLikert()}
+                                 </div>
+                            </div>
+                        </div>
+                    );
+                } else {
+                    answerQuestion();
+                }
+            }
+            break;
+        case "captain":
+            player.stage.set("timedOut",false);
+            player.stage.set("submit", true);
+            return (
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}> 
                     <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                         <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>
-                        <ShipsRemainingComponent 
-                            shipsStatus={round.get("shipsSunk")}
-                        />
+                            <ShipsRemainingComponent shipsStatus={round.get("shipsSunk")} />
                         </div>
-                        <SpotterBoardComponent 
-                        occ_tiles={round.get("occTiles")}
-                            init_tiles={round.get("trueTiles")}
+                        <BoardComponent 
+                            init_tiles={round.get("occTiles")}
                             ships={round.get("ships")}
                         />
-                    <HistoryComponent
-                        grid = {round.get("occTiles")[0].length}/>
+                        <HistoryComponent grid={round.get("occTiles")[0].length} />
                     </div>
-                    <p style={{margin: "20px"}}>The captain asked the following question: <i>"{round.get("question")}"</i>. Please answer it below:</p>
-                    {getPossibleAnswers()}
-                    </div>);
-              } else {
-                answerQuestion();
-              }
-        }
-        else {
-          if (round.get("question") != noQuestion) {
-            return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-            
-                <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                    <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>
-                    <ShipsRemainingComponent 
-                        shipsStatus={round.get("shipsSunk")}
-                    />
-                    </div>
-                    <SpotterBoardComponent 
-                    occ_tiles={round.get("occTiles")}
-                        init_tiles={round.get("trueTiles")}
-                        ships={round.get("ships")}
-                    />
-                <HistoryComponent
-                    grid = {round.get("occTiles")[0].length}/>
+                    <p style={{margin: "20px"}}><i>The spotter is answering your question...</i></p>
                 </div>
-                <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-                <p style={{margin: "20px"}}>The captain asked the following question: <i>"{round.get("question")}"</i>. Please answer it below:</p>
-                {!stage.get("answered") ? getPossibleAnswers() : handleSpotterLikert()}
-                </div>
-
-                </div>);
-          } else {
-            answerQuestion();
-          }
-        }
-        case "captain":
-          player.stage.set("submit", true);
-          return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}> 
-            <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>
-                <ShipsRemainingComponent 
-                    shipsStatus={round.get("shipsSunk")}
-                />
-                </div>
-                <BoardComponent 
-                    init_tiles={round.get("occTiles")}
-                    ships={round.get("ships")}
-                />
-                <HistoryComponent
-                    grid = {round.get("occTiles")[0].length}/>
-            </div>
-            <p style={{margin: "20px"}}><i>The spotter is answering your question...</i> </p>
-            </div>);
+            );
         default:
-          return <div>This is the shared stage. You have no role: something's gone wrong!</div>;
-      }
+            return <div>This is the shared stage. You have no role: something's gone wrong!</div>;
+    }
 }

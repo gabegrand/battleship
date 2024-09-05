@@ -5,17 +5,20 @@ import ShipsRemainingComponent from "../components/ShipsRemainingComponent.jsx";
 import { SpotterBoardComponent } from "../components/SpotterBoardComponent.jsx";
 import { noQuestion, timeoutAnswer } from "../../../utils/systemText.js";
 import { HistoryComponent } from "../components/HistoryComponent.jsx";
+import { SendMessage } from "../../../utils/SendMessage.js";
 
 export function SharedStage_3() {
 
+    const stage = useStage();
     const round = useRound();
     const player = usePlayer();
+    const game = useGame();
 
     function getSummaryText() {
-        if (round.get("question") == noQuestion) {
+        if (round.get("skippedToFiring")) {
             return "You opted not to ask a question.";
         } else {
-            if (round.get("answer") == timeoutAnswer) {
+            if (game.get("timeoutGuiltAssigned")) {
                 return (<div style={{fontSize:"1vw"}}>
                     You asked <b>"{round.get('question')}"</b>. <i>The spotter did not answer.</i>
                 </div>);
@@ -27,12 +30,13 @@ export function SharedStage_3() {
     }
 
     if (round.get("answer") == undefined) {
-        round.set("answer", timeoutAnswer);
+       round.set("answer", timeoutAnswer);
     }
 
     switch (player.round.get("role")) {
         case "spotter":
-          player.stage.set("submit", true)
+          player.stage.set("timedOut",false);
+          player.stage.set("submit", true);
           return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             
             <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
@@ -50,10 +54,25 @@ export function SharedStage_3() {
                     grid = {round.get("occTiles")[0].length}/>
             </div>
             <div style={{margin: "20px", fontSize:"1vw"}}>
-                <i>{round.get("question") == noQuestion ? "The captain opted not to ask a question. They are now selecting a tile to shoot at..." : "Thank you for answering. The captain is selecting a tile to shoot at next..."}</i>
+                <i>{round.get("skippedToFiring") ? "The captain opted not to ask a question. They are now selecting a tile to shoot at..." : "Thank you for answering. The captain is selecting a tile to shoot at next..."}</i>
             </div>
             </div>);
         case "captain":
+          if (game.get("timeoutGuiltAssigned")) {
+            player.stage.set("timedOut", false);
+
+            if (!stage.get("answered") && !round.get("firingTimedOut")) {
+                if (!round.get("spotterTimedOut")) {
+                    SendMessage("(captain timed out)","move",round,"timeout");
+                } else {
+                    SendMessage("(spotter timed out)","move",round,"timeout");
+                }
+                
+                stage.set("answered",true);
+            }
+            
+            player.stage.set("submit", true);
+          }
           return (<div style={{display: "flex", flexDirection: "column", alignItems: "center"}}> 
                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                 <div style={{display: "flex", flexDirection: "column", margin: "30px", alignItems: "center", paddingTop:"50px"}}>

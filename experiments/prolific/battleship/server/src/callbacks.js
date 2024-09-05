@@ -2,40 +2,47 @@ import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 export const Empirica = new ClassicListenersCollector();
 import Board, { hasGameEnded, hasShipSunk } from "../../client/src/stages/Board";
 import { gameBoards, testBoards } from "../../utils/authoredBoards";
+import { SendMessage } from "../../utils/SendMessage";
 
-//Fisher-Yates Shuffle implementation
-function fy_shuffle(array) {
-  var newArray = array.filter((item) => item);
-  let currentIndex = newArray.length;
-
-  while (currentIndex != 0) {
-
-    let randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    [newArray[currentIndex], newArray[randomIndex]] = [
-      newArray[randomIndex], newArray[currentIndex]];
+function handleTimeOut(stageName, round) {
+  switch (stageName) {
+    case "shared_stage":
+      SendMessage("(question timed out)","question",round,"timeout");
+      break;
+    case "shared_stage_2":
+      SendMessage("(answer timed out)","answer",round,"timeout");
+      round.set("spotterTimedOut",true);
+      break;
+    case "shared_stage_3":
+      SendMessage("(firing timed out)","move",round,"timeout");
+      round.set("firingTimedOut",true);
+      break;
   }
-
-  return newArray;
 }
 
 Empirica.onGameStart(({ game }) => {
   const treatment = game.get("treatment");
   ///HYPERPARAMETERS
-  game.set("testRounds",treatment.testNumber);
-  game.set("totalRounds",treatment.testNumber+treatment.realNumber);
+  game.set("testRounds",0);
+  game.set("totalRounds",treatment.realNumber);
   game.set("roundDuration",treatment.maxTime);
+  game.set("timeoutDuration",treatment.timeoutDuration);
   game.set("totalQuestions",treatment.totalQuestions);
   game.set("categoricalAnswers",treatment.categorical);
   game.set("spotterRatesQuestions",treatment.spotterRatesQuestions);
   game.set("questionEveryTime",treatment.questionEveryTime);
-  game.set("compcode", treatment.compcode);
-  game.set("compcodeStuck", treatment.compcodeStuck);
   game.set("uniformStart",treatment.uniformStart);
   game.set("startingBonus",treatment.startingBonus);
   game.set("missPenalty",treatment.missPenalty);
-  game.set("bonusFloor",treatment.bonusFloor);
+  game.set("skipTutorial",treatment.skipTutorial);
+  game.set("bonusFloor",0);
+  game.set("timeoutEnd",false);
+  game.set("playersTimedOut",false);
+
+  game.set("compcode", treatment.compcode);
+  game.set("compcodeStuck", treatment.compcodeStuck);
+  game.set("compcodeTimeoutGuilty", treatment.compcodeTimeoutGuilty);
+  game.set("compcodeTimeoutInnocent", treatment.compcodeTimeoutInnocent);
   ////----------------
 
   if (game.get("questionEveryTime")) {
@@ -46,13 +53,16 @@ Empirica.onGameStart(({ game }) => {
   game.set("instructionsJustFinished",false);
   game.set("stuck",false);
   game.set("bonuses",[]);
+  game.set("timeoutGuiltAssigned",false);
 
   const players = game.players;
   for (const player of players) {
     player.set("stuck",false);
+    player.set("timeoutGuilty",false);
+    player.set("timeoutGuiltySticky",false);
+    player.set("timeoutGameEnd",false);
   }
 
-  //game.set("gameBoards", fy_shuffle(gameBoards));
   game.set("gameBoards",gameBoards);
   game.set("testBoards",testBoards);
 
@@ -89,11 +99,7 @@ Empirica.onRoundStart(({ round }) => {
                       : "testBoards";
 
   var boardList = game.get(boardListName);
-
-  // it looks like the boards are served in deterministic order
-  // this is half-true: the test boards are
-  // but remember we shuffled the gameBoards array so its order is random
-  // 9 aug update -- for now we're no longer shuffling the array so it is in deterministic order 
+ 
   var shipSelected = boardList[elapsedRounds];
 
   round.set("board_id", shipSelected[0]);
@@ -118,6 +124,10 @@ Empirica.onRoundStart(({ round }) => {
   round.set("spotterRatings",[]);
   round.set("gameOver",false);
 
+  round.set("skippedToFiring",false);
+  round.set("spotterTimedOut",false);
+  round.set("firingTimedOut",false);
+
 });
 
 
@@ -125,28 +135,70 @@ Empirica.onStageStart(({ stage }) => {
   stage.set("questionAsked",false);
   stage.set("questionRated",false);
   stage.set("answered",false);
+  stage.set("timeoutHandled",false);
+
+  var players = stage.currentGame.players;
+
+  players[0].stage.set("timedOut",true);
+  players[1].stage.set("timedOut",true);
+
 });
 
 Empirica.onStageEnded(({ stage }) => {
   const game = stage.currentGame;
   const round = stage.round;
+  const players = game.players;
+
+  //console.log(round.get("messages"));
 
   var filteredMessages = [];
   let previousType = "";
   for (const message of round.get("messages")) {
-    if (message.type === 'answer' && previousType === 'answer') {
+    if (message.type == previousType) {
       continue;
     }
     filteredMessages.push(message);
     previousType = message.type;
   }
 
-  //console.log(filteredMessages);
+  //round.set("messages",filteredMessages);
 
-  round.set("messages",filteredMessages);
+  var timeOutArray = [players[0].stage.get("timedOut"),players[1].stage.get("timedOut")];
 
-  if (!game.get("stuck")) {
-    if (stage.get("name") == "shared_stage" || stage.get("name") == "shared_stage_2" || stage.get("name") == "shared_stage_3") {
+  players[0].set("timeoutGuilty", players[0].stage.get("timedOut"));
+  players[1].set("timeoutGuilty", players[1].stage.get("timedOut"));
+
+  var playersTimedOut = timeOutArray.some((bool) => bool == true);
+
+  if (playersTimedOut && !game.get("timeoutGuiltAssigned")) {
+    game.set("playersTimedOut",playersTimedOut);
+    players[0].set("timeoutGuiltySticky",players[0].get("timeoutGuilty"));
+    players[1].set("timeoutGuiltySticky",players[1].get("timeoutGuilty"));
+    game.set("timeoutGuiltAssigned",true);
+
+    if (!stage.get("timeoutHandled")) {
+    handleTimeOut(stage.get("name"),round);
+    stage.set("timeoutHandled",true);
+    }
+  }
+
+  var timeoutEnd = false;
+  if (stage.get("name") == "timeout") {
+    var timeoutEnd = [players[0].get("timeoutGuilty"),players[1].get("timeoutGuilty")].some((bool) => bool == true);
+    game.set("timeoutEnd",timeoutEnd);
+    //console.log("timeoutEnd",[players[0].get("timeoutGuilty"),players[1].get("timeoutGuilty")],timeoutEnd);
+    if (timeoutEnd) {
+      players[0].set("timeoutGameEnd",true);
+      players[1].set("timeoutGameEnd",true);
+      return 0;
+    } else {
+      game.set("timeoutGuiltAssigned",false);
+    }
+  }
+
+  if (!game.get("stuck") && !timeoutEnd) {
+
+    if ((stage.get("name") == "shared_stage" || stage.get("name") == "shared_stage_2" || stage.get("name") == "shared_stage_3" || stage.get("name") == "timeout")) {
       var tiles_uncovered = round.get("occTiles");
       var tiles_true = round.get("trueTiles");
       var round_ships = round.get("ships");
@@ -159,6 +211,12 @@ Empirica.onStageEnded(({ stage }) => {
       round.set("shipsSunk",ships_sunk);
 
       switch (stage.get("name")) {
+        case "timeout":
+          game.set("playersTimedOut",false);
+          round.set("spotterTimedOut",false);
+          round.set("firingTimedOut",false);
+          round.addStage({ name: "shared_stage", duration: game.get("roundDuration") });
+          break;
         case "shared_stage":
           if (round.get("gameOver")) {
             break;
@@ -171,21 +229,24 @@ Empirica.onStageEnded(({ stage }) => {
             break;
         case "shared_stage_3":
             round.set("questionSkipped",false);
-            if (!game.get("spotterRatesQuestions")) {
-              round.set("question", undefined);
-            }
+            round.set("question", undefined);
             round.set("answer", undefined);
-            round.set("score", round.get("score")+1) //increases move count by one even if they don't fire
-            round.addStage({ name: "shared_stage", duration: game.get("roundDuration") });
+            round.set("score", round.get("score")+1); //increases move count by one even if they don't fire
+            round.set("skippedToFiring",false);
+            if (game.get("playersTimedOut")) {
+              round.addStage({ name: "timeout", duration: game.get("timeoutDuration")});
+            } else {
+              round.addStage({ name: "shared_stage", duration: game.get("roundDuration") });
+            }
+            
           break;
       }
     }
-
-
+  }
     if (stage.get("name") == "instructions") {
       game.set("instructionsJustFinished",true);
     }
-  } 
+
   else {}
 
 });
@@ -193,7 +254,7 @@ Empirica.onStageEnded(({ stage }) => {
 Empirica.onRoundEnded(({ round }) => {
   curr_game = round.currentGame;
 
-  if (!curr_game.get("stuck")) {
+  if (!curr_game.get("stuck") && !curr_game.get("timeoutEnd")) {
     var prevRounds = curr_game.get("elapsedRounds");
     curr_game.set("bonuses",[...curr_game.get("bonuses"), round.get("bonus")])
 
@@ -212,7 +273,7 @@ Empirica.onRoundEnded(({ round }) => {
       if (nextRoundNumber == 0) {
         new_round.addStage({ name: "end_of_instructions", duration: curr_game.get("roundDuration") });
       }
-      if (nextRoundNumber == curr_game.get("testRounds")) {
+      if (nextRoundNumber == curr_game.get("testRounds") && curr_game.get("testRounds") != 0) {
         new_round.addStage({ name: "end_of_tests", duration: curr_game.get("roundDuration") });
       }
       new_round.addStage({ name: "shared_stage", duration: curr_game.get("roundDuration") });
@@ -225,6 +286,8 @@ Empirica.onRoundEnded(({ round }) => {
 Empirica.onGameEnded(({ game }) => {
     const players = game.players;
     for (const player of players) {
+      player.set("compcodeTimeoutGuilty",game.get("compcodeTimeoutGuilty"));
+      player.set("compcodeTimeoutInnocent",game.get("compcodeTimeoutInnocent"));
       player.set("compcodeStuck",game.get("compcodeStuck"));
       player.set("compcode",game.get("compcode"));
     }

@@ -44,13 +44,16 @@ export function BoardComponent({init_tiles, ships}) {
 
       var move = targetLetter.concat(targetNumber);
 
-      //sets moves array
       var moves_new = [...round.get("moves"), move];
       round.set("moves", moves_new);
 
       
       if (notInInstructionsStage()) {
-        SendMessage(move, "move", round, game, timer);
+        if (!stage.get("answered")) {
+          SendMessage(move, "move", round, game, timer);
+          stage.set("answered",true);
+        }
+        player.stage.set("timedOut",false);
         player.stage.set("submit",true);
       } else {
         player.stage.set("textStage",player.stage.get("textStage")+1);

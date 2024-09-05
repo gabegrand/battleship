@@ -22,7 +22,7 @@ export function Introduction({ next }) {
         <li>As <b>Spotter</b>, you will answer questions for your partner, given special knowledge of the ship locations.</li>
       </ul>
       <p>Your bonus will be determined by how well you work together as a team: the fewer moves it takes for you to sink all the ships, the better. To maximize your team's bonus, the Captain will need to think carefully about what questions will be most informative, and the Spotter will need to answer the Captain's questions correctly. While there is a time limit for each turn, there is no bonus for playing quickly, so take your time to think through each move.</p>
-      <p>First, we'll take you through a short tutorial to familiarize you with the interface. Then you will play <b>{treatment.testNumber}</b> training games on a small board, followed by <b>{treatment.realNumber}</b> test games on a larger one.</p>
+      <p>First, we'll take you through a short tutorial to familiarize you with the interface. Then you will play <b>{treatment.realNumber}</b> games.</p>
       <p>Press Next to proceed to the tutorial.</p>
       </div>
       <InstructionsButton handleClick={next}>

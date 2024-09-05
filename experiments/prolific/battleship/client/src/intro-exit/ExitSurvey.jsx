@@ -52,6 +52,24 @@ export function ExitSurvey({ next }) {
     }
   }
 
+  function getCompletionCode() {
+    if (player.get("stuck")) {
+      return player.get("compcodeStuck");
+    } 
+    else {
+      if (player.get("timeoutGameEnd")) {
+        if (player.get("timeoutGuiltySticky")) {
+          return player.get("compcodeTimeoutGuilty");
+        } else {
+          return player.get("compcodeTimeoutInnocent");
+        }
+      }
+      else {
+        return player.get("compcode");
+      }
+    }
+  }
+
   return (
     <div className="py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -66,11 +84,11 @@ export function ExitSurvey({ next }) {
                 Exit Survey
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Please answer the following short survey. You do not have to
-                provide any information you feel uncomfortable with.
+                Please answer the following short survey. 
               </p>
               {player.get("stuck") ? <h1 style={{fontSize:"1.5vw", marginLeft:"0vw", marginTop:"1vh"}}>The experiment was ended early by one of the participants.</h1> : <div></div>}
-              <h1 style={{fontSize:"2vw", margin:"2vw", marginLeft:"0vw", marginBottom:"1vh"}}>Your Prolific completion code is <b>{player.get("stuck") ? player.get("compcodeStuck") : player.get("compcode")}</b></h1>
+              {player.get("timeoutGameEnd") ? <h1 style={{fontSize:"1.5vw", marginLeft:"0vw", marginTop:"1vh"}}>The experiment ended early due to a timeout.</h1> : <div></div>}
+              <h1 style={{fontSize:"2vw", margin:"2vw", marginLeft:"0vw", marginBottom:"1vh"}}>Your Prolific completion code is <b>{getCompletionCode()}</b></h1>
               <h1 style={{fontSize:"1.4vw", margin:"2vw", marginLeft:"0vw", marginTop:"1vh"}}>Make sure to paste it into Prolific to ensure payment.</h1>
             </div>
 
@@ -119,7 +137,7 @@ export function ExitSurvey({ next }) {
               <div className="grid grid-cols-3 gap-x-6 gap-y-3">
 
                 <label className={labelClassName}>
-                  Feedback, including problems you encountered.
+                  Feedback, including problems you encountered. We will provide additional bonuses for helpful feedback.
                 </label>
 
                 <textarea
