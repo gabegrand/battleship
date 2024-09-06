@@ -234,7 +234,7 @@ class FastSampler:
                     np.ones((self.board.size, self.board.size)) / self.board.size**2
                 )
             else:
-                return board_counts / n_samples_valid
+                return board_counts / board_counts.sum()
         else:
             return board_counts
 
