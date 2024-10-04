@@ -164,3 +164,6 @@ notebooks/
 
 # HuggingFace auth token
 .hf_auth_token
+
+# MacOS
+.DS_Store
