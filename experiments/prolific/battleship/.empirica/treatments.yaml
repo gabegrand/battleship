@@ -95,6 +95,10 @@ factors:
         - value: 20
         - value: 200
         - value: 15
+        - value: 60
+    - name: timeoutDuration
+      values:
+        - value: 6
 treatments:
     - name: Experiment
       desc: True Conditions
@@ -112,8 +116,8 @@ treatments:
         spotterRatesQuestions: true
         startingBonus: 10
         testNumber: 0
-        totalQuestions: 10
         timeoutDuration: 30
+        totalQuestions: 10
         uniformStart: true
     - name: skiptoexitscreen
       desc: Debug Conditions
@@ -137,12 +141,12 @@ treatments:
         compcodeStuck: foobar_stuck
         compcodeTimeoutGuilty: foobar_guilty
         compcodeTimeoutInnocent: foobar_innocent
-        maxTime: 15
+        maxTime: 60
         missPenalty: 12
         playerCount: 2
         realNumber: 2
-        timeoutDuration: 6
         skipTutorial: true
         spotterRatesQuestions: true
         startingBonus: 10
+        timeoutDuration: 6
         totalQuestions: 5

@@ -167,3 +167,7 @@ notebooks/
 
 # MacOS
 .DS_Store
+
+experiments/collaborative/data/
+experiments/prolific/battleship/.empirica/empirica.toml
+experiments/prolific/battleship/package-lock.json
