@@ -1,0 +1,23 @@
+"""DEPRECATED: This file is deprecated and is no longer used in the project. It is kept for reference purposes only."""
+import os
+
+ascii_prompt = "User input will be an ASCII representation of a 6-row, 6-column game of Battleship (the board game) that you should aim to win, where 'W' represents 'Water', 'B' represents the blue battleship being hit, 'R' represents the red battleship being hit, and 'P' represents the purple battleship being hit (there are only these three battleships). Some cells may be denoted by 'H', indicating they are 'Hidden', meaning they could be any of the other categories but they have not been revealed yet. We denote coordinates as follows: columns are numbered from 1 onwards, where column 1 is the leftmost column, and rows are given a letter from A onwards where row A is the topmost row (so the cell at the second row and second column is B2). Your role is to ask the most informative possible question from the context given: no further information about the game state will be given, so you have to interpret the board as a collection of previous knowledge of hits and misses (cells denoting P,B,R are hits to the Purple, Blue and Red battleships respectively). Strictly output the question only, and make sure the questions are relevant to the context: 'Which cells should I target to sink the battleships with the least number of moves?' is not a relevant question because it is the general goal of Battleship. Questions also need to be answerable with yes or no, no other questions will be considered in scope."
+
+serial_prompt = "User input will be a series of sentences representing a board from Battleship, the board game, that you should aim to win. Tiles in the board can either be 'Water' tiles, 'Blue Ship' tiles, 'Red Ship' tiles, and 'Purple Ship' tiles (there are only these three battleships). Some tiles may also be 'Hidden' tiles, meaning they could be any of the others but have not been revealed yet. The user will denote coordinates as follows: columns are numbered from 1 onwards, where column 1 is the leftmost column, and rows are given a letter from A onwards where row A is the topmost row (so the cell at the second row and second column is B2). Your role is to ask the most informative possible question from the context given: strictly output the question only, and make sure the questions are relevant to the context: 'Which cells should I target to sink the battleships with the least number of moves?' is not a relevant question because it is the general goal of Battleship. Questions also need to be answerable with yes or no, no other questions will be considered in scope."
+
+vision_prompt = "User input will be an image representing a board from Battleship the board game, that you should aim to win. This board contains purple, red, and blue battleships, so purple tiles represent the purple ship, red tiles represent the red ship, and blue tiles represent the blue ship (there are only these three battleships). Dark gray tiles are water tiles, meaning a battleship is not on them, and light gray tiles are hidden, meaning they could be a purple, red, blue, or water tile but it has not yet been uncovered. Your role is to ask the most informative possible question from the context given: no further information about the game state will be given, so you have to interpret the board as a collection of previous knowledge of hits and misses. Strictly output the question only, and make sure the questions are relevant to the context: 'Which cells should I target to sink the battleships with the least number of moves?' is not a relevant question because it is the general goal of Battleship. Questions also need to be answerable with yes or no, no other questions will be considered in scope."
+
+translator_constant = """You will be presented below with a series of natural language questions and their code equivalent in a domain-specific language. The user will present you with one of these questions, and your task, as an expert translator, is to translate these into the domain-specific language. No further elaboration about the rules or syntax will be given. Just output the new code and do not repeat the original question, strictly using the functions defined in the following examples."""
+
+
+def constructPrompt(translator_constant, csv_list):
+    lines = []
+    for csv in csv_list:
+        path = os.path.join(
+            f"{os.path.abspath(os.path.dirname(__file__))}/battleship/battleship",
+            "prompts",
+            csv,
+        )
+        with open(path, "r") as promptCsv:
+            lines.extend([i for i in promptCsv.readlines() if i != "question,code"])
+    return translator_constant + "".join(lines)

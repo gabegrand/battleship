@@ -1,0 +1,13 @@
+question,code
+"How many blocks is the red ship?","(size Red)"
+"Does the purple ship have 4 tiles?","(== (size Purple) 4)"
+"Is the purple ship horizontal or vertical?","(orient Purple)"
+"Does the purple ship go upwards?","(== (orient Purple) V)"
+"What is at 1B?","(color 1-B)"
+"Is there a ship at 3F?","(not (== (color 3-F) Water))"
+"Is the purple ship touching the blue ship?","(touch Purple Blue)"
+"What are the coordinate of the first block of the red ship?","(topleft (coloredTiles Red))"
+"What is the rightmost square occupied by the purple ship?","(bottomright (coloredTiles Purple))"
+"Are any of the ships horizontal?","(any (map (lambda x0 (== (orient x0) H)) (set AllColors)))"
+"How many ships are vertical?","(++ (map (lambda x0 (== (orient x0) V)) (set AllColors)))"
+"How many total squares are occupied by ships?","(++ (map (lambda x0 (size x0)) (set AllColors)))"
