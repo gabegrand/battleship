@@ -9,9 +9,9 @@ from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
-from battleship.grammar import BattleshipGrammar
-from battleship.scoring import _compute_score_batch
-from battleship.scoring import compute_score_parallel
+from battleship.v1.grammar import BattleshipGrammar
+from battleship.v1.scoring import _compute_score_batch
+from battleship.v1.scoring import compute_score_parallel
 
 
 RESULTS_FILENAME = "results.csv"

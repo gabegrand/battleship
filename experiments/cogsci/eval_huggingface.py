@@ -8,14 +8,14 @@ import time
 
 import numpy as np
 import pandas as pd
+from hfppl.llms import CachedCausalLM
 from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
-from battleship.models import SingleStepQuestionGenerationModel
-from battleship.prompting import QuestionGenerationPrompt
-from battleship.prompting import TranslationPrompt
-from hfppl.llms import CachedCausalLM
+from battleship.v1.models import SingleStepQuestionGenerationModel
+from battleship.v1.prompting import QuestionGenerationPrompt
+from battleship.v1.prompting import TranslationPrompt
 
 
 RESULTS_FILENAME = "results.csv"
