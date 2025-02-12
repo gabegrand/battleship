@@ -122,16 +122,9 @@ class Board(object):
 
     @staticmethod
     def from_trial_id(trial_id: int, experiment: str = "collaborative_contexts"):
-        if experiment == "collaborative_contexts":
-            board_path = os.path.join(
+        board_path = os.path.join(
                 os.path.dirname(__file__),
-                "../collaborative_contexts",
-                f"board_{trial_id}.txt",
-            )
-        else:
-            board_path = os.path.join(
-                os.path.dirname(__file__),
-                "../question_dataset",
+                f"../{experiment}",
                 f"board_{trial_id}.txt",
             )
         return Board.from_text_file(board_path)
