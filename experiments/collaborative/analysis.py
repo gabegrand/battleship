@@ -9,10 +9,12 @@ import seaborn as sns
 from battleship.board import Board
 
 
-def load_dataset(experiment_path: str) -> pd.DataFrame:
+def load_dataset(
+    experiment_path: str, use_gold: bool = False, drop_incomplete: bool = False
+) -> pd.DataFrame:
     PATH_PLAYER = os.path.join(experiment_path, "player.csv")
     PATH_ROUND = os.path.join(experiment_path, "round.csv")
-    PATH_STAGE = os.path.join(experiment_path, "stage.csv")
+    PATH_STAGE = os.path.join(experiment_path, "gold.csv" if use_gold else "stage.csv")
 
     df_stage = pd.read_csv(PATH_STAGE)
     df_round = pd.read_csv(PATH_ROUND)
@@ -32,10 +34,12 @@ def load_dataset(experiment_path: str) -> pd.DataFrame:
     )
 
     if not (df_ended["gameCompleted"]).all():
-        print(
-            "WARNING: Some games were not completed. These will be dropped from the dataset."
-        )
+        print("WARNING: Some games were not completed.")
         print(df_ended.loc[~df_ended["gameCompleted"]])
+        if drop_incomplete:
+            print("These will be dropped from the dataset.")
+        else:
+            print("These will be kept in the dataset.")
 
     # Merge stage, round, and player dataframes
     ROUND_COLUMNS = ["roundID"] + ["board_id", "trueTiles"]
@@ -43,7 +47,8 @@ def load_dataset(experiment_path: str) -> pd.DataFrame:
 
     # drop all rows where game was not completed
     df = df.merge(df_ended, on="gameID")
-    df = df[df["gameCompleted"]]
+    if drop_incomplete:
+        df = df[df["gameCompleted"]]
 
     # drop all rows where messageType is not in (fire, question, answer, decision)
     df = df[df["messageType"].isin(["move", "question", "answer", "decision"])]
@@ -65,5 +70,13 @@ def load_dataset(experiment_path: str) -> pd.DataFrame:
 
     # Sort by pairID and roundID
     df = df.sort_values(by=["pairID", "roundID"])
+
+    def compute_hits(board_array: np.ndarray):
+        board = np.array(board_array)
+        return np.sum(board > 0)
+
+    df["hits"] = df["occTiles"].apply(compute_hits)
+    df["totalShipTiles"] = df["trueTiles"].apply(compute_hits)
+    df["hits_pct"] = df["hits"] / df["totalShipTiles"]
 
     return df
