@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 import hashlib
 
-# Add at top of file after imports
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
 client = OpenAI()
