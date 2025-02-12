@@ -121,11 +121,11 @@ class Board(object):
         pd.DataFrame(self.to_symbolic_array()).to_csv(path, header=False, index=False)
 
     @staticmethod
-    def from_trial_id(trial_id: int):
+    def from_trial_id(trial_id: int, experiment: str = "contexts"):
         board_path = os.path.join(
             os.path.dirname(__file__),
             "../question_dataset",
-            "contexts",
+            experiment,
             f"board_{trial_id}.txt",
         )
         return Board.from_text_file(board_path)
