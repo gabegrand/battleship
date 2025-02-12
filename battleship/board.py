@@ -132,7 +132,6 @@ class Board(object):
             board_path = os.path.join(
                 os.path.dirname(__file__),
                 "../question_dataset",
-                experiment,
                 f"board_{trial_id}.txt",
             )
         return Board.from_text_file(board_path)
