@@ -1,11 +1,13 @@
 """Core game logic for Battleship."""
 import logging
+from copy import deepcopy
 from enum import StrEnum
 from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Type
 
+import numpy as np
 from IPython.display import display
 
 from battleship.board import Board
@@ -38,7 +40,7 @@ class BattleshipGame:
         else:
             self.start = board_start
 
-        self.state = self.start
+        self.state = deepcopy(self.start)
         self.target = board_target
 
         self.max_questions = max_questions
@@ -54,13 +56,25 @@ class BattleshipGame:
         return self.stage_count
 
     def __repr__(self):
-        return f"BattleshipGame(stage={self.stage_count}, questions={self.question_count}, moves={self.move_count})"
+        return f"BattleshipGame(stage={self.stage_count}, hits={self.hits}, misses={self.misses}, questions={self.question_count}/{self.max_questions}, moves={self.move_count}/{self.max_moves})"
 
     def __str__(self):
         return self.__repr__()
 
     def _ipython_display_(self):
         display(self.state)
+
+    @property
+    def hits(self):
+        return np.sum(self.state.board > Board.water) - np.sum(
+            self.start.board > Board.water
+        )
+
+    @property
+    def misses(self):
+        return np.sum(self.state.board == Board.water) - np.sum(
+            self.start.board == Board.water
+        )
 
     def play(self):
         while not self.is_done():

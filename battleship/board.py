@@ -75,6 +75,9 @@ class Board(object):
             output += "\n"
         return output
 
+    def __deepcopy__(self, memo):
+        return Board(self._board.copy())
+
     def _ipython_display_(self):
         display(self.to_figure())
 
