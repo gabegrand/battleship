@@ -1,12 +1,23 @@
 """Core game logic for Battleship."""
+import logging
 from enum import StrEnum
 from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Type
 
+from IPython.display import display
+
 from battleship.board import Board
 from battleship.board import BOARD_SYMBOL_MAPPING
+
+
+logger = logging.getLogger(__name__)
+
+
+class Decision(StrEnum):
+    QUESTION = "question"
+    MOVE = "move"
 
 
 class BattleshipGame:
@@ -39,7 +50,19 @@ class BattleshipGame:
 
         self.history = []
 
-    def simulate(self):
+    def __len__(self):
+        return self.stage_count
+
+    def __repr__(self):
+        return f"BattleshipGame(stage={self.stage_count}, questions={self.question_count}, moves={self.move_count})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    def _ipython_display_(self):
+        display(self.state)
+
+    def play(self):
         while not self.is_done():
             self.next_stage()
 
@@ -63,7 +86,7 @@ class BattleshipGame:
                 }
             )
         elif decision == Decision.MOVE:
-            coords = self.captain.move(self.state)
+            coords = self.captain.move(self.state, self.history)
             self.update_state(coords)
             self.move_count += 1
             self.history.append(
@@ -75,8 +98,9 @@ class BattleshipGame:
         self.stage_count += 1
 
     def update_state(self, coords: Tuple[int, int]):
-        if self.state.board[coords] != Board.hidden:
+        if self.state.board[coords].item() != Board.hidden:
             raise ValueError(f"Invalid move: tile already revealed: {coords}")
+
         self.state.board[coords] = self.target.board[coords]
 
     def is_done(self):
@@ -89,8 +113,3 @@ class BattleshipGame:
 
     def is_won(self):
         return self.state == self.target
-
-
-class Decision(StrEnum):
-    QUESTION = "question"
-    MOVE = "move"
