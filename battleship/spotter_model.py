@@ -39,9 +39,10 @@ class Answer:
     code_question: CodeQuestion = None
 
 class BaseSpotterModel(ABC):
-    def __init__(self, board_id, board_experiment, history: List[dict], use_cache = True):
+    def __init__(self, board_id, board_experiment, history: List[dict], occ_tiles = None, use_cache = True):
         self.board_id = board_id
         self.board_experiment = board_experiment
+        self.occ_tiles = occ_tiles
         self.history = history
         self.use_cache = use_cache
         self.cache_path = CACHE_DIR / self.__class__.__name__
@@ -78,7 +79,8 @@ class BaseSpotterModel(ABC):
 class DirectSpotterModel(BaseSpotterModel):
     def _get_model_answer(self, question: Question) -> Answer:
         prompt = SpotterPrompt(target_trial_id = self.board_id, 
-                    target_trial_experiment = self.board_experiment, 
+                    target_trial_experiment = self.board_experiment,
+                    target_occ_tiles = self.occ_tiles, 
                     board_format = "grid", 
                     question=question,
                     use_code=False,
@@ -103,6 +105,7 @@ class CodeSpotterModel(BaseSpotterModel):
     def translate(self, question: Question) -> CodeQuestion:
         translation_prompt = SpotterPrompt(target_trial_id = self.board_id, 
                 target_trial_experiment = self.board_experiment, 
+                target_occ_tiles = self.occ_tiles,
                 board_format = "grid", 
                 question=question,
                 use_code=True,

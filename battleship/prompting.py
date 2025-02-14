@@ -157,8 +157,8 @@ PROMPT_GAME = (
     "You are playing the board game Battleship. "
     "There are four ships on the board: Green, Red, Purple, and Orange. "
     "Ships are oriented either horizontally or vertically and can be 2, 3, or 4 tiles in length. "
-    "The board is an 8x8 grid, with numbered rows 1, 2, 3, 4, 5, 6, 7, 8 and lettered columns A, B, C, D, E, F, G, H. "
-    "Coordinates are specified as a row, column pair. For example, 2-C is the tile in row 2, column C.\n"
+    "The board is an 8x8 grid, with lettered rows A, B, C, D, E, F, G, H and numbered columns 1, 2, 3, 4, 5, 6, 7, 8. "
+    "Coordinates are specified as a row, column pair. For example, C2 is the tile in row C, column 2.\n"
 )
 
 # Task description
@@ -409,6 +409,12 @@ PROMPT_EXAMPLES_SPOTTER = (
     "Here are the past turns in the game so far, which include what questions the user has asked, their answers, and what moves the user made."
 )
 
+PROMPT_PARTIAL_BOARD = (
+    "Here's what the captain could see when they asked this question: in this representation, 'H' stands for 'hidden', tiles the player has not fired at yet, which could be water or ship tiles."
+)
+
+PROMPT_TARGET_BOARD_SPOTTER = "Now it's your turn. Here's the fully-revealed board, that the captain did not have access to when asking their question: \n"
+
 QUESTION_PRESENTATION_PROMPT = "Here is the question the captain asked: "
 
 class SpotterPrompt(BasePrompt):
@@ -420,6 +426,7 @@ class SpotterPrompt(BasePrompt):
         self,
         question,
         use_code = False,
+        target_occ_tiles = None,
         history = None,
         **kwargs,
     ):
@@ -427,6 +434,7 @@ class SpotterPrompt(BasePrompt):
         self.question = question
         self.history = history
         self.use_code = use_code
+        self.target_occ_tiles = target_occ_tiles
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
         
@@ -510,6 +518,38 @@ class SpotterPrompt(BasePrompt):
                         "content": f""" {decision_str}\n
                                         {self.EXAMPLE_DELIMITER}\n\n""", 
                     }
+                )
+        else:
+            if self.include_board:
+                if self.target_occ_tiles is not None:
+                    if self.include_instructions:
+                        messages.append({"role": "user", "content": "\n" + PROMPT_PARTIAL_BOARD})
+                    
+                    captain_board_str = Board(np.array(eval(self.target_occ_tiles))).to_format(
+                        self.board_format
+                    )
+                    if not captain_board_str.endswith("\n"):
+                        captain_board_str += "\n"
+                    messages.append(
+                            {
+                                "role": "user",
+                                "content": f"{self.EXAMPLE_DELIMITER}\n\n{captain_board_str}",
+                            }
+                    )
+
+                if self.include_instructions:
+                    messages.append({"role": "user", "content": "\n" + PROMPT_TARGET_BOARD})
+
+                board_str = Board.from_trial_id(self.target_trial_id, self.target_trial_experiment).to_format(
+                    self.board_format
+                )
+                if not board_str.endswith("\n"):
+                    board_str += "\n"
+                messages.append(
+                        {
+                            "role": "user",
+                            "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                        }
                 )
 
         messages.append(
