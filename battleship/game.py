@@ -38,10 +38,10 @@ class BattleshipGame:
         if board_start is None:
             self.start = Board.hidden_board(board_target.size)
         else:
-            self.start = board_start
+            self.start = deepcopy(board_start)
 
         self.state = deepcopy(self.start)
-        self.target = board_target
+        self.target = deepcopy(board_target)
 
         self.max_questions = max_questions
         self.max_moves = max_moves
@@ -56,7 +56,17 @@ class BattleshipGame:
         return self.stage_count
 
     def __repr__(self):
-        return f"BattleshipGame(stage={self.stage_count}, hits={self.hits}, misses={self.misses}, questions={self.question_count}/{self.max_questions}, moves={self.move_count}/{self.max_moves})"
+        return (
+            f"BattleshipGame(\n"
+            f"  stage={self.stage_count},\n"
+            f"  hits={self.hits},\n"
+            f"  misses={self.misses},\n"
+            f"  questions={self.question_count}/{self.max_questions},\n"
+            f"  moves={self.move_count}/{self.max_moves},\n"
+            f"  is_done={self.is_done()},\n"
+            f"  is_won={self.is_won()}\n"
+            f")"
+        )
 
     def __str__(self):
         return self.__repr__()
@@ -75,6 +85,13 @@ class BattleshipGame:
         return np.sum(self.state.board == Board.water) - np.sum(
             self.start.board == Board.water
         )
+
+    def __iter__(self):
+        def generator():
+            while not self.is_done():
+                yield self.next_stage()
+
+        return generator()
 
     def play(self):
         while not self.is_done():
@@ -126,4 +143,7 @@ class BattleshipGame:
             return False
 
     def is_won(self):
-        return self.state == self.target
+        return np.all(
+            self.state.board[self.target.board > Board.water]
+            == self.target.board[self.target.board > Board.water]
+        )

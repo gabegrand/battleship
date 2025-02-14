@@ -40,6 +40,11 @@ class BoardFormat(StrEnum):
 
 
 class Board(object):
+    SHIP_LENGTHS = range(2, 6)
+    SHIP_LABELS = [
+        symbol for symbol, value in BOARD_SYMBOL_MAPPING.items() if value > 0
+    ]
+
     hidden = BOARD_SYMBOL_MAPPING["H"]
     water = BOARD_SYMBOL_MAPPING["W"]
     green = BOARD_SYMBOL_MAPPING["G"]
