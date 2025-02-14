@@ -75,8 +75,16 @@ def load_dataset(
         board = np.array(board_array)
         return np.sum(board > 0)
 
+    def compute_misses(board_array: np.ndarray):
+        board = np.array(board_array)
+        return np.sum(board == 0)
+
     df["hits"] = df["occTiles"].apply(compute_hits)
+    df["misses"] = df["occTiles"].apply(compute_misses)
     df["totalShipTiles"] = df["trueTiles"].apply(compute_hits)
     df["hits_pct"] = df["hits"] / df["totalShipTiles"]
+
+    df["precision"] = df["hits"] / (df["hits"] + df["misses"])
+    df["recall"] = df["hits_pct"]
 
     return df
