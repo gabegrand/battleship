@@ -40,6 +40,18 @@ class BoardFormat(StrEnum):
 
 
 class Board(object):
+    SHIP_LENGTHS = range(2, 6)
+    SHIP_LABELS = [
+        symbol for symbol, value in BOARD_SYMBOL_MAPPING.items() if value > 0
+    ]
+
+    hidden = BOARD_SYMBOL_MAPPING["H"]
+    water = BOARD_SYMBOL_MAPPING["W"]
+    green = BOARD_SYMBOL_MAPPING["G"]
+    red = BOARD_SYMBOL_MAPPING["R"]
+    purple = BOARD_SYMBOL_MAPPING["P"]
+    orange = BOARD_SYMBOL_MAPPING["O"]
+
     def __init__(self, board: np.ndarray):
         assert board.dtype == np.dtype(int)
         assert board.shape[0] == board.shape[1]
@@ -54,6 +66,9 @@ class Board(object):
     def size(self):
         return self._board.shape[0]
 
+    def __eq__(self, other):
+        return np.array_equal(self.board, other.board)
+
     def __repr__(self):
         return str(self)
 
@@ -65,8 +80,23 @@ class Board(object):
             output += "\n"
         return output
 
+    def __deepcopy__(self, memo):
+        return Board(self._board.copy())
+
     def _ipython_display_(self):
         display(self.to_figure())
+
+    @staticmethod
+    def symbol_to_int(symbol: str):
+        return BOARD_SYMBOL_MAPPING[symbol]
+
+    @staticmethod
+    def int_to_symbol(value: int):
+        return {v: k for k, v in BOARD_SYMBOL_MAPPING.items()}[value]
+
+    @staticmethod
+    def hidden_board(size: int):
+        return Board(np.full((size, size), BOARD_SYMBOL_MAPPING["H"]))
 
     @staticmethod
     def from_symbolic_array(board: np.ndarray):
