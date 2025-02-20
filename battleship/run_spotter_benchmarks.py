@@ -126,6 +126,8 @@ def benchmark_on_rounds(
     df,
     rounds_question_ids,
     model,
+    model_string,
+    temperature,
     use_history=False,
     max_rounds=10,
     max_questions=10,
@@ -155,6 +157,8 @@ def benchmark_on_rounds(
                 board_id=question_board,
                 board_experiment="collaborative",
                 use_cache=use_cache,
+                model_string=model_string,
+                temperature=temperature,
             )
 
             question = Question(text=question_text)
@@ -215,6 +219,18 @@ if __name__ == "__main__":
         help="The model type to use.",
     )
     parser.add_argument(
+        "--model_string",
+        type=str,
+        default="gpt-4o",
+        help="The underlying AI model to call.",
+    )
+    parser.add_argument(
+        "--model_temperature",
+        type=int,
+        default=None,
+        help="The model temperature to use.",
+    )
+    parser.add_argument(
         "--max_rounds",
         type=int,
         default=20,
@@ -267,6 +283,8 @@ if __name__ == "__main__":
         df=df,
         rounds_question_ids=rounds_questions_dict,
         model=model_class,
+        model_string=args.model_string,
+        temperature=args.model_temperature,
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,

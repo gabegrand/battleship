@@ -166,7 +166,6 @@ class CodeSpotterModel(BaseSpotterModel):
             _ = exec(code_generated, {"np": np}, local_vars)
         except Exception as e:
             tb = "".join(traceback.format_tb(e.__traceback__))
-            # code_generated += f"\n# Error: {e}\n{tb}"
             local_vars["answer"] = None
 
         return CodeQuestion(
