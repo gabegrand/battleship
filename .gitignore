@@ -22,9 +22,14 @@ var/
 wheels/
 share/python-wheels/
 *.egg-info/
+notebooks/cache/
 .installed.cfg
 *.egg
 MANIFEST
+experiments/collaborative/battleship-final-data
+experiments/collaborative/reports_battleship-final-data
+experiments/collaborative/reports_battleship-final-data-old
+battleship/cache
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

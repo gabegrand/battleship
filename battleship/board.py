@@ -58,10 +58,8 @@ class Board(object):
         return str(self)
 
     def __str__(self):
-        #output = "  " + " ".join([chr(ord("A") + i) for i in range(self.size)]) + "\n"
-        output = "  " + " ".join([str(i+1) for i in range(self.size)]) + "\n"
+        output = "  " + " ".join([str(i + 1) for i in range(self.size)]) + "\n"
         for i, row in enumerate(self.to_symbolic_array()):
-            #output += str(i + 1) + " "
             output += chr(ord("A") + i) + " "
             output += " ".join([str(cell) for cell in row])
             output += "\n"
@@ -123,12 +121,12 @@ class Board(object):
         pd.DataFrame(self.to_symbolic_array()).to_csv(path, header=False, index=False)
 
     @staticmethod
-    def from_trial_id(trial_id: int, experiment: str = "collaborative_contexts"):
+    def from_trial_id(trial_id: int, experiment: str = "collaborative"):
         board_path = os.path.join(
-                os.path.dirname(__file__),
-                f"../{experiment}",
-                f"board_{trial_id}.txt",
-            )
+            os.path.dirname(os.path.dirname(__file__)),
+            f"experiments/{experiment}/contexts",
+            f"board_{trial_id}.txt",
+        )
         return Board.from_text_file(board_path)
 
     @staticmethod
@@ -180,7 +178,7 @@ class Board(object):
         ax.set_xticks(np.arange(0, len(board_array), 1))
         ax.set_yticks(np.arange(0, len(board_array), 1))
         ax.set_xticklabels(
-            np.arange(1, len(board_array) + 1, 1),            
+            np.arange(1, len(board_array) + 1, 1),
             fontsize=24,
             fontweight="bold",
             color="#9b9c97",
