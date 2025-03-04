@@ -61,8 +61,11 @@ class BaseSpotterModel(ABC):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cache = use_cache
-        self.cache_path = CACHE_DIR / self.__class__.__name__
-        self.cache_path.mkdir(exist_ok=True)
+
+        escaped_model_string = model_string.split("/")[1]
+        self.cache_path = CACHE_DIR / escaped_model_string / self.__class__.__name__
+        # self.cache_path.mkdir(exist_ok=True)
+        os.makedirs(self.cache_path, exist_ok=True)
 
     def read_cache(self, cache_key):
         cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
@@ -72,12 +75,12 @@ class BaseSpotterModel(ABC):
             return cache_dict["result"]
         return None
 
-    def write_cache(self, cache_key, prompt, code, result, traceback):
+    def write_cache(self, cache_key, prompt, code, result, traceback=None):
         cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
         cache_data = {
             "prompt": prompt,
-            "code": code,
-            "result": result,
+            "code": str(code),
+            "result": str(result),
             "traceback": traceback,
         }
 

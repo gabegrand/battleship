@@ -260,13 +260,4 @@ class SpotterPrompt(BasePrompt):
             }
         )
 
-        # Set to false if using GPT-4; the model will generate this message itself
-        if self.include_final_prefix:
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": self.optional_space(self.PREFIX_QUESTION),
-                }
-            )
-
         return messages

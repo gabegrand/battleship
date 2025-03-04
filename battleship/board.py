@@ -124,7 +124,9 @@ class Board(object):
     def from_trial_id(trial_id: int, experiment: str = "collaborative"):
         board_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
-            f"experiments/{experiment}/contexts",
+            "experiments",
+            experiment,
+            "contexts",
             f"board_{trial_id}.txt",
         )
         return Board.from_text_file(board_path)

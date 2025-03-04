@@ -1,7 +1,6 @@
 import argparse
 
 import pandas as pd
-from board import *
 from spotter_model import CodeSpotterModel
 from spotter_model import DirectSpotterModel
 from spotter_model import Question
@@ -127,7 +126,7 @@ def benchmark_on_rounds(
     rounds_question_ids,
     model,
     model_string,
-    temperature,
+    temperature=None,
     use_history=False,
     max_rounds=10,
     max_questions=10,
