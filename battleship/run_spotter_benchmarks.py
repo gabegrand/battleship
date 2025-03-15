@@ -1,9 +1,9 @@
 import argparse
 
 import pandas as pd
-from spotter_model import CodeSpotterModel
-from spotter_model import DirectSpotterModel
-from spotter_model import Question
+from agents import CodeSpotterModel
+from agents import DirectSpotterModel
+from agents import Question
 from tqdm import tqdm
 
 # LOAD DATA

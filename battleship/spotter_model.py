@@ -1,9 +1,7 @@
-import hashlib
 import json
 import traceback
 from abc import ABC
 from abc import abstractmethod
-from ast import literal_eval
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,7 +12,10 @@ from prompting import *
 
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
-client = OpenAI()
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="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",
+)
 
 
 @dataclass

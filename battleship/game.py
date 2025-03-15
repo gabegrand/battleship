@@ -100,12 +100,13 @@ class BattleshipGame:
     def next_stage(self):
         decision = self.captain.decision(
             state=self.state,
+            history=self.history,
             questions_remaining=self.max_questions - self.question_count,
             moves_remaining=self.max_moves - self.move_count,
         )
 
         if decision == Decision.QUESTION:
-            q = self.captain.question(self.state)
+            q = self.captain.question(self.state, self.history)
             a = self.spotter.answer(q)
             self.question_count += 1
             self.history.append(

@@ -1,6 +1,8 @@
 import numpy as np
-from board import Board
-from board import BoardFormat
+
+from battleship.board import Board
+from battleship.board import BoardFormat
+from battleship.game import Decision
 
 PROMPT_GAME = (
     "You are playing the board game Battleship. "
@@ -18,6 +20,7 @@ PROMPT_VARIANT_GRID = (
     "G: Green ship\n"
     "P: Purple ship\n"
     "O: Orange ship\n"
+    "H: Hidden\n"
 )
 PROMPT_VARIANT_TEXTUAL = "The board is represented as a textual description.\n"
 PROMPT_VARIANT_VISUAL = "The board is represented as an image, with light gray indicating hidden tiles, dark gray indicating water tiles, and red, blue and purple indicating ship tiles.\n"
@@ -42,13 +45,13 @@ class BasePrompt(object):
 
     def __init__(
         self,
-        target_trial_id: int,
-        target_trial_experiment: str,
+        target_trial_id: int = None,
+        target_trial_experiment: str = None,
         board_format: BoardFormat = None,
         include_instructions: bool = True,
         include_board: bool = True,
         include_system_prompt: bool = True,
-        include_final_prefix: bool = True,
+        include_final_prefix: bool = False,
     ):
         self.target_trial_experiment = target_trial_experiment
         self.target_trial_id = target_trial_id
@@ -101,8 +104,7 @@ PROMPT_TASK_DIRECT_SPOTTER = (
     "You can only answer with 'Yes' or 'No'. Please only answer with a single word."
 )
 
-# Example questions
-PROMPT_EXAMPLES_SPOTTER = "Here are the past turns in the game so far, which include what questions the user has asked, their answers, and what moves the user made."
+PROMPT_EXAMPLES_MOVE = "Here are the past turns in the game so far, which include what questions the user has asked, their answers, and what moves the user made."
 
 PROMPT_PARTIAL_BOARD = "Here's what the captain could see when they asked this question: in this representation, 'H' stands for 'hidden', tiles the player has not fired at yet, which could be water or ship tiles."
 
@@ -259,5 +261,303 @@ class SpotterPrompt(BasePrompt):
                 "content": self.question.text,
             }
         )
+
+        return messages
+
+
+"""
+Move prompt for the Collaborative Battleship task.
+"""
+
+PROMPT_SYSTEM_MOVE = (
+    "You are a game-playing agent. "
+    "Read the game instructions and examples carefully. "
+    "Respond in one word. "
+    "Do not include any other explanation or prose.\n"
+)
+
+PROMPT_TASK_BASE_MOVE = (
+    "You will be given a partially-revealed game board. "
+    "Your task is to give the coordinates, of the hidden tile you think is most likely to contain a ship tile. "
+)
+
+PROMPT_EXAMPLES_SPOTTER = "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. "
+
+PROMPT_TARGET_BOARD_MOVE = "Now it's your turn. Remember that hidden tiles are marked by 'H'. Here's your board: \n"
+
+
+class MovePrompt(BasePrompt):
+    """Prompt for generating moves during a game of Battleship."""
+
+    def __init__(
+        self,
+        target_occ_tiles=None,
+        history=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.history = history
+        self.target_occ_tiles = target_occ_tiles
+        if self.board_format is None:
+            raise ValueError("Board format must be specified.")
+
+    def to_chat_format(self):
+        messages = []
+
+        if self.include_instructions:
+            if self.include_system_prompt:
+                messages.append({"role": "system", "content": PROMPT_SYSTEM_MOVE})
+
+            messages.append({"role": "user", "content": PROMPT_GAME})
+            messages.append({"role": "user", "content": PROMPT_TASK_BASE_MOVE})
+
+            if self.include_board:
+                if self.board_format == BoardFormat.GRID:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_GRID})
+                elif self.board_format == BoardFormat.TEXTUAL:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_TEXTUAL})
+                elif self.board_format == BoardFormat.VISUAL:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_VISUAL})
+                else:
+                    raise ValueError(f"Unknown board format: {self.board_format}")
+
+        if self.history is not None:
+            if self.include_board:
+                if self.include_instructions:
+                    messages.append(
+                        {"role": "user", "content": "\n" + PROMPT_TARGET_BOARD_MOVE}
+                    )
+
+                board_str = self.target_occ_tiles.to_format(self.board_format)
+                if self.board_format == BoardFormat.VISUAL:
+                    messages.append(
+                        {
+                            "role": "user",
+                            "name": "example_user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{board_str}",
+                                        "detail": "low",
+                                    },
+                                }
+                            ],
+                        },
+                    )
+                else:
+                    if not board_str.endswith("\n"):
+                        board_str += "\n"
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                        }
+                    )
+            if self.include_instructions:
+                messages.append({"role": "user", "content": PROMPT_EXAMPLES_MOVE})
+
+            for example in self.history:
+                if example["decision"] == Decision.QUESTION:
+                    decision_str = f"""Question: {example["question"]}\n 
+                                        Answer: {example["answer"]}"""
+                else:
+                    decision_str = f"""Move: {example["coords"]}"""
+
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f""" {decision_str}\n
+                                        {self.EXAMPLE_DELIMITER}\n\n""",
+                    }
+                )
+        else:
+            if self.include_board:
+                if self.target_occ_tiles is not None:
+                    captain_board_str = Board(
+                        np.array(eval(self.target_occ_tiles))
+                    ).to_format(self.board_format)
+                    if not captain_board_str.endswith("\n"):
+                        captain_board_str += "\n"
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": f"{self.EXAMPLE_DELIMITER}\n\n{captain_board_str}",
+                        }
+                    )
+
+                if self.include_instructions:
+                    messages.append(
+                        {"role": "user", "content": "\n" + PROMPT_TARGET_BOARD_MOVE}
+                    )
+
+                board_str = Board.from_trial_id(
+                    self.target_trial_id, self.target_trial_experiment
+                ).to_format(self.board_format)
+                if not board_str.endswith("\n"):
+                    board_str += "\n"
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                    }
+                )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                    }
+                )
+
+        return messages
+
+
+"""
+Question prompt for the Collaborative Battleship task.
+"""
+
+PROMPT_SYSTEM_QUESTION = (
+    "You are a game-playing agent. "
+    "Read the game instructions and examples carefully. "
+    "Respond with a single question that can be answered with one word. "
+    "Do not include any other explanation or prose.\n"
+)
+
+# Task description
+PROMPT_TASK_BASE_QUESTION = (
+    "You will be given a partially-revealed game board. "
+    "Your task is to ask a single question that will help you gain information about the position of the remaining hidden ships on the board. "
+    "You can ask any question, but it must be answerable with a boolean answer (Yes/No). "
+)
+
+PROMPT_EXAMPLES_QUESTION = "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. "
+
+PROMPT_TARGET_BOARD_QUESTION = "Now it's your turn. Remember that hidden tiles are marked by 'H'. Here's your board: \n"
+
+
+class QuestionPrompt(BasePrompt):
+    """Prompt for generating questions for the Battleship task."""
+
+    PREFIX_QUESTION = "Question:"
+
+    def __init__(
+        self,
+        target_occ_tiles=None,
+        history=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.history = history
+        self.target_occ_tiles = target_occ_tiles
+        if self.board_format is None:
+            raise ValueError("Board format must be specified.")
+
+    def to_chat_format(self):
+        messages = []
+
+        if self.include_instructions:
+            if self.include_system_prompt:
+                messages.append({"role": "system", "content": PROMPT_SYSTEM_QUESTION})
+
+            messages.append({"role": "user", "content": PROMPT_GAME})
+            messages.append({"role": "user", "content": PROMPT_TASK_BASE_QUESTION})
+
+            if self.include_board:
+                if self.board_format == BoardFormat.GRID:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_GRID})
+                elif self.board_format == BoardFormat.TEXTUAL:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_TEXTUAL})
+                elif self.board_format == BoardFormat.VISUAL:
+                    messages.append({"role": "user", "content": PROMPT_VARIANT_VISUAL})
+                else:
+                    raise ValueError(f"Unknown board format: {self.board_format}")
+
+        if self.history is not None:
+            if self.include_board:
+                if self.include_instructions:
+                    messages.append(
+                        {"role": "user", "content": "\n" + PROMPT_TARGET_BOARD_QUESTION}
+                    )
+
+                board_str = self.target_occ_tiles.to_format(self.board_format)
+                if self.board_format == BoardFormat.VISUAL:
+                    messages.append(
+                        {
+                            "role": "user",
+                            "name": "example_user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{board_str}",
+                                        "detail": "low",
+                                    },
+                                }
+                            ],
+                        },
+                    )
+                else:
+                    if not board_str.endswith("\n"):
+                        board_str += "\n"
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                        }
+                    )
+            if self.include_instructions:
+                messages.append({"role": "user", "content": PROMPT_EXAMPLES_QUESTION})
+
+            for example in self.history:
+                if example["decision"] == Decision.QUESTION:
+                    decision_str = f"""Question: {example["question"]}\n 
+                                        Answer: {example["answer"]}"""
+                else:
+                    decision_str = f"""Move: {example["coords"]}"""
+
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f""" {decision_str}\n
+                                        {self.EXAMPLE_DELIMITER}\n\n""",
+                    }
+                )
+        else:
+            if self.include_board:
+                if self.target_occ_tiles is not None:
+                    if self.include_instructions:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": "\n" + PROMPT_TARGET_BOARD_QUESTION,
+                            }
+                        )
+
+                    board_str = self.target_occ_tiles.to_format(self.board_format)
+                    if self.board_format == BoardFormat.VISUAL:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "name": "example_user",
+                                "content": [
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/png;base64,{board_str}",
+                                            "detail": "low",
+                                        },
+                                    }
+                                ],
+                            },
+                        )
+                    else:
+                        if not board_str.endswith("\n"):
+                            board_str += "\n"
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
+                            }
+                        )
 
         return messages
