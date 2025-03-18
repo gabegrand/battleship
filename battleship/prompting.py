@@ -2,6 +2,7 @@ import numpy as np
 
 from battleship.board import Board
 from battleship.board import BoardFormat
+from battleship.board import coords_to_tile
 from battleship.game import Decision
 
 PROMPT_GAME = (
@@ -92,6 +93,11 @@ PROMPT_SYSTEM_SPOTTER = (
     "Do not include any other explanation or prose.\n"
 )
 
+PROMPT_SYSTEM_SPOTTER_COT = (
+    "You are a game-playing agent. "
+    "Read the game instructions and examples carefully.\n"
+)
+
 PROMPT_TASK_BASE_SPOTTER = (
     "You will be given a fully-revealed game board in a numpy array-like style. "
     "You are in a team with a partner, the 'captain', who cannot see all of the board, but can ask you a question per turn about it. "
@@ -103,6 +109,10 @@ PROMPT_TASK_CODE_SPOTTER = "Please generate a piece of numpy code that answers t
 PROMPT_TASK_DIRECT_SPOTTER = (
     "You can only answer with 'Yes' or 'No'. Please only answer with a single word."
 )
+
+PROMPT_TASK_CODE_SPOTTER_COT = "Generate a piece of numpy code that answers the question. This code will be executed in an environment with both numpy (namespaced as np) and a 'board' variable (a numpy representation of the board) so give some function answer(board) that could be used across any board. Please think about this step by step, and make sure your code returns 'Yes' or 'No' and that you enclose the function you create in ```code blocks```, e.g. ```def answer(board): return ANSWER```. Assume you're already in a Python environment,begin your answer with ```def answer(board):, never start with ```python```."
+
+PROMPT_TASK_DIRECT_SPOTTER_COT = "You can only answer with 'Yes' or 'No'. Please think about this step by step, and, when you've come up with an answer, make sure to enclose it in <answer></answer> tags, e.g. <answer>Yes</answer> or <answer>No</answer>."
 
 PROMPT_EXAMPLES_MOVE = "Here are the past turns in the game so far, which include what questions the user has asked, their answers, and what moves the user made."
 
@@ -124,12 +134,14 @@ class SpotterPrompt(BasePrompt):
         use_code=False,
         target_occ_tiles=None,
         history=None,
+        use_cot=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.question = question
         self.history = history
         self.use_code = use_code
+        self.use_cot = use_cot
         self.target_occ_tiles = target_occ_tiles
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
@@ -139,15 +151,36 @@ class SpotterPrompt(BasePrompt):
 
         if self.include_instructions:
             if self.include_system_prompt:
-                messages.append({"role": "system", "content": PROMPT_SYSTEM_SPOTTER})
+                if self.use_cot:
+                    messages.append(
+                        {"role": "system", "content": PROMPT_SYSTEM_SPOTTER_COT}
+                    )
+                else:
+                    messages.append(
+                        {"role": "system", "content": PROMPT_SYSTEM_SPOTTER}
+                    )
 
             messages.append({"role": "user", "content": PROMPT_GAME})
             messages.append({"role": "user", "content": PROMPT_TASK_BASE_SPOTTER})
 
             if self.use_code:
-                messages.append({"role": "user", "content": PROMPT_TASK_CODE_SPOTTER})
+                if self.use_cot:
+                    messages.append(
+                        {"role": "user", "content": PROMPT_TASK_CODE_SPOTTER_COT}
+                    )
+                else:
+                    messages.append(
+                        {"role": "user", "content": PROMPT_TASK_CODE_SPOTTER}
+                    )
             else:
-                messages.append({"role": "user", "content": PROMPT_TASK_DIRECT_SPOTTER})
+                if self.use_cot:
+                    messages.append(
+                        {"role": "user", "content": PROMPT_TASK_DIRECT_SPOTTER_COT}
+                    )
+                else:
+                    messages.append(
+                        {"role": "user", "content": PROMPT_TASK_DIRECT_SPOTTER}
+                    )
 
             if self.include_board:
                 if self.board_format == BoardFormat.GRID:
@@ -199,10 +232,10 @@ class SpotterPrompt(BasePrompt):
 
             for example in self.history:
                 if example["decision"] == "question":
-                    decision_str = f"""Question: {example["question"]}\n 
-                                        Answer: {example["answer"]}"""
+                    decision_str = f"""Question: {example["question"].text if type(example["question"]) != str else example["question"]}\n 
+                                        Answer: {example["answer"].text if type(example["answer"]) != str else example["answer"]}"""
                 else:
-                    decision_str = f"""Move: {example["move"]}"""
+                    decision_str = f"""Move: {coords_to_tile(example["move"]) if type(example["move"]) != str else example["move"]}"""
 
                 messages.append(
                     {
@@ -276,12 +309,21 @@ PROMPT_SYSTEM_MOVE = (
     "Do not include any other explanation or prose.\n"
 )
 
+PROMPT_SYSTEM_MOVE_COT = (
+    "You are a game-playing agent. "
+    "Read the game instructions and examples carefully.\n"
+)
+
 PROMPT_TASK_BASE_MOVE = (
     "You will be given a partially-revealed game board. "
     "Your task is to give the coordinates, of the hidden tile you think is most likely to contain a ship tile. "
 )
 
-PROMPT_EXAMPLES_SPOTTER = "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. "
+PROMPT_TASK_BASE_MOVE_COT = (
+    "You will be given a partially-revealed game board. "
+    "Your task is to give the coordinates, of the hidden tile you think is most likely to contain a ship tile. "
+    "Please think about the task step-by-step, and enclose your answer in <answer></answer> tags, e.g. <answer>A1</answer>."
+)
 
 PROMPT_TARGET_BOARD_MOVE = "Now it's your turn. Remember that hidden tiles are marked by 'H'. Here's your board: \n"
 
@@ -292,12 +334,14 @@ class MovePrompt(BasePrompt):
     def __init__(
         self,
         target_occ_tiles=None,
+        use_cot=False,
         history=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.history = history
         self.target_occ_tiles = target_occ_tiles
+        self.use_cot = use_cot
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -306,10 +350,19 @@ class MovePrompt(BasePrompt):
 
         if self.include_instructions:
             if self.include_system_prompt:
-                messages.append({"role": "system", "content": PROMPT_SYSTEM_MOVE})
+                if self.use_cot:
+                    messages.append(
+                        {"role": "system", "content": PROMPT_SYSTEM_MOVE_COT}
+                    )
+                else:
+                    messages.append({"role": "system", "content": PROMPT_SYSTEM_MOVE})
 
             messages.append({"role": "user", "content": PROMPT_GAME})
-            messages.append({"role": "user", "content": PROMPT_TASK_BASE_MOVE})
+
+            if self.use_cot:
+                messages.append({"role": "user", "content": PROMPT_TASK_BASE_MOVE_COT})
+            else:
+                messages.append({"role": "user", "content": PROMPT_TASK_BASE_MOVE})
 
             if self.include_board:
                 if self.board_format == BoardFormat.GRID:
@@ -321,7 +374,7 @@ class MovePrompt(BasePrompt):
                 else:
                     raise ValueError(f"Unknown board format: {self.board_format}")
 
-        if self.history is not None:
+        if self.history != []:
             if self.include_board:
                 if self.include_instructions:
                     messages.append(
@@ -359,10 +412,10 @@ class MovePrompt(BasePrompt):
 
             for example in self.history:
                 if example["decision"] == Decision.QUESTION:
-                    decision_str = f"""Question: {example["question"]}\n 
-                                        Answer: {example["answer"]}"""
+                    decision_str = f"""Question: {example["question"].text}\n 
+                                        Answer: {example["answer"].text}"""
                 else:
-                    decision_str = f"""Move: {example["coords"]}"""
+                    decision_str = f"""Move: {coords_to_tile(example["coords"])}"""
 
                 messages.append(
                     {
@@ -374,9 +427,9 @@ class MovePrompt(BasePrompt):
         else:
             if self.include_board:
                 if self.target_occ_tiles is not None:
-                    captain_board_str = Board(
-                        np.array(eval(self.target_occ_tiles))
-                    ).to_format(self.board_format)
+                    captain_board_str = self.target_occ_tiles.to_format(
+                        self.board_format
+                    )
                     if not captain_board_str.endswith("\n"):
                         captain_board_str += "\n"
                     messages.append(
@@ -390,24 +443,6 @@ class MovePrompt(BasePrompt):
                     messages.append(
                         {"role": "user", "content": "\n" + PROMPT_TARGET_BOARD_MOVE}
                     )
-
-                board_str = Board.from_trial_id(
-                    self.target_trial_id, self.target_trial_experiment
-                ).to_format(self.board_format)
-                if not board_str.endswith("\n"):
-                    board_str += "\n"
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
-                    }
-                )
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": f"{self.EXAMPLE_DELIMITER}\n\n{board_str}",
-                    }
-                )
 
         return messages
 
@@ -423,16 +458,27 @@ PROMPT_SYSTEM_QUESTION = (
     "Do not include any other explanation or prose.\n"
 )
 
+PROMPT_SYSTEM_QUESTION_COT = (
+    "You are a game-playing agent. "
+    "Read the game instructions and examples carefully.\n"
+)
+
 # Task description
 PROMPT_TASK_BASE_QUESTION = (
     "You will be given a partially-revealed game board. "
-    "Your task is to ask a single question that will help you gain information about the position of the remaining hidden ships on the board. "
+    "Your task is to ask a single question that will help you gain the most information possible about the position of the remaining hidden ships on the board. "
     "You can ask any question, but it must be answerable with a boolean answer (Yes/No). "
 )
 
-PROMPT_EXAMPLES_QUESTION = "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. "
+PROMPT_TASK_BASE_QUESTION_COT = (
+    "You will be given a partially-revealed game board. "
+    "Your task is to ask a single question that will help you gain the most information possible about the position of the remaining hidden ships on the board. "
+    "You can ask any question, but it must be answerable with a boolean answer (Yes/No). Please think about this step by step, and, when you've come up with an answer, make sure to enclose it in <answer></answer> tags, e.g. <answer>Is the sky blue?</answer>."
+)
 
-PROMPT_TARGET_BOARD_QUESTION = "Now it's your turn. Remember that hidden tiles are marked by 'H'. Here's your board: \n"
+PROMPT_EXAMPLES_QUESTION = "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. Make sure your questions are not similar to each other."
+
+PROMPT_TARGET_BOARD_QUESTION = "Now it's your turn. Here's your board: \n"
 
 
 class QuestionPrompt(BasePrompt):
@@ -444,11 +490,13 @@ class QuestionPrompt(BasePrompt):
         self,
         target_occ_tiles=None,
         history=None,
+        use_cot=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.history = history
         self.target_occ_tiles = target_occ_tiles
+        self.use_cot = use_cot
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -457,10 +505,24 @@ class QuestionPrompt(BasePrompt):
 
         if self.include_instructions:
             if self.include_system_prompt:
-                messages.append({"role": "system", "content": PROMPT_SYSTEM_QUESTION})
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": PROMPT_SYSTEM_QUESTION
+                        if not self.use_cot
+                        else PROMPT_SYSTEM_QUESTION_COT,
+                    }
+                )
 
             messages.append({"role": "user", "content": PROMPT_GAME})
-            messages.append({"role": "user", "content": PROMPT_TASK_BASE_QUESTION})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": PROMPT_TASK_BASE_QUESTION
+                    if not self.use_cot
+                    else PROMPT_TASK_BASE_QUESTION_COT,
+                }
+            )
 
             if self.include_board:
                 if self.board_format == BoardFormat.GRID:
@@ -510,10 +572,10 @@ class QuestionPrompt(BasePrompt):
 
             for example in self.history:
                 if example["decision"] == Decision.QUESTION:
-                    decision_str = f"""Question: {example["question"]}\n 
-                                        Answer: {example["answer"]}"""
+                    decision_str = f"""Question: {example["question"].text}\n 
+                                        Answer: {example["answer"].text}"""
                 else:
-                    decision_str = f"""Move: {example["coords"]}"""
+                    decision_str = f"""Move: {coords_to_tile(example["coords"])}"""
 
                 messages.append(
                     {

@@ -1,10 +1,12 @@
 import argparse
 
 import pandas as pd
-from agents import CodeSpotterModel
-from agents import DirectSpotterModel
-from agents import Question
 from tqdm import tqdm
+
+from battleship.agents import CacheMode
+from battleship.agents import CodeSpotterModel
+from battleship.agents import DirectSpotterModel
+from battleship.agents import Question
 
 # LOAD DATA
 
@@ -41,6 +43,9 @@ def load_data(
             stage_df = stage_df[stage_df[f"gold{annotation.capitalize()}"] == False]
 
     rounds_questions_list = list(zip(stage_df["roundID"], stage_df["questionID"]))
+    rounds_questions_list = [
+        i for i in rounds_questions_list if i[0] in round_df["id"].tolist()
+    ]
     rounds_questions_dict = {key: [] for key, value in rounds_questions_list}
     for key, value in rounds_questions_list:
         rounds_questions_dict[key].append(value)
@@ -71,6 +76,7 @@ def retrieve_context(question_id, round_data):
 
     # QUESTION HISTORY decision, question, answer, move
     # {"question":question, "code": q_ex.codestr, "answer": a_ex.text, "board_id": board}
+
     previous_decision_ids = sorted(
         list(set(question_history_data["questionID"].tolist()))
     )
@@ -130,7 +136,8 @@ def benchmark_on_rounds(
     use_history=False,
     max_rounds=10,
     max_questions=10,
-    use_cache=True,
+    cache_mode=CacheMode.NO_CACHE,
+    use_cot=False,
     use_captain_board=False,
 ):
     correct = []
@@ -140,8 +147,19 @@ def benchmark_on_rounds(
         round_data = df[df["roundID"] == round]
         question_ids = sorted(rounds_question_ids[round])
 
+        clean_q_ids = list(
+            set(
+                [
+                    i
+                    for i in question_ids
+                    if "question"
+                    in round_data[round_data["questionID"] == i]["messageType"].tolist()
+                ]
+            )
+        )
+
         for question_id in tqdm(
-            question_ids[:max_questions],
+            clean_q_ids[:max_questions],
             desc=f"Round {str(round)}, {idx+1}/{max_rounds}",
         ):
             question_context = retrieve_context(question_id, round_data)
@@ -149,15 +167,17 @@ def benchmark_on_rounds(
             examples = question_context["history"]
             question_board = question_context["context"]["board_id"]
             question_text = question_context["context"]["text"]
-            ground_truth_answer = question_context["context"]["true_answer"]
             question_captain_board = question_context["context"]["occ_tiles"]
+
+            ground_truth_answer = question_context["context"]["true_answer"]
 
             spotter_model = model(
                 board_id=question_board,
                 board_experiment="collaborative",
-                use_cache=use_cache,
+                cache_mode=cache_mode,
                 model_string=model_string,
                 temperature=temperature,
+                use_cot=use_cot,
             )
 
             question = Question(text=question_text)
@@ -247,8 +267,9 @@ if __name__ == "__main__":
         help="Flag to include history in the benchmark.",
     )
     parser.add_argument(
-        "--use_cache",
-        action="store_true",
+        "--cache_mode",
+        type=str,
+        default=CacheMode.NO_CACHE,
         help="Flag to enable cache usage.",
     )
     parser.add_argument(
@@ -287,7 +308,7 @@ if __name__ == "__main__":
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
-        use_cache=args.use_cache,
+        cache_mode=args.cache_mode,
         use_captain_board=args.use_captain_board,
     )
 

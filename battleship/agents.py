@@ -26,12 +26,14 @@ from battleship.prompting import SpotterPrompt
 
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
-MOVE_PATTERN = re.compile("^[A-H]{1}[1-8]{1}$")
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key="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",
-)
+MOVE_PATTERN = re.compile("^[A-H]{1}[1-8]{1}$")
+MOVE_COT_PATTERN = re.compile(r"\s*<answer>\s*([A-H][1-8])\s*</answer>\s*")
+BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
+ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
+CODE_ANSWER_PATTERN = re.compile("```(.*?)```", re.DOTALL)
+
+client = OpenAI()
 
 
 @dataclass
@@ -84,8 +86,10 @@ class Agent(ABC):
         self,
         seed: int = None,
         model_string: str = None,
+        use_cot: bool = False,
         cache_mode: CacheMode = CacheMode.NO_CACHE,
     ):
+        self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
         self.cache_mode = cache_mode
@@ -130,7 +134,7 @@ class Agent(ABC):
         """Write to cache based on cache mode using the counter-based key"""
         # Don't write if NO_CACHE or READ_ONLY
         if self.cache_mode in [CacheMode.NO_CACHE, CacheMode.READ_ONLY]:
-            return
+            return None
 
         cache_key = self.get_cache_key(decision_type)
         cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
@@ -151,11 +155,11 @@ class Captain(Agent):
     def __init__(
         self,
         seed: int = None,
-        cache_mode=CacheMode.NO_CACHE,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
         model_string=None,
         temperature=None,
     ):
-        super().__init__(seed, model_string, cache_mode)
+        super().__init__(seed=seed, model_string=model_string, cache_mode=cache_mode)
         self.temperature = temperature
 
     def decision(
@@ -226,12 +230,12 @@ class Captain(Agent):
             # Generate new anyway
             result = self._get_move(state, history)
             # Cache the result
-            self.write_cache(
-                "MOVE",
-                prompt={"type": "move", "state": str(state.board.tobytes())},
-                code=None,
-                result=str(result),
-            )
+            # self.write_cache(
+            #    "MOVE",
+            #    prompt={"type": "move", "state": str(state.board.tobytes())},
+            #    code=None,
+            #    result=str(result),
+            # )
 
             # Increment counter after move
             Agent.increment_counter()
@@ -260,12 +264,12 @@ class Captain(Agent):
             # Generate new anyway
             result = self._get_question(state, history)
             # Cache the result
-            self.write_cache(
-                "QUESTION",
-                prompt={"type": "question", "state": str(state.board.tobytes())},
-                code=None,
-                result=result.text,
-            )
+            # self.write_cache(
+            #    "QUESTION",
+            #    prompt={"type": "question", "state": str(state.board.tobytes())},
+            #    code=None,
+            #    result=result.text,
+            # )
 
             # Increment counter after question
             Agent.increment_counter()
@@ -302,13 +306,16 @@ class Spotter(Agent):
         cache_mode=CacheMode.NO_CACHE,
         model_string="gpt-4o",
         temperature=None,
+        use_cot=False,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
 
         # Use proper Agent initialization to handle model string and cache path
-        super().__init__(seed=None, model_string=model_string, cache_mode=cache_mode)
+        super().__init__(
+            seed=None, model_string=model_string, cache_mode=cache_mode, use_cot=use_cot
+        )
 
     @abstractmethod
     def _get_model_answer(
@@ -357,6 +364,7 @@ class DirectSpotterModel(Spotter):
             use_code=False,
             include_final_prefix=False,
             history=history,
+            use_cot=self.use_cot,
         )
 
         completion = client.chat.completions.create(
@@ -365,13 +373,38 @@ class DirectSpotterModel(Spotter):
             temperature=self.temperature,
         )
 
-        response = completion.choices[0].message.content
-        self.write_cache(
-            question.get_cache_key(self.board_id),
-            prompt=prompt.to_chat_format(),
-            code=None,
-            result=response,
-        )
+        if not self.use_cot:
+            response = completion.choices[0].message.content
+            self.write_cache(
+                question.get_cache_key(self.board_id),
+                prompt=prompt.to_chat_format(),
+                code=None,
+                result=response,
+            )
+        else:
+            response = None
+            while response is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                response_match = BOOL_ANSWER_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+                if response_match:
+                    response = response_match.group(
+                        1
+                    )  # This extracts just the "Yes" or "No"
+                else:
+                    response = None
+
+            self.write_cache(
+                question.get_cache_key(self.board_id),
+                prompt=prompt.to_chat_format(),
+                code=completion.choices[0].message.content,
+                result=response,
+            )
 
         answer = Answer(text=response)
         return answer
@@ -390,17 +423,39 @@ class CodeSpotterModel(Spotter):
             use_code=True,
             include_final_prefix=False,
             history=history,
+            use_cot=self.use_cot,
         )
 
-        completion = client.chat.completions.create(
-            model=self.model_string,
-            messages=translation_prompt.to_chat_format(),
-            temperature=self.temperature,
-        )
-        code_generated = completion.choices[0].message.content
+        if not self.use_cot:
+            completion = client.chat.completions.create(
+                model=self.model_string,
+                messages=translation_prompt.to_chat_format(),
+                temperature=self.temperature,
+            )
+            code_generated = completion.choices[0].message.content
+        else:
+            code_generated = None
+            while code_generated is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=translation_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                response_match = CODE_ANSWER_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+                if response_match:
+                    code_generated = response_match.group(
+                        1
+                    )  # This extracts just the "Yes" or "No"
+                else:
+                    code_generated = None
 
         local_vars = {}
         tb = None
+
+        if "python\n" in code_generated:
+            code_generated = code_generated.split("python\n")[1]
 
         try:
             _ = exec(code_generated, {"np": np}, local_vars)
@@ -488,6 +543,7 @@ class ProbabilisticCaptain(Captain):
         seed: int = None,
         questions_remaining=15,
         q_prob: float = 0.5,
+        use_cot=False,
         model_string: str = "openai/gpt-4o",
         temperature: float = None,
         cache_mode: CacheMode = CacheMode.NO_CACHE,
@@ -498,6 +554,7 @@ class ProbabilisticCaptain(Captain):
             temperature=temperature,
             cache_mode=cache_mode,
         )
+        self.use_cot = use_cot
         self.q_prob = q_prob
         self.questions_remaining = questions_remaining
 
@@ -522,7 +579,10 @@ class ProbabilisticCaptain(Captain):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
-            target_occ_tiles=state, board_format="grid", history=history
+            target_occ_tiles=state,
+            board_format="grid",
+            history=history,
+            use_cot=self.use_cot,
         )
 
         # Format the prompt for caching
@@ -535,31 +595,74 @@ class ProbabilisticCaptain(Captain):
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
-            candidate_move = MOVE_PATTERN.match(completion.choices[0].message.content)
+            if self.use_cot:
+                match = MOVE_COT_PATTERN.search(completion.choices[0].message.content)
+                if match is not None:
+                    candidate_move = tile_to_coords(match.group(1))
+            else:
+                candidate_move = MOVE_PATTERN.match(
+                    completion.choices[0].message.content
+                )
+                if candidate_move is not None:
+                    candidate_move = tile_to_coords(candidate_move.group())
 
-            if candidate_move is not None:
-                candidate_move = tile_to_coords(candidate_move.group())
+        self.write_cache(
+            "MOVE",
+            prompt_for_cache,
+            None,
+            candidate_move,
+            traceback=completion.choices[0].message.content,
+        )
 
-        self.write_cache("MOVE", prompt_for_cache, None, candidate_move, traceback=None)
-
+        print("prob move", coords_to_tile(candidate_move))
         return candidate_move
 
     def _get_question(self, state: Board, history: List[Dict]) -> Question:
         question_prompt = QuestionPrompt(
-            target_occ_tiles=state, board_format="grid", history=history
+            target_occ_tiles=state,
+            board_format="grid",
+            history=history,
+            use_cot=self.use_cot,
         )
 
         # Format the prompt for caching
         prompt_for_cache = question_prompt.to_chat_format()
 
-        completion = client.chat.completions.create(
-            model=self.model_string,
-            messages=question_prompt.to_chat_format(),
-            temperature=self.temperature,
+        if not self.use_cot:
+            completion = client.chat.completions.create(
+                model=self.model_string,
+                messages=question_prompt.to_chat_format(),
+                temperature=self.temperature,
+            )
+            candidate_question = completion.choices[0].message.content
+        else:
+            candidate_question = None
+            while candidate_question is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=question_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                candidate_question = ANSWER_MATCH_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+
+                if candidate_question:
+                    candidate_question = candidate_question.group(
+                        1
+                    )  # This extracts just the "Yes" or "No"
+                else:
+                    candidate_question = None
+
+        result = Question(text=candidate_question)
+
+        print("prob question", candidate_question)
+        self.write_cache(
+            "QUESTION",
+            str(prompt_for_cache),
+            None,
+            candidate_question,
+            traceback=completion.choices[0].message.content,
         )
-
-        result = Question(text=completion.choices[0].message.content)
-
-        self.write_cache("MOVE", prompt_for_cache, None, result, traceback=None)
 
         return result
