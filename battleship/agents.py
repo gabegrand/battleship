@@ -21,13 +21,13 @@ class Captain(Agent):
         history: List[Dict],
         questions_remaining: int,
         moves_remaining: int,
-    ):
+    ) -> Decision:
         raise NotImplementedError
 
-    def question(self, state: Board, history: List[Dict]):
+    def question(self, state: Board, history: List[Dict]) -> str:
         raise NotImplementedError
 
-    def move(self, state: Board, history: List[Dict]):
+    def move(self, state: Board, history: List[Dict]) -> Tuple[int, int]:
         raise NotImplementedError
 
 
@@ -36,8 +36,8 @@ class Spotter(Agent):
         self,
         state: Board,
         history: List[Dict],
-        question: Tuple[int, int],
-    ):
+        question: str,
+    ) -> bool:
         raise NotImplementedError
 
 
