@@ -163,7 +163,7 @@ class Captain(Agent):
         history: List[Dict],
         questions_remaining: int,
         moves_remaining: int,
-    ):
+    ) -> Decision:
         cached_result = self.read_cache("DECISION")
 
         # If we have a cache hit in READ_WRITE mode
@@ -251,7 +251,7 @@ class Captain(Agent):
         Agent.increment_counter()
         return result
 
-    def question(self, state: Board, history: List[Dict]):
+    def question(self, state: Board, history: List[Dict]) -> str:
         cached_result = self.read_cache("QUESTION")
 
         # If we have a cache hit in READ_WRITE mode
@@ -301,7 +301,7 @@ class Captain(Agent):
     def _get_move(self, state, history):
         raise NotImplementedError
 
-    def _get_question(self, state, history):
+    def _get_question(self, state, history) -> Tuple[int, int]:
         raise NotImplementedError
 
 
