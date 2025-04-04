@@ -33,6 +33,20 @@ SYMBOL_MEANING_MAPPING = {
 TRIAL_IDS = list(range(1, 19))
 
 
+def tile_to_coords(tile: str):
+    """Convert a tile string to coordinates."""
+    row = ord(tile[0]) - ord("A")
+    col = int(tile[1:]) - 1
+    return row, col
+
+
+def coords_to_tile(tile: tuple):
+    """Convert a tile string to coordinates."""
+    row = chr(tile[0] + ord("A"))
+    col = str(tile[1] + 1)
+    return row + col
+
+
 class BoardFormat(StrEnum):
     GRID = "grid"
     TEXTUAL = "textual"
