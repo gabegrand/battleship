@@ -1,3 +1,12 @@
+"""
+python run_spotter_benchmarks.py \
+  --stages /home/ubuntu/repo_battleship/temp/gold_annotations_partial.csv \
+  --rounds /home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv \
+  --model CodeSpotterModel \
+  --max_rounds 10 \
+  --max_questions 15 \
+  --gold_annotations answer ambiguous contextual unanswerable
+"""
 import argparse
 
 import pandas as pd

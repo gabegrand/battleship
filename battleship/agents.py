@@ -75,10 +75,9 @@ class Agent(ABC):
     # Class variable for global counter
     action_counter = 0
 
-    @classmethod
-    def increment_counter(cls):
-        cls.action_counter += 1
-        return cls.action_counter
+    def increment_counter(self):
+        self.action_counter += 1
+        return self.action_counter
 
     def __init__(
         self,
@@ -283,6 +282,18 @@ class Captain(Agent):
         # Increment counter after question
         Agent.increment_counter()
         return result
+
+    def get_decision_cache_key(self, state_hash):
+        """Generate a cache key for decisions"""
+        return f"decision_{state_hash}"
+
+    def get_move_cache_key(self, state_hash):
+        """Generate a cache key for move operations"""
+        return f"move_{state_hash}"
+
+    def get_question_cache_key(self, state_hash):
+        """Generate a cache key for question operations"""
+        return f"question_{state_hash}"
 
     def _get_decision(self, state, history, questions_remaining, moves_remaining):
         raise NotImplementedError
@@ -500,18 +511,6 @@ class ProbabilisticCaptain(Captain):
         )
         self.q_prob = q_prob
         self.questions_remaining = questions_remaining
-
-    def get_decision_cache_key(self, state_hash):
-        """Generate a cache key for decisions"""
-        return f"decision_{state_hash}"
-
-    def get_move_cache_key(self, state_hash):
-        """Generate a cache key for move operations"""
-        return f"move_{state_hash}"
-
-    def get_question_cache_key(self, state_hash):
-        """Generate a cache key for question operations"""
-        return f"question_{state_hash}"
 
     def _get_decision(self, state, history, questions_remaining, moves_remaining):
         if random() < self.q_prob and questions_remaining > 0:
