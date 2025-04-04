@@ -12,6 +12,7 @@ from IPython.display import display
 
 from battleship.board import Board
 from battleship.board import BOARD_SYMBOL_MAPPING
+from battleship.board import SYMBOL_MEANING_MAPPING
 
 
 logger = logging.getLogger(__name__)
@@ -97,16 +98,49 @@ class BattleshipGame:
         while not self.is_done():
             self.next_stage()
 
+    def sunk_ships(self):
+        """
+        Return a string describing the sinking status of each ship.
+
+        Example: "Green ship sunk, Red ship sunk, Purple ship not yet sunk, Orange ship not yet sunk"
+        """
+        status_parts = []
+
+        # Create reverse mapping from ship number to name
+        reverse_mapping = {}
+        for symbol, number in BOARD_SYMBOL_MAPPING.items():
+            if number > 0:  # Skip hidden and water
+                reverse_mapping[number] = SYMBOL_MEANING_MAPPING[symbol]
+
+        # Skip water (0) and hidden (-1) tiles
+        for ship_type in range(1, int(np.max(self.target.board)) + 1):
+            if ship_type in reverse_mapping:
+                ship_name = reverse_mapping[ship_type]
+
+                # Count tiles of this ship type in target and state
+                target_count = np.sum(self.target.board == ship_type)
+                state_count = np.sum(self.state.board == ship_type)
+
+                # Determine if ship is sunk
+                if target_count > 0:
+                    if target_count == state_count:
+                        status_parts.append(f"{ship_name} sunk")
+                    else:
+                        status_parts.append(f"{ship_name} not yet sunk")
+
+        return ", ".join(status_parts)
+
     def next_stage(self):
         decision = self.captain.decision(
             state=self.state,
             history=self.history,
             questions_remaining=self.max_questions - self.question_count,
             moves_remaining=self.max_moves - self.move_count,
+            sunk=self.sunk_ships(),
         )
 
         if decision == Decision.QUESTION:
-            q = self.captain.question(self.state, self.history)
+            q = self.captain.question(self.state, self.history, self.sunk_ships())
             a = self.spotter.answer(q)
             self.question_count += 1
             self.history.append(
@@ -118,7 +152,7 @@ class BattleshipGame:
                 }
             )
         elif decision == Decision.MOVE:
-            coords = self.captain.move(self.state, self.history)
+            coords = self.captain.move(self.state, self.history, self.sunk_ships())
             self.update_state(coords)
             self.move_count += 1
             self.history.append(

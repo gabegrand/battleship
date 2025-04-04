@@ -6,8 +6,10 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from math import log2
 from pathlib import Path
 from random import random
+from time import time
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -20,6 +22,7 @@ from battleship.board import coords_to_tile
 from battleship.board import tile_to_coords
 from battleship.fast_sampler import FastSampler
 from battleship.game import Decision
+from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
 from battleship.prompting import SpotterPrompt
@@ -28,6 +31,7 @@ CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
 MOVE_PATTERN = re.compile("^[A-H]{1}[1-8]{1}$")
+DECISION_PATTERN = re.compile("^(Question|Move)$")
 MOVE_COT_PATTERN = re.compile(r"\s*<answer>\s*([A-H][1-8])\s*</answer>\s*")
 BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
 ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
@@ -73,6 +77,11 @@ class CacheMode(Enum):
     READ_WRITE = "read_write"  # Read from cache and generate+cache new responses
 
 
+# ---------------------
+# Abstract Agent Classes
+# ---------------------
+
+
 class Agent(ABC):
     # Class variable for global counter
     action_counter = 0
@@ -107,7 +116,7 @@ class Agent(ABC):
 
     def get_cache_key(self, decision_type):
         """Generate a cache key based on the global counter and decision type"""
-        return f"{Agent.action_counter}_{decision_type}"
+        return f"{Agent.action_counter}_{decision_type}_{str(time())}"
 
     def read_cache(self, decision_type):
         """Read from cache based on cache mode using the counter-based key"""
@@ -168,6 +177,7 @@ class Captain(Agent):
         history: List[Dict],
         questions_remaining: int,
         moves_remaining: int,
+        sunk: str,
     ):
         cached_result = self.read_cache("DECISION")
 
@@ -175,19 +185,7 @@ class Captain(Agent):
         if cached_result == "GENERATE_NEW":
             # Generate new response anyway
             result = self._get_decision(
-                state, history, questions_remaining, moves_remaining
-            )
-            # Cache the new result
-            self.write_cache(
-                "DECISION",
-                prompt={
-                    "type": "decision",
-                    "state": str(state.board.tobytes()),
-                    "questions_remaining": questions_remaining,
-                    "moves_remaining": moves_remaining,
-                },
-                code=None,
-                result=str(result.value),
+                state, history, questions_remaining, moves_remaining, sunk
             )
 
             # Increment counter after decision
@@ -202,40 +200,20 @@ class Captain(Agent):
 
         # Cache miss
         result = self._get_decision(
-            state, history, questions_remaining, moves_remaining
-        )
-
-        # Cache the result
-        self.write_cache(
-            "DECISION",
-            prompt={
-                "type": "decision",
-                "state": str(state.board.tobytes()),
-                "questions_remaining": questions_remaining,
-                "moves_remaining": moves_remaining,
-            },
-            code=None,
-            result=str(result.value),
+            state, history, questions_remaining, moves_remaining, sunk
         )
 
         # Increment counter after decision
         Agent.increment_counter()
         return result
 
-    def move(self, state: Board, history: List[Dict]):
+    def move(self, state: Board, history: List[Dict], sunk: str):
         cached_result = self.read_cache("MOVE")
 
         # If we have a cache hit in READ_WRITE mode
         if cached_result == "GENERATE_NEW":
             # Generate new anyway
-            result = self._get_move(state, history)
-            # Cache the result
-            # self.write_cache(
-            #    "MOVE",
-            #    prompt={"type": "move", "state": str(state.board.tobytes())},
-            #    code=None,
-            #    result=str(result),
-            # )
+            result = self._get_move(state, history, sunk)
 
             # Increment counter after move
             Agent.increment_counter()
@@ -250,26 +228,19 @@ class Captain(Agent):
             return coords
 
         # Cache miss
-        result = self._get_move(state, history)
+        result = self._get_move(state, history, sunk)
 
         # Increment counter after move
         Agent.increment_counter()
         return result
 
-    def question(self, state: Board, history: List[Dict]):
+    def question(self, state: Board, history: List[Dict], sunk: str):
         cached_result = self.read_cache("QUESTION")
 
         # If we have a cache hit in READ_WRITE mode
         if cached_result == "GENERATE_NEW":
             # Generate new anyway
-            result = self._get_question(state, history)
-            # Cache the result
-            # self.write_cache(
-            #    "QUESTION",
-            #    prompt={"type": "question", "state": str(state.board.tobytes())},
-            #    code=None,
-            #    result=result.text,
-            # )
+            result = self._get_question(state, history, sunk)
 
             # Increment counter after question
             Agent.increment_counter()
@@ -282,19 +253,19 @@ class Captain(Agent):
             return Question(text=cached_result)
 
         # Cache miss
-        result = self._get_question(state, history)
+        result = self._get_question(state, history, sunk)
 
         # Increment counter after question
         Agent.increment_counter()
         return result
 
-    def _get_decision(self, state, history, questions_remaining, moves_remaining):
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         raise NotImplementedError
 
-    def _get_move(self, state, history):
+    def _get_move(self, state, history, sunk):
         raise NotImplementedError
 
-    def _get_question(self, state, history):
+    def _get_question(self, state, history, sunk):
         raise NotImplementedError
 
 
@@ -349,6 +320,11 @@ class Spotter(Agent):
         # Increment counter after answer
         Agent.increment_counter()
         return result
+
+
+# ---------------------
+# Spotter Classes
+# ---------------------
 
 
 class DirectSpotterModel(Spotter):
@@ -445,9 +421,7 @@ class CodeSpotterModel(Spotter):
                     completion.choices[0].message.content
                 )
                 if response_match:
-                    code_generated = response_match.group(
-                        1
-                    )  # This extracts just the "Yes" or "No"
+                    code_generated = response_match.group(1)
                 else:
                     code_generated = None
 
@@ -494,11 +468,61 @@ class CodeSpotterModel(Spotter):
         return Answer(text=result, code_question=code_question)
 
 
+class EIGCalculator:
+    def __init__(self, seed, spotter):
+        self.seed = seed
+        self.rng = np.random.default_rng(seed)
+        self.spotter = spotter
+
+    def calculate_eig(self, question, state, samples=100, move=False):
+        def safe_log2(x):
+            if x == 0:
+                return 0
+            return log2(x)
+
+        code_question = self.spotter.translate(question, [], state.board)
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        results = {"Yes": 0, "No": 0}
+        curr_time = time()
+        while sum(results.values()) < samples:
+            if time() - curr_time > 15:
+                print("EIG calculation timed out")
+                return 0
+            board = None
+            while not board:
+                board = sampler.populate_board()
+            board = board.to_symbolic_array()
+            result = code_question(board)
+            if result:
+                results[result] += 1
+        print("eig results calculated")
+
+        if results == {"Yes": samples, "No": 0} and move:
+            return 1000
+
+        eig = safe_log2(samples) - sum(
+            [p / samples * safe_log2(p) for p in results.values()]
+        )
+        # print("eig calculated as", eig, results)
+        return eig
+
+
+# ---------------------
+# Captain Classes
+# ---------------------
+
+
 class RandomCaptain(Captain):
     def decision(self, *args, **kwargs):
         return Decision.MOVE
 
-    def move(self, state: Board, history: List[Dict]) -> Tuple[int, int]:
+    def move(self, state: Board, history: List[Dict], sunk) -> Tuple[int, int]:
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
@@ -514,7 +538,7 @@ class MAPCaptain(Captain):
     def decision(self, *args, **kwargs):
         return Decision.MOVE
 
-    def move(self, state: Board, history: List[Dict]) -> Tuple[int, int]:
+    def move(self, state: Board, history: List[Dict], sunk) -> Tuple[int, int]:
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -537,27 +561,7 @@ class MAPCaptain(Captain):
         return tuple(move_coords)
 
 
-class ProbabilisticCaptain(Captain):
-    def __init__(
-        self,
-        seed: int = None,
-        questions_remaining=15,
-        q_prob: float = 0.5,
-        use_cot=False,
-        model_string: str = "openai/gpt-4o",
-        temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
-    ):
-        super().__init__(
-            seed=seed,
-            model_string=model_string,
-            temperature=temperature,
-            cache_mode=cache_mode,
-        )
-        self.use_cot = use_cot
-        self.q_prob = q_prob
-        self.questions_remaining = questions_remaining
-
+class AutoCaptain(Captain):
     def get_decision_cache_key(self, state_hash):
         """Generate a cache key for decisions"""
         return f"decision_{state_hash}"
@@ -570,12 +574,12 @@ class ProbabilisticCaptain(Captain):
         """Generate a cache key for question operations"""
         return f"question_{state_hash}"
 
-    def _get_decision(self, state, history, questions_remaining, moves_remaining):
-        if random() < self.q_prob and questions_remaining > 0:
-            return Decision.QUESTION
-        return Decision.MOVE
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        raise NotImplementedError
 
-    def _get_move(self, state: Board, history: List[Dict]) -> Tuple[int, int]:
+    def _get_move(
+        self, state: Board, history: List[Dict], sunk: str
+    ) -> Tuple[int, int]:
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
@@ -583,10 +587,9 @@ class ProbabilisticCaptain(Captain):
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
+            moves_remaining=self.moves_remaining,
+            sunk=sunk,
         )
-
-        # Format the prompt for caching
-        prompt_for_cache = move_prompt.to_chat_format()
 
         candidate_move = None
         while candidate_move is None or candidate_move in visible_tiles:
@@ -606,27 +609,17 @@ class ProbabilisticCaptain(Captain):
                 if candidate_move is not None:
                     candidate_move = tile_to_coords(candidate_move.group())
 
-        self.write_cache(
-            "MOVE",
-            prompt_for_cache,
-            None,
-            candidate_move,
-            traceback=completion.choices[0].message.content,
-        )
-
-        print("prob move", coords_to_tile(candidate_move))
         return candidate_move
 
-    def _get_question(self, state: Board, history: List[Dict]) -> Question:
+    def _get_question(self, state: Board, history: List[Dict], sunk: str) -> Question:
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
+            q_remaining=self.questions_remaining,
+            sunk=sunk,
         )
-
-        # Format the prompt for caching
-        prompt_for_cache = question_prompt.to_chat_format()
 
         if not self.use_cot:
             completion = client.chat.completions.create(
@@ -656,13 +649,316 @@ class ProbabilisticCaptain(Captain):
 
         result = Question(text=candidate_question)
 
-        print("prob question", candidate_question)
+        return result
+
+
+class ProbabilisticCaptain(AutoCaptain):
+    def __init__(
+        self,
+        seed: int = None,
+        q_prob: float = 0.5,
+        use_cot=False,
+        model_string: str = "openai/gpt-4o",
+        temperature: float = None,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
+    ):
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            temperature=temperature,
+            cache_mode=cache_mode,
+        )
+        self.use_cot = use_cot
+        self.q_prob = q_prob
+
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+
+        if random() < self.q_prob and questions_remaining > 0:
+            return Decision.QUESTION
+        return Decision.MOVE
+
+
+class LLMDecisionCaptain(AutoCaptain):
+    def __init__(
+        self,
+        seed: int = None,
+        questions_remaining=15,
+        use_cot=False,
+        model_string: str = "openai/gpt-4o",
+        temperature: float = None,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
+    ):
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            temperature=temperature,
+            cache_mode=cache_mode,
+        )
+        self.use_cot = use_cot
+        self.questions_remaining = questions_remaining
+
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+
+        if questions_remaining > 0:
+            decision_prompt = DecisionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=questions_remaining,
+                sunk=sunk,
+            )
+
+            # Format the prompt for caching
+            prompt_for_cache = decision_prompt.to_chat_format()
+
+            candidate_decision = None
+            while candidate_decision is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=decision_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                if self.use_cot:
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_decision = match.group(1)
+                else:
+                    candidate_decision = DECISION_PATTERN.match(
+                        completion.choices[0].message.content
+                    ).group(0)
+
+            decision = (
+                Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
+            )
+
+            self.write_cache(
+                "DECISION",
+                prompt_for_cache,
+                None,
+                decision,
+                traceback=completion.choices[0].message.content,
+            )
+
+            print("auto decision", decision, candidate_decision)
+            return decision
+        return Decision.MOVE
+
+
+class EIGAutoCaptain(Captain):
+    def __init__(
+        self,
+        seed: int = None,
+        model_string: str = "openai/gpt-4o",
+        spotter: CodeSpotterModel = None,
+        temperature: float = None,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cot: bool = False,
+        samples: int = 100,
+        k: int = 3,
+    ):
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            temperature=temperature,
+            cache_mode=cache_mode,
+        )
+        self.use_cot = use_cot
+        self.samples = samples
+        self.k = k
+        self.spotter = spotter
+        self.eig_calculator = EIGCalculator(seed=seed, spotter=self.spotter)
+
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+
+        if questions_remaining > 0:
+            decision_prompt = DecisionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=questions_remaining,
+                sunk=sunk,
+            )
+
+            # Format the prompt for caching
+            prompt_for_cache = decision_prompt.to_chat_format()
+
+            candidate_decision = None
+            while candidate_decision is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=decision_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                print(completion.choices[0].message.content)
+                print("decision prompt", decision_prompt.to_chat_format())
+                if self.use_cot:
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_decision = match.group(1)
+                else:
+                    candidate_decision = DECISION_PATTERN.match(
+                        completion.choices[0].message.content
+                    ).group(0)
+
+            decision = (
+                Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
+            )
+            print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
+
+            self.write_cache(
+                "DECISION",
+                prompt_for_cache,
+                None,
+                decision,
+                traceback=completion.choices[0].message.content,
+            )
+
+            print("auto decision", decision, candidate_decision)
+            return decision
+        return Decision.MOVE
+
+    def _get_move(
+        self, state: Board, history: List[Dict], sunk: str
+    ) -> Tuple[int, int]:
+        print("getting move")
+        visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
+
+        best_move = None
+        best_eig = -1
+
+        # Generate k different moves and calculate EIG for each
+        for _ in range(self.k):
+            print(f"calculating move {_+1}th time")
+            move_prompt = MovePrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                moves_remaining=self.moves_remaining,
+                sunk=sunk,
+            )
+
+            # Generate a candidate move
+            candidate_move = None
+            while candidate_move is None or candidate_move in visible_tiles:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=move_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                if self.use_cot:
+                    match = MOVE_COT_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_move = tile_to_coords(match.group(1))
+                else:
+                    candidate_move = MOVE_PATTERN.match(
+                        completion.choices[0].message.content
+                    )
+                    if candidate_move is not None:
+                        candidate_move = tile_to_coords(candidate_move.group())
+
+            # Create a question about this move
+            move_question = Question(
+                text=f"Is there a ship at {coords_to_tile(candidate_move)}?"
+            )
+
+            # Calculate EIG for this move
+            eig = self.eig_calculator.calculate_eig(
+                move_question, state, samples=self.samples, move=True
+            )
+
+            print(f"Move {coords_to_tile(candidate_move)} has EIG: {eig}")
+
+            # Update best move if this one has higher EIG
+            if eig > best_eig:
+                best_eig = eig
+                best_move = candidate_move
+
         self.write_cache(
-            "QUESTION",
-            str(prompt_for_cache),
+            "MOVE",
+            move_prompt.to_chat_format(),
             None,
-            candidate_question,
+            best_move,
             traceback=completion.choices[0].message.content,
         )
 
-        return result
+        print("Best move:", coords_to_tile(best_move), "with EIG:", best_eig)
+        return best_move
+
+    def _get_question(self, state: Board, history: List[Dict], sunk: str) -> Question:
+        # Generate k different questions and calculate EIG for each
+        best_question = None
+        best_eig = -1
+
+        for _ in range(self.k):
+            print(f"calculating question #{_+1}")
+            question_prompt = QuestionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=self.questions_remaining,
+                sunk=sunk,
+            )
+
+            # Generate a candidate question
+            if not self.use_cot:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=question_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                candidate_question_text = completion.choices[0].message.content
+            else:
+                candidate_question_text = None
+                while candidate_question_text is None:
+                    completion = client.chat.completions.create(
+                        model=self.model_string,
+                        messages=question_prompt.to_chat_format(),
+                        temperature=self.temperature,
+                    )
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match:
+                        candidate_question_text = match.group(1)
+
+            # Create question object
+            candidate_question = Question(text=candidate_question_text)
+
+            # Calculate EIG for this question
+            eig = self.eig_calculator.calculate_eig(
+                candidate_question, state, samples=self.samples
+            )
+
+            print(f"Question: '{candidate_question_text}' has EIG: {eig}")
+
+            # Update best question if this one has higher EIG
+            if eig > best_eig:
+                best_eig = eig
+                best_question = candidate_question
+
+        self.write_cache(
+            "QUESTION",
+            str(question_prompt.to_chat_format()),
+            None,
+            best_question.text,
+            traceback=completion.choices[0].message.content,
+        )
+
+        print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
+        return best_question
