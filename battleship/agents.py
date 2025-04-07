@@ -30,9 +30,20 @@ from battleship.prompting import SpotterPrompt
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
-MOVE_PATTERN = re.compile("^[A-H]{1}[1-8]{1}$")
+
+def config_move_regex(size):
+    """Generate a regex pattern for move validation based on board size."""
+    # max_letter/number are required so black can format the return statement properly
+    max_letter = chr(ord("A") + size - 1)
+    max_number = str(size)
+    return f"[A-{max_letter}]{{1}}[1-{max_number}]{{1}}"
+
+
+MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
 DECISION_PATTERN = re.compile("^(Question|Move)$")
-MOVE_COT_PATTERN = re.compile(r"\s*<answer>\s*([A-H][1-8])\s*</answer>\s*")
+MOVE_COT_PATTERN = lambda size: re.compile(
+    rf"\s*<answer>\s*({config_move_regex(size)})\s*</answer>\s*"
+)
 BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
 ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
 CODE_ANSWER_PATTERN = re.compile("```(.*?)```", re.DOTALL)
@@ -177,7 +188,7 @@ class Captain(Agent):
         questions_remaining: int,
         moves_remaining: int,
         sunk: str,
-    )  -> Decision:
+    ) -> Decision:
         cached_result = self.read_cache("DECISION")
 
         # If we have a cache hit in READ_WRITE mode
@@ -598,11 +609,13 @@ class AutoCaptain(Captain):
                 temperature=self.temperature,
             )
             if self.use_cot:
-                match = MOVE_COT_PATTERN.search(completion.choices[0].message.content)
+                match = MOVE_COT_PATTERN(state.size).search(
+                    completion.choices[0].message.content
+                )
                 if match is not None:
                     candidate_move = tile_to_coords(match.group(1))
             else:
-                candidate_move = MOVE_PATTERN.match(
+                candidate_move = MOVE_PATTERN(state.size).match(
                     completion.choices[0].message.content
                 )
                 if candidate_move is not None:
@@ -857,13 +870,13 @@ class EIGAutoCaptain(Captain):
                     temperature=self.temperature,
                 )
                 if self.use_cot:
-                    match = MOVE_COT_PATTERN.search(
+                    match = MOVE_COT_PATTERN(state.size).search(
                         completion.choices[0].message.content
                     )
                     if match is not None:
                         candidate_move = tile_to_coords(match.group(1))
                 else:
-                    candidate_move = MOVE_PATTERN.match(
+                    candidate_move = MOVE_PATTERN(state.size).match(
                         completion.choices[0].message.content
                     )
                     if candidate_move is not None:
