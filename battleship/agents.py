@@ -86,10 +86,9 @@ class Agent(ABC):
     # Class variable for global counter
     action_counter = 0
 
-    @classmethod
-    def increment_counter(cls):
-        cls.action_counter += 1
-        return cls.action_counter
+    def increment_counter(self):
+        self.action_counter += 1
+        return self.action_counter
 
     def __init__(
         self,
@@ -178,7 +177,7 @@ class Captain(Agent):
         questions_remaining: int,
         moves_remaining: int,
         sunk: str,
-    ):
+    )  -> Decision:
         cached_result = self.read_cache("DECISION")
 
         # If we have a cache hit in READ_WRITE mode
@@ -674,7 +673,6 @@ class ProbabilisticCaptain(AutoCaptain):
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-
         if random() < self.q_prob and questions_remaining > 0:
             return Decision.QUESTION
         return Decision.MOVE
