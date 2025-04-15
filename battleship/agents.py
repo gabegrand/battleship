@@ -180,6 +180,7 @@ class Captain(Agent):
     ):
         super().__init__(seed=seed, model_string=model_string, cache_mode=cache_mode)
         self.temperature = temperature
+        self.sampling_constraints = []
 
     def decision(
         self,
@@ -199,13 +200,13 @@ class Captain(Agent):
             )
 
             # Increment counter after decision
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return result
 
         # Normal cache hit
         elif cached_result is not None:
             # Increment counter after decision
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return Decision(cached_result)
 
         # Cache miss
@@ -214,7 +215,7 @@ class Captain(Agent):
         )
 
         # Increment counter after decision
-        Agent.increment_counter()
+        Agent.increment_counter(self)
         return result
 
     def move(self, state: Board, history: List[Dict], sunk: str):
@@ -226,7 +227,7 @@ class Captain(Agent):
             result = self._get_move(state, history, sunk)
 
             # Increment counter after move
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return result
 
         # Normal cache hit
@@ -234,14 +235,14 @@ class Captain(Agent):
             # Convert cached string representation back to tuple
             coords = tuple(map(int, cached_result.strip("()").split(", ")))
             # Increment counter after move
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return coords
 
         # Cache miss
         result = self._get_move(state, history, sunk)
 
         # Increment counter after move
-        Agent.increment_counter()
+        Agent.increment_counter(self)
         return result
 
     def question(self, state: Board, history: List[Dict], sunk: str):
@@ -253,20 +254,20 @@ class Captain(Agent):
             result = self._get_question(state, history, sunk)
 
             # Increment counter after question
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return result
 
         # Normal cache hit
         elif cached_result is not None:
             # Increment counter after question
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return Question(text=cached_result)
 
         # Cache miss
         result = self._get_question(state, history, sunk)
 
         # Increment counter after question
-        Agent.increment_counter()
+        Agent.increment_counter(self)
         return result
 
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
@@ -315,20 +316,20 @@ class Spotter(Agent):
             result = self._get_model_answer(question, history, occ_tiles)
 
             # Increment counter after answer
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return result
 
         # Normal cache hit
         elif cached_result is not None:
             # Increment counter after answer
-            Agent.increment_counter()
+            Agent.increment_counter(self)
             return Answer(text=cached_result)
 
         # Cache miss
         result = self._get_model_answer(question, history, occ_tiles)
 
         # Increment counter after answer
-        Agent.increment_counter()
+        Agent.increment_counter(self)
         return result
 
 
@@ -695,7 +696,6 @@ class LLMDecisionCaptain(AutoCaptain):
     def __init__(
         self,
         seed: int = None,
-        questions_remaining=15,
         use_cot=False,
         model_string: str = "openai/gpt-4o",
         temperature: float = None,
@@ -708,7 +708,6 @@ class LLMDecisionCaptain(AutoCaptain):
             cache_mode=cache_mode,
         )
         self.use_cot = use_cot
-        self.questions_remaining = questions_remaining
 
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         self.questions_remaining = questions_remaining
@@ -950,6 +949,421 @@ class EIGAutoCaptain(Captain):
 
             # Create question object
             candidate_question = Question(text=candidate_question_text)
+
+            # Calculate EIG for this question
+            eig = self.eig_calculator.calculate_eig(
+                candidate_question, state, samples=self.samples
+            )
+
+            print(f"Question: '{candidate_question_text}' has EIG: {eig}")
+
+            # Update best question if this one has higher EIG
+            if eig > best_eig:
+                best_eig = eig
+                best_question = candidate_question
+
+        self.write_cache(
+            "QUESTION",
+            str(question_prompt.to_chat_format()),
+            None,
+            best_question.text,
+            traceback=completion.choices[0].message.content,
+        )
+
+        print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
+        return best_question
+
+
+class LIPSLikeAutoCaptain(Captain):
+    def __init__(
+        self,
+        seed: int = None,
+        model_string: str = "openai/gpt-4o",
+        spotter: CodeSpotterModel = None,
+        temperature: float = None,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cot: bool = False,
+        samples: int = 1000,
+        k: int = 3,
+    ):
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            temperature=temperature,
+            cache_mode=cache_mode,
+        )
+        self.use_cot = use_cot
+        self.samples = samples
+        self.k = k
+        self.spotter = spotter
+        self.eig_calculator = EIGCalculator(seed=seed, spotter=self.spotter)
+
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+
+        if questions_remaining > 0:
+            decision_prompt = DecisionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=questions_remaining,
+                sunk=sunk,
+            )
+
+            # Format the prompt for caching
+            prompt_for_cache = decision_prompt.to_chat_format()
+
+            candidate_decision = None
+            while candidate_decision is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=decision_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                print(completion.choices[0].message.content)
+                print("decision prompt", decision_prompt.to_chat_format())
+                if self.use_cot:
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_decision = match.group(1)
+                else:
+                    candidate_decision = DECISION_PATTERN.match(
+                        completion.choices[0].message.content
+                    ).group(0)
+
+            decision = (
+                Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
+            )
+            print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
+
+            self.write_cache(
+                "DECISION",
+                prompt_for_cache,
+                None,
+                decision,
+                traceback=completion.choices[0].message.content,
+            )
+
+            print("auto decision", decision, candidate_decision)
+            return decision
+        return Decision.MOVE
+
+    def _get_move(
+        self, state: Board, history: List[Dict], sunk: str
+    ) -> Tuple[int, int]:
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        # Compute the raw posterior counts over board positions.
+        posterior = sampler.compute_posterior(n_samples=self.samples, normalize=False)
+
+        # For tiles that have already been revealed, force their probability to -infinity.
+        posterior = posterior.astype(float)
+        posterior[state.board != Board.hidden] = -np.inf
+
+        print("getting move")
+        visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
+
+        best_move = None
+        best_prob = -1
+
+        # Generate k different moves and calculate EIG for each
+        for _ in range(self.k):
+            print(f"calculating move {_+1}th time")
+            move_prompt = MovePrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                moves_remaining=self.moves_remaining,
+                sunk=sunk,
+            )
+
+            # Generate a candidate move
+            candidate_move = None
+            while candidate_move is None or candidate_move in visible_tiles:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=move_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                if self.use_cot:
+                    match = MOVE_COT_PATTERN(state.size).search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_move = tile_to_coords(match.group(1))
+                else:
+                    candidate_move = MOVE_PATTERN(state.size).match(
+                        completion.choices[0].message.content
+                    )
+                    if candidate_move is not None:
+                        candidate_move = tile_to_coords(candidate_move.group())
+
+            # Extract ship posterior probability for this move
+            ship_prob = posterior[candidate_move[0]][candidate_move[1]]
+
+            print(f"Move {coords_to_tile(candidate_move)} has EIG: {ship_prob}")
+
+            # Update best move if this one has higher EIG
+            if ship_prob > best_prob:
+                best_prob = ship_prob
+                best_move = candidate_move
+
+        self.write_cache(
+            "MOVE",
+            move_prompt.to_chat_format(),
+            None,
+            best_move,
+            traceback=completion.choices[0].message.content,
+        )
+
+        print("Best move:", coords_to_tile(best_move), "with Probability:", best_prob)
+
+        return best_move
+
+    def _get_question(self, state: Board, history: List[Dict], sunk: str) -> Question:
+        # Generate k different questions and calculate EIG for each
+        best_question = None
+        best_eig = -1
+
+        sequential_questions = []
+        for _ in range(self.k):
+            print(f"calculating question #{_+1}")
+            question_prompt = QuestionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=self.questions_remaining,
+                sunk=sunk,
+                sequential_questions=" ".join(sequential_questions),
+            )
+
+            # Generate a candidate question
+            if not self.use_cot:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=question_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                candidate_question_text = completion.choices[0].message.content
+            else:
+                candidate_question_text = None
+                while candidate_question_text is None:
+                    completion = client.chat.completions.create(
+                        model=self.model_string,
+                        messages=question_prompt.to_chat_format(),
+                        temperature=self.temperature,
+                    )
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match:
+                        candidate_question_text = match.group(1)
+
+            sequential_questions.append(candidate_question_text)
+
+            # Create question object
+            candidate_question = Question(text=candidate_question_text)
+
+            # Calculate EIG for this question
+            eig = self.eig_calculator.calculate_eig(
+                candidate_question, state, samples=self.samples
+            )
+
+            print(f"Question: '{candidate_question_text}' has EIG: {eig}")
+
+            # Update best question if this one has higher EIG
+            if eig > best_eig:
+                best_eig = eig
+                best_question = candidate_question
+
+        self.write_cache(
+            "QUESTION",
+            str(question_prompt.to_chat_format()),
+            None,
+            best_question.text,
+            traceback=completion.choices[0].message.content,
+        )
+
+        print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
+        return best_question
+
+
+class MAPEIGAutoCaptain(Captain):
+    def __init__(
+        self,
+        seed: int = None,
+        model_string: str = "openai/gpt-4o",
+        spotter: CodeSpotterModel = None,
+        temperature: float = None,
+        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cot: bool = False,
+        samples: int = 1000,
+        k: int = 3,
+    ):
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            temperature=temperature,
+            cache_mode=cache_mode,
+        )
+        self.use_cot = use_cot
+        self.samples = samples
+        self.k = k
+        self.spotter = spotter
+        self.eig_calculator = EIGCalculator(seed=seed, spotter=self.spotter)
+
+    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+
+        if questions_remaining > 0:
+            decision_prompt = DecisionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=questions_remaining,
+                sunk=sunk,
+            )
+
+            # Format the prompt for caching
+            prompt_for_cache = decision_prompt.to_chat_format()
+
+            candidate_decision = None
+            while candidate_decision is None:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=decision_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                print(completion.choices[0].message.content)
+                print("decision prompt", decision_prompt.to_chat_format())
+                if self.use_cot:
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match is not None:
+                        candidate_decision = match.group(1)
+                else:
+                    candidate_decision = DECISION_PATTERN.match(
+                        completion.choices[0].message.content
+                    ).group(0)
+
+            decision = (
+                Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
+            )
+            print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
+
+            self.write_cache(
+                "DECISION",
+                prompt_for_cache,
+                None,
+                decision,
+                traceback=completion.choices[0].message.content,
+            )
+
+            print("auto decision", decision, candidate_decision)
+            return decision
+        return Decision.MOVE
+
+    def _get_move(
+        self, state: Board, history: List[Dict], sunk: str
+    ) -> Tuple[int, int]:
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        # Compute the raw posterior counts over board positions.
+        posterior = sampler.compute_posterior(
+            n_samples=self.samples,
+            normalize=False,
+            constraints=self.sampling_constraints,
+        )
+
+        # For tiles that have already been revealed, force their probability to -infinity.
+        posterior = posterior.astype(float)
+        posterior[state.board != Board.hidden] = -np.inf
+
+        # Select the tile with the maximum posterior probability (MAP estimate).
+        flat_idx = int(np.argmax(posterior))
+
+        # Map the flat index back to 2D coordinates.
+        move_coords = np.unravel_index(flat_idx, state.board.shape)
+
+        self.write_cache(
+            "MOVE",
+            coords_to_tile(move_coords),
+            None,
+            None,
+        )
+
+        print(
+            "Best move:",
+            coords_to_tile(move_coords),
+            "with Probability:",
+            posterior[move_coords[0]][move_coords[1]],
+        )
+
+        return tuple(move_coords)
+
+    def _get_question(self, state: Board, history: List[Dict], sunk: str) -> Question:
+        # Generate k different questions and calculate EIG for each
+        best_question = None
+        best_eig = -1
+
+        sequential_questions = []
+        for _ in range(self.k):
+            print(f"calculating question #{_+1}")
+            question_prompt = QuestionPrompt(
+                target_occ_tiles=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                q_remaining=self.questions_remaining,
+                sunk=sunk,
+                sequential_questions=" ".join(sequential_questions),
+            )
+
+            # Generate a candidate question
+            if not self.use_cot:
+                completion = client.chat.completions.create(
+                    model=self.model_string,
+                    messages=question_prompt.to_chat_format(),
+                    temperature=self.temperature,
+                )
+                candidate_question_text = completion.choices[0].message.content
+            else:
+                candidate_question_text = None
+                while candidate_question_text is None:
+                    completion = client.chat.completions.create(
+                        model=self.model_string,
+                        messages=question_prompt.to_chat_format(),
+                        temperature=self.temperature,
+                    )
+                    match = ANSWER_MATCH_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if match:
+                        candidate_question_text = match.group(1)
+
+            # Create question object
+            candidate_question = Question(text=candidate_question_text)
+
+            sequential_questions.append(candidate_question_text)
 
             # Calculate EIG for this question
             eig = self.eig_calculator.calculate_eig(

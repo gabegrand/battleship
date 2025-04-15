@@ -4,6 +4,7 @@ Author: Gabe Grand (grandg@mit.edu)
 """
 from collections import defaultdict
 from enum import StrEnum
+from time import time
 from typing import List
 
 import numpy as np
@@ -15,6 +16,9 @@ from battleship.board import BOARD_SYMBOL_MAPPING
 class Orientation(StrEnum):
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
+
+
+CONSTRAINT_SATISFACTION_STRING = "Yes"
 
 
 class Span:
@@ -213,20 +217,54 @@ class FastSampler:
 
         return Board(new_board)
 
-    def compute_posterior(self, n_samples: int, normalize: bool = True):
+    def compute_posterior(self, n_samples: int, normalize: bool = True, constraints=[]):
         """Computes an approximate posterior distribution over ship locations."""
         # Initialize the count of each board
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
 
         n_samples_valid = 0
-        for _ in range(n_samples):
-            new_board = self.populate_board()
-            if new_board is not None:
-                board_counts += (new_board.board > 0).astype(int)
-                n_samples_valid += 1
+
+        if len(constraints) > 0:
+            start_time = time()
+            while n_samples_valid < n_samples:
+                if time() - start_time > 300:
+                    print(f"sampling timed out")
+                    break
+                if (time() - start_time > 30) and (n_samples_valid > 0):
+                    print(f"slow sampling: low samples returned")
+                    break
+                new_board = self.populate_board()
+                if new_board is not None:
+                    constraint_results = [
+                        constraint(new_board.to_symbolic_array())
+                        for constraint in constraints
+                    ]
+                    constraints_clean = [i for i in constraint_results if i is not None]
+                    constraint_sum = sum(
+                        [
+                            1
+                            for i in constraints_clean
+                            if i == CONSTRAINT_SATISFACTION_STRING
+                        ]
+                    )
+                    if constraint_sum < (
+                        len(constraints_clean)
+                        - (1 if (time() - start_time > 30) else 0)
+                    ):  # discuss w/ gabe!
+                        continue
+                    board_counts += (new_board.board > 0).astype(int)
+                    n_samples_valid += 1
+        else:
+            for _ in range(n_samples):
+                new_board = self.populate_board()
+                if new_board is not None:
+                    board_counts += (new_board.board > 0).astype(int)
+                    n_samples_valid += 1
 
         if n_samples_valid == 0:
-            print("Warning: Unable to compute posterior; returning uniform array.")
+            print(
+                f"Warning: Unable to compute posterior; returning uniform array. Last board: {new_board}, constraints: {constraint_results}, "
+            )
 
         if normalize:
             if n_samples_valid == 0:

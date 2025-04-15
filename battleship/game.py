@@ -142,6 +142,10 @@ class BattleshipGame:
         if decision == Decision.QUESTION:
             q = self.captain.question(self.state, self.history, self.sunk_ships())
             a = self.spotter.answer(q)
+
+            if a.code_question is not None:
+                self.captain.sampling_constraints.append(a.code_question)
+
             self.question_count += 1
             self.history.append(
                 {

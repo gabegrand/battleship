@@ -694,6 +694,10 @@ PROMPT_TARGET_BOARD_QUESTION = (
     lambda x: f"Now it's your turn. Including the one you are about to ask, you have {x} questions remaining. Here's your board: \n"
 )
 
+PROMPT_TARGET_BOARD_QUESTION_SEQ = (
+    lambda x, y: f"Now it's your turn. Including the one you are about to ask, you have {x} questions remaining. You've already considered asking the following questions, so make sure to ask something different: {y}. Here's your board: \n"
+)
+
 
 class QuestionPrompt(BasePrompt):
     """Prompt for generating questions for the Battleship task."""
@@ -707,6 +711,7 @@ class QuestionPrompt(BasePrompt):
         use_cot=False,
         q_remaining=None,
         sunk=None,
+        sequential_questions="",
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -715,6 +720,7 @@ class QuestionPrompt(BasePrompt):
         self.use_cot = use_cot
         self.q_remaining = q_remaining
         self.sunk = sunk
+        self.sequential_questions = sequential_questions
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -772,13 +778,24 @@ class QuestionPrompt(BasePrompt):
                 )
             if self.include_board:
                 if self.include_instructions:
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": "\n"
-                            + PROMPT_TARGET_BOARD_QUESTION(self.q_remaining),
-                        }
-                    )
+                    if self.sequential_questions == "":
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": "\n"
+                                + PROMPT_TARGET_BOARD_QUESTION(self.q_remaining),
+                            }
+                        )
+                    else:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": "\n"
+                                + PROMPT_TARGET_BOARD_QUESTION_SEQ(
+                                    self.q_remaining, self.sequential_questions
+                                ),
+                            }
+                        )
 
                 if self.sunk is not None:
                     messages.append(
@@ -818,13 +835,24 @@ class QuestionPrompt(BasePrompt):
             if self.include_board:
                 if self.target_occ_tiles is not None:
                     if self.include_instructions:
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": "\n"
-                                + PROMPT_TARGET_BOARD_QUESTION(self.q_remaining),
-                            }
-                        )
+                        if self.sequential_questions == "":
+                            messages.append(
+                                {
+                                    "role": "user",
+                                    "content": "\n"
+                                    + PROMPT_TARGET_BOARD_QUESTION(self.q_remaining),
+                                }
+                            )
+                        else:
+                            messages.append(
+                                {
+                                    "role": "user",
+                                    "content": "\n"
+                                    + PROMPT_TARGET_BOARD_QUESTION_SEQ(
+                                        self.q_remaining, self.sequential_questions
+                                    ),
+                                }
+                            )
 
                     if self.sunk is not None:
                         messages.append(

@@ -16,6 +16,7 @@ from battleship.agents import (
     ProbabilisticCaptain,
     CodeSpotterModel,
     LLMDecisionCaptain,
+    MAPEIGAutoCaptain,
     EIGAutoCaptain,
     CacheMode,
 )
@@ -56,8 +57,12 @@ def parse_arguments():
             "MAPCaptain",
             "ProbabilisticCaptain",
             "EIGAutoCaptain",
+            "MAPEIGAutoCaptain",
+            "LLMDecisionCaptain",
+            "LLMDecisionCaptain_cot",
             "ProbabilisticCaptain_cot",
             "EIGAutoCaptain_cot",
+            "MAPEIGAutoCaptain_cot",
         ],
         help="Captain types to benchmark",
     )
@@ -205,7 +210,7 @@ def create_captains(args):
         "read_only": CacheMode.READ_ONLY,
         "read_write": CacheMode.READ_WRITE,
         "write_only": CacheMode.WRITE_ONLY,
-        "none": CacheMode.NONE,
+        "none": CacheMode.NO_CACHE,
     }
     cache_mode = cache_mode_map[args.cache_mode]
 
@@ -247,6 +252,22 @@ def create_captains(args):
                 cache_mode=cache_mode,
             )
 
+        elif captain_type == "LLMDecisionCaptain":
+            captains[captain_type] = LLMDecisionCaptain(
+                seed=args.seeds[0],
+                model_string=args.model,
+                use_cot=False,
+                cache_mode=cache_mode,
+            )
+
+        elif captain_type == "LLMDecisionCaptain_cot":
+            captains[captain_type] = LLMDecisionCaptain(
+                seed=args.seeds[0],
+                model_string=args.model,
+                use_cot=True,
+                cache_mode=cache_mode,
+            )
+
         elif captain_type == "EIGAutoCaptain":
             captains[captain_type] = EIGAutoCaptain(
                 seed=args.seeds[0],
@@ -269,6 +290,27 @@ def create_captains(args):
                 cache_mode=cache_mode,
             )
 
+        elif captain_type == "MAPEIGAutoCaptain":
+            captains[captain_type] = MAPEIGAutoCaptain(
+                seed=args.seeds[0],
+                samples=args.eig_samples,
+                model_string=args.model,
+                spotter=eig_spotter,
+                use_cot=False,
+                k=args.eig_k,
+                cache_mode=cache_mode,
+            )
+
+        elif captain_type == "MAPEIGAutoCaptain_cot":
+            captains[captain_type] = MAPEIGAutoCaptain(
+                seed=args.seeds[0],
+                samples=args.eig_samples,
+                model_string=args.model,
+                spotter=eig_spotter,
+                use_cot=True,
+                k=args.eig_k,
+                cache_mode=cache_mode,
+            )
     return captains
 
 
@@ -308,6 +350,13 @@ def run_single_agent_game(args):
         if (game.hits + game.misses) > 0
         else 0,
     }
+
+    pd.DataFrame.from_dict([result]).to_csv(
+        "/home/ubuntu/repo_battleship/temp/total_results.csv",
+        mode="a",
+        header=False,
+        index=False,
+    )
 
     return result
 
