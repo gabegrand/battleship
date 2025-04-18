@@ -10,18 +10,21 @@ import pandas as pd
 
 sys.path.insert(0, "..")
 
-from battleship.agents import (
-    RandomCaptain,
-    MAPCaptain,
-    ProbabilisticCaptain,
-    CodeSpotterModel,
-    LLMDecisionCaptain,
-    MAPEIGAutoCaptain,
-    EIGAutoCaptain,
-    CacheMode,
-)
 from battleship.board import Board
 from battleship.game import BattleshipGame
+from battleship.captains import (
+    create_random_captain,
+    create_map_captain,
+    create_probabilistic_captain,
+    create_eig_captain,
+    create_map_eig_captain,
+    ModularCaptain,
+    LLMDecisionStrategy,
+    LLMMoveStrategy,
+    BasicLLMQuestionStrategy,
+)
+from battleship.spotters import CodeSpotterModel
+from battleship.utils import CacheMode
 
 
 def parse_arguments():
@@ -51,18 +54,18 @@ def parse_arguments():
     parser.add_argument(
         "--captains",
         nargs="+",
-        default=["EIGAutoCaptain_cot"],
+        default=["EIGCaptain_cot"],
         choices=[
             "RandomCaptain",
             "MAPCaptain",
             "ProbabilisticCaptain",
-            "EIGAutoCaptain",
-            "MAPEIGAutoCaptain",
+            "EIGCaptain",
+            "MAPEIGCaptain",
             "LLMDecisionCaptain",
             "LLMDecisionCaptain_cot",
             "ProbabilisticCaptain_cot",
-            "EIGAutoCaptain_cot",
-            "MAPEIGAutoCaptain_cot",
+            "EIGCaptain_cot",
+            "MAPEIGCaptain_cot",
         ],
         help="Captain types to benchmark",
     )
@@ -117,11 +120,9 @@ def parse_arguments():
         "--eig-samples",
         type=int,
         default=1000,
-        help="Number of samples for EIGAutoCaptain",
+        help="Number of samples for EIGCaptain",
     )
-    parser.add_argument(
-        "--eig-k", type=int, default=10, help="K value for EIGAutoCaptain"
-    )
+    parser.add_argument("--eig-k", type=int, default=10, help="K value for EIGCaptain")
 
     return parser.parse_args()
 
@@ -214,7 +215,6 @@ def create_captains(args):
     }
     cache_mode = cache_mode_map[args.cache_mode]
 
-    # Create default spotter for EIG
     eig_spotter = CodeSpotterModel(
         board_id="B01",
         board_experiment="collaborative",
@@ -227,114 +227,140 @@ def create_captains(args):
 
     for captain_type in args.captains:
         if captain_type == "RandomCaptain":
-            captains[captain_type] = RandomCaptain(seed=args.seeds[0])
+            captains[captain_type] = create_random_captain(seed=args.seeds[0])
 
         elif captain_type == "MAPCaptain":
-            captains[captain_type] = MAPCaptain(
+            captains[captain_type] = create_map_captain(
                 seed=args.seeds[0], n_samples=args.map_samples
             )
 
         elif captain_type == "ProbabilisticCaptain":
-            captains[captain_type] = ProbabilisticCaptain(
+            captains[captain_type] = create_probabilistic_captain(
                 seed=args.seeds[0],
-                model_string=args.model,
                 q_prob=args.prob_q_prob,
+                model_string=args.model,
                 use_cot=False,
-                cache_mode=cache_mode,
             )
 
         elif captain_type == "ProbabilisticCaptain_cot":
-            captains[captain_type] = ProbabilisticCaptain(
+            captains[captain_type] = create_probabilistic_captain(
                 seed=args.seeds[0],
-                model_string=args.model,
                 q_prob=args.prob_q_prob,
+                model_string=args.model,
                 use_cot=True,
-                cache_mode=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain":
-            captains[captain_type] = LLMDecisionCaptain(
+            # Create LLM decision captain using basic LLM strategies
+            decision_strategy = LLMDecisionStrategy(
+                model_string=args.model, use_cot=False
+            )
+            move_strategy = LLMMoveStrategy(model_string=args.model, use_cot=False)
+            question_strategy = BasicLLMQuestionStrategy(
+                model_string=args.model, use_cot=False
+            )
+
+            captains[captain_type] = ModularCaptain(
+                decision_strategy=decision_strategy,
+                move_strategy=move_strategy,
+                question_strategy=question_strategy,
                 seed=args.seeds[0],
                 model_string=args.model,
-                use_cot=False,
                 cache_mode=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain_cot":
-            captains[captain_type] = LLMDecisionCaptain(
+            # Create LLM decision captain with CoT using basic LLM strategies
+            decision_strategy = LLMDecisionStrategy(
+                model_string=args.model, use_cot=True
+            )
+            move_strategy = LLMMoveStrategy(model_string=args.model, use_cot=True)
+            question_strategy = BasicLLMQuestionStrategy(
+                model_string=args.model, use_cot=True
+            )
+
+            captains[captain_type] = ModularCaptain(
+                decision_strategy=decision_strategy,
+                move_strategy=move_strategy,
+                question_strategy=question_strategy,
                 seed=args.seeds[0],
                 model_string=args.model,
-                use_cot=True,
                 cache_mode=cache_mode,
             )
 
-        elif captain_type == "EIGAutoCaptain":
-            captains[captain_type] = EIGAutoCaptain(
+        elif captain_type == "EIGCaptain":
+            captains[captain_type] = create_eig_captain(
                 seed=args.seeds[0],
-                samples=args.eig_samples,
-                model_string=args.model,
                 spotter=eig_spotter,
+                model_string=args.model,
+                samples=args.eig_samples,
+                k=args.eig_k,
                 use_cot=False,
-                k=args.eig_k,
-                cache_mode=cache_mode,
             )
 
-        elif captain_type == "EIGAutoCaptain_cot":
-            captains[captain_type] = EIGAutoCaptain(
+        elif captain_type == "EIGCaptain_cot":
+            captains[captain_type] = create_eig_captain(
                 seed=args.seeds[0],
-                samples=args.eig_samples,
-                model_string=args.model,
                 spotter=eig_spotter,
+                model_string=args.model,
+                samples=args.eig_samples,
+                k=args.eig_k,
                 use_cot=True,
-                k=args.eig_k,
-                cache_mode=cache_mode,
             )
 
-        elif captain_type == "MAPEIGAutoCaptain":
-            captains[captain_type] = MAPEIGAutoCaptain(
+        elif captain_type == "MAPEIGCaptain":
+            captains[captain_type] = create_map_eig_captain(
                 seed=args.seeds[0],
-                samples=args.eig_samples,
-                model_string=args.model,
                 spotter=eig_spotter,
+                model_string=args.model,
+                samples=args.eig_samples,
+                k=args.eig_k,
                 use_cot=False,
-                k=args.eig_k,
-                cache_mode=cache_mode,
             )
 
-        elif captain_type == "MAPEIGAutoCaptain_cot":
-            captains[captain_type] = MAPEIGAutoCaptain(
+        elif captain_type == "MAPEIGCaptain_cot":
+            captains[captain_type] = create_map_eig_captain(
                 seed=args.seeds[0],
-                samples=args.eig_samples,
-                model_string=args.model,
                 spotter=eig_spotter,
-                use_cot=True,
+                model_string=args.model,
+                samples=args.eig_samples,
                 k=args.eig_k,
-                cache_mode=cache_mode,
+                use_cot=True,
             )
+
     return captains
 
 
 def run_single_agent_game(args):
     cap_name, captain, seed, board_id, max_questions, max_moves, model = args
-    if "EIG" in cap_name:
-        captain.spotter.board_id = board_id
+
+    # Update spotter board ID for EIG captains
+    if hasattr(captain, "question_strategy") and hasattr(
+        captain.question_strategy, "spotter"
+    ):
+        captain.question_strategy.spotter.board_id = board_id
+
+    # Set the captain's seed
     captain.seed = seed
 
     print(f"{cap_name} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
+
+    spotter = CodeSpotterModel(
+        board_id,
+        "collaborative",
+        cache_mode=CacheMode.WRITE_ONLY,
+        model_string=model,
+        temperature=None,
+        use_cot=True,
+    )
+
     game = BattleshipGame(
         board_target=board,
         max_questions=max_questions,
         max_moves=max_moves,
         captain=captain,
-        spotter=CodeSpotterModel(
-            board_id,
-            "collaborative",
-            cache_mode=CacheMode.WRITE_ONLY,
-            model_string=model,
-            temperature=None,
-            use_cot=True,
-        ),
+        spotter=spotter,
     )
     game.play()
     print(f"{cap_name} finished with {board_id} & seed {seed}")
@@ -392,7 +418,7 @@ def main():
             ]
         ).to_csv(args.output_file, index=False)
 
-    # Create captains
+    # Create captains using the modular architecture
     captains = create_captains(args)
 
     # Prepare a list of tasks (each tuple corresponds to one game run)
