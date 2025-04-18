@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import os
 import sys
+from copy import deepcopy
 from multiprocessing.dummy import Pool
 from pathlib import Path
+from random import randint
 
 import numpy as np
 import pandas as pd
@@ -16,9 +19,11 @@ from battleship.agents import (
     ProbabilisticCaptain,
     CodeSpotterModel,
     LLMDecisionCaptain,
+    LIPSLikeAutoCaptain,
     MAPEIGAutoCaptain,
     EIGAutoCaptain,
-    CacheMode,
+    Counter,
+    CSV_ROUND_FILE,
 )
 from battleship.board import Board
 from battleship.game import BattleshipGame
@@ -58,6 +63,8 @@ def parse_arguments():
             "ProbabilisticCaptain",
             "EIGAutoCaptain",
             "MAPEIGAutoCaptain",
+            "LIPSLikeAutoCaptain",
+            "LIPSLikeAutoCaptain_cot",
             "LLMDecisionCaptain",
             "LLMDecisionCaptain_cot",
             "ProbabilisticCaptain_cot",
@@ -71,9 +78,8 @@ def parse_arguments():
     parser.add_argument("--model", type=str, default="gpt-4o", help="LLM model to use")
     parser.add_argument(
         "--cache-mode",
-        type=str,
-        default="write_only",
-        choices=["read_only", "read_write", "write_only", "none"],
+        type=bool,
+        default=True,
         help="Cache mode for LLM requests",
     )
 
@@ -206,13 +212,7 @@ def get_human_results(gold_annotations_path, round_data_path):
 
 
 def create_captains(args):
-    cache_mode_map = {
-        "read_only": CacheMode.READ_ONLY,
-        "read_write": CacheMode.READ_WRITE,
-        "write_only": CacheMode.WRITE_ONLY,
-        "none": CacheMode.NO_CACHE,
-    }
-    cache_mode = cache_mode_map[args.cache_mode]
+    cache_mode = args.cache_mode
 
     # Create default spotter for EIG
     eig_spotter = CodeSpotterModel(
@@ -227,11 +227,11 @@ def create_captains(args):
 
     for captain_type in args.captains:
         if captain_type == "RandomCaptain":
-            captains[captain_type] = RandomCaptain(seed=args.seeds[0])
+            captains[captain_type] = RandomCaptain(seed=args.seeds[0], round_id=None)
 
         elif captain_type == "MAPCaptain":
             captains[captain_type] = MAPCaptain(
-                seed=args.seeds[0], n_samples=args.map_samples
+                seed=args.seeds[0], n_samples=args.map_samples, round_id=None
             )
 
         elif captain_type == "ProbabilisticCaptain":
@@ -240,7 +240,7 @@ def create_captains(args):
                 model_string=args.model,
                 q_prob=args.prob_q_prob,
                 use_cot=False,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "ProbabilisticCaptain_cot":
@@ -249,7 +249,7 @@ def create_captains(args):
                 model_string=args.model,
                 q_prob=args.prob_q_prob,
                 use_cot=True,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain":
@@ -257,7 +257,7 @@ def create_captains(args):
                 seed=args.seeds[0],
                 model_string=args.model,
                 use_cot=False,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain_cot":
@@ -265,7 +265,7 @@ def create_captains(args):
                 seed=args.seeds[0],
                 model_string=args.model,
                 use_cot=True,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "EIGAutoCaptain":
@@ -276,7 +276,7 @@ def create_captains(args):
                 spotter=eig_spotter,
                 use_cot=False,
                 k=args.eig_k,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "EIGAutoCaptain_cot":
@@ -287,7 +287,29 @@ def create_captains(args):
                 spotter=eig_spotter,
                 use_cot=True,
                 k=args.eig_k,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
+            )
+
+        elif captain_type == "LIPSLikeAutoCaptain":
+            captains[captain_type] = LIPSLikeAutoCaptain(
+                seed=args.seeds[0],
+                samples=args.eig_samples,
+                model_string=args.model,
+                spotter=eig_spotter,
+                use_cot=False,
+                k=args.eig_k,
+                use_cache=cache_mode,
+            )
+
+        elif captain_type == "LIPSLikeAutoCaptain_cot":
+            captains[captain_type] = LIPSLikeAutoCaptain(
+                seed=args.seeds[0],
+                samples=args.eig_samples,
+                model_string=args.model,
+                spotter=eig_spotter,
+                use_cot=True,
+                k=args.eig_k,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "MAPEIGAutoCaptain":
@@ -298,7 +320,7 @@ def create_captains(args):
                 spotter=eig_spotter,
                 use_cot=False,
                 k=args.eig_k,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
 
         elif captain_type == "MAPEIGAutoCaptain_cot":
@@ -309,32 +331,68 @@ def create_captains(args):
                 spotter=eig_spotter,
                 use_cot=True,
                 k=args.eig_k,
-                cache_mode=cache_mode,
+                use_cache=cache_mode,
             )
     return captains
 
 
 def run_single_agent_game(args):
+    round_id = randint(0, 1000000)
+
     cap_name, captain, seed, board_id, max_questions, max_moves, model = args
     if "EIG" in cap_name:
         captain.spotter.board_id = board_id
+
     captain.seed = seed
+    captain.round_id = round_id
 
     print(f"{cap_name} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
+
+    decision_counter = Counter()
+    index_counter = Counter()
+
+    captain.index_counter = index_counter
+    captain.decision_counter = decision_counter
+
+    spotter = CodeSpotterModel(
+        board_id,
+        "collaborative",
+        use_cache=True,
+        model_string=model,
+        temperature=None,
+        use_cot=True,
+        decision_counter=decision_counter,
+        index_counter=index_counter,
+    )
+
+    spotter.index_counter = index_counter
+    spotter.decision_counter = decision_counter
+
+    file_exists = os.path.isfile(CSV_ROUND_FILE)
+    with open(CSV_ROUND_FILE, "a", newline="") as csvfile:
+        writer = csv.DictWriter(
+            csvfile,
+            fieldnames=["id", "boardId", "seed", "captainModel", "spotterModel"],
+        )
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "id": round_id,
+                "boardId": board_id,
+                "seed": seed,
+                "captainModel": cap_name,
+                "spotterModel": spotter.__class__.__name__,
+            }
+        )
+
     game = BattleshipGame(
         board_target=board,
         max_questions=max_questions,
         max_moves=max_moves,
         captain=captain,
-        spotter=CodeSpotterModel(
-            board_id,
-            "collaborative",
-            cache_mode=CacheMode.WRITE_ONLY,
-            model_string=model,
-            temperature=None,
-            use_cot=True,
-        ),
+        spotter=spotter,
     )
     game.play()
     print(f"{cap_name} finished with {board_id} & seed {seed}")
@@ -399,7 +457,7 @@ def main():
     jobs = [
         (
             cap_name,
-            captain,
+            deepcopy(captain),
             seed,
             board_id,
             args.max_questions,

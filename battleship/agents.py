@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import re
@@ -29,6 +30,8 @@ from battleship.prompting import SpotterPrompt
 
 CACHE_DIR = Path("./cache")
 CACHE_DIR.mkdir(exist_ok=True)
+CSV_STAGE_FILE = CACHE_DIR / f"stage_{time()}.csv"
+CSV_ROUND_FILE = CACHE_DIR / f"round_{time()}.csv"
 
 
 def config_move_regex(size):
@@ -89,96 +92,143 @@ class CacheMode(Enum):
 
 
 # ---------------------
-# Abstract Agent Classes
+# Utils & Abstract Agent Classes
 # ---------------------
+
+
+class Counter:
+    def __init__(self):
+        self.counter = 0
+
+    def increment_counter(self):
+        self.counter += 1
+        return self.counter
+
+
+class EIGCalculator:
+    def __init__(self, seed, spotter):
+        self.seed = seed
+        self.rng = np.random.default_rng(seed)
+        self.spotter = spotter
+
+    def calculate_eig(self, question, state, samples=100, move=False):
+        def safe_log2(x):
+            if x == 0:
+                return 0
+            return log2(x)
+
+        code_question = self.spotter.translate(question, [], state.board)
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        results = {"Yes": 0, "No": 0}
+        curr_time = time()
+        while sum(results.values()) < samples:
+            if time() - curr_time > 15:
+                print("EIG calculation timed out")
+                return 0
+            board = None
+            while not board:
+                board = sampler.populate_board()
+            board = board.to_symbolic_array()
+            result = code_question(board)
+            if result:
+                results[result] += 1
+        print("eig results calculated")
+
+        if results == {"Yes": samples, "No": 0} and move:
+            return 1000
+
+        eig = safe_log2(samples) - sum(
+            [p / samples * safe_log2(p) for p in results.values()]
+        )
+        # print("eig calculated as", eig, results)
+        return eig
 
 
 class Agent(ABC):
     # Class variable for global counter
-    action_counter = 0
-
-    def increment_counter(self):
-        self.action_counter += 1
-        return self.action_counter
-
     def __init__(
         self,
         seed: int = None,
         model_string: str = None,
         use_cot: bool = False,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: bool = False,
+        decision_counter: Counter = None,
+        index_counter: Counter = None,
+        round_id: str = None,
     ):
+        self.round_id = round_id
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
-        self.cache_mode = cache_mode
+        self.use_cache = use_cache
+        self.decision_counter = decision_counter
+        self.index_counter = index_counter
 
-        folder_name = self.__class__.__name__
-        if model_string is not None:
-            # Extract model name after the provider (e.g. "openai/gpt-4o" -> "gpt-4o")
-            if "/" in model_string:
-                folder_name = model_string.split("/")[1]
-            else:
-                folder_name = model_string
+        # folder_name = self.__class__.__name__
+        # if model_string is not None:
+        #    # Extract model name after the provider (e.g. "openai/gpt-4o" -> "gpt-4o")
+        #    if "/" in model_string:
+        #        folder_name = model_string.split("/")[1]
+        #    else:
+        #        folder_name = model_string
 
-        self.cache_path = CACHE_DIR / self.__class__.__name__ / folder_name
-        os.makedirs(self.cache_path, exist_ok=True)
-
-    def get_cache_key(self, decision_type):
-        """Generate a cache key based on the global counter and decision type"""
-        return f"{Agent.action_counter}_{decision_type}_{str(time())}"
-
-    def read_cache(self, decision_type):
-        """Read from cache based on cache mode using the counter-based key"""
-        # Don't read if NO_CACHE or WRITE_ONLY
-        if self.cache_mode in [CacheMode.NO_CACHE, CacheMode.WRITE_ONLY]:
-            return None
-
-        cache_key = self.get_cache_key(decision_type)
-        cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
-        if os.path.exists(cache_file):
-            with open(cache_file, "r") as f:
-                cache_dict = json.load(f)
-
-            # For READ_WRITE, mark that we had a cache hit but still want to generate new
-            if self.cache_mode == CacheMode.READ_WRITE:
-                # We've read it, but we'll still generate a new response
-                return "GENERATE_NEW"
-
-            # For READ_ONLY, return the cached result
-            return cache_dict["result"]
-        return None
-
-    def write_cache(self, decision_type, prompt, code, result, traceback=None):
-        """Write to cache based on cache mode using the counter-based key"""
-        # Don't write if NO_CACHE or READ_ONLY
-        if self.cache_mode in [CacheMode.NO_CACHE, CacheMode.READ_ONLY]:
-            return None
-
-        cache_key = self.get_cache_key(decision_type)
-        cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
-        cache_data = {
-            "counter": Agent.action_counter,
-            "decision_type": decision_type,
-            "prompt": prompt,
-            "code": str(code),
-            "result": str(result),
-            "traceback": traceback,
-        }
-
-        with open(cache_file, "w") as f:
-            json.dump(cache_data, f, indent=4)
+    def write_cache(self, message_type, message_text, eig, occ_tiles):
+        """Append a new entry to the CSV cache."""
+        occ_tiles_str = np.array2string(occ_tiles) if occ_tiles is not None else ""
+        exists = os.path.isfile(CSV_STAGE_FILE)
+        with open(CSV_STAGE_FILE, "a", newline="") as csvfile:
+            writer = csv.DictWriter(
+                csvfile,
+                fieldnames=[
+                    "round_id",
+                    "index",
+                    "messageType",
+                    "messageText",
+                    "EIG",
+                    "occTiles",
+                    "question_id",
+                ],
+            )
+            if not exists:
+                writer.writeheader()
+            writer.writerow(
+                {
+                    "round_id": self.round_id,
+                    "index": self.index_counter.increment_counter(),
+                    "messageType": message_type,
+                    "messageText": message_text,
+                    "EIG": eig if eig is not None else "",
+                    "occTiles": occ_tiles_str,
+                    "question_id": self.decision_counter.counter,
+                }
+            )
 
 
 class Captain(Agent):
     def __init__(
         self,
         seed: int = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: bool = False,
         model_string=None,
         temperature=None,
+        decision_counter=None,
+        index_counter=None,
+        round_id=None,
     ):
-        super().__init__(seed=seed, model_string=model_string, cache_mode=cache_mode)
+        super().__init__(
+            seed=seed,
+            model_string=model_string,
+            use_cache=use_cache,
+            decision_counter=decision_counter,
+            index_counter=index_counter,
+            round_id=round_id,
+        )
         self.temperature = temperature
         self.sampling_constraints = []
 
@@ -190,84 +240,18 @@ class Captain(Agent):
         moves_remaining: int,
         sunk: str,
     ) -> Decision:
-        cached_result = self.read_cache("DECISION")
-
-        # If we have a cache hit in READ_WRITE mode
-        if cached_result == "GENERATE_NEW":
-            # Generate new response anyway
-            result = self._get_decision(
-                state, history, questions_remaining, moves_remaining, sunk
-            )
-
-            # Increment counter after decision
-            Agent.increment_counter(self)
-            return result
-
-        # Normal cache hit
-        elif cached_result is not None:
-            # Increment counter after decision
-            Agent.increment_counter(self)
-            return Decision(cached_result)
-
-        # Cache miss
+        self.decision_counter.increment_counter()
         result = self._get_decision(
             state, history, questions_remaining, moves_remaining, sunk
         )
-
-        # Increment counter after decision
-        Agent.increment_counter(self)
         return result
 
     def move(self, state: Board, history: List[Dict], sunk: str):
-        cached_result = self.read_cache("MOVE")
-
-        # If we have a cache hit in READ_WRITE mode
-        if cached_result == "GENERATE_NEW":
-            # Generate new anyway
-            result = self._get_move(state, history, sunk)
-
-            # Increment counter after move
-            Agent.increment_counter(self)
-            return result
-
-        # Normal cache hit
-        elif cached_result is not None:
-            # Convert cached string representation back to tuple
-            coords = tuple(map(int, cached_result.strip("()").split(", ")))
-            # Increment counter after move
-            Agent.increment_counter(self)
-            return coords
-
-        # Cache miss
         result = self._get_move(state, history, sunk)
-
-        # Increment counter after move
-        Agent.increment_counter(self)
         return result
 
     def question(self, state: Board, history: List[Dict], sunk: str):
-        cached_result = self.read_cache("QUESTION")
-
-        # If we have a cache hit in READ_WRITE mode
-        if cached_result == "GENERATE_NEW":
-            # Generate new anyway
-            result = self._get_question(state, history, sunk)
-
-            # Increment counter after question
-            Agent.increment_counter(self)
-            return result
-
-        # Normal cache hit
-        elif cached_result is not None:
-            # Increment counter after question
-            Agent.increment_counter(self)
-            return Question(text=cached_result)
-
-        # Cache miss
         result = self._get_question(state, history, sunk)
-
-        # Increment counter after question
-        Agent.increment_counter(self)
         return result
 
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
@@ -285,18 +269,26 @@ class Spotter(Agent):
         self,
         board_id,
         board_experiment,
-        cache_mode=CacheMode.NO_CACHE,
+        use_cache: bool = False,
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
+        decision_counter=None,
+        index_counter=None,
+        round_id=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
+        self.decision_counter = decision_counter
+        self.index_counter = index_counter
 
-        # Use proper Agent initialization to handle model string and cache path
         super().__init__(
-            seed=None, model_string=model_string, cache_mode=cache_mode, use_cot=use_cot
+            seed=None,
+            model_string=model_string,
+            use_cot=use_cot,
+            use_cache=use_cache,
+            round_id=round_id,
         )
 
     @abstractmethod
@@ -308,28 +300,7 @@ class Spotter(Agent):
     def answer(
         self, question: Question, history: List[dict] = None, occ_tiles=None
     ) -> Answer:
-        cached_result = self.read_cache("ANSWER")
-
-        # If we have a cache hit in READ_WRITE mode
-        if cached_result == "GENERATE_NEW":
-            # Generate new response anyway
-            result = self._get_model_answer(question, history, occ_tiles)
-
-            # Increment counter after answer
-            Agent.increment_counter(self)
-            return result
-
-        # Normal cache hit
-        elif cached_result is not None:
-            # Increment counter after answer
-            Agent.increment_counter(self)
-            return Answer(text=cached_result)
-
-        # Cache miss
         result = self._get_model_answer(question, history, occ_tiles)
-
-        # Increment counter after answer
-        Agent.increment_counter(self)
         return result
 
 
@@ -362,12 +333,6 @@ class DirectSpotterModel(Spotter):
 
         if not self.use_cot:
             response = completion.choices[0].message.content
-            self.write_cache(
-                question.get_cache_key(self.board_id),
-                prompt=prompt.to_chat_format(),
-                code=None,
-                result=response,
-            )
         else:
             response = None
             while response is None:
@@ -386,11 +351,13 @@ class DirectSpotterModel(Spotter):
                 else:
                     response = None
 
+        if self.use_cache:
             self.write_cache(
-                question.get_cache_key(self.board_id),
-                prompt=prompt.to_chat_format(),
-                code=completion.choices[0].message.content,
-                result=response,
+                "ANSWER",
+                response,
+                None,
+                occ_tiles,
+                self.counter.counter,
             )
 
         answer = Answer(text=response)
@@ -467,61 +434,14 @@ class CodeSpotterModel(Spotter):
 
         result = code_question(board)
 
-        # Use our global counter caching system
         self.write_cache(
             "ANSWER",
-            prompt=code_question.translation_prompt.to_chat_format(),
-            code=code_question.fn_str,
-            result=result,
-            traceback=code_question.traceback,
+            result,
+            None,
+            occ_tiles,
         )
 
         return Answer(text=result, code_question=code_question)
-
-
-class EIGCalculator:
-    def __init__(self, seed, spotter):
-        self.seed = seed
-        self.rng = np.random.default_rng(seed)
-        self.spotter = spotter
-
-    def calculate_eig(self, question, state, samples=100, move=False):
-        def safe_log2(x):
-            if x == 0:
-                return 0
-            return log2(x)
-
-        code_question = self.spotter.translate(question, [], state.board)
-        sampler = FastSampler(
-            board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
-            seed=self.rng,
-        )
-
-        results = {"Yes": 0, "No": 0}
-        curr_time = time()
-        while sum(results.values()) < samples:
-            if time() - curr_time > 15:
-                print("EIG calculation timed out")
-                return 0
-            board = None
-            while not board:
-                board = sampler.populate_board()
-            board = board.to_symbolic_array()
-            result = code_question(board)
-            if result:
-                results[result] += 1
-        print("eig results calculated")
-
-        if results == {"Yes": samples, "No": 0} and move:
-            return 1000
-
-        eig = safe_log2(samples) - sum(
-            [p / samples * safe_log2(p) for p in results.values()]
-        )
-        # print("eig calculated as", eig, results)
-        return eig
 
 
 # ---------------------
@@ -530,7 +450,12 @@ class EIGCalculator:
 
 
 class RandomCaptain(Captain):
-    def decision(self, *args, **kwargs):
+    def __init__(self, seed: int = None, round_id=None, **kwargs):
+        super().__init__(seed=seed, round_id=round_id, **kwargs)
+
+    def decision(self, state, *args, **kwargs):
+        self.decision_counter.increment_counter()
+        self.write_cache("DECISION", Decision.MOVE, None, state.board)
         return Decision.MOVE
 
     def move(self, state: Board, history: List[Dict], sunk) -> Tuple[int, int]:
@@ -538,15 +463,21 @@ class RandomCaptain(Captain):
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
         coords = self.rng.choice(hidden_tiles)
+
+        self.write_cache("MOVE", coords_to_tile(tuple(coords)), None, state.board)
         return tuple(coords)
 
 
 class MAPCaptain(Captain):
-    def __init__(self, seed: int = None, n_samples: int = 10000):
-        super().__init__(seed)
+    def __init__(
+        self, seed: int = None, round_id=None, n_samples: int = 10000, **kwargs
+    ):
+        super().__init__(seed=seed, round_id=round_id, **kwargs)
         self.n_samples = n_samples
 
-    def decision(self, *args, **kwargs):
+    def decision(self, state, *args, **kwargs):
+        self.decision_counter.increment_counter()
+        self.write_cache("DECISION", Decision.MOVE, None, state.board)
         return Decision.MOVE
 
     def move(self, state: Board, history: List[Dict], sunk) -> Tuple[int, int]:
@@ -569,22 +500,12 @@ class MAPCaptain(Captain):
 
         # Map the flat index back to 2D coordinates.
         move_coords = np.unravel_index(flat_idx, state.board.shape)
+
+        self.write_cache("MOVE", coords_to_tile(tuple(move_coords)), None, state.board)
         return tuple(move_coords)
 
 
 class AutoCaptain(Captain):
-    def get_decision_cache_key(self, state_hash):
-        """Generate a cache key for decisions"""
-        return f"decision_{state_hash}"
-
-    def get_move_cache_key(self, state_hash):
-        """Generate a cache key for move operations"""
-        return f"move_{state_hash}"
-
-    def get_question_cache_key(self, state_hash):
-        """Generate a cache key for question operations"""
-        return f"question_{state_hash}"
-
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         raise NotImplementedError
 
@@ -621,6 +542,8 @@ class AutoCaptain(Captain):
                 )
                 if candidate_move is not None:
                     candidate_move = tile_to_coords(candidate_move.group())
+
+        self.write_cache("MOVE", coords_to_tile(candidate_move), None, state.board)
 
         return candidate_move
 
@@ -660,6 +583,8 @@ class AutoCaptain(Captain):
                 else:
                     candidate_question = None
 
+        self.write_cache("QUESTION", candidate_question, None, state.board)
+
         result = Question(text=candidate_question)
 
         return result
@@ -673,13 +598,13 @@ class ProbabilisticCaptain(AutoCaptain):
         use_cot=False,
         model_string: str = "openai/gpt-4o",
         temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: CacheMode = CacheMode.NO_CACHE,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
             temperature=temperature,
-            cache_mode=cache_mode,
+            use_cache=use_cache,
         )
         self.use_cot = use_cot
         self.q_prob = q_prob
@@ -687,9 +612,15 @@ class ProbabilisticCaptain(AutoCaptain):
     def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
+        decision = None
         if random() < self.q_prob and questions_remaining > 0:
-            return Decision.QUESTION
-        return Decision.MOVE
+            decision = Decision.QUESTION
+        else:
+            decision = Decision.MOVE
+
+        self.write_cache("DECISION", decision, None, state.board)
+
+        return decision
 
 
 class LLMDecisionCaptain(AutoCaptain):
@@ -699,13 +630,13 @@ class LLMDecisionCaptain(AutoCaptain):
         use_cot=False,
         model_string: str = "openai/gpt-4o",
         temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: CacheMode = CacheMode.NO_CACHE,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
             temperature=temperature,
-            cache_mode=cache_mode,
+            use_cache=use_cache,
         )
         self.use_cot = use_cot
 
@@ -748,13 +679,7 @@ class LLMDecisionCaptain(AutoCaptain):
                 Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
             )
 
-            self.write_cache(
-                "DECISION",
-                prompt_for_cache,
-                None,
-                decision,
-                traceback=completion.choices[0].message.content,
-            )
+            self.write_cache("DECISION", decision, None, state.board)
 
             print("auto decision", decision, candidate_decision)
             return decision
@@ -768,7 +693,7 @@ class EIGAutoCaptain(Captain):
         model_string: str = "openai/gpt-4o",
         spotter: CodeSpotterModel = None,
         temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: CacheMode = CacheMode.NO_CACHE,
         use_cot: bool = False,
         samples: int = 100,
         k: int = 3,
@@ -777,7 +702,7 @@ class EIGAutoCaptain(Captain):
             seed=seed,
             model_string=model_string,
             temperature=temperature,
-            cache_mode=cache_mode,
+            use_cache=use_cache,
         )
         self.use_cot = use_cot
         self.samples = samples
@@ -827,13 +752,7 @@ class EIGAutoCaptain(Captain):
             )
             print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
 
-            self.write_cache(
-                "DECISION",
-                prompt_for_cache,
-                None,
-                decision,
-                traceback=completion.choices[0].message.content,
-            )
+            self.write_cache("DECISION", decision, None, state.board)
 
             print("auto decision", decision, candidate_decision)
             return decision
@@ -898,13 +817,7 @@ class EIGAutoCaptain(Captain):
                 best_eig = eig
                 best_move = candidate_move
 
-        self.write_cache(
-            "MOVE",
-            move_prompt.to_chat_format(),
-            None,
-            best_move,
-            traceback=completion.choices[0].message.content,
-        )
+        self.write_cache("MOVE", coords_to_tile(best_move), best_eig, state.board)
 
         print("Best move:", coords_to_tile(best_move), "with EIG:", best_eig)
         return best_move
@@ -962,13 +875,7 @@ class EIGAutoCaptain(Captain):
                 best_eig = eig
                 best_question = candidate_question
 
-        self.write_cache(
-            "QUESTION",
-            str(question_prompt.to_chat_format()),
-            None,
-            best_question.text,
-            traceback=completion.choices[0].message.content,
-        )
+        self.write_cache("QUESTION", best_question.text, best_eig, state.board)
 
         print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
         return best_question
@@ -981,7 +888,7 @@ class LIPSLikeAutoCaptain(Captain):
         model_string: str = "openai/gpt-4o",
         spotter: CodeSpotterModel = None,
         temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: CacheMode = CacheMode.NO_CACHE,
         use_cot: bool = False,
         samples: int = 1000,
         k: int = 3,
@@ -990,7 +897,7 @@ class LIPSLikeAutoCaptain(Captain):
             seed=seed,
             model_string=model_string,
             temperature=temperature,
-            cache_mode=cache_mode,
+            use_cache=use_cache,
         )
         self.use_cot = use_cot
         self.samples = samples
@@ -1040,13 +947,7 @@ class LIPSLikeAutoCaptain(Captain):
             )
             print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
 
-            self.write_cache(
-                "DECISION",
-                prompt_for_cache,
-                None,
-                decision,
-                traceback=completion.choices[0].message.content,
-            )
+            self.write_cache("DECISION", decision, None, state.board)
 
             print("auto decision", decision, candidate_decision)
             return decision
@@ -1118,13 +1019,7 @@ class LIPSLikeAutoCaptain(Captain):
                 best_prob = ship_prob
                 best_move = candidate_move
 
-        self.write_cache(
-            "MOVE",
-            move_prompt.to_chat_format(),
-            None,
-            best_move,
-            traceback=completion.choices[0].message.content,
-        )
+        self.write_cache("MOVE", best_move, best_prob, state.board)
 
         print("Best move:", coords_to_tile(best_move), "with Probability:", best_prob)
 
@@ -1187,13 +1082,7 @@ class LIPSLikeAutoCaptain(Captain):
                 best_eig = eig
                 best_question = candidate_question
 
-        self.write_cache(
-            "QUESTION",
-            str(question_prompt.to_chat_format()),
-            None,
-            best_question.text,
-            traceback=completion.choices[0].message.content,
-        )
+        self.write_cache("QUESTION", best_question.text, best_eig, state.board)
 
         print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
         return best_question
@@ -1206,16 +1095,20 @@ class MAPEIGAutoCaptain(Captain):
         model_string: str = "openai/gpt-4o",
         spotter: CodeSpotterModel = None,
         temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: CacheMode = CacheMode.NO_CACHE,
         use_cot: bool = False,
         samples: int = 1000,
         k: int = 3,
+        decision_counter=None,
+        index_counter=None,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
             temperature=temperature,
-            cache_mode=cache_mode,
+            use_cache=use_cache,
+            decision_counter=decision_counter,
+            index_counter=index_counter,
         )
         self.use_cot = use_cot
         self.samples = samples
@@ -1265,13 +1158,7 @@ class MAPEIGAutoCaptain(Captain):
             )
             print(Decision.MOVE, candidate_decision, decision, Decision.QUESTION)
 
-            self.write_cache(
-                "DECISION",
-                prompt_for_cache,
-                None,
-                decision,
-                traceback=completion.choices[0].message.content,
-            )
+            self.write_cache("DECISION", decision, None, state.board)
 
             print("auto decision", decision, candidate_decision)
             return decision
@@ -1304,12 +1191,7 @@ class MAPEIGAutoCaptain(Captain):
         # Map the flat index back to 2D coordinates.
         move_coords = np.unravel_index(flat_idx, state.board.shape)
 
-        self.write_cache(
-            "MOVE",
-            coords_to_tile(move_coords),
-            None,
-            None,
-        )
+        self.write_cache("MOVE", coords_to_tile(move_coords), None, state.board)
 
         print(
             "Best move:",
@@ -1377,13 +1259,7 @@ class MAPEIGAutoCaptain(Captain):
                 best_eig = eig
                 best_question = candidate_question
 
-        self.write_cache(
-            "QUESTION",
-            str(question_prompt.to_chat_format()),
-            None,
-            best_question.text,
-            traceback=completion.choices[0].message.content,
-        )
+        self.write_cache("QUESTION", best_question.text, best_eig, state.board)
 
         print(f"Best question: '{best_question.text}' with EIG: {best_eig}")
         return best_question
