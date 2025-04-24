@@ -13,18 +13,18 @@ sys.path.insert(0, "..")
 from battleship.board import Board
 from battleship.game import BattleshipGame
 from battleship.captains import (
-    create_random_captain,
-    create_map_captain,
-    create_probabilistic_captain,
-    create_eig_captain,
-    create_map_eig_captain,
-    ModularCaptain,
+    Captain,
+    AlwaysMoveDecisionStrategy,
+    ProbabilisticDecisionStrategy,
     LLMDecisionStrategy,
+    RandomMoveStrategy,
+    MAPMoveStrategy,
     LLMMoveStrategy,
-    BasicLLMQuestionStrategy,
+    EIGQuestionStrategy,
+    LLMQuestionStrategy,
 )
 from battleship.spotters import CodeSpotterModel
-from battleship.utils import CacheMode
+from battleship.battleship.agents import CacheMode
 
 
 def parse_arguments():
@@ -207,6 +207,7 @@ def get_human_results(gold_annotations_path, round_data_path):
 
 
 def create_captains(args):
+    # Convert string cache mode to enum
     cache_mode_map = {
         "read_only": CacheMode.READ_ONLY,
         "read_write": CacheMode.READ_WRITE,
@@ -215,6 +216,7 @@ def create_captains(args):
     }
     cache_mode = cache_mode_map[args.cache_mode]
 
+    # Initialize spotter for EIG captains
     eig_spotter = CodeSpotterModel(
         board_id="B01",
         board_experiment="collaborative",
@@ -227,105 +229,161 @@ def create_captains(args):
 
     for captain_type in args.captains:
         if captain_type == "RandomCaptain":
-            captains[captain_type] = create_random_captain(seed=args.seeds[0])
+            captains[captain_type] = Captain(
+                decision_strategy=AlwaysMoveDecisionStrategy(),
+                move_strategy=RandomMoveStrategy(
+                    rng=np.random.default_rng(args.seeds[0])
+                ),
+                question_strategy=None,
+                seed=args.seeds[0],
+                cache_mode=cache_mode,
+            )
 
         elif captain_type == "MAPCaptain":
-            captains[captain_type] = create_map_captain(
-                seed=args.seeds[0], n_samples=args.map_samples
+            captains[captain_type] = Captain(
+                decision_strategy=AlwaysMoveDecisionStrategy(),
+                move_strategy=MAPMoveStrategy(
+                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.map_samples
+                ),
+                question_strategy=None,
+                seed=args.seeds[0],
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "ProbabilisticCaptain":
-            captains[captain_type] = create_probabilistic_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=ProbabilisticDecisionStrategy(
+                    q_prob=args.prob_q_prob
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
+                question_strategy=LLMQuestionStrategy(
+                    model_string=args.model, use_cot=False
+                ),
                 seed=args.seeds[0],
-                q_prob=args.prob_q_prob,
                 model_string=args.model,
-                use_cot=False,
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "ProbabilisticCaptain_cot":
-            captains[captain_type] = create_probabilistic_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=ProbabilisticDecisionStrategy(
+                    q_prob=args.prob_q_prob
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
+                question_strategy=LLMQuestionStrategy(
+                    model_string=args.model, use_cot=True
+                ),
                 seed=args.seeds[0],
-                q_prob=args.prob_q_prob,
                 model_string=args.model,
-                use_cot=True,
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain":
-            # Create LLM decision captain using basic LLM strategies
-            decision_strategy = LLMDecisionStrategy(
-                model_string=args.model, use_cot=False
-            )
-            move_strategy = LLMMoveStrategy(model_string=args.model, use_cot=False)
-            question_strategy = BasicLLMQuestionStrategy(
-                model_string=args.model, use_cot=False
-            )
-
-            captains[captain_type] = ModularCaptain(
-                decision_strategy=decision_strategy,
-                move_strategy=move_strategy,
-                question_strategy=question_strategy,
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=False
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
+                question_strategy=LLMQuestionStrategy(
+                    model_string=args.model, use_cot=False
+                ),
                 seed=args.seeds[0],
                 model_string=args.model,
                 cache_mode=cache_mode,
             )
 
         elif captain_type == "LLMDecisionCaptain_cot":
-            # Create LLM decision captain with CoT using basic LLM strategies
-            decision_strategy = LLMDecisionStrategy(
-                model_string=args.model, use_cot=True
-            )
-            move_strategy = LLMMoveStrategy(model_string=args.model, use_cot=True)
-            question_strategy = BasicLLMQuestionStrategy(
-                model_string=args.model, use_cot=True
-            )
-
-            captains[captain_type] = ModularCaptain(
-                decision_strategy=decision_strategy,
-                move_strategy=move_strategy,
-                question_strategy=question_strategy,
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=True
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
+                question_strategy=LLMQuestionStrategy(
+                    model_string=args.model, use_cot=True
+                ),
                 seed=args.seeds[0],
                 model_string=args.model,
                 cache_mode=cache_mode,
             )
 
         elif captain_type == "EIGCaptain":
-            captains[captain_type] = create_eig_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=False
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
+                question_strategy=EIGQuestionStrategy(
+                    model_string=args.model,
+                    spotter=eig_spotter,
+                    rng=np.random.default_rng(args.seeds[0]),
+                    samples=args.eig_samples,
+                    k=args.eig_k,
+                    use_cot=False,
+                ),
                 seed=args.seeds[0],
-                spotter=eig_spotter,
                 model_string=args.model,
-                samples=args.eig_samples,
-                k=args.eig_k,
-                use_cot=False,
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "EIGCaptain_cot":
-            captains[captain_type] = create_eig_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=True
+                ),
+                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
+                question_strategy=EIGQuestionStrategy(
+                    model_string=args.model,
+                    spotter=eig_spotter,
+                    rng=np.random.default_rng(args.seeds[0]),
+                    samples=args.eig_samples,
+                    k=args.eig_k,
+                    use_cot=True,
+                ),
                 seed=args.seeds[0],
-                spotter=eig_spotter,
                 model_string=args.model,
-                samples=args.eig_samples,
-                k=args.eig_k,
-                use_cot=True,
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "MAPEIGCaptain":
-            captains[captain_type] = create_map_eig_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=False
+                ),
+                move_strategy=MAPMoveStrategy(
+                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
+                ),
+                question_strategy=EIGQuestionStrategy(
+                    model_string=args.model,
+                    spotter=eig_spotter,
+                    rng=np.random.default_rng(args.seeds[0]),
+                    samples=args.eig_samples,
+                    k=args.eig_k,
+                    use_cot=False,
+                ),
                 seed=args.seeds[0],
-                spotter=eig_spotter,
                 model_string=args.model,
-                samples=args.eig_samples,
-                k=args.eig_k,
-                use_cot=False,
+                cache_mode=cache_mode,
             )
 
         elif captain_type == "MAPEIGCaptain_cot":
-            captains[captain_type] = create_map_eig_captain(
+            captains[captain_type] = Captain(
+                decision_strategy=LLMDecisionStrategy(
+                    model_string=args.model, use_cot=True
+                ),
+                move_strategy=MAPMoveStrategy(
+                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
+                ),
+                question_strategy=EIGQuestionStrategy(
+                    model_string=args.model,
+                    spotter=eig_spotter,
+                    rng=np.random.default_rng(args.seeds[0]),
+                    samples=args.eig_samples,
+                    k=args.eig_k,
+                    use_cot=True,
+                ),
                 seed=args.seeds[0],
-                spotter=eig_spotter,
                 model_string=args.model,
-                samples=args.eig_samples,
-                k=args.eig_k,
-                use_cot=True,
+                cache_mode=cache_mode,
             )
 
     return captains

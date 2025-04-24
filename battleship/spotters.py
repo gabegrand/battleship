@@ -4,16 +4,16 @@ from typing import List
 
 import numpy as np
 
+from battleship.battleship.agents import Agent
+from battleship.battleship.agents import Answer
+from battleship.battleship.agents import BOOL_ANSWER_PATTERN
+from battleship.battleship.agents import CacheMode
+from battleship.battleship.agents import client
+from battleship.battleship.agents import CODE_ANSWER_PATTERN
+from battleship.battleship.agents import CodeQuestion
+from battleship.battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
-from battleship.utils import Agent
-from battleship.utils import Answer
-from battleship.utils import BOOL_ANSWER_PATTERN
-from battleship.utils import CacheMode
-from battleship.utils import client
-from battleship.utils import CODE_ANSWER_PATTERN
-from battleship.utils import CodeQuestion
-from battleship.utils import Question
 
 
 class Spotter(Agent):

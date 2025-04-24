@@ -7,6 +7,15 @@ from typing import Tuple
 
 import numpy as np
 
+from battleship.battleship.agents import Agent
+from battleship.battleship.agents import ANSWER_MATCH_PATTERN
+from battleship.battleship.agents import CacheMode
+from battleship.battleship.agents import client
+from battleship.battleship.agents import DECISION_PATTERN
+from battleship.battleship.agents import EIGCalculator
+from battleship.battleship.agents import MOVE_COT_PATTERN
+from battleship.battleship.agents import MOVE_PATTERN
+from battleship.battleship.agents import Question
 from battleship.board import Board
 from battleship.board import tile_to_coords
 from battleship.fast_sampler import FastSampler
@@ -14,15 +23,6 @@ from battleship.game import Decision
 from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
-from battleship.utils import Agent
-from battleship.utils import ANSWER_MATCH_PATTERN
-from battleship.utils import CacheMode
-from battleship.utils import client
-from battleship.utils import DECISION_PATTERN
-from battleship.utils import EIGCalculator
-from battleship.utils import MOVE_COT_PATTERN
-from battleship.utils import MOVE_PATTERN
-from battleship.utils import Question
 
 
 # Strategy interfaces
@@ -47,6 +47,9 @@ class QuestionStrategy(ABC):
 class Captain(Agent):
     def __init__(
         self,
+        decision_strategy=None,
+        move_strategy=None,
+        question_strategy=None,
         seed: int = None,
         cache_mode: CacheMode = CacheMode.WRITE_ONLY,
         model_string=None,
@@ -55,6 +58,11 @@ class Captain(Agent):
         super().__init__(seed=seed, model_string=model_string, cache_mode=cache_mode)
         self.temperature = temperature
         self.sampling_constraints = []
+
+        # Optional strategies for modular approach
+        self.decision_strategy = decision_strategy
+        self.move_strategy = move_strategy
+        self.question_strategy = question_strategy
 
     def decision(
         self,
@@ -69,7 +77,7 @@ class Captain(Agent):
         # If we have a cache hit in READ_WRITE mode
         if cached_result == "GENERATE_NEW":
             # Generate new response anyway
-            result = self._get_decision(
+            result = self.decision_strategy.make_decision(
                 state, history, questions_remaining, moves_remaining, sunk
             )
 
@@ -84,7 +92,7 @@ class Captain(Agent):
             return Decision(cached_result)
 
         # Cache miss
-        result = self._get_decision(
+        result = self.decision_strategy.make_decision(
             state, history, questions_remaining, moves_remaining, sunk
         )
 
@@ -98,7 +106,7 @@ class Captain(Agent):
         # If we have a cache hit in READ_WRITE mode
         if cached_result == "GENERATE_NEW":
             # Generate new anyway
-            result = self._get_move(state, history, sunk)
+            result = self.move_strategy.make_move(state, history, sunk)
 
             # Increment counter after move
             Agent.increment_counter(self)
@@ -113,7 +121,7 @@ class Captain(Agent):
             return coords
 
         # Cache miss
-        result = self._get_move(state, history, sunk)
+        result = self.move_strategy.make_move(state, history, sunk)
 
         # Increment counter after move
         Agent.increment_counter(self)
@@ -125,7 +133,7 @@ class Captain(Agent):
         # If we have a cache hit in READ_WRITE mode
         if cached_result == "GENERATE_NEW":
             # Generate new anyway
-            result = self._get_question(state, history, sunk)
+            result = self.question_strategy.ask_question(state, history, sunk)
 
             # Increment counter after question
             Agent.increment_counter(self)
@@ -138,50 +146,11 @@ class Captain(Agent):
             return Question(text=cached_result)
 
         # Cache miss
-        result = self._get_question(state, history, sunk)
+        result = self.question_strategy.ask_question(state, history, sunk)
 
         # Increment counter after question
         Agent.increment_counter(self)
         return result
-
-    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
-        raise NotImplementedError
-
-    def _get_move(self, state, history, sunk):
-        raise NotImplementedError
-
-    def _get_question(self, state, history, sunk):
-        raise NotImplementedError
-
-
-# The modular captain class
-class ModularCaptain(Captain):
-    def __init__(
-        self,
-        decision_strategy: DecisionStrategy,
-        move_strategy: MoveStrategy,
-        question_strategy: QuestionStrategy,
-        seed: int = None,
-        model_string: str = None,
-        temperature: float = None,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
-    ):
-        super().__init__(seed=seed, model_string=model_string, cache_mode=cache_mode)
-        self.decision_strategy = decision_strategy
-        self.move_strategy = move_strategy
-        self.question_strategy = question_strategy
-        self.temperature = temperature
-
-    def _get_decision(self, state, history, questions_remaining, moves_remaining, sunk):
-        return self.decision_strategy.make_decision(
-            state, history, questions_remaining, moves_remaining, sunk
-        )
-
-    def _get_move(self, state, history, sunk):
-        return self.move_strategy.make_move(state, history, sunk)
-
-    def _get_question(self, state, history, sunk):
-        return self.question_strategy.ask_question(state, history, sunk)
 
 
 # Example decision strategies
@@ -400,7 +369,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         return best_question
 
 
-class BasicLLMQuestionStrategy(QuestionStrategy):
+class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
         self, model_string, temperature=None, use_cot=False, questions_remaining=None
     ):
@@ -444,114 +413,3 @@ class BasicLLMQuestionStrategy(QuestionStrategy):
                     candidate_question = None
 
         return Question(text=candidate_question)
-
-
-# Examples of creating new captains with different strategy combinations
-def create_random_captain(seed=None):
-    rng = np.random.default_rng(seed)
-    decision_strategy = AlwaysMoveDecisionStrategy()
-    move_strategy = RandomMoveStrategy(rng)
-    question_strategy = BasicLLMQuestionStrategy(
-        model_string="openai/gpt-4o",
-        questions_remaining=0,  # Won't be used but needed to initialize
-    )
-
-    return ModularCaptain(
-        decision_strategy=decision_strategy,
-        move_strategy=move_strategy,
-        question_strategy=question_strategy,
-        seed=seed,
-    )
-
-
-def create_map_captain(seed=None, n_samples=10000):
-    rng = np.random.default_rng(seed)
-    decision_strategy = AlwaysMoveDecisionStrategy()
-    move_strategy = MAPMoveStrategy(rng, n_samples=n_samples)
-    question_strategy = BasicLLMQuestionStrategy(
-        model_string="openai/gpt-4o",
-        questions_remaining=0,  # Won't be used but needed to initialize
-    )
-
-    return ModularCaptain(
-        decision_strategy=decision_strategy,
-        move_strategy=move_strategy,
-        question_strategy=question_strategy,
-        seed=seed,
-    )
-
-
-def create_probabilistic_captain(
-    seed=None, q_prob=0.5, model_string="openai/gpt-4o", use_cot=False
-):
-    decision_strategy = ProbabilisticDecisionStrategy(q_prob=q_prob)
-    move_strategy = LLMMoveStrategy(model_string=model_string, use_cot=use_cot)
-    question_strategy = BasicLLMQuestionStrategy(
-        model_string=model_string, use_cot=use_cot
-    )
-
-    return ModularCaptain(
-        decision_strategy=decision_strategy,
-        move_strategy=move_strategy,
-        question_strategy=question_strategy,
-        seed=seed,
-        model_string=model_string,
-    )
-
-
-def create_eig_captain(
-    seed=None,
-    spotter=None,
-    model_string="openai/gpt-4o",
-    samples=100,
-    k=3,
-    use_cot=False,
-):
-    rng = np.random.default_rng(seed)
-    decision_strategy = LLMDecisionStrategy(model_string=model_string, use_cot=use_cot)
-    move_strategy = LLMMoveStrategy(model_string=model_string, use_cot=use_cot)
-    question_strategy = EIGQuestionStrategy(
-        model_string=model_string,
-        spotter=spotter,
-        rng=rng,
-        samples=samples,
-        k=k,
-        use_cot=use_cot,
-    )
-
-    return ModularCaptain(
-        decision_strategy=decision_strategy,
-        move_strategy=move_strategy,
-        question_strategy=question_strategy,
-        seed=seed,
-        model_string=model_string,
-    )
-
-
-def create_map_eig_captain(
-    seed=None,
-    spotter=None,
-    model_string="openai/gpt-4o",
-    samples=1000,
-    k=3,
-    use_cot=False,
-):
-    rng = np.random.default_rng(seed)
-    decision_strategy = LLMDecisionStrategy(model_string=model_string, use_cot=use_cot)
-    move_strategy = MAPMoveStrategy(rng=rng, n_samples=samples)
-    question_strategy = EIGQuestionStrategy(
-        model_string=model_string,
-        spotter=spotter,
-        rng=rng,
-        samples=samples,
-        k=k,
-        use_cot=use_cot,
-    )
-
-    return ModularCaptain(
-        decision_strategy=decision_strategy,
-        move_strategy=move_strategy,
-        question_strategy=question_strategy,
-        seed=seed,
-        model_string=model_string,
-    )
