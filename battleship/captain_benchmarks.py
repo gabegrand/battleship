@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import os
 import sys
+from copy import deepcopy
 from multiprocessing.dummy import Pool
 from pathlib import Path
+from random import randint
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, "..")
-
+from battleship.agents import Counter
+from battleship.agents import CSV_ROUND_FILE
+from battleship.agents import SUMMARY_FILE
 from battleship.board import Board
+from battleship.captains import AlwaysMoveDecisionStrategy
+from battleship.captains import Captain
+from battleship.captains import EIGQuestionStrategy
+from battleship.captains import LLMDecisionStrategy
+from battleship.captains import LLMMoveStrategy
+from battleship.captains import LLMQuestionStrategy
+from battleship.captains import MAPMoveStrategy
+from battleship.captains import ProbabilisticDecisionStrategy
+from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
-from battleship.captains import (
-    Captain,
-    AlwaysMoveDecisionStrategy,
-    ProbabilisticDecisionStrategy,
-    LLMDecisionStrategy,
-    RandomMoveStrategy,
-    MAPMoveStrategy,
-    LLMMoveStrategy,
-    EIGQuestionStrategy,
-    LLMQuestionStrategy,
-)
 from battleship.spotters import CodeSpotterModel
-from battleship.battleship.agents import CacheMode
 
 
 def parse_arguments():
@@ -72,13 +73,7 @@ def parse_arguments():
 
     # Model configuration
     parser.add_argument("--model", type=str, default="gpt-4o", help="LLM model to use")
-    parser.add_argument(
-        "--cache-mode",
-        type=str,
-        default="write_only",
-        choices=["read_only", "read_write", "write_only", "none"],
-        help="Cache mode for LLM requests",
-    )
+    parser.add_argument("--use-cache", action="store_true", help="Cache results")
 
     # Experiment settings
     parser.add_argument(
@@ -207,15 +202,6 @@ def get_human_results(gold_annotations_path, round_data_path):
 
 
 def create_captains(args):
-    # Convert string cache mode to enum
-    cache_mode_map = {
-        "read_only": CacheMode.READ_ONLY,
-        "read_write": CacheMode.READ_WRITE,
-        "write_only": CacheMode.WRITE_ONLY,
-        "none": CacheMode.NO_CACHE,
-    }
-    cache_mode = cache_mode_map[args.cache_mode]
-
     # Initialize spotter for EIG captains
     eig_spotter = CodeSpotterModel(
         board_id="B01",
@@ -236,7 +222,8 @@ def create_captains(args):
                 ),
                 question_strategy=None,
                 seed=args.seeds[0],
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "MAPCaptain":
@@ -247,7 +234,8 @@ def create_captains(args):
                 ),
                 question_strategy=None,
                 seed=args.seeds[0],
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "ProbabilisticCaptain":
@@ -261,7 +249,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "ProbabilisticCaptain_cot":
@@ -275,7 +264,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "LLMDecisionCaptain":
@@ -289,7 +279,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "LLMDecisionCaptain_cot":
@@ -303,7 +294,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "EIGCaptain":
@@ -322,7 +314,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "EIGCaptain_cot":
@@ -341,7 +334,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "MAPEIGCaptain":
@@ -362,7 +356,8 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
         elif captain_type == "MAPEIGCaptain_cot":
@@ -383,14 +378,15 @@ def create_captains(args):
                 ),
                 seed=args.seeds[0],
                 model_string=args.model,
-                cache_mode=cache_mode,
+                use_cache=args.use_cache,
+                round_id=None,
             )
 
     return captains
 
 
 def run_single_agent_game(args):
-    cap_name, captain, seed, board_id, max_questions, max_moves, model = args
+    round_id, cap_name, captain, seed, board_id, max_questions, max_moves, model = args
 
     # Update spotter board ID for EIG captains
     if hasattr(captain, "question_strategy") and hasattr(
@@ -404,14 +400,43 @@ def run_single_agent_game(args):
     print(f"{cap_name} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
 
+    decision_counter = Counter()
+    index_counter = Counter()
+
+    captain.index_counter = index_counter
+    captain.decision_counter = decision_counter
+
     spotter = CodeSpotterModel(
         board_id,
         "collaborative",
-        cache_mode=CacheMode.WRITE_ONLY,
+        use_cache=True,
         model_string=model,
         temperature=None,
         use_cot=True,
+        decision_counter=decision_counter,
+        index_counter=index_counter,
+        round_id=round_id,
     )
+
+    file_exists = os.path.isfile(CSV_ROUND_FILE)
+    with open(CSV_ROUND_FILE, "a", newline="") as csvfile:
+        writer = csv.DictWriter(
+            csvfile,
+            fieldnames=["id", "boardId", "seed", "captainModel", "spotterModel"],
+        )
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "id": round_id,
+                "boardId": board_id,
+                "seed": seed,
+                "captainModel": cap_name,
+                "spotterModel": spotter.__class__.__name__,
+            }
+        )
+
+    captain.round_id = round_id
 
     game = BattleshipGame(
         board_target=board,
@@ -424,6 +449,7 @@ def run_single_agent_game(args):
     print(f"{cap_name} finished with {board_id} & seed {seed}")
 
     result = {
+        "roundId": round_id,
         "captainType": cap_name,
         "boardId": board_id,
         "hits": game.hits,
@@ -436,7 +462,7 @@ def run_single_agent_game(args):
     }
 
     pd.DataFrame.from_dict([result]).to_csv(
-        "/home/ubuntu/repo_battleship/temp/total_results.csv",
+        SUMMARY_FILE,
         mode="a",
         header=False,
         index=False,
@@ -482,8 +508,9 @@ def main():
     # Prepare a list of tasks (each tuple corresponds to one game run)
     jobs = [
         (
-            cap_name,
-            captain,
+            randint(0, 1000000),
+            deepcopy(cap_name),
+            deepcopy(captain),
             seed,
             board_id,
             args.max_questions,

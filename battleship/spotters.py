@@ -1,17 +1,18 @@
 import traceback
 from abc import abstractmethod
 from typing import List
+from typing import Tuple
 
 import numpy as np
 
-from battleship.battleship.agents import Agent
-from battleship.battleship.agents import Answer
-from battleship.battleship.agents import BOOL_ANSWER_PATTERN
-from battleship.battleship.agents import CacheMode
-from battleship.battleship.agents import client
-from battleship.battleship.agents import CODE_ANSWER_PATTERN
-from battleship.battleship.agents import CodeQuestion
-from battleship.battleship.agents import Question
+from battleship.agents import Agent
+from battleship.agents import Answer
+from battleship.agents import BOOL_ANSWER_PATTERN
+from battleship.agents import CacheData
+from battleship.agents import client
+from battleship.agents import CODE_ANSWER_PATTERN
+from battleship.agents import CodeQuestion
+from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
 
@@ -21,10 +22,13 @@ class Spotter(Agent):
         self,
         board_id,
         board_experiment,
-        cache_mode=CacheMode.NO_CACHE,
+        use_cache=True,
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
+        decision_counter=None,
+        index_counter=None,
+        round_id=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
@@ -32,8 +36,15 @@ class Spotter(Agent):
 
         # Use proper Agent initialization to handle model string and cache path
         super().__init__(
-            seed=None, model_string=model_string, cache_mode=cache_mode, use_cot=use_cot
+            seed=None,
+            model_string=model_string,
+            use_cache=use_cache,
+            use_cot=use_cot,
+            decision_counter=decision_counter,
+            index_counter=index_counter,
+            round_id=round_id,
         )
+        self.round_id
 
     @abstractmethod
     def _get_model_answer(
@@ -44,28 +55,15 @@ class Spotter(Agent):
     def answer(
         self, question: Question, history: List[dict] = None, occ_tiles=None
     ) -> Answer:
-        cached_result = self.read_cache("ANSWER")
+        self.index_counter.increment_counter()
+        result, answer_cache = self._get_model_answer(question, history, occ_tiles)
 
-        # If we have a cache hit in READ_WRITE mode
-        if cached_result == "GENERATE_NEW":
-            # Generate new response anyway
-            result = self._get_model_answer(question, history, occ_tiles)
+        if self.use_cache:
+            self.write_cache(
+                message_type="ANSWER",
+                cache_data=answer_cache,
+            )
 
-            # Increment counter after answer
-            Agent.increment_counter(self)
-            return result
-
-        # Normal cache hit
-        elif cached_result is not None:
-            # Increment counter after answer
-            Agent.increment_counter(self)
-            return Answer(text=cached_result)
-
-        # Cache miss
-        result = self._get_model_answer(question, history, occ_tiles)
-
-        # Increment counter after answer
-        Agent.increment_counter(self)
         return result
 
 
@@ -77,7 +75,7 @@ class Spotter(Agent):
 class DirectSpotterModel(Spotter):
     def _get_model_answer(
         self, question: Question, history: List[dict], occ_tiles=None
-    ) -> Answer:
+    ) -> Tuple[Answer, CacheData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
             target_trial_experiment=self.board_experiment,
@@ -122,15 +120,8 @@ class DirectSpotterModel(Spotter):
                 else:
                     response = None
 
-            self.write_cache(
-                question.get_cache_key(self.board_id),
-                prompt=prompt.to_chat_format(),
-                code=completion.choices[0].message.content,
-                result=response,
-            )
-
         answer = Answer(text=response)
-        return answer
+        return answer, CacheData(message_text=response, occ_tiles=occ_tiles)
 
 
 class CodeSpotterModel(Spotter):
@@ -194,7 +185,7 @@ class CodeSpotterModel(Spotter):
 
     def _get_model_answer(
         self, question: Question, history: List[dict], occ_tiles=None
-    ) -> Answer:
+    ) -> Tuple[Answer, CacheData]:
         code_question = self.translate(question, history, occ_tiles)
 
         board = Board.from_trial_id(
@@ -203,13 +194,6 @@ class CodeSpotterModel(Spotter):
 
         result = code_question(board)
 
-        # Use our global counter caching system
-        self.write_cache(
-            "ANSWER",
-            prompt=code_question.translation_prompt.to_chat_format(),
-            code=code_question.fn_str,
-            result=result,
-            traceback=code_question.traceback,
+        return Answer(text=result, code_question=code_question), CacheData(
+            message_text=result, occ_tiles=occ_tiles
         )
-
-        return Answer(text=result, code_question=code_question)

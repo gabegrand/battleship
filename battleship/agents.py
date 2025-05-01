@@ -1,9 +1,8 @@
-import json
+import csv
 import os
 import re
 from abc import ABC
 from dataclasses import dataclass
-from enum import Enum
 from math import log2
 from pathlib import Path
 from time import time
@@ -14,8 +13,14 @@ from openai import OpenAI
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
 
-CACHE_DIR = Path("./cache")
+CACHE_DIR = Path(f"./cache")
 CACHE_DIR.mkdir(exist_ok=True)
+
+CSV_STAGE_FILE = CACHE_DIR / f"stage.csv"
+CSV_ROUND_FILE = CACHE_DIR / f"round.csv"
+CSV_PROMPTS_FILE = CACHE_DIR / f"prompts.csv"
+SUMMARY_FILE = CACHE_DIR / f"summary.csv"
+
 
 MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
 DECISION_PATTERN = re.compile("^(Question|Move)$")
@@ -35,6 +40,25 @@ class Question:
 
     def get_cache_key(self, board_id):
         return f"{self.text.lower().replace(' ','_').replace('/','_')}_{board_id}"
+
+
+@dataclass
+class Prompt:
+    prompt: str = None
+    full_completion: str = None
+    extracted_completion: str = None
+    eig: float = None
+    map_prob: float = None
+    occ_tiles: np.ndarray = None
+
+
+@dataclass
+class CacheData:
+    message_text: str = None
+    eig: float = None
+    map_prob: float = None
+    occ_tiles: np.ndarray = None
+    prompts: list[Prompt] = None
 
 
 class CodeQuestion:
@@ -59,16 +83,18 @@ class Answer:
     code_question: CodeQuestion = None
 
 
-class CacheMode(Enum):
-    NO_CACHE = "no_cache"  # Don't use cache at all
-    READ_ONLY = "read_only"  # Only read from cache, don't write
-    WRITE_ONLY = "write_only"  # Only write to cache, don't read
-    READ_WRITE = "read_write"  # Read from cache and generate+cache new responses
-
-
 # ---------------------
 # Abstract Agent Classes
 # ---------------------
+
+
+class Counter:
+    def __init__(self):
+        self.counter = 0
+
+    def increment_counter(self):
+        self.counter += 1
+        return self.counter
 
 
 class Agent(ABC):
@@ -84,68 +110,100 @@ class Agent(ABC):
         seed: int = None,
         model_string: str = None,
         use_cot: bool = False,
-        cache_mode: CacheMode = CacheMode.NO_CACHE,
+        use_cache: bool = False,
+        decision_counter: Counter = None,
+        index_counter: Counter = None,
+        round_id: str = None,
     ):
+        self.round_id = round_id
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
-        self.cache_mode = cache_mode
+        self.use_cache = use_cache
+        self.decision_counter = decision_counter
+        self.index_counter = index_counter
 
-        folder_name = self.__class__.__name__
-        if model_string is not None:
-            # Extract model name after the provider (e.g. "openai/gpt-4o" -> "gpt-4o")
-            if "/" in model_string:
-                folder_name = model_string.split("/")[1]
-            else:
-                folder_name = model_string
+    def write_cache(self, message_type: str = None, cache_data: CacheData = None):
+        """Append a new entry to the CSV cache."""
 
-        self.cache_path = CACHE_DIR / self.__class__.__name__ / folder_name
-        os.makedirs(self.cache_path, exist_ok=True)
+        def option_to_str(option):
+            return option if option is not None else ""
 
-    def get_cache_key(self, decision_type):
-        """Generate a cache key based on the global counter and decision type"""
-        return f"{Agent.action_counter}_{decision_type}_{str(time())}"
-
-    def read_cache(self, decision_type):
-        """Read from cache based on cache mode using the counter-based key"""
-        # Don't read if NO_CACHE or WRITE_ONLY
-        if self.cache_mode in [CacheMode.NO_CACHE, CacheMode.WRITE_ONLY]:
-            return None
-
-        cache_key = self.get_cache_key(decision_type)
-        cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
-        if os.path.exists(cache_file):
-            with open(cache_file, "r") as f:
-                cache_dict = json.load(f)
-
-            # For READ_WRITE, mark that we had a cache hit but still want to generate new
-            if self.cache_mode == CacheMode.READ_WRITE:
-                # We've read it, but we'll still generate a new response
-                return "GENERATE_NEW"
-
-            # For READ_ONLY, return the cached result
-            return cache_dict["result"]
-        return None
-
-    def write_cache(self, decision_type, prompt, code, result, traceback=None):
-        """Write to cache based on cache mode using the counter-based key"""
-        # Don't write if NO_CACHE or READ_ONLY
-        if self.cache_mode in [CacheMode.NO_CACHE, CacheMode.READ_ONLY]:
-            return None
-
-        cache_key = self.get_cache_key(decision_type)
-        cache_file = os.path.join(self.cache_path, f"{cache_key}.json")
-        cache_data = {
-            "counter": Agent.action_counter,
-            "decision_type": decision_type,
-            "prompt": prompt,
-            "code": str(code),
-            "result": str(result),
-            "traceback": traceback,
-        }
-
-        with open(cache_file, "w") as f:
-            json.dump(cache_data, f, indent=4)
+        occ_tiles_str = (
+            np.array2string(cache_data.occ_tiles)
+            if cache_data.occ_tiles is not None
+            else ""
+        )
+        exists = os.path.isfile(CSV_STAGE_FILE)
+        with open(CSV_STAGE_FILE, "a", newline="") as csvfile:
+            writer = csv.DictWriter(
+                csvfile,
+                fieldnames=[
+                    "round_id",
+                    "index",
+                    "messageType",
+                    "messageText",
+                    "mapProb",
+                    "eig",
+                    "occTiles",
+                    "question_id",
+                ],
+            )
+            if not exists:
+                writer.writeheader()
+            stage_id = self.index_counter.increment_counter()
+            print(
+                self.round_id,
+                message_type,
+                cache_data.message_text,
+                cache_data.map_prob,
+                cache_data.eig,
+            )
+            writer.writerow(
+                {
+                    "round_id": self.round_id,
+                    "index": stage_id,
+                    "messageType": message_type,
+                    "messageText": option_to_str(cache_data.message_text),
+                    "mapProb": option_to_str(cache_data.map_prob),
+                    "eig": option_to_str(cache_data.eig),
+                    "occTiles": option_to_str(occ_tiles_str),
+                    "question_id": self.decision_counter.counter,
+                }
+            )
+            if cache_data.prompts is not None:
+                with open(CSV_PROMPTS_FILE, "a", newline="") as csvfile:
+                    writer = csv.DictWriter(
+                        csvfile,
+                        fieldnames=[
+                            "round_id",
+                            "stage_index",
+                            "prompt_index",
+                            "prompt",
+                            "full_completion",
+                            "extracted_completion",
+                            "eig",
+                            "map_prob",
+                            "occ_tiles",
+                        ],
+                    )
+                    if not exists:
+                        writer.writeheader()
+                    prompt_counter = Counter()
+                    for prompt in cache_data.prompts:
+                        writer.writerow(
+                            {
+                                "round_id": self.round_id,
+                                "stage_index": stage_id,
+                                "prompt_index": prompt_counter.increment_counter(),
+                                "prompt": prompt.prompt,
+                                "full_completion": prompt.full_completion,
+                                "extracted_completion": prompt.extracted_completion,
+                                "eig": prompt.eig,
+                                "map_prob": prompt.map_prob,
+                                "occ_tiles": prompt.occ_tiles,
+                            }
+                        )
 
 
 class EIGCalculator:
@@ -154,12 +212,7 @@ class EIGCalculator:
         self.rng = np.random.default_rng(seed)
         self.spotter = spotter
 
-    def calculate_eig(self, question, state, samples=100, move=False):
-        def safe_log2(x):
-            if x == 0:
-                return 0
-            return log2(x)
-
+    def calculate_eig(self, question, state, samples=100):
         code_question = self.spotter.translate(question, [], state.board)
         sampler = FastSampler(
             board=state,
@@ -183,14 +236,12 @@ class EIGCalculator:
                 results[result] += 1
         print("eig results calculated")
 
-        if results == {"Yes": samples, "No": 0} and move:
-            return 1000
-
-        eig = safe_log2(samples) - sum(
-            [p / samples * safe_log2(p) for p in results.values()]
-        )
-        # print("eig calculated as", eig, results)
-        return eig
+        if any(v == 0 for v in results.values()):
+            return 0
+        else:
+            return np.log2(samples) - sum(
+                [p / samples * np.log2(p) for p in results.values()]
+            )
 
 
 def config_move_regex(size):

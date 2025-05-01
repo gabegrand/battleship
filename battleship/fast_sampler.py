@@ -18,9 +18,6 @@ class Orientation(StrEnum):
     VERTICAL = "vertical"
 
 
-CONSTRAINT_SATISFACTION_STRING = "Yes"
-
-
 class Span:
     def __init__(self, id: int, topleft: tuple, bottomright: tuple):
         self.id = id
@@ -217,64 +214,72 @@ class FastSampler:
 
         return Board(new_board)
 
-    def compute_posterior(self, n_samples: int, normalize: bool = True, constraints=[]):
+    def compute_posterior(self, n_samples: int, normalize: bool = True):
         """Computes an approximate posterior distribution over ship locations."""
         # Initialize the count of each board
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
 
-        n_samples_valid = 0
-
-        if len(constraints) > 0:
-            start_time = time()
-            while n_samples_valid < n_samples:
-                if time() - start_time > 300:
-                    print(f"sampling timed out")
-                    break
-                if (time() - start_time > 30) and (n_samples_valid > 0):
-                    print(f"slow sampling: low samples returned")
-                    break
-                new_board = self.populate_board()
-                if new_board is not None:
-                    constraint_results = [
-                        constraint(new_board.to_symbolic_array())
-                        for constraint in constraints
-                    ]
-                    constraints_clean = [i for i in constraint_results if i is not None]
-                    constraint_sum = sum(
-                        [
-                            1
-                            for i in constraints_clean
-                            if i == CONSTRAINT_SATISFACTION_STRING
-                        ]
-                    )
-                    if constraint_sum < (
-                        len(constraints_clean)
-                        - (1 if (time() - start_time > 30) else 0)
-                    ):  # discuss w/ gabe!
-                        continue
-                    board_counts += (new_board.board > 0).astype(int)
-                    n_samples_valid += 1
-        else:
-            for _ in range(n_samples):
-                new_board = self.populate_board()
-                if new_board is not None:
-                    board_counts += (new_board.board > 0).astype(int)
-                    n_samples_valid += 1
-
-        if n_samples_valid == 0:
-            print(
-                f"Warning: Unable to compute posterior; returning uniform array. Last board: {new_board}, constraints: {constraint_results}, "
-            )
+        for _ in range(n_samples):
+            new_board = self.populate_board()
+            if new_board is not None:
+                board_counts += (new_board.board > 0).astype(int)
 
         if normalize:
-            if n_samples_valid == 0:
-                return (
-                    np.ones((self.board.size, self.board.size)) / self.board.size**2
-                )
-            else:
-                return board_counts / board_counts.sum()
+            return board_counts / board_counts.sum()
         else:
             return board_counts
+
+    def constrained_posterior(
+        self,
+        n_samples: int,
+        max_samples: int,
+        constraints: list = [],
+        normalize: bool = True,
+    ):
+        """Computes an approximate posterior distribution over ship locations with constraints."""
+        assert (
+            n_samples <= max_samples
+        ), "n_samples must be less than or equal to max_samples"
+
+        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
+        total_sampled = 0
+        constraint_satisfactions = []
+        active_constraints = constraints.copy()
+
+        while total_sampled < n_samples and total_sampled < max_samples:
+            # Generate candidate boards in batches
+            candidate_boards = []
+            for _ in range(2 * (n_samples - total_sampled)):
+                new_board = self.populate_board()
+                if new_board is not None:
+                    candidate_boards.append(new_board)
+
+            # Check constraints and update counts
+            for new_board in candidate_boards:
+                board_satisfactions = [
+                    constraint(self.board) == constraint(new_board)
+                    for constraint in active_constraints
+                ]
+                constraint_satisfactions.append(board_satisfactions)
+
+                if all(board_satisfactions):
+                    board_counts += (new_board.board > 0).astype(int)
+                    total_sampled += 1
+                    if total_sampled >= n_samples:
+                        break
+
+            # Check for poisoned constraints
+            if constraint_satisfactions:
+                constraint_results = list(zip(*constraint_satisfactions))
+                for i, results in enumerate(constraint_results):
+                    if not any(results):
+                        active_constraints.pop(i)
+                        if not active_constraints:
+                            break
+
+        if normalize and total_sampled > 0:
+            return board_counts / total_sampled
+        return board_counts
 
     def heatmap(self, n_samples: int, **fig_kwargs):
         """Computes a heatmap of the approximate posterior distribution over ship locations."""

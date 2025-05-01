@@ -27,8 +27,8 @@ class BattleshipGame:
     def __init__(
         self,
         board_target: Board,
-        captain: Type["CaptainAgent"],
-        spotter: Type["SpotterAgent"],
+        captain: Type["Captain"],
+        spotter: Type["Spotter"],
         board_start=None,
         max_questions: int = 15,
         max_moves: int = 40,

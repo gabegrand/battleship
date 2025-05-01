@@ -145,7 +145,7 @@ def benchmark_on_rounds(
     use_history=False,
     max_rounds=10,
     max_questions=10,
-    cache_mode=CacheMode.NO_CACHE,
+    use_cache=True,
     use_cot=False,
     use_captain_board=False,
 ):
@@ -183,7 +183,7 @@ def benchmark_on_rounds(
             spotter_model = model(
                 board_id=question_board,
                 board_experiment="collaborative",
-                cache_mode=cache_mode,
+                use_cache=use_cache,
                 model_string=model_string,
                 temperature=temperature,
                 use_cot=use_cot,
@@ -276,9 +276,8 @@ if __name__ == "__main__":
         help="Flag to include history in the benchmark.",
     )
     parser.add_argument(
-        "--cache_mode",
-        type=str,
-        default=CacheMode.NO_CACHE,
+        "--use_cache",
+        action="store_true",
         help="Flag to enable cache usage.",
     )
     parser.add_argument(
@@ -317,7 +316,7 @@ if __name__ == "__main__":
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
-        cache_mode=args.cache_mode,
+        use_cache=args.use_cache,
         use_captain_board=args.use_captain_board,
     )
 
