@@ -186,3 +186,6 @@ class BattleshipGame:
             self.state.board[self.target.board > Board.water]
             == self.target.board[self.target.board > Board.water]
         )
+
+    def score(self):
+        return self.target.score(self.state)
