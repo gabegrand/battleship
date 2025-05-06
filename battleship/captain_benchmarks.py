@@ -107,188 +107,169 @@ def get_human_results(gold_annotations_path, round_data_path):
     return pd.DataFrame(data)
 
 
-def create_captains(args):
+def create_captain(
+    captain_type,
+    seed,
+    model,
+    use_cache,
+    map_samples=None,
+    prob_q_prob=None,
+    eig_samples=None,
+    eig_k=None,
+):
     # Initialize spotter for EIG captains
     eig_spotter = CodeSpotterModel(
         board_id="B01",
         board_experiment="collaborative",
-        model_string=args.model,
+        model_string=model,
         temperature=None,
         use_cot=True,
     )
 
-    captains = {}
+    if captain_type == "RandomCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-    for captain_type in args.captains:
-        if captain_type == "RandomCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=AlwaysMoveDecisionStrategy(),
-                move_strategy=RandomMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0])
-                ),
-                question_strategy=None,
-                seed=args.seeds[0],
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "MAPCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=map_samples
+            ),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "MAPCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=AlwaysMoveDecisionStrategy(),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.map_samples
-                ),
-                question_strategy=None,
-                seed=args.seeds[0],
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "ProbabilisticCaptain":
+        return Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "ProbabilisticCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=ProbabilisticDecisionStrategy(
-                    q_prob=args.prob_q_prob
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "ProbabilisticCaptain_cot":
+        return Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=True),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "ProbabilisticCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=ProbabilisticDecisionStrategy(
-                    q_prob=args.prob_q_prob
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "LLMDecisionCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "LLMDecisionCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "LLMDecisionCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=True),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "LLMDecisionCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "EIGCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "EIGCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=False,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "EIGCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "EIGCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=True,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "MAPEIGCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "MAPEIGCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
-                ),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=False,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
+    elif captain_type == "MAPEIGCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
 
-        elif captain_type == "MAPEIGCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
-                ),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=True,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-    return captains
+    else:
+        raise ValueError(f"Unknown captain type: {captain_type}")
 
 
 def run_single_agent_game(args):
@@ -501,25 +482,33 @@ def main():
         # Initialize empty results file with consistent column names
         pd.DataFrame(columns=RESULTS_CSV_COLUMNS).to_csv(args.output_file, index=False)
 
-    # Create captains using the modular architecture
-    captains = create_captains(args)
-
     # Prepare a list of tasks (each tuple corresponds to one game run)
-    jobs = [
-        (
-            randint(0, 1000000),
-            deepcopy(cap_name),
-            deepcopy(captain),
-            seed,
-            board_id,
-            args.max_questions,
-            args.max_moves,
-            args.model,
-        )
-        for cap_name, captain in captains.items()
-        for seed in args.seeds
-        for board_id in args.board_ids
-    ]
+    jobs = []
+    for seed in args.seeds:
+        for board_id in args.board_ids:
+            for captain_type in args.captains:
+                captain = create_captain(
+                    captain_type=captain_type,
+                    seed=seed,
+                    model=args.model,
+                    use_cache=args.use_cache,
+                    map_samples=args.map_samples,
+                    prob_q_prob=args.prob_q_prob,
+                    eig_samples=args.eig_samples,
+                    eig_k=args.eig_k,
+                )
+                jobs.append(
+                    (
+                        hash(captain_type + str(seed) + board_id + str(args)),
+                        captain_type,
+                        captain,
+                        seed,
+                        board_id,
+                        args.max_questions,
+                        args.max_moves,
+                        args.model,
+                    )
+                )
 
     print(f"Running {len(jobs)} benchmark games...")
 
@@ -552,7 +541,14 @@ def main():
     print("\nSummary by Captain Type:")
     summary = (
         results_df.groupby("captainType")
-        .agg({"precision": "mean", "recall": "mean", "f1_score": "mean", "question_count": "mean"})
+        .agg(
+            {
+                "precision": "mean",
+                "recall": "mean",
+                "f1_score": "mean",
+                "question_count": "mean",
+            }
+        )
         .reset_index()
     )
     print(summary)
