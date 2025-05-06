@@ -19,6 +19,7 @@ optimum = "^1.14.0"
 matplotlib = "^3.8.1"
 lark = "^1.1.8"
 nltk = "^3.8.1"
+openai = "^1.77.0"
 
 [tool.poetry.group.repos.dependencies]
 # expected-information-gain = { path = "./EIG/", develop = true }

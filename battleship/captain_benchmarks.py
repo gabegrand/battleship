@@ -152,11 +152,11 @@ def get_human_results(gold_annotations_path, round_data_path):
             "messageText",
             "messageType",
             "occTiles",
-            "goldAnswer",
+            "gold_answer",
         ]
     ]
     df = filtered_stage_df.merge(
-        board_ids, left_on="roundID", right_on="id", how="inner"
+        board_ids, left_on="roundID", right_on="id", how="left"
     )
 
     question_counts_df = (
@@ -166,7 +166,7 @@ def get_human_results(gold_annotations_path, round_data_path):
         .reset_index(name="question_number")
     )
 
-    df = df.merge(question_counts_df, on="roundID", how="inner")
+    df = df.merge(question_counts_df, on="roundID", how="left")
     result = df.loc[df.groupby("roundID")["index"].idxmax()][
         ["roundID", "occTiles", "board_id", "question_number"]
     ]
@@ -186,6 +186,7 @@ def get_human_results(gold_annotations_path, round_data_path):
 
         data.append(
             {
+                "roundId": roundID,
                 "captainType": "human",
                 "boardId": board_id,
                 "hits": hits,
@@ -492,6 +493,7 @@ def main():
         # Initialize empty results file
         pd.DataFrame(
             columns=[
+                "roundID",
                 "captainType",
                 "boardId",
                 "hits",
