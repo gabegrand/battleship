@@ -16,11 +16,50 @@ from battleship.fast_sampler import FastSampler
 CACHE_DIR = Path(f"./cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
+# Consistent CSV file paths
 CSV_STAGE_FILE = CACHE_DIR / f"stage.csv"
 CSV_ROUND_FILE = CACHE_DIR / f"round.csv"
 CSV_PROMPTS_FILE = CACHE_DIR / f"prompts.csv"
 SUMMARY_FILE = CACHE_DIR / f"summary.csv"
 
+# Define consistent CSV column names
+STAGE_CSV_COLUMNS = [
+    "round_id",
+    "index",
+    "messageType",
+    "messageText",
+    "mapProb",
+    "eig",
+    "occTiles",
+    "question_id",
+]
+
+ROUND_CSV_COLUMNS = ["id", "boardId", "seed", "captainModel", "spotterModel"]
+
+PROMPTS_CSV_COLUMNS = [
+    "round_id",
+    "stage_index",
+    "prompt_index",
+    "prompt",
+    "full_completion",
+    "extracted_completion",
+    "eig",
+    "map_prob",
+    "occ_tiles",
+]
+
+SUMMARY_CSV_COLUMNS = [
+    "roundId",
+    "captainType",
+    "boardId",
+    "hits",
+    "misses",
+    "is_won",
+    "questionsAsked",
+    "precision",
+    "recall",
+    "f1_score",
+]
 
 MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
 DECISION_PATTERN = re.compile("^(Question|Move)$")
@@ -143,22 +182,9 @@ class Agent(ABC):
             if cache_data.occ_tiles is not None
             else ""
         )
-        exists = os.path.isfile(self.csv_stage_file)
-        with open(self.csv_stage_file, "a", newline="") as csvfile:
-            writer = csv.DictWriter(
-                csvfile,
-                fieldnames=[
-                    "round_id",
-                    "index",
-                    "messageType",
-                    "messageText",
-                    "mapProb",
-                    "eig",
-                    "occTiles",
-                    "question_id",
-                    "modelBackend",  # Add the model backend
-                ],
-            )
+        exists = os.path.isfile(CSV_STAGE_FILE)
+        with open(CSV_STAGE_FILE, "a", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=STAGE_CSV_COLUMNS)
             if not exists:
                 writer.writeheader()
             stage_id = self.index_counter.increment_counter()
@@ -176,22 +202,8 @@ class Agent(ABC):
                 }
             )
             if cache_data.prompts is not None:
-                with open(self.csv_prompts_file, "a", newline="") as csvfile:
-                    writer = csv.DictWriter(
-                        csvfile,
-                        fieldnames=[
-                            "round_id",
-                            "stage_index",
-                            "prompt_index",
-                            "prompt",
-                            "full_completion",
-                            "extracted_completion",
-                            "eig",
-                            "map_prob",
-                            "occ_tiles",
-                            "modelBackend",  # Add the model backend
-                        ],
-                    )
+                with open(CSV_PROMPTS_FILE, "a", newline="") as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=PROMPTS_CSV_COLUMNS)
                     if not exists:
                         writer.writeheader()
                     prompt_counter = Counter()

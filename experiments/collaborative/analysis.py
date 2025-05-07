@@ -14,7 +14,9 @@ def load_dataset(
 ) -> pd.DataFrame:
     PATH_PLAYER = os.path.join(experiment_path, "player.csv")
     PATH_ROUND = os.path.join(experiment_path, "round.csv")
-    PATH_STAGE = os.path.join(experiment_path, "gold.csv" if use_gold else "stage.csv")
+    PATH_STAGE = os.path.join(
+        experiment_path, "gold-v2/gold-v2.csv" if use_gold else "stage.csv"
+    )
 
     df_stage = pd.read_csv(PATH_STAGE)
     df_round = pd.read_csv(PATH_ROUND)
@@ -71,20 +73,19 @@ def load_dataset(
     # Sort by pairID and roundID
     df = df.sort_values(by=["pairID", "roundID"])
 
-    def compute_hits(board_array: np.ndarray):
-        board = np.array(board_array)
-        return np.sum(board > 0)
+    # Use Board.score to calculate metrics for each row
+    def calculate_metrics(row):
+        true_board = Board(np.array(row["trueTiles"]))
+        partial_board = Board(np.array(row["occTiles"]))
 
-    def compute_misses(board_array: np.ndarray):
-        board = np.array(board_array)
-        return np.sum(board == 0)
+        # Calculate scores using the Board class
+        scores = true_board.score(partial_board)
 
-    df["hits"] = df["occTiles"].apply(compute_hits)
-    df["misses"] = df["occTiles"].apply(compute_misses)
-    df["totalShipTiles"] = df["trueTiles"].apply(compute_hits)
-    df["hits_pct"] = df["hits"] / df["totalShipTiles"]
+        # Return scores with exact keys from Board.score
+        return pd.Series(scores)
 
-    df["precision"] = df["hits"] / (df["hits"] + df["misses"])
-    df["recall"] = df["hits_pct"]
+    # Apply the calculation to each row and merge the results
+    scores_df = df.apply(calculate_metrics, axis=1)
+    df = pd.concat([df, scores_df], axis=1)
 
     return df

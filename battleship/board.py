@@ -125,11 +125,17 @@ class Board(object):
         """Convert a Board object into a JSON serializable string."""
         return str(self.to_symbolic_array().tolist())
 
+    @staticmethod
     def from_serialized(serialized_board):
         """Converts a JSON serializable string back into a Board object"""
         s = eval(serialized_board)
         symb = np.array(s)
         return Board.from_symbolic_array(symb)
+
+    @staticmethod
+    def from_occ_tiles(occ_tiles: str):
+        A = np.array(eval(occ_tiles))
+        return Board(A)
 
     def to_textual_description(self, include_hidden: bool = False):
         """Convert a Board object into its serialized representation"""
@@ -189,6 +195,57 @@ class Board(object):
         for c, v in BOARD_SYMBOL_MAPPING.items():
             board = np.char.replace(board, str(v), c)
         return board
+
+    def score(self, partial_board: "Board"):
+        """Computes hits, misses, precision, recall, and F1 score."""
+        if not isinstance(partial_board, Board):
+            raise ValueError("partial_board must be a Board object")
+
+        assert self.size == partial_board.size
+
+        # Compute hits and misses
+        partial_board_ship_tiles = partial_board.board > Board.water
+        # Everywhere that is a ship in the partial board must be the same ship in the full board
+        assert np.array_equal(
+            partial_board.board[partial_board_ship_tiles],
+            self.board[partial_board_ship_tiles],
+        ), "Ship identities do not match"
+
+        partial_board_water_tiles = partial_board.board == Board.water
+        # Everywhere that is water in the partial board must be water in the full board
+        assert np.array_equal(
+            partial_board.board[partial_board_water_tiles],
+            self.board[partial_board_water_tiles],
+        ), "Water identities do not match"
+
+        partial_board_hidden_tiles = partial_board.board == Board.hidden
+        total_ship_tiles = np.sum(self.board > Board.water)
+
+        hits = np.sum(partial_board_ship_tiles)
+        misses = np.sum(partial_board_water_tiles)
+        hidden = np.sum(partial_board_hidden_tiles)
+
+        # Compute precision and recall
+        precision = hits / (hits + misses) if (hits + misses) > 0 else 0
+        recall = hits / total_ship_tiles if total_ship_tiles > 0 else 0
+
+        # Compute F1 score
+        f1_score = (
+            2 * precision * recall / (precision + recall)
+            if (precision + recall) > 0
+            else 0
+        )
+
+        return {
+            "hits": hits,
+            "misses": misses,
+            "hidden": hidden,
+            "total_ship_tiles": total_ship_tiles,
+            "is_won": hits == total_ship_tiles,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score,
+        }
 
     def to_figure(self, inches: int = 6, dpi: int = 128):
         return Board._to_figure(board_array=self.board, inches=inches, dpi=dpi)

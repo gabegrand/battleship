@@ -26,7 +26,338 @@ from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
 
-PREFIXES = ["prompts", "stage", "round", "summary"]
+# Define consistent CSV column names
+ROUND_CSV_COLUMNS = ["id", "boardId", "seed", "captainModel", "spotterModel"]
+RESULTS_CSV_COLUMNS = [
+    "roundId",
+    "captainType",
+    "boardId",
+    "hits",
+    "misses",
+    "is_won",
+    "question_count",
+    "precision",
+    "recall",
+    "f1_score",
+]
+
+
+def get_human_results(gold_annotations_path, round_data_path):
+    stage_df = pd.read_csv(gold_annotations_path)
+    round_df = pd.read_csv(round_data_path)
+
+    board_ids = round_df[["id", "board_id"]]
+    filtered_stage_df = stage_df[
+        [
+            "roundID",
+            "index",
+            "questionID",
+            "messageText",
+            "messageType",
+            "occTiles",
+            "gold_answer",
+        ]
+    ]
+    df = filtered_stage_df.merge(
+        board_ids, left_on="roundID", right_on="id", how="left"
+    )
+
+    question_counts_df = (
+        df[df["messageType"] == "question"]
+        .groupby("roundID")
+        .size()
+        .reset_index(name="question_number")
+    )
+
+    df = df.merge(question_counts_df, on="roundID", how="left")
+    result = df.loc[df.groupby("roundID")["index"].idxmax()][
+        ["roundID", "occTiles", "board_id", "question_number"]
+    ]
+    # GG: Why is this needed?
+    result = result[
+        result["occTiles"] != str(np.full((8, 8), -1).tolist()).replace(" ", "")
+    ]
+
+    data = []
+    for roundID, occTiles, board_id in zip(
+        result["roundID"], result["occTiles"], result["board_id"]
+    ):
+        board_true = Board.from_trial_id(board_id)
+        board_partial = Board.from_occ_tiles(occTiles)
+        scores = board_true.score(board_partial)
+
+        data.append(
+            {
+                "roundId": roundID,
+                "captainType": "human",
+                "boardId": board_id,
+                "hits": scores["hits"],
+                "misses": scores["misses"],
+                "precision": scores["precision"],
+                "recall": scores["recall"],
+                "f1_score": scores["f1_score"],
+                "is_won": scores["is_won"],
+                "question_count": result[result["roundID"] == roundID][
+                    "question_number"
+                ].values[0],
+            }
+        )
+
+    return pd.DataFrame(data)
+
+
+def create_captain(
+    captain_type,
+    seed,
+    model,
+    use_cache,
+    map_samples=None,
+    prob_q_prob=None,
+    eig_samples=None,
+    eig_k=None,
+):
+    # Initialize spotter for EIG captains
+    eig_spotter = CodeSpotterModel(
+        board_id="B01",
+        board_experiment="collaborative",
+        model_string=model,
+        temperature=None,
+        use_cot=True,
+    )
+
+    if captain_type == "RandomCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "MAPCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=map_samples
+            ),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "ProbabilisticCaptain":
+        return Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "ProbabilisticCaptain_cot":
+        return Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=True),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "LLMDecisionCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "LLMDecisionCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=True),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "EIGCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "EIGCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "MAPEIGCaptain":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "MAPEIGCaptain_cot":
+        return Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    else:
+        raise ValueError(f"Unknown captain type: {captain_type}")
+
+
+def run_single_agent_game(args):
+    round_id, cap_name, captain, seed, board_id, max_questions, max_moves, model = args
+
+    # Update spotter board ID for EIG captains
+    if hasattr(captain, "question_strategy") and hasattr(
+        captain.question_strategy, "spotter"
+    ):
+        captain.question_strategy.spotter.board_id = board_id
+
+    # Set the captain's seed
+    captain.seed = seed
+
+    print(f"{cap_name} started with {board_id} & seed {seed}")
+    board = Board.from_trial_id(board_id)
+
+    decision_counter = Counter()
+    index_counter = Counter()
+
+    captain.index_counter = index_counter
+    captain.decision_counter = decision_counter
+
+    spotter = CodeSpotterModel(
+        board_id,
+        "collaborative",
+        use_cache=True,
+        model_string=model,
+        temperature=None,
+        use_cot=True,
+        decision_counter=decision_counter,
+        index_counter=index_counter,
+        round_id=round_id,
+    )
+
+    # Write round information using consistent column names
+    file_exists = os.path.isfile(CSV_ROUND_FILE)
+    with open(CSV_ROUND_FILE, "a", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=ROUND_CSV_COLUMNS)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "id": round_id,
+                "boardId": board_id,
+                "seed": seed,
+                "captainModel": cap_name,
+                "spotterModel": spotter.__class__.__name__,
+            }
+        )
+
+    captain.round_id = round_id
+
+    game = BattleshipGame(
+        board_target=board,
+        max_questions=max_questions,
+        max_moves=max_moves,
+        captain=captain,
+        spotter=spotter,
+    )
+    game.play()
+    print(f"{cap_name} finished with {board_id} & seed {seed}")
+
+    scores = game.score()
+
+    # Ensure consistent column names in the result data
+    result = {
+        "roundId": round_id,
+        "captainType": cap_name,
+        "boardId": board_id,
+        "hits": game.hits,
+        "misses": game.misses,
+        "is_won": game.is_won(),
+        "question_count": game.question_count,
+        "precision": scores["precision"],
+        "recall": scores["recall"],
+        "f1_score": scores["f1_score"],
+    }
+
+    # Write summary information with consistent column order
+    summary_df = pd.DataFrame.from_dict([result])
+    summary_df.to_csv(
+        SUMMARY_FILE,
+        mode="a",
+        header=not os.path.exists(SUMMARY_FILE),
+        index=False,
+    )
+
+    return result
 
 
 def parse_arguments():
@@ -85,7 +416,11 @@ def parse_arguments():
 
     # Experiment settings
     parser.add_argument(
-        "--seeds", nargs="+", type=int, default=[1, 2], help="Random seeds to use"
+        "--seeds",
+        nargs="+",
+        type=int,
+        default=[111, 222, 333],
+        help="Random seeds to use",
     )
     parser.add_argument(
         "--board-ids",
@@ -130,396 +465,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-args = parse_arguments()
-
-
-def game_completed(hits, misses, occTiles, board_id):
-    def mask(board_array):
-        return (board_array != -1) & (board_array != 0)
-
-    if hits + misses > 40:
-        return False
-    else:
-        return np.all(
-            mask(occTiles)
-            == mask(
-                Board.convert_to_numeric(
-                    Board.from_trial_id(board_id).to_symbolic_array()
-                )
-            )
-        )
-
-
-def get_human_results(gold_annotations_path, round_data_path):
-    stage_df = pd.read_csv(gold_annotations_path)
-    round_df = pd.read_csv(round_data_path)
-
-    board_ids = round_df[["id", "board_id"]]
-    filtered_stage_df = stage_df[
-        [
-            "roundID",
-            "index",
-            "questionID",
-            "messageText",
-            "messageType",
-            "occTiles",
-            "goldAnswer",
-        ]
-    ]
-    df = filtered_stage_df.merge(
-        board_ids, left_on="roundID", right_on="id", how="inner"
-    )
-
-    question_counts_df = (
-        df[df["messageType"] == "question"]
-        .groupby("roundID")
-        .size()
-        .reset_index(name="question_number")
-    )
-
-    df = df.merge(question_counts_df, on="roundID", how="inner")
-    result = df.loc[df.groupby("roundID")["index"].idxmax()][
-        ["roundID", "occTiles", "board_id", "question_number"]
-    ]
-    result = result[
-        result["occTiles"] != str(np.full((8, 8), -1).tolist()).replace(" ", "")
-    ]
-
-    data = []
-    for roundID, occTiles, board_id in zip(
-        result["roundID"], result["occTiles"], result["board_id"]
-    ):
-        occTiles = np.array(eval(occTiles))
-        misses = np.sum(occTiles == 0)
-        hits = np.sum((occTiles != -1) & (occTiles != 0))
-
-        precision = hits / (hits + misses) if (hits + misses) > 0 else 0
-
-        data.append(
-            {
-                "captainType": "human",
-                "boardId": board_id,
-                "hits": hits,
-                "misses": misses,
-                "gameCompleted": game_completed(hits, misses, occTiles, board_id),
-                "questionsAsked": result[result["roundID"] == roundID][
-                    "question_number"
-                ].values[0],
-                "precision": precision,
-            }
-        )
-
-    return pd.DataFrame(data)
-
-
-def create_captains(args):
-    # Initialize spotter for EIG captains
-    eig_spotter = CodeSpotterModel(
-        board_id="B01",
-        board_experiment="collaborative",
-        model_string=args.model,
-        temperature=None,
-        use_cot=True,
-    )
-
-    captains = {}
-
-    for captain_type in args.captains:
-        if captain_type == "RandomCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=AlwaysMoveDecisionStrategy(),
-                move_strategy=RandomMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0])
-                ),
-                question_strategy=None,
-                seed=args.seeds[0],
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "MAPCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=AlwaysMoveDecisionStrategy(),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.map_samples
-                ),
-                question_strategy=None,
-                seed=args.seeds[0],
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "ProbabilisticCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=ProbabilisticDecisionStrategy(
-                    q_prob=args.prob_q_prob
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "ProbabilisticCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=ProbabilisticDecisionStrategy(
-                    q_prob=args.prob_q_prob
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "LLMDecisionCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "LLMDecisionCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=LLMQuestionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "EIGCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=False),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=False,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "EIGCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=LLMMoveStrategy(model_string=args.model, use_cot=True),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=True,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "MAPEIGCaptain":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=False
-                ),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
-                ),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=False,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-        elif captain_type == "MAPEIGCaptain_cot":
-            captains[captain_type] = Captain(
-                decision_strategy=LLMDecisionStrategy(
-                    model_string=args.model, use_cot=True
-                ),
-                move_strategy=MAPMoveStrategy(
-                    rng=np.random.default_rng(args.seeds[0]), n_samples=args.eig_samples
-                ),
-                question_strategy=EIGQuestionStrategy(
-                    model_string=args.model,
-                    spotter=eig_spotter,
-                    rng=np.random.default_rng(args.seeds[0]),
-                    samples=args.eig_samples,
-                    k=args.eig_k,
-                    use_cot=True,
-                ),
-                seed=args.seeds[0],
-                model_string=args.model,
-                use_cache=args.use_cache,
-                round_id=None,
-            )
-
-    return captains
-
-
-def run_single_agent_game(fun_args):
-    (
-        round_id,
-        cap_name,
-        captain,
-        seed,
-        board_id,
-        max_questions,
-        max_moves,
-        model,
-    ) = fun_args
-
-    # Create job-specific file paths
-    job_id = f"{round_id}_{board_id}_{seed}"
-    job_csv_stage_file = f"{args.output_prefix}_stage_{job_id}.csv"
-    job_csv_round_file = f"{args.output_prefix}_round_{job_id}.csv"
-    job_csv_prompts_file = f"{args.output_prefix}_prompts_{job_id}.csv"
-    job_summary_file = f"{args.output_prefix}_summary_{job_id}.csv"
-
-    # Update spotter board ID for EIG captains
-    if hasattr(captain, "question_strategy") and hasattr(
-        captain.question_strategy, "spotter"
-    ):
-        captain.question_strategy.spotter.board_id = board_id
-
-    # Set the captain's seed
-    captain.seed = seed
-
-    print(f"{cap_name} started with {board_id} & seed {seed}")
-    board = Board.from_trial_id(board_id)
-
-    decision_counter = Counter()
-    index_counter = Counter()
-
-    captain.index_counter = index_counter
-    captain.decision_counter = decision_counter
-
-    # Pass the job-specific CSV files to the agent
-    captain.csv_stage_file = job_csv_stage_file
-    captain.csv_round_file = job_csv_round_file
-    captain.csv_prompts_file = job_csv_prompts_file
-    captain.summary_file = job_summary_file
-
-    spotter = CodeSpotterModel(
-        board_id,
-        "collaborative",
-        use_cache=True,
-        model_string=model,
-        temperature=None,
-        use_cot=True,
-        decision_counter=decision_counter,
-        index_counter=index_counter,
-        round_id=round_id,
-    )
-
-    # Update spotter with job-specific CSV files too
-    spotter.csv_stage_file = job_csv_stage_file
-    spotter.csv_round_file = job_csv_round_file
-    spotter.csv_prompts_file = job_csv_prompts_file
-    spotter.summary_file = job_summary_file
-
-    file_exists = os.path.isfile(job_csv_round_file)
-    with open(job_csv_round_file, "a", newline="") as csvfile:
-        writer = csv.DictWriter(
-            csvfile,
-            fieldnames=[
-                "id",
-                "boardId",
-                "seed",
-                "captainModel",
-                "spotterModel",
-                "modelBackend",
-            ],
-        )
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(
-            {
-                "id": round_id,
-                "boardId": board_id,
-                "seed": seed,
-                "captainModel": cap_name,
-                "spotterModel": spotter.__class__.__name__,
-                "modelBackend": model,
-            }
-        )
-
-    captain.round_id = round_id
-
-    game = BattleshipGame(
-        board_target=board,
-        max_questions=max_questions,
-        max_moves=max_moves,
-        captain=captain,
-        spotter=spotter,
-    )
-    game.play()
-    print(f"{cap_name} finished with {board_id} & seed {seed}")
-
-    result = {
-        "roundId": round_id,
-        "captainType": cap_name,
-        "boardId": board_id,
-        "hits": game.hits,
-        "misses": game.misses,
-        "gameCompleted": game.is_won(),
-        "questionsAsked": game.question_count,
-        "precision": game.hits / (game.hits + game.misses)
-        if (game.hits + game.misses) > 0
-        else 0,
-        "modelBackend": model,  # Add model backend to the results
-    }
-
-    # Write to job-specific summary file
-    pd.DataFrame.from_dict([result]).to_csv(
-        job_summary_file,
-        mode="a",
-        header=not os.path.exists(job_summary_file),
-        index=False,
-    )
-
-    return result
-
-
 def main():
     # Setup board IDs if not specified
     if args.board_ids is None:
@@ -533,41 +478,41 @@ def main():
     human_results_df = None
     if args.include_human:
         human_results_df = get_human_results(args.gold_annotations, args.round_data)
+        # Ensure column names match our defined schema
+        human_results_df = human_results_df[RESULTS_CSV_COLUMNS]
         human_results_df.to_csv(args.output_file, index=False)
         print(f"Wrote human results to {args.output_file}")
     else:
-        # Initialize empty results file
-        pd.DataFrame(
-            columns=[
-                "captainType",
-                "boardId",
-                "hits",
-                "misses",
-                "gameCompleted",
-                "questionsAsked",
-                "precision",
-            ]
-        ).to_csv(args.output_file + "summary.csv", index=False)
-
-    # Create captains using the modular architecture
-    captains = create_captains(args)
+        # Initialize empty results file with consistent column names
+        pd.DataFrame(columns=RESULTS_CSV_COLUMNS).to_csv(args.output_file, index=False)
 
     # Prepare a list of tasks (each tuple corresponds to one game run)
-    jobs = [
-        (
-            randint(0, 1000000),
-            deepcopy(cap_name),
-            deepcopy(captain),
-            seed,
-            board_id,
-            args.max_questions,
-            args.max_moves,
-            args.model,
-        )
-        for cap_name, captain in captains.items()
-        for seed in args.seeds
-        for board_id in args.board_ids
-    ]
+    jobs = []
+    for seed in args.seeds:
+        for board_id in args.board_ids:
+            for captain_type in args.captains:
+                captain = create_captain(
+                    captain_type=captain_type,
+                    seed=seed,
+                    model=args.model,
+                    use_cache=args.use_cache,
+                    map_samples=args.map_samples,
+                    prob_q_prob=args.prob_q_prob,
+                    eig_samples=args.eig_samples,
+                    eig_k=args.eig_k,
+                )
+                jobs.append(
+                    (
+                        hash(captain_type + str(seed) + board_id + str(args)),
+                        captain_type,
+                        captain,
+                        seed,
+                        board_id,
+                        args.max_questions,
+                        args.max_moves,
+                        args.model,
+                    )
+                )
 
     print(f"Running {len(jobs)} benchmark games...")
 
@@ -581,12 +526,17 @@ def main():
     # Write all results to CSV
     results_df = pd.DataFrame(results)
 
+    # Ensure all columns match our defined schema
+    for col in RESULTS_CSV_COLUMNS:
+        if col not in results_df.columns:
+            results_df[col] = None
+    results_df = results_df[RESULTS_CSV_COLUMNS]
+
     # Append to existing file
     if human_results_df is not None:
         results_df.to_csv(args.output_file, mode="a", header=False, index=False)
     else:
-        # Write without human results
-        results_df.to_csv(args.output_file + "summary.csv", index=False)
+        results_df.to_csv(args.output_file, index=False)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
 
@@ -614,7 +564,14 @@ def main():
     print("\nSummary by Captain Type:")
     summary = (
         results_df.groupby("captainType")
-        .agg({"precision": "mean", "gameCompleted": "mean", "questionsAsked": "mean"})
+        .agg(
+            {
+                "precision": "mean",
+                "recall": "mean",
+                "f1_score": "mean",
+                "question_count": "mean",
+            }
+        )
         .reset_index()
     )
     print(summary)
