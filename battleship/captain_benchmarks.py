@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import csv
-import glob
 import os
 import sys
 from copy import deepcopy
@@ -13,6 +12,8 @@ import numpy as np
 import pandas as pd
 
 from battleship.agents import Counter
+from battleship.agents import CSV_ROUND_FILE
+from battleship.agents import SUMMARY_FILE
 from battleship.board import Board
 from battleship.captains import AlwaysMoveDecisionStrategy
 from battleship.captains import Captain
@@ -365,13 +366,6 @@ def parse_arguments():
 
     # Data paths
     parser.add_argument(
-        "--output-prefix",
-        type=str,
-        default="/home/ubuntu/repo_battleship/temp/job_results",
-        help="Prefix for job-specific output files",
-    )
-
-    parser.add_argument(
         "--gold-annotations",
         type=str,
         default="/home/ubuntu/repo_battleship/temp/gold_annotations_partial.csv",
@@ -386,7 +380,7 @@ def parse_arguments():
     parser.add_argument(
         "--output-file",
         type=str,
-        default="/home/ubuntu/repo_battleship/battleship/battleship/cache/",
+        default="/home/ubuntu/repo_battleship/temp/total_results.csv",
         help="Path to output results CSV",
     )
 
@@ -466,6 +460,8 @@ def parse_arguments():
 
 
 def main():
+    args = parse_arguments()
+
     # Setup board IDs if not specified
     if args.board_ids is None:
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
@@ -539,26 +535,7 @@ def main():
         results_df.to_csv(args.output_file, index=False)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-
-    for prefix in PREFIXES:
-        # Aggregate all job-specific files into final results
-        job_result_files = glob.glob(f"{args.output_prefix}_{prefix}_*.csv")
-        print(f"Found {len(job_result_files)} {prefix} result files to aggregate")
-
-        all_results = []
-        for file_path in job_result_files:
-            try:
-                df = pd.read_csv(file_path)
-                all_results.append(df)
-            except Exception as e:
-                print(f"Error reading {file_path}: {e}")
-
-        if all_results:
-            combined_results = pd.concat(all_results, ignore_index=True)
-            combined_results.to_csv(args.output_file + prefix + ".csv", index=False)
-            print(f"Aggregated results saved to {args.output_file}")
-        else:
-            print("No results to aggregate")
+    print(f"Results saved to {args.output_file}")
 
     # Print summary statistics
     print("\nSummary by Captain Type:")
