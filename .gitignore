@@ -26,6 +26,7 @@ notebooks/cache/
 .installed.cfg
 *.egg
 MANIFEST
+notebooks/benchmark_results
 experiments/collaborative/battleship-final-data
 experiments/collaborative/reports_battleship-final-data
 experiments/collaborative/reports_battleship-final-data-old

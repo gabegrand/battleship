@@ -12,6 +12,7 @@ from battleship.agents import CacheData
 from battleship.agents import client
 from battleship.agents import CODE_ANSWER_PATTERN
 from battleship.agents import CodeQuestion
+from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
@@ -29,10 +30,12 @@ class Spotter(Agent):
         decision_counter=None,
         index_counter=None,
         round_id=None,
+        spotter_benchmark=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
+        self.spotter_benchmark = spotter_benchmark
 
         # Use proper Agent initialization to handle model string and cache path
         super().__init__(
@@ -44,7 +47,6 @@ class Spotter(Agent):
             index_counter=index_counter,
             round_id=round_id,
         )
-        self.round_id
 
     @abstractmethod
     def _get_model_answer(
@@ -58,13 +60,16 @@ class Spotter(Agent):
         self.index_counter.increment_counter()
         result, answer_cache = self._get_model_answer(question, history, occ_tiles)
 
-        if self.use_cache:
-            self.write_cache(
-                message_type="ANSWER",
-                cache_data=answer_cache,
-            )
+        if self.spotter_benchmark is None:
+            if self.use_cache:
+                self.write_cache(
+                    message_type="ANSWER",
+                    cache_data=answer_cache,
+                )
 
-        return result
+            return result
+        else:
+            return result, answer_cache
 
 
 # ---------------------
@@ -96,12 +101,6 @@ class DirectSpotterModel(Spotter):
 
         if not self.use_cot:
             response = completion.choices[0].message.content
-            self.write_cache(
-                question.get_cache_key(self.board_id),
-                prompt=prompt.to_chat_format(),
-                code=None,
-                result=response,
-            )
         else:
             response = None
             while response is None:
@@ -120,8 +119,17 @@ class DirectSpotterModel(Spotter):
                 else:
                     response = None
 
+        prompt = Prompt(
+            prompt=prompt.to_chat_format(),
+            full_completion=completion.choices[0].message.content,
+            extracted_completion=response,
+            occ_tiles=occ_tiles,
+        )
+
         answer = Answer(text=response)
-        return answer, CacheData(message_text=response, occ_tiles=occ_tiles)
+        return answer, CacheData(
+            message_text=response, occ_tiles=occ_tiles, prompts=[prompt]
+        )
 
 
 class CodeSpotterModel(Spotter):
@@ -155,13 +163,14 @@ class CodeSpotterModel(Spotter):
                     messages=translation_prompt.to_chat_format(),
                     temperature=self.temperature,
                 )
-                response_match = CODE_ANSWER_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-                if response_match:
-                    code_generated = response_match.group(1)
-                else:
-                    code_generated = None
+                if completion.choices:
+                    response_match = CODE_ANSWER_PATTERN.search(
+                        completion.choices[0].message.content
+                    )
+                    if response_match:
+                        code_generated = response_match.group(1)
+                    else:
+                        code_generated = None
 
         local_vars = {}
         tb = None
@@ -169,19 +178,33 @@ class CodeSpotterModel(Spotter):
         if "python\n" in code_generated:
             code_generated = code_generated.split("python\n")[1]
 
+        def blocked_input(*args):
+            raise RuntimeError("input() function is not allowed in generated code")
+
         try:
-            _ = exec(code_generated, {"np": np}, local_vars)
+            _ = exec(code_generated, {"np": np, "input": blocked_input}, local_vars)
         except Exception as e:
             tb = "".join(traceback.format_tb(e.__traceback__))
             local_vars["answer"] = None
 
-        return CodeQuestion(
-            question=question,
-            fn=local_vars["answer"],
-            fn_string=code_generated,
-            translation_prompt=translation_prompt,
-            traceback=tb,
-        )
+        try:
+            return CodeQuestion(
+                question=question,
+                fn=local_vars["answer"],
+                fn_string=code_generated,
+                translation_prompt=translation_prompt,
+                full_completion=completion.choices[0].message.content,
+                traceback=tb,
+            )
+        except:
+            return CodeQuestion(
+                question=question,
+                fn=None,
+                fn_string=code_generated,
+                translation_prompt=translation_prompt,
+                full_completion=completion.choices[0].message.content,
+                traceback=tb,
+            )
 
     def _get_model_answer(
         self, question: Question, history: List[dict], occ_tiles=None
@@ -194,6 +217,13 @@ class CodeSpotterModel(Spotter):
 
         result = code_question(board)
 
+        prompt = Prompt(
+            prompt=code_question.translation_prompt.to_chat_format(),
+            full_completion=code_question.full_completion,
+            extracted_completion=result,
+            occ_tiles=occ_tiles,
+        )
+
         return Answer(text=result, code_question=code_question), CacheData(
-            message_text=result, occ_tiles=occ_tiles
+            message_text=result, occ_tiles=occ_tiles, prompts=[prompt]
         )

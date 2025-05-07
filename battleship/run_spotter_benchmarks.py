@@ -1,27 +1,27 @@
-"""
-python run_spotter_benchmarks.py \
-  --stages /home/ubuntu/repo_battleship/temp/gold_annotations_partial.csv \
-  --rounds /home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv \
-  --model CodeSpotterModel \
-  --max_rounds 10 \
-  --max_questions 15 \
-  --gold_annotations answer ambiguous contextual unanswerable
-"""
 import argparse
+import csv
+import multiprocessing.dummy as mp
+import os
+from functools import partial
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from battleship.agents import CacheMode
-from battleship.agents import CodeSpotterModel
-from battleship.agents import DirectSpotterModel
+from battleship.agents import Counter
+from battleship.agents import EIGCalculator
 from battleship.agents import Question
+from battleship.board import Board
+from battleship.spotters import CodeSpotterModel
+from battleship.spotters import DirectSpotterModel
 
 # LOAD DATA
 
+ALL_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"]
+
 
 def load_data(
-    stages_path="/home/ubuntu/repo_battleship/temp/gold_annotations_partial.csv",
+    stages_path="/home/ubuntu/repo_battleship/gold-v2.csv",
     rounds_path="/home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv",
     goldAnnotations=[],
 ):
@@ -38,31 +38,45 @@ def load_data(
             "messageText",
             "messageType",
             "occTiles",
-            "goldAnswer",
+            "gold_answer",
+            "gold_discourse",
+            "gold_stateful",
+            "gold_vague",
+            "gold_ambiguous",
+            "gold_unanswerable",
         ]
     ]
     df = filtered_stage_df.merge(
         board_ids, left_on="roundID", right_on="id", how="inner"
     )
 
+    print(len(stage_df))
+
     for annotation in goldAnnotations:
         if annotation == "answer":
-            stage_df = stage_df[(stage_df["goldAnswer"].isin(["yes", "no"]))]
-        if annotation in ["ambiguous", "contextual", "unanswerable"]:
-            stage_df = stage_df[stage_df[f"gold{annotation.capitalize()}"] == False]
+            stage_df = stage_df[(stage_df["gold_answer"].notna())]
+        if annotation in ALL_ANNOTATIONS:
+            stage_df = stage_df[stage_df[f"gold_{annotation}"] == False]
+
+    print(len(stage_df))
 
     rounds_questions_list = list(zip(stage_df["roundID"], stage_df["questionID"]))
     rounds_questions_list = [
         i for i in rounds_questions_list if i[0] in round_df["id"].tolist()
     ]
-    rounds_questions_dict = {key: [] for key, value in rounds_questions_list}
+    rounds_questions_dict = {key: [] for key, _ in rounds_questions_list}
     for key, value in rounds_questions_list:
         rounds_questions_dict[key].append(value)
 
     return df, rounds_questions_dict
 
 
-# -----------------------------------------------------------------------
+def calculate_EIG(question, board):
+    """EIG Calculator"""
+    calculator = EIGCalculator(seed=0, spotter=None)
+    return calculator.calculate_eig(
+        None, board, pregenerated_question=question, samples=100
+    )
 
 
 def retrieve_context(question_id, round_data):
@@ -80,12 +94,20 @@ def retrieve_context(question_id, round_data):
         "board_id"
     ].tolist()[0]
     ground_truth_answer = question_data[question_data["messageType"] == "answer"][
-        "goldAnswer"
+        "gold_answer"
     ].tolist()[0]
 
-    # QUESTION HISTORY decision, question, answer, move
-    # {"question":question, "code": q_ex.codestr, "answer": a_ex.text, "board_id": board}
+    # Extract all gold annotations
+    gold_annotations = {}
+    for annotation in ALL_ANNOTATIONS:
+        try:
+            gold_annotations[annotation] = question_data[
+                question_data["messageType"] == "answer"
+            ][f"gold_{annotation}"].tolist()[0]
+        except (IndexError, KeyError):
+            gold_annotations[annotation] = None
 
+    # QUESTION HISTORY decision, question, answer, move
     previous_decision_ids = sorted(
         list(set(question_history_data["questionID"].tolist()))
     )
@@ -122,8 +144,7 @@ def retrieve_context(question_id, round_data):
             }
             examples.append(dict_example)
         except IndexError:
-            if int(id) != 0:
-                print(f"Error with decision id {id}")
+            continue
 
     return {
         "context": {
@@ -131,30 +152,131 @@ def retrieve_context(question_id, round_data):
             "board_id": question_board_id,
             "true_answer": ground_truth_answer,
             "occ_tiles": question_captain_board,
+            "gold_annotations": gold_annotations,
         },
         "history": examples,
     }
 
 
-def benchmark_on_rounds(
+def process_question_data(question_data):
+    """Process a single question with pre-extracted data"""
+
+    (
+        round_data,
+        round_id,
+        question_id,
+        model_class,
+        model_string,
+        temperature,
+        use_history,
+        use_cache,
+        use_cot,
+        use_captain_board,
+        output_dir,
+    ) = question_data
+
+    question_context = retrieve_context(question_id, round_data)
+
+    examples = question_context["history"]
+    question_board = question_context["context"]["board_id"]
+    question_text = question_context["context"]["text"]
+    question_captain_board = question_context["context"]["occ_tiles"]
+    ground_truth_answer = question_context["context"]["true_answer"]
+    gold_annotations = question_context["context"]["gold_annotations"]
+
+    decision_counter = Counter()
+    index_counter = Counter()
+
+    spotter_model = model_class(
+        board_id=question_board,
+        board_experiment="collaborative",
+        use_cache=use_cache,
+        model_string=model_string,
+        temperature=temperature,
+        use_cot=use_cot,
+        decision_counter=decision_counter,
+        index_counter=index_counter,
+        spotter_benchmark=True,
+    )
+
+    question = Question(text=question_text)
+    result, answer_cache = spotter_model.answer(
+        question,
+        history=examples if use_history else None,
+    )
+
+    # Get answer from result
+    answer_text = None
+    if result.text is not None:
+        try:
+            answer_text = result.text.lower()
+        except AttributeError:
+            print("Non-string answer:", result.text)
+            answer_text = str(result.text)
+
+    # Extract necessary data for CSV
+    data_row = {
+        "model": model_string,
+        "CoT": use_cot,
+        "spotterModel": model_class.__name__,
+        "roundID": round_id,
+        "questionID": question_id,
+        "question": question_text,
+        "program": result.code_question.fn_str if result.code_question else None,
+        "occTiles": question_captain_board,
+        "answer": answer_text,
+        "EIG": calculate_EIG(
+            result.code_question, Board(np.array(eval(question_captain_board)))
+        )
+        if result.code_question
+        else None,
+        "full_completion": answer_cache.prompts[-1].full_completion,
+        "prompt": answer_cache.prompts[-1].prompt,
+        "true_answer": ground_truth_answer,
+        "is_correct": answer_text == ground_truth_answer,
+    }
+
+    # Add all gold annotations to the data row
+    for annotation, value in gold_annotations.items():
+        data_row[f"gold_{annotation}"] = value
+
+    # Replace slashes with a safe character for filenames (e.g., underscores or hyphens)
+    safe_model_string = model_string.replace("/", "-")
+
+    # Append to model-specific CSV file using the safe model string
+    csv_path = os.path.join(
+        output_dir, f"{safe_model_string}_{model_class.__name__}_{use_cot}.csv"
+    )
+
+    # Use a lock to prevent race conditions when writing to the same file
+    with open(csv_path, "a", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=list(data_row.keys()))
+        writer.writerow(data_row)
+
+    return data_row["is_correct"]
+
+
+def prepare_question_data(
     df,
     rounds_question_ids,
     model,
     model_string,
-    temperature=None,
-    use_history=False,
-    max_rounds=10,
-    max_questions=10,
-    use_cache=True,
-    use_cot=False,
-    use_captain_board=False,
+    temperature,
+    use_history,
+    max_rounds,
+    max_questions,
+    use_cache,
+    use_cot,
+    use_captain_board,
+    output_dir,
 ):
-    correct = []
-    failed_cache_ids = []
-    round_list = list(rounds_question_ids.keys())
-    for idx, round in enumerate(round_list[:max_rounds]):
-        round_data = df[df["roundID"] == round]
-        question_ids = sorted(rounds_question_ids[round])
+    """Prepare all question data for parallel processing"""
+    all_question_data = []
+    round_list = list(rounds_question_ids.keys())[:max_rounds]
+
+    for round_id in round_list:
+        round_data = df[df["roundID"] == round_id]
+        question_ids = sorted(rounds_question_ids[round_id])
 
         clean_q_ids = list(
             set(
@@ -167,62 +289,229 @@ def benchmark_on_rounds(
             )
         )
 
-        for question_id in tqdm(
-            clean_q_ids[:max_questions],
-            desc=f"Round {str(round)}, {idx+1}/{max_rounds}",
-        ):
-            question_context = retrieve_context(question_id, round_data)
+        clean_q_ids = clean_q_ids[:max_questions]
 
-            examples = question_context["history"]
-            question_board = question_context["context"]["board_id"]
-            question_text = question_context["context"]["text"]
-            question_captain_board = question_context["context"]["occ_tiles"]
-
-            ground_truth_answer = question_context["context"]["true_answer"]
-
-            spotter_model = model(
-                board_id=question_board,
-                board_experiment="collaborative",
-                use_cache=use_cache,
-                model_string=model_string,
-                temperature=temperature,
-                use_cot=use_cot,
+        for question_id in clean_q_ids:
+            all_question_data.append(
+                (
+                    round_data,
+                    round_id,
+                    question_id,
+                    model,
+                    model_string,
+                    temperature,
+                    use_history,
+                    use_cache,
+                    use_cot,
+                    use_captain_board,
+                    output_dir,
+                )
             )
 
-            question = Question(text=question_text)
-            model_answer = spotter_model.answer(
-                question,
-                history=examples if use_history else None,
-                occ_tiles=question_captain_board if use_captain_board else None,
+    return all_question_data
+
+
+def benchmark_on_rounds(
+    df,
+    rounds_question_ids,
+    model,
+    model_string,
+    temperature=1.0,
+    use_history=False,
+    max_rounds=10,
+    max_questions=10,
+    use_cache=True,
+    use_cot=False,
+    use_captain_board=False,
+    output_dir="benchmark_results",
+):
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    safe_model_string = model_string.replace("/", "-")
+
+    # Create the model-specific CSV file with headers
+    csv_path = os.path.join(
+        output_dir, f"{safe_model_string}_{model.__name__}_{use_cot}.csv"
+    )
+
+    # Get a sample question to determine all the fieldnames including gold annotations
+    sample_question_data = next(
+        iter(
+            prepare_question_data(
+                df,
+                rounds_question_ids,
+                model,
+                model_string,
+                temperature,
+                use_history,
+                1,
+                1,
+                use_cache,
+                use_cot,
+                use_captain_board,
+                output_dir,
             )
+        ),
+        None,
+    )
 
-            if model_answer.text is not None:
-                try:
-                    lowercase_bool = model_answer.text.lower()
-                except AttributeError:
-                    print("Non-string answer:", model_answer.text)
-                    failed_cache_ids.append(
-                        [
-                            question.get_cache_key(question_board),
-                            (model_answer.text, ground_truth_answer),
-                        ]
-                    )
-                    continue
+    if sample_question_data:
+        sample_context = retrieve_context(
+            sample_question_data[2], sample_question_data[0]
+        )
+        gold_annotation_keys = [
+            f"gold_{k}" for k in sample_context["context"]["gold_annotations"].keys()
+        ]
+    else:
+        gold_annotation_keys = [f"gold_{k}" for k in ALL_ANNOTATIONS]
 
-                correct_bool = lowercase_bool == ground_truth_answer
+    if not os.path.exists(csv_path):
+        with open(csv_path, "w", newline="") as csvfile:
+            fieldnames = [
+                "model",
+                "CoT",
+                "spotterModel",
+                "roundID",
+                "questionID",
+                "question",
+                "program",
+                "occTiles",
+                "answer",
+                "EIG",
+                "full_completion",
+                "prompt",
+                "true_answer",
+                "is_correct",
+            ] + gold_annotation_keys
 
-                if not correct_bool:
-                    failed_cache_ids.append(
-                        [
-                            question.get_cache_key(question_board),
-                            (lowercase_bool, ground_truth_answer),
-                        ]
-                    )
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
-                correct.append(correct_bool)
-            else:
-                pass
-    return sum(correct) / len(correct), failed_cache_ids
+    # Prepare all question data for parallel processing
+    all_question_data = prepare_question_data(
+        df,
+        rounds_question_ids,
+        model,
+        model_string,
+        temperature,
+        use_history,
+        max_rounds,
+        max_questions,
+        use_cache,
+        use_cot,
+        use_captain_board,
+        output_dir,
+    )
+
+    # Process all questions in parallel with max 10 workers
+    with mp.Pool() as pool:
+        results = list(
+            tqdm(
+                pool.imap(process_question_data, all_question_data),
+                total=len(all_question_data),
+                desc=f"Processing {model.__name__} with {model_string}",
+            )
+        )
+
+    # Calculate accuracy
+    if results:
+        accuracy = sum(1 for r in results if r) / len(results)
+    else:
+        accuracy = 0.0
+
+    return accuracy
+
+
+def combine_results(output_dir="benchmark_results"):
+    """Combine all individual CSV files into a single results file"""
+    all_files = [
+        os.path.join(output_dir, f)
+        for f in os.listdir(output_dir)
+        if f.endswith(".csv")
+        and f != "combined_results.csv"
+        and f != "accuracy_summary.csv"
+    ]
+
+    if not all_files:
+        print("No result files found to combine.")
+        return None
+
+    # Read all CSVs and determine all possible columns
+    all_columns = set()
+    dfs = []
+
+    for file_path in all_files:
+        df = pd.read_csv(file_path)
+        all_columns.update(df.columns)
+        dfs.append(df)
+
+    # Create a combined dataframe with all columns
+    combined_df = pd.DataFrame(columns=list(all_columns))
+
+    # Append each dataframe, filling missing columns with NaN
+    for df in dfs:
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    combined_path = os.path.join(output_dir, "combined_results.csv")
+    combined_df.to_csv(combined_path, index=False)
+
+    print(f"Combined results saved to {combined_path}")
+    return combined_df
+
+
+def run_experiments(
+    df,
+    rounds_questions_dict,
+    language_models=["gpt-4o"],
+    spotter_models=[DirectSpotterModel, CodeSpotterModel],
+    cot_options=[True, False],
+    max_rounds=20,
+    max_questions=20,
+    use_history=True,
+    use_cache=False,
+    use_captain_board=False,
+    output_dir="benchmark_results",
+):
+    """Run experiments with all combinations of models and options"""
+    results = {"language_model": [], "spotter_model": [], "accuracy": [], "cot": []}
+
+    for llm in language_models:
+        for spotter in spotter_models:
+            for cot_option in cot_options:
+                print(
+                    f"Benchmarking {spotter.__name__} with language model {llm}, COT: {cot_option}"
+                )
+
+                accuracy = benchmark_on_rounds(
+                    df=df,
+                    rounds_question_ids=rounds_questions_dict,
+                    model=spotter,
+                    model_string=llm,
+                    max_rounds=max_rounds,
+                    max_questions=max_questions,
+                    use_cache=use_cache,
+                    use_cot=cot_option,
+                    use_history=use_history,
+                    use_captain_board=use_captain_board,
+                    output_dir=output_dir,
+                )
+
+                results["language_model"].append(llm)
+                results["spotter_model"].append(spotter.__name__)
+                results["cot"].append(cot_option)
+                results["accuracy"].append(accuracy)
+
+                print(f"Accuracy: {accuracy * 100:.2f}%")
+
+    # Convert the results to a df for easier manipulation
+    results_df = pd.DataFrame(results)
+    results_df.to_csv(os.path.join(output_dir, "accuracy_summary.csv"), index=False)
+
+    # Combine all individual result files
+    combine_results(output_dir)
+
+    return results_df
 
 
 if __name__ == "__main__":
@@ -240,21 +529,28 @@ if __name__ == "__main__":
         help="Path to the round.csv file.",
     )
     parser.add_argument(
-        "--model",
+        "--output_dir",
         type=str,
-        default="CodeSpotterModel",
-        choices=["CodeSpotterModel", "DirectSpotterModel"],
-        help="The model type to use.",
+        default="benchmark_results",
+        help="Directory to save results.",
     )
     parser.add_argument(
-        "--model_string",
+        "--models",
         type=str,
-        default="gpt-4o",
-        help="The underlying AI model to call.",
+        nargs="+",
+        default=["gpt-4o"],
+        help="Space-separated list of language models to test.",
     )
     parser.add_argument(
-        "--model_temperature",
-        type=int,
+        "--spotter_models",
+        type=str,
+        nargs="+",
+        default=["CodeSpotterModel", "DirectSpotterModel"],
+        help="Space-separated list of spotter models to test.",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
         default=None,
         help="The model temperature to use.",
     )
@@ -289,17 +585,34 @@ if __name__ == "__main__":
         "--gold_annotations",
         type=str,
         nargs="+",
-        choices=["answer", "ambiguous", "contextual", "unanswerable"],
+        choices=ALL_ANNOTATIONS + ["answer"],
+        default=[],
         help="Space-separated list of gold annotations from [answer, ambiguous, contextual, unanswerable].",
+    )
+    parser.add_argument(
+        "--cot_options",
+        type=str,
+        nargs="+",
+        default=["True", "False"],
+        help="Space-separated list of chain-of-thought options (True/False).",
     )
 
     args = parser.parse_args()
 
-    # Select model class based on argument
-    if args.model == "CodeSpotterModel":
-        model_class = CodeSpotterModel
-    else:
-        model_class = DirectSpotterModel
+    # Convert string spotter model names to actual classes
+    spotter_model_map = {
+        "CodeSpotterModel": CodeSpotterModel,
+        "DirectSpotterModel": DirectSpotterModel,
+    }
+
+    spotter_models = [
+        spotter_model_map[name]
+        for name in args.spotter_models
+        if name in spotter_model_map
+    ]
+
+    # Convert string cot options to boolean
+    cot_options = [opt.lower() == "true" for opt in args.cot_options]
 
     df, rounds_questions_dict = load_data(
         stages_path=args.stages,
@@ -307,21 +620,20 @@ if __name__ == "__main__":
         goldAnnotations=args.gold_annotations,
     )
 
-    accuracy, failed = benchmark_on_rounds(
+    # Run the experiments
+    results_df = run_experiments(
         df=df,
-        rounds_question_ids=rounds_questions_dict,
-        model=model_class,
-        model_string=args.model_string,
-        temperature=args.model_temperature,
+        rounds_questions_dict=rounds_questions_dict,
+        language_models=args.models,
+        spotter_models=spotter_models,
+        cot_options=cot_options,
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
         use_cache=args.use_cache,
         use_captain_board=args.use_captain_board,
+        output_dir=args.output_dir,
     )
 
-    print(f"Benchmark Accuracy: {accuracy * 100:.2f}%")
-    if failed:
-        print("Failed cache ids and mismatches:")
-        for item in failed:
-            print(item)
+    print("Experiment completed!")
+    print(f"Results summary:\n{results_df}")

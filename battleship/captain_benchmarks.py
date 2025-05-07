@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import glob
 import os
 import sys
 from copy import deepcopy
@@ -12,8 +13,6 @@ import numpy as np
 import pandas as pd
 
 from battleship.agents import Counter
-from battleship.agents import CSV_ROUND_FILE
-from battleship.agents import SUMMARY_FILE
 from battleship.board import Board
 from battleship.captains import AlwaysMoveDecisionStrategy
 from battleship.captains import Captain
@@ -27,11 +26,20 @@ from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
 
+PREFIXES = ["prompts", "stage", "round", "summary"]
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run Battleship Captain benchmarks")
 
     # Data paths
+    parser.add_argument(
+        "--output-prefix",
+        type=str,
+        default="/home/ubuntu/repo_battleship/temp/job_results",
+        help="Prefix for job-specific output files",
+    )
+
     parser.add_argument(
         "--gold-annotations",
         type=str,
@@ -47,7 +55,7 @@ def parse_arguments():
     parser.add_argument(
         "--output-file",
         type=str,
-        default="/home/ubuntu/repo_battleship/temp/total_results.csv",
+        default="/home/ubuntu/repo_battleship/battleship/battleship/cache/",
         help="Path to output results CSV",
     )
 
@@ -120,6 +128,9 @@ def parse_arguments():
     parser.add_argument("--eig-k", type=int, default=10, help="K value for EIGCaptain")
 
     return parser.parse_args()
+
+
+args = parse_arguments()
 
 
 def game_completed(hits, misses, occTiles, board_id):
@@ -385,8 +396,24 @@ def create_captains(args):
     return captains
 
 
-def run_single_agent_game(args):
-    round_id, cap_name, captain, seed, board_id, max_questions, max_moves, model = args
+def run_single_agent_game(fun_args):
+    (
+        round_id,
+        cap_name,
+        captain,
+        seed,
+        board_id,
+        max_questions,
+        max_moves,
+        model,
+    ) = fun_args
+
+    # Create job-specific file paths
+    job_id = f"{round_id}_{board_id}_{seed}"
+    job_csv_stage_file = f"{args.output_prefix}_stage_{job_id}.csv"
+    job_csv_round_file = f"{args.output_prefix}_round_{job_id}.csv"
+    job_csv_prompts_file = f"{args.output_prefix}_prompts_{job_id}.csv"
+    job_summary_file = f"{args.output_prefix}_summary_{job_id}.csv"
 
     # Update spotter board ID for EIG captains
     if hasattr(captain, "question_strategy") and hasattr(
@@ -406,6 +433,12 @@ def run_single_agent_game(args):
     captain.index_counter = index_counter
     captain.decision_counter = decision_counter
 
+    # Pass the job-specific CSV files to the agent
+    captain.csv_stage_file = job_csv_stage_file
+    captain.csv_round_file = job_csv_round_file
+    captain.csv_prompts_file = job_csv_prompts_file
+    captain.summary_file = job_summary_file
+
     spotter = CodeSpotterModel(
         board_id,
         "collaborative",
@@ -418,11 +451,24 @@ def run_single_agent_game(args):
         round_id=round_id,
     )
 
-    file_exists = os.path.isfile(CSV_ROUND_FILE)
-    with open(CSV_ROUND_FILE, "a", newline="") as csvfile:
+    # Update spotter with job-specific CSV files too
+    spotter.csv_stage_file = job_csv_stage_file
+    spotter.csv_round_file = job_csv_round_file
+    spotter.csv_prompts_file = job_csv_prompts_file
+    spotter.summary_file = job_summary_file
+
+    file_exists = os.path.isfile(job_csv_round_file)
+    with open(job_csv_round_file, "a", newline="") as csvfile:
         writer = csv.DictWriter(
             csvfile,
-            fieldnames=["id", "boardId", "seed", "captainModel", "spotterModel"],
+            fieldnames=[
+                "id",
+                "boardId",
+                "seed",
+                "captainModel",
+                "spotterModel",
+                "modelBackend",
+            ],
         )
         if not file_exists:
             writer.writeheader()
@@ -433,6 +479,7 @@ def run_single_agent_game(args):
                 "seed": seed,
                 "captainModel": cap_name,
                 "spotterModel": spotter.__class__.__name__,
+                "modelBackend": model,
             }
         )
 
@@ -459,12 +506,14 @@ def run_single_agent_game(args):
         "precision": game.hits / (game.hits + game.misses)
         if (game.hits + game.misses) > 0
         else 0,
+        "modelBackend": model,  # Add model backend to the results
     }
 
+    # Write to job-specific summary file
     pd.DataFrame.from_dict([result]).to_csv(
-        SUMMARY_FILE,
+        job_summary_file,
         mode="a",
-        header=False,
+        header=not os.path.exists(job_summary_file),
         index=False,
     )
 
@@ -472,8 +521,6 @@ def run_single_agent_game(args):
 
 
 def main():
-    args = parse_arguments()
-
     # Setup board IDs if not specified
     if args.board_ids is None:
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
@@ -500,7 +547,7 @@ def main():
                 "questionsAsked",
                 "precision",
             ]
-        ).to_csv(args.output_file, index=False)
+        ).to_csv(args.output_file + "summary.csv", index=False)
 
     # Create captains using the modular architecture
     captains = create_captains(args)
@@ -539,10 +586,29 @@ def main():
         results_df.to_csv(args.output_file, mode="a", header=False, index=False)
     else:
         # Write without human results
-        results_df.to_csv(args.output_file, index=False)
+        results_df.to_csv(args.output_file + "summary.csv", index=False)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-    print(f"Results saved to {args.output_file}")
+
+    for prefix in PREFIXES:
+        # Aggregate all job-specific files into final results
+        job_result_files = glob.glob(f"{args.output_prefix}_{prefix}_*.csv")
+        print(f"Found {len(job_result_files)} {prefix} result files to aggregate")
+
+        all_results = []
+        for file_path in job_result_files:
+            try:
+                df = pd.read_csv(file_path)
+                all_results.append(df)
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+
+        if all_results:
+            combined_results = pd.concat(all_results, ignore_index=True)
+            combined_results.to_csv(args.output_file + prefix + ".csv", index=False)
+            print(f"Aggregated results saved to {args.output_file}")
+        else:
+            print("No results to aggregate")
 
     # Print summary statistics
     print("\nSummary by Captain Type:")

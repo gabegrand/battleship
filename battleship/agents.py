@@ -29,7 +29,7 @@ MOVE_COT_PATTERN = lambda size: re.compile(
 )
 BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
 ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
-CODE_ANSWER_PATTERN = re.compile("```(.*?)```", re.DOTALL)
+CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
 client = OpenAI()
 
@@ -62,12 +62,21 @@ class CacheData:
 
 
 class CodeQuestion:
-    def __init__(self, question, fn, fn_string, translation_prompt, traceback=None):
+    def __init__(
+        self,
+        question,
+        fn,
+        fn_string,
+        translation_prompt,
+        full_completion,
+        traceback=None,
+    ):
         self.question = question
         self.fn = fn
         self.fn_str = fn_string
         self.translation_prompt = translation_prompt
         self.traceback = traceback
+        self.full_completion = full_completion
 
     def __call__(self, board):
         try:
@@ -134,8 +143,8 @@ class Agent(ABC):
             if cache_data.occ_tiles is not None
             else ""
         )
-        exists = os.path.isfile(CSV_STAGE_FILE)
-        with open(CSV_STAGE_FILE, "a", newline="") as csvfile:
+        exists = os.path.isfile(self.csv_stage_file)
+        with open(self.csv_stage_file, "a", newline="") as csvfile:
             writer = csv.DictWriter(
                 csvfile,
                 fieldnames=[
@@ -147,18 +156,12 @@ class Agent(ABC):
                     "eig",
                     "occTiles",
                     "question_id",
+                    "modelBackend",  # Add the model backend
                 ],
             )
             if not exists:
                 writer.writeheader()
             stage_id = self.index_counter.increment_counter()
-            print(
-                self.round_id,
-                message_type,
-                cache_data.message_text,
-                cache_data.map_prob,
-                cache_data.eig,
-            )
             writer.writerow(
                 {
                     "round_id": self.round_id,
@@ -169,10 +172,11 @@ class Agent(ABC):
                     "eig": option_to_str(cache_data.eig),
                     "occTiles": option_to_str(occ_tiles_str),
                     "question_id": self.decision_counter.counter,
+                    "modelBackend": self.model_string,  # Include model backend
                 }
             )
             if cache_data.prompts is not None:
-                with open(CSV_PROMPTS_FILE, "a", newline="") as csvfile:
+                with open(self.csv_prompts_file, "a", newline="") as csvfile:
                     writer = csv.DictWriter(
                         csvfile,
                         fieldnames=[
@@ -185,6 +189,7 @@ class Agent(ABC):
                             "eig",
                             "map_prob",
                             "occ_tiles",
+                            "modelBackend",  # Add the model backend
                         ],
                     )
                     if not exists:
@@ -202,6 +207,7 @@ class Agent(ABC):
                                 "eig": prompt.eig,
                                 "map_prob": prompt.map_prob,
                                 "occ_tiles": prompt.occ_tiles,
+                                "modelBackend": self.model_string,  # Include model backend
                             }
                         )
 
@@ -212,8 +218,12 @@ class EIGCalculator:
         self.rng = np.random.default_rng(seed)
         self.spotter = spotter
 
-    def calculate_eig(self, question, state, samples=100):
-        code_question = self.spotter.translate(question, [], state.board)
+    def calculate_eig(self, question, state, pregenerated_question=None, samples=100):
+        if pregenerated_question is None:
+            code_question = self.spotter.translate(question, [], state.board)
+        else:
+            code_question = pregenerated_question
+
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -225,16 +235,18 @@ class EIGCalculator:
         curr_time = time()
         while sum(results.values()) < samples:
             if time() - curr_time > 15:
-                print("EIG calculation timed out")
-                return 0
+                # print("EIG calculation timed out")
+                return float("nan")
             board = None
             while not board:
                 board = sampler.populate_board()
             board = board.to_symbolic_array()
             result = code_question(board)
-            if result:
-                results[result] += 1
-        print("eig results calculated")
+            if type(result) == str:
+                try:
+                    results[result] += 1
+                except:
+                    break
 
         if any(v == 0 for v in results.values()):
             return 0

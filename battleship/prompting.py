@@ -110,7 +110,7 @@ PROMPT_TASK_DIRECT_SPOTTER = (
     "You can only answer with 'Yes' or 'No'. Please only answer with a single word."
 )
 
-PROMPT_TASK_CODE_SPOTTER_COT = "Generate a piece of numpy code that answers the question. This code will be executed in an environment with both numpy (namespaced as np) and a 'board' variable (a numpy representation of the board) so give some function answer(board) that could be used across any board. Please think about this step by step, and make sure your code returns 'Yes' or 'No' and that you enclose the function you create in ```code blocks```, e.g. ```def answer(board): return ANSWER```. Assume you're already in a Python environment,begin your answer with ```def answer(board):, never start with ```python```."
+PROMPT_TASK_CODE_SPOTTER_COT = "Generate a piece of numpy code that answers the question. This code will be executed in an environment with both numpy (namespaced as np) and a 'board' variable (a numpy representation of the board) so give some function answer(board) that could be used across any board. Please think about this step by step, and make sure your code returns 'Yes' or 'No' and that you enclose the function you create in ```code blocks```, e.g. ```def answer(board): return ANSWER```."
 
 PROMPT_TASK_DIRECT_SPOTTER_COT = "You can only answer with 'Yes' or 'No'. Please think about this step by step, and, when you've come up with an answer, make sure to enclose it in <answer></answer> tags, e.g. <answer>Yes</answer> or <answer>No</answer>."
 
