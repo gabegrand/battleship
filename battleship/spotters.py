@@ -148,6 +148,10 @@ class CodeSpotterModel(Spotter):
             use_cot=self.use_cot,
         )
 
+        import pdb
+
+        pdb.set_trace()
+
         if not self.use_cot:
             completion = client.chat.completions.create(
                 model=self.model_string,
