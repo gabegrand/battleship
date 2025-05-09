@@ -1,5 +1,6 @@
 import argparse
 import csv
+import logging
 import multiprocessing.dummy as mp
 import os
 from functools import partial
@@ -14,6 +15,16 @@ from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("spotter_benchmark.log"),
+        logging.StreamHandler(),
+    ],
+)
 
 # LOAD DATA
 
@@ -121,6 +132,10 @@ def retrieve_context(question_id, round_data):
                 "messageText"
             ].tolist()[0]
 
+            # Remap "fire" -> "move"
+            if decision == "fire":
+                decision = "move"
+
             if decision == "question":
                 question = id_actions[id_actions["messageType"] == "question"][
                     "messageText"
@@ -202,17 +217,15 @@ def process_question_data(question_data):
     question = Question(text=question_text)
     result, answer_cache = spotter_model.answer(
         question,
+        occ_tiles=Board.from_occ_tiles(question_captain_board).to_numpy(),
         history=examples if use_history else None,
     )
 
     # Get answer from result
-    answer_text = None
-    if result.text is not None:
-        try:
-            answer_text = result.text.lower()
-        except AttributeError:
-            print("Non-string answer:", result.text)
-            answer_text = str(result.text)
+    if isinstance(result.text, str):
+        answer_text = result.text.lower()
+    else:
+        answer_text = None
 
     # Extract necessary data for CSV
     data_row = {
@@ -226,7 +239,7 @@ def process_question_data(question_data):
         "occTiles": question_captain_board,
         "answer": answer_text,
         "EIG": calculate_EIG(
-            result.code_question, Board(np.array(eval(question_captain_board)))
+            result.code_question, Board.from_occ_tiles(question_captain_board)
         )
         if result.code_question
         else None,
@@ -405,7 +418,7 @@ def benchmark_on_rounds(
     )
 
     # Process all questions in parallel with max 10 workers
-    with mp.Pool() as pool:
+    with mp.Pool(processes=args.processes) as pool:
         results = list(
             tqdm(
                 pool.imap(process_question_data, all_question_data),
@@ -595,6 +608,12 @@ if __name__ == "__main__":
         nargs="+",
         default=["True", "False"],
         help="Space-separated list of chain-of-thought options (True/False).",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=os.cpu_count(),
+        help="Number of parallel processes to use.",
     )
 
     args = parser.parse_args()
