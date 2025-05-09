@@ -247,6 +247,38 @@ class Board(object):
             "f1_score": f1_score,
         }
 
+    def ship_tracker(self, partial_board: "Board"):
+        """
+        Return a string describing the sinking status of each ship.
+
+        Example: "Green ship sunk, Red ship sunk, Purple ship not yet sunk, Orange ship not yet sunk"
+        """
+        tracker = {}
+
+        # Create reverse mapping from ship number to name
+        reverse_mapping = {}
+        for symbol, number in BOARD_SYMBOL_MAPPING.items():
+            if number > 0:  # Skip hidden and water
+                reverse_mapping[number] = SYMBOL_MEANING_MAPPING[symbol]
+
+        # Skip water (0) and hidden (-1) tiles
+        for ship_type in range(1, int(np.max(self.board)) + 1):
+            if ship_type in reverse_mapping:
+                ship_name = reverse_mapping[ship_type]
+
+                # Count tiles of this ship type in target and state
+                target_count = np.sum(self.board == ship_type)
+                state_count = np.sum(partial_board.board == ship_type)
+
+                # Determine if ship is sunk
+                if target_count > 0:
+                    if target_count == state_count:
+                        tracker[ship_name] = True
+                    else:
+                        tracker[ship_name] = False
+
+        return tracker
+
     def to_figure(self, inches: int = 6, dpi: int = 128):
         return Board._to_figure(board_array=self.board, inches=inches, dpi=dpi)
 
