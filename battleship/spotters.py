@@ -87,7 +87,11 @@ class Spotter(Agent):
 
 class DirectSpotterModel(Spotter):
     def _get_model_answer(
-        self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
+        self,
+        question: Question,
+        occ_tiles: np.ndarray,
+        history: List[dict] = None,
+        n_attempts: int = 3,
     ) -> Tuple[Answer, CacheData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
@@ -101,36 +105,29 @@ class DirectSpotterModel(Spotter):
         )
         logging.info(str(prompt))
 
-        completion = client.chat.completions.create(
-            model=self.model_string,
-            messages=prompt.to_chat_format(),
-            temperature=self.temperature,
-        )
-        logging.info(completion.choices[0].message.content)
+        response = None
+        for attempt in range(n_attempts):
+            completion = client.chat.completions.create(
+                model=self.model_string,
+                messages=prompt.to_chat_format(),
+                temperature=self.temperature,
+            )
+            logging.info(completion.choices[0].message.content)
 
-        if not self.use_cot:
-            response = completion.choices[0].message.content
-        else:
-            response = None
-            while response is None:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-                response_match = BOOL_ANSWER_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-                if response_match:
-                    response = response_match.group(
-                        1
-                    )  # This extracts just the "Yes" or "No"
-                else:
-                    response = None
+            # Extract the answer from the response
+            response_match = BOOL_ANSWER_PATTERN.search(
+                completion.choices[0].message.content
+            )
+            if response_match:
+                response = response_match.group(1)
+                break
+
+        if isinstance(response, str):
+            response = response.lower()
 
         logging.info(response)
 
-        prompt = Prompt(
+        output_prompt = Prompt(
             prompt=prompt.to_chat_format(),
             full_completion=completion.choices[0].message.content,
             extracted_completion=response,
@@ -139,7 +136,7 @@ class DirectSpotterModel(Spotter):
 
         answer = Answer(text=response)
         return answer, CacheData(
-            message_text=response, occ_tiles=occ_tiles, prompts=[prompt]
+            message_text=response, occ_tiles=occ_tiles, prompts=[output_prompt]
         )
 
 
@@ -236,7 +233,7 @@ class CodeSpotterModel(Spotter):
             result_text = str(result)
             logging.warning(f"CodeQuestion() produced invalid answer: {result}")
 
-        prompt = Prompt(
+        output_prompt = Prompt(
             prompt=code_question.translation_prompt.to_chat_format(),
             full_completion=code_question.full_completion,
             extracted_completion=result,
@@ -244,5 +241,5 @@ class CodeSpotterModel(Spotter):
         )
 
         return Answer(text=result_text, code_question=code_question), CacheData(
-            message_text=result_text, occ_tiles=occ_tiles, prompts=[prompt]
+            message_text=result_text, occ_tiles=occ_tiles, prompts=[output_prompt]
         )
