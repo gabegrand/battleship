@@ -130,8 +130,11 @@ class DirectSpotterModel(Spotter):
 
         logging.info(response)
 
-        prompt = Prompt(
-            prompt=prompt.to_chat_format(),
+        if isinstance(response, str):
+            response = response.lower()
+
+        output_prompt = Prompt(
+            prompt=output_prompt.to_chat_format(),
             full_completion=completion.choices[0].message.content,
             extracted_completion=response,
             occ_tiles=occ_tiles,
@@ -139,7 +142,7 @@ class DirectSpotterModel(Spotter):
 
         answer = Answer(text=response)
         return answer, CacheData(
-            message_text=response, occ_tiles=occ_tiles, prompts=[prompt]
+            message_text=response, occ_tiles=occ_tiles, prompts=[output_prompt]
         )
 
 
@@ -236,7 +239,7 @@ class CodeSpotterModel(Spotter):
             result_text = str(result)
             logging.warning(f"CodeQuestion() produced invalid answer: {result}")
 
-        prompt = Prompt(
+        output_prompt = Prompt(
             prompt=code_question.translation_prompt.to_chat_format(),
             full_completion=code_question.full_completion,
             extracted_completion=result,
@@ -244,5 +247,5 @@ class CodeSpotterModel(Spotter):
         )
 
         return Answer(text=result_text, code_question=code_question), CacheData(
-            message_text=result_text, occ_tiles=occ_tiles, prompts=[prompt]
+            message_text=result_text, occ_tiles=occ_tiles, prompts=[output_prompt]
         )
