@@ -1,5 +1,6 @@
 import argparse
 import csv
+import logging
 import multiprocessing.dummy as mp
 import os
 from functools import partial
@@ -14,6 +15,16 @@ from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("spotter_benchmark.log"),
+        logging.StreamHandler(),
+    ],
+)
 
 # LOAD DATA
 
@@ -206,6 +217,7 @@ def process_question_data(question_data):
     question = Question(text=question_text)
     result, answer_cache = spotter_model.answer(
         question,
+        occ_tiles=Board.from_occ_tiles(question_captain_board).to_numpy(),
         history=examples if use_history else None,
     )
 
@@ -230,7 +242,7 @@ def process_question_data(question_data):
         "occTiles": question_captain_board,
         "answer": answer_text,
         "EIG": calculate_EIG(
-            result.code_question, Board(np.array(eval(question_captain_board)))
+            result.code_question, Board.from_occ_tiles(question_captain_board)
         )
         if result.code_question
         else None,

@@ -125,6 +125,10 @@ class Board(object):
         """Convert a Board object into a JSON serializable string."""
         return str(self.to_symbolic_array().tolist())
 
+    def to_numpy(self):
+        """Convert a Board object into a numpy array."""
+        return self._board.copy()
+
     @staticmethod
     def from_serialized(serialized_board):
         """Converts a JSON serializable string back into a Board object"""

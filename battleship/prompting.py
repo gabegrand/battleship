@@ -64,6 +64,7 @@ class BasePrompt(object):
         self.target_trial_experiment = target_trial_experiment
         self.target_trial_id = target_trial_id
         self.board_format = board_format
+        self.history = history
 
     def __str__(self):
         return "\n".join(
@@ -104,6 +105,7 @@ class BasePrompt(object):
                 text += f"{self.SPOTTER} (answer): {answer_text}\n"
 
             elif example["decision"] == Decision.MOVE:
+                # TODO: Implement dataloader for human data to make this cleaner
                 move_text = (
                     str(example["move"])
                     if example.get("move")
@@ -128,15 +130,20 @@ PROMPT_TASK_BASE_SPOTTER = (
 PROMPT_TASK_DIRECT_SPOTTER = "Remember: You can only answer with 'Yes' or 'No'. Please only answer with a single word. Enclose your answer in <answer></answer> tags, e.g. <answer>Yes</answer> or <answer>No</answer>."
 
 PROMPT_TASK_CODE_SPOTTER = (
-    "Your task is to write a Python function that, when executed on the board, returns the answer to the question. "
+    "Your task is to write a Python function that computes the answer to the question. "
+    "\n\nThe function should accept two numpy arrays as arguments: `true_board` and `partial_board`. "
+    "\nThe `true_board` is the full board, which is only visible to you as the Spotter. "
+    "\nThe `partial_board` is the current board that is visible to the captain, which may contain hidden tiles. This represents the current state of the game that the Captain is asking about. "
     "Your function should return a Boolean value, which will be interpreted as 'Yes' or 'No'. "
-    "\n\nYour function should be defined as follows: "
+    "\n\nYour function should be defined generically to work with *any* true and partial board, not just the ones you are given. This means that your function must perform some operations on `true_board`, `partial_board`, or both boards in order to compute the answer to the Captain's question. Avoid hardcoding the answer. "
+    "In some situations, the correct answer may depend on the current state of the game. For instance, if the Captain asks, 'Are there any ships in Row A?', the answer depends on what ships have already been revealed. If there are any unrevealed ship tiles in Row A, then the answer is 'Yes'. However, if all ships in Row A have already been revealed, then the correct answer is 'No'. Comparing the `partial_board` with the `true_board` will allow you to determine which ship tiles remain unrevealed. Remember: Your goal is to help the Captain find the location of the ships on the board, so your function should be designed to provide the useful information in context. "
+    "\n\nYour function should be defined as follows:"
     "\n```python"
-    "\ndef answer(board: np.ndarray) -> bool:"
+    "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:"
     "\n    # Your code here"
     "\n    return ANSWER"
     "\n```"
-    "\nYour code will be executed in an environment with `numpy` (namespaced as `np`) and a `board` variable (a numpy representation of the board). "
+    "\n\nYour code will be executed in an environment with `numpy` (namespaced as `np`) and a `board` variable (a numpy representation of the board). "
     "Make sure your code is valid Python and does not contain any syntax errors. "
     "You are responsible for implementing the `answer()` function, but do not invoke it or include any other code. "
 )
@@ -191,7 +198,7 @@ class SpotterPrompt(BasePrompt):
         board_str = str(
             Board.from_trial_id(
                 self.target_trial_id, self.target_trial_experiment
-            ).board
+            ).to_numpy()
         )
         system_prompt += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
 

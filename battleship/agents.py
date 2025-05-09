@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import traceback
 from abc import ABC
 from dataclasses import dataclass
 from math import log2
@@ -105,26 +106,53 @@ class CacheData:
 class CodeQuestion:
     def __init__(
         self,
-        question,
-        fn,
-        fn_string,
+        question: str,
+        fn_text: str,
         translation_prompt,
         full_completion,
-        traceback=None,
     ):
         self.question = question
-        self.fn = fn
-        self.fn_str = fn_string
+        self.fn_str = fn_text
         self.translation_prompt = translation_prompt
-        self.traceback = traceback
         self.full_completion = full_completion
 
-    def __call__(self, board):
+        self.__evaluate_fn_text()
+
+    def __evaluate_fn_text(self):
+        local_namespace = {}
+
+        def _restricted_input(*args):
+            raise RuntimeError("input() function is not allowed in generated code")
+
         try:
-            result = self.fn(board)
+            exec(self.fn_str, {"np": np, "input": _restricted_input}, local_namespace)
+        except Exception as e:
+            raise RuntimeError(
+                f"Error evaluating the provided code: {e}\n{traceback.format_exc()}"
+            )
+
+        if "answer" not in local_namespace:
+            raise RuntimeError(
+                "The answer function is not defined in the provided code."
+            )
+
+        self.fn = local_namespace["answer"]
+
+    def __call__(self, true_board: np.ndarray, partial_board: np.ndarray):
+        try:
+            result = self.fn(true_board, partial_board)
             return result
         except:
             return None
+
+
+class NullCodeQuestion(CodeQuestion):
+    def __init__(self):
+        self.question = None
+        self.fn = lambda true_board, partial_board: None
+        self.fn_str = None
+        self.translation_prompt = None
+        self.full_completion = None
 
 
 @dataclass
@@ -255,7 +283,7 @@ class EIGCalculator:
             while not board:
                 board = sampler.populate_board()
             board = board.to_symbolic_array()
-            result = code_question(board)
+            result = code_question(true_board=board, partial_board=state.board)
             if type(result) == str:
                 try:
                     results[result] += 1
