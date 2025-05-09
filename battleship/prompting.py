@@ -1,3 +1,6 @@
+from typing import Dict
+from typing import List
+
 import numpy as np
 
 from battleship.board import Board
@@ -9,7 +12,7 @@ PROMPT_GAME = (
     "You are playing the board game Battleship. In this variant of the game, pairs of players collaborate as a team to find the location of ships on the board. "
     "Each player is assigned to one of two roles: the 'Captain' or the 'Spotter'. "
     "The Captain's role is to decide when and where to reveal tiles on the board. On each turn, the Captain can ask the Spotter a question about the board, or make a move by guessing a tile that they think contains a ship. "
-    "The Spotter's role is to provide the Captain with information about the hidden tiles. The spotter has full visibility of the board, but can only answer the captain's question with 'Yes' or 'No'."
+    "The Spotter's role is to provide the Captain with information about the hidden tiles. The Spotter has full visibility of the board, but can only answer the Captain's questions with 'Yes' or 'No'."
     "\n"
     "The board is an 8x8 grid, with lettered rows A, B, C, D, E, F, G, H and numbered columns 1, 2, 3, 4, 5, 6, 7, 8. "
     "Coordinates are specified as a row, column pair. For example, C2 is the tile in row C, column 2.\n"
@@ -48,23 +51,19 @@ class BasePrompt(object):
     Each subclass implements its own .to_chat_format() method.
     """
 
+    CAPTAIN = "Captain"
+    SPOTTER = "Spotter"
+
     def __init__(
         self,
         target_trial_id: int = None,
         target_trial_experiment: str = None,
         board_format: BoardFormat = None,
-        include_instructions: bool = True,
-        include_board: bool = True,
-        include_system_prompt: bool = True,
-        include_final_prefix: bool = False,
+        history: List[Dict] = None,
     ):
         self.target_trial_experiment = target_trial_experiment
         self.target_trial_id = target_trial_id
         self.board_format = board_format
-        self.include_system_prompt = include_system_prompt
-        self.include_board = include_board
-        self.include_instructions = include_instructions
-        self.include_final_prefix = include_final_prefix
 
     def __str__(self):
         return "\n".join(
@@ -84,6 +83,37 @@ class BasePrompt(object):
 
         """
         raise NotImplementedError()
+
+    def format_history(self) -> str:
+        text = ""
+        for example in self.history:
+            if example["decision"] == Decision.QUESTION:
+                # TODO: Implement dataloader for human data to make this cleaner
+                question_text = (
+                    example["question"].text
+                    if type(example["question"]) != str
+                    else example["question"]
+                )
+                answer_text = (
+                    example["answer"].text
+                    if type(example["answer"]) != str
+                    else example["answer"]
+                )
+
+                text += f"{self.CAPTAIN} (question): {question_text}\n"
+                text += f"{self.SPOTTER} (answer): {answer_text}\n"
+
+            elif example["decision"] == Decision.MOVE:
+                move_text = (
+                    str(example["move"])
+                    if example.get("move")
+                    else str(coords_to_tile(example["coords"]))
+                )
+
+                text += f"{self.CAPTAIN} (move): {move_text}\n"
+            else:
+                raise ValueError(f"Unknown decision type: {example['decision']}")
+        return text
 
 
 """
@@ -155,35 +185,27 @@ class SpotterPrompt(BasePrompt):
             system_prompt += PROMPT_TASK_DIRECT_SPOTTER
 
         if self.history:
-            system_prompt += PROMPT_EXAMPLES_MOVE
-            for example in self.history:
-                if example["decision"] == Decision.QUESTION:
-                    decision_str = f"Captain (question): {example['question']}\nSpotter (answer): {example['answer']}"
-                else:
-                    decision_str = (
-                        f"Captain (move): {coords_to_tile(example['coords'])}"
-                    )
-                system_prompt += decision_str + "\n"
+            system_prompt += "\n\n" + PROMPT_EXAMPLES_MOVE
+            system_prompt += self.format_history()
 
         board_str = str(
             Board.from_trial_id(
                 self.target_trial_id, self.target_trial_experiment
             ).board
         )
-
-        system_prompt += PROMPT_TARGET_BOARD_SPOTTER + board_str
-
-        system_prompt += QUESTION_PRESENTATION_PROMPT
+        system_prompt += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
 
         if self.use_cot:
-            system_prompt += PROMPT_COT
+            system_prompt += "\n\n" + PROMPT_COT
+
+        system_prompt += "\n\n" + QUESTION_PRESENTATION_PROMPT
 
         messages.append({"role": "system", "content": system_prompt})
 
         messages.append(
             {
                 "role": "user",
-                "content": self.question.text,
+                "content": f"{self.CAPTAIN} (question): {self.question.text}\n",
             }
         )
 

@@ -121,6 +121,10 @@ def retrieve_context(question_id, round_data):
                 "messageText"
             ].tolist()[0]
 
+            # Remap "fire" -> "move"
+            if decision == "fire":
+                decision = "move"
+
             if decision == "question":
                 question = id_actions[id_actions["messageType"] == "question"][
                     "messageText"
@@ -405,7 +409,7 @@ def benchmark_on_rounds(
     )
 
     # Process all questions in parallel with max 10 workers
-    with mp.Pool() as pool:
+    with mp.Pool(processes=args.processes) as pool:
         results = list(
             tqdm(
                 pool.imap(process_question_data, all_question_data),
@@ -595,6 +599,12 @@ if __name__ == "__main__":
         nargs="+",
         default=["True", "False"],
         help="Space-separated list of chain-of-thought options (True/False).",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=os.cpu_count(),
+        help="Number of parallel processes to use.",
     )
 
     args = parser.parse_args()

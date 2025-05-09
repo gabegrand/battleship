@@ -88,7 +88,6 @@ class DirectSpotterModel(Spotter):
             board_format="grid",
             question=question,
             use_code=False,
-            include_final_prefix=False,
             history=history,
             use_cot=self.use_cot,
         )
@@ -143,14 +142,12 @@ class CodeSpotterModel(Spotter):
             board_format="grid",
             question=question,
             use_code=True,
-            include_final_prefix=False,
             history=history,
             use_cot=self.use_cot,
         )
 
-        import pdb
-
-        pdb.set_trace()
+        p = translation_prompt
+        print(str(p))
 
         if not self.use_cot:
             completion = client.chat.completions.create(
