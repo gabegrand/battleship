@@ -138,10 +138,9 @@ class CodeQuestion:
 
         self.fn = local_namespace["answer"]
 
-    def __call__(self, true_board: np.ndarray, partial_board: np.ndarray):
+    def __call__(self, true_board: np.ndarray, partial_board: np.ndarray) -> bool:
         try:
-            result = self.fn(true_board, partial_board)
-            return result
+            return self.fn(true_board, partial_board)
         except:
             return None
 

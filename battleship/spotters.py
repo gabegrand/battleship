@@ -62,7 +62,11 @@ class Spotter(Agent):
         self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
     ) -> Answer:
         self.index_counter.increment_counter()
-        result, answer_cache = self._get_model_answer(question, history, occ_tiles)
+        result, answer_cache = self._get_model_answer(
+            question,
+            occ_tiles=occ_tiles,
+            history=history,
+        )
 
         if self.spotter_benchmark is None:
             if self.use_cache:
@@ -219,6 +223,15 @@ class CodeSpotterModel(Spotter):
 
         result = code_question(true_board, partial_board)
 
+        # Check if the result is a valid answer
+        if result is True:
+            result_text = "yes"
+        elif result is False:
+            result_text = "no"
+        else:
+            result_text = str(result)
+            logging.warning(f"CodeQuestion() produced invalid answer: {result}")
+
         prompt = Prompt(
             prompt=code_question.translation_prompt.to_chat_format(),
             full_completion=code_question.full_completion,
@@ -227,5 +240,5 @@ class CodeSpotterModel(Spotter):
         )
 
         return Answer(text=result, code_question=code_question), CacheData(
-            message_text=result, occ_tiles=occ_tiles, prompts=[prompt]
+            message_text=result_text, occ_tiles=occ_tiles, prompts=[prompt]
         )
