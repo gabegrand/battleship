@@ -213,7 +213,11 @@ class CodeSpotterModel(Spotter):
         occ_tiles: np.ndarray,
         history: List[dict],
     ) -> Tuple[Answer, CacheData]:
-        code_question = self.translate(question, history, occ_tiles)
+        code_question = self.translate(
+            question,
+            occ_tiles=occ_tiles,
+            history=history,
+        )
 
         true_board = Board.from_trial_id(
             trial_id=self.board_id, experiment=self.board_experiment
@@ -239,6 +243,6 @@ class CodeSpotterModel(Spotter):
             occ_tiles=occ_tiles,
         )
 
-        return Answer(text=result, code_question=code_question), CacheData(
+        return Answer(text=result_text, code_question=code_question), CacheData(
             message_text=result_text, occ_tiles=occ_tiles, prompts=[prompt]
         )

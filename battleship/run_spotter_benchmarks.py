@@ -222,13 +222,10 @@ def process_question_data(question_data):
     )
 
     # Get answer from result
-    answer_text = None
-    if result.text is not None:
-        try:
-            answer_text = result.text.lower()
-        except AttributeError:
-            print("Non-string answer:", result.text)
-            answer_text = str(result.text)
+    if isinstance(result.text, str):
+        answer_text = result.text.lower()
+    else:
+        answer_text = None
 
     # Extract necessary data for CSV
     data_row = {

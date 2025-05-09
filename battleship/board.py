@@ -138,8 +138,16 @@ class Board(object):
 
     @staticmethod
     def from_occ_tiles(occ_tiles: str):
-        A = np.array(eval(occ_tiles))
-        return Board(A)
+        if isinstance(occ_tiles, str):
+            return Board(np.array(eval(occ_tiles)))
+        elif isinstance(occ_tiles, (list, np.ndarray)):
+            return Board(np.array(occ_tiles))
+        elif isinstance(occ_tiles, Board):
+            return occ_tiles
+        else:
+            raise ValueError(
+                f"occ_tiles must be a string, list, numpy array, or Board object. Got {type(occ_tiles)}"
+            )
 
     def to_textual_description(self, include_hidden: bool = False):
         """Convert a Board object into its serialized representation"""

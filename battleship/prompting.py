@@ -152,6 +152,10 @@ PROMPT_COT = "Please think step-by-step about the task before returning your ans
 
 PROMPT_EXAMPLES_MOVE = "Here are the past turns in the game so far:\n"
 
+PROMPT_TARGET_BOARD_CAPTAIN = (
+    "Here is the partial board, which is the view that is visible to the Captain:\n"
+)
+
 PROMPT_TARGET_BOARD_SPOTTER = (
     "Here is the full board, which only you as Spotter have access to:\n"
 )
@@ -183,18 +187,27 @@ class SpotterPrompt(BasePrompt):
     def to_chat_format(self):
         messages = []
 
+        # Basic Spotter instructions
         system_prompt = (
             PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_TASK_BASE_SPOTTER
         )
+        # Code vs. direct answering
         if self.use_code:
             system_prompt += PROMPT_TASK_CODE_SPOTTER
         else:
             system_prompt += PROMPT_TASK_DIRECT_SPOTTER
 
-        if self.history:
+        # Game history
+        if self.history is not None:
             system_prompt += "\n\n" + PROMPT_EXAMPLES_MOVE
             system_prompt += self.format_history()
 
+        # Captain board (partial)
+        if self.target_occ_tiles is not None:
+            board_str = str(Board.from_occ_tiles(self.target_occ_tiles).to_numpy())
+            system_prompt += "\n\n" + PROMPT_TARGET_BOARD_CAPTAIN + board_str
+
+        # Spotter board (true)
         board_str = str(
             Board.from_trial_id(
                 self.target_trial_id, self.target_trial_experiment
@@ -202,13 +215,13 @@ class SpotterPrompt(BasePrompt):
         )
         system_prompt += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
 
+        # Chain-of-thought prompt (optional)
         if self.use_cot:
             system_prompt += "\n\n" + PROMPT_COT
 
         system_prompt += "\n\n" + QUESTION_PRESENTATION_PROMPT
 
         messages.append({"role": "system", "content": system_prompt})
-
         messages.append(
             {
                 "role": "user",
