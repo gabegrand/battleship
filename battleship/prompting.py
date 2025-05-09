@@ -34,8 +34,8 @@ PROMPT_VARIANT_GRID_NUMERIC = (
     "The board is represented as a numpy array with the following symbols:\n"
     "-1: Hidden\n"
     "0: Water\n"
-    "1: Green ship\n"
-    "2: Red ship\n"
+    "1: Red ship\n"
+    "2: Green ship\n"
     "3: Purple ship\n"
     "4: Orange ship\n"
 )
