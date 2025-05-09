@@ -1,6 +1,6 @@
-W,W,W,W,R,R,W,W
+W,W,W,W,G,G,W,W
 W,W,W,W,W,W,W,W
-G,G,G,G,G,W,W,W
+R,R,R,R,R,W,W,W
 W,W,W,P,P,P,P,P
 W,W,W,W,W,W,W,W
 W,W,W,W,W,W,W,W

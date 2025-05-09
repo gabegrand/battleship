@@ -2,7 +2,7 @@ W,W,W,W,O,W,W,W
 W,W,W,W,O,P,W,W
 W,W,W,W,O,P,W,W
 W,W,W,W,O,W,W,W
-G,G,G,G,W,W,W,W
+R,R,R,R,W,W,W,W
 W,W,W,W,W,W,W,W
-W,R,R,R,R,R,W,W
+W,G,G,G,G,G,W,W
 W,W,W,W,W,W,W,W

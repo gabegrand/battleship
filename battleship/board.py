@@ -13,12 +13,12 @@ from IPython.display import display
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colors import ListedColormap
 
-BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "G": 1, "R": 2, "P": 3, "O": 4}
+BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "R": 1, "G": 2, "P": 3, "O": 4}
 BOARD_COLOR_MAPPING = {
     -1: "#eaeae4",
     0: "#9b9c97",
-    1: "#04af70",
-    2: "#ac2028",
+    1: "#ac2028",
+    2: "#04af70",
     3: "#6d467b",
     4: "#ffa500",
 }

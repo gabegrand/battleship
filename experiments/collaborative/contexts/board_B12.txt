@@ -3,6 +3,6 @@ W,W,O,W,W,W,W,W
 P,P,W,W,W,W,W,W
 W,W,W,W,W,W,W,W
 W,W,W,W,W,W,W,W
-W,W,W,W,W,G,G,W
-W,R,R,R,W,W,W,W
+W,W,W,W,W,R,R,W
+W,G,G,G,W,W,W,W
 W,W,W,W,W,W,W,W

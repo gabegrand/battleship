@@ -1,8 +1,8 @@
 W,W,W,W,W,W,W,W
-W,W,W,W,R,R,R,W
+W,W,W,W,G,G,G,W
 W,W,W,W,W,W,W,W
 W,W,W,W,W,W,W,W
-G,G,G,P,W,W,W,W
+R,R,R,P,W,W,W,W
 W,O,O,P,W,W,W,W
 W,W,W,P,W,W,W,W
 W,W,W,W,W,W,W,W
