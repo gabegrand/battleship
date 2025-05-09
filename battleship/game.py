@@ -156,7 +156,12 @@ class BattleshipGame:
                 }
             )
         elif decision == Decision.MOVE:
-            coords = self.captain.move(self.state, self.history, self.sunk_ships())
+            coords = self.captain.move(
+                self.state,
+                self.history,
+                self.sunk_ships(),
+                self.captain.sampling_constraints,
+            )
             self.update_state(coords)
             self.move_count += 1
             self.history.append(

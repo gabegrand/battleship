@@ -32,6 +32,7 @@ STAGE_CSV_COLUMNS = [
     "eig",
     "occTiles",
     "question_id",
+    "modelBackend",
 ]
 
 ROUND_CSV_COLUMNS = ["id", "boardId", "seed", "captainModel", "spotterModel"]
@@ -46,6 +47,7 @@ PROMPTS_CSV_COLUMNS = [
     "eig",
     "map_prob",
     "occ_tiles",
+    "modelBackend",
 ]
 
 SUMMARY_CSV_COLUMNS = [

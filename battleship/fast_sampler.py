@@ -232,7 +232,7 @@ class FastSampler:
     def constrained_posterior(
         self,
         n_samples: int,
-        max_samples: int,
+        max_samples: int = 1000,
         constraints: list = [],
         normalize: bool = True,
     ):

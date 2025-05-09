@@ -104,8 +104,10 @@ class Captain(Agent):
 
         return result
 
-    def move(self, state: Board, history: List[Dict], sunk: str):
-        result, move_cache = self.move_strategy.make_move(state, history, sunk)
+    def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
+        result, move_cache = self.move_strategy.make_move(
+            state, history, sunk, constraints
+        )
 
         if self.use_cache:
             self.write_cache(
@@ -159,6 +161,7 @@ class LLMDecisionStrategy(DecisionStrategy):
     def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         decision = None
         prompts = []
+
         if questions_remaining > 0:
             decision_prompt = DecisionPrompt(
                 target_occ_tiles=state,
@@ -211,7 +214,7 @@ class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
         self.rng = rng
 
-    def make_move(self, state, history, sunk):
+    def make_move(self, state, history, sunk, constraints):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
@@ -222,12 +225,11 @@ class RandomMoveStrategy(MoveStrategy):
 
 
 class MAPMoveStrategy(MoveStrategy):
-    def __init__(self, rng, n_samples=10000, constraints=[]):
+    def __init__(self, rng, n_samples=10000):
         self.rng = rng
         self.n_samples = n_samples
-        self.constraints = constraints
 
-    def make_move(self, state, history, sunk):
+    def make_move(self, state, history, sunk, constraints):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -235,10 +237,10 @@ class MAPMoveStrategy(MoveStrategy):
             seed=self.rng,
         )
 
-        if self.constraints != []:
+        if constraints != []:
             # Compute the raw posterior counts over board positions
             posterior = sampler.constrained_posterior(
-                n_samples=self.n_samples, normalize=False, constraints=self.constraints
+                n_samples=self.n_samples, normalize=False, constraints=constraints
             )
         else:
             # Compute the raw posterior counts over board positions
@@ -272,7 +274,7 @@ class LLMMoveStrategy(MoveStrategy):
         self.use_cot = use_cot
         self.moves_remaining = moves_remaining
 
-    def make_move(self, state, history, sunk):
+    def make_move(self, state, history, sunk, constraints):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
