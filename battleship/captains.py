@@ -104,7 +104,7 @@ class Captain(Agent):
 
         return result
 
-    def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
+    def move(self, state: Board, history: List[Dict], sunk: str, constraints: Dict):
         result, move_cache = self.move_strategy.make_move(
             state, history, sunk, constraints
         )
@@ -237,10 +237,13 @@ class MAPMoveStrategy(MoveStrategy):
             seed=self.rng,
         )
 
-        if constraints != []:
+        if constraints["constraints"] != []:
             # Compute the raw posterior counts over board positions
             posterior = sampler.constrained_posterior(
-                n_samples=self.n_samples, normalize=False, constraints=constraints
+                true_board=constraints["true_board"],
+                n_samples=self.n_samples,
+                normalize=False,
+                constraints=constraints["constraints"],
             )
         else:
             # Compute the raw posterior counts over board positions
@@ -311,9 +314,9 @@ class LLMMoveStrategy(MoveStrategy):
                 Prompt(
                     prompt=move_prompt.to_chat_format(),
                     full_completion=completion.choices[0].message.content,
-                    extracted_completion=coords_to_tile(candidate_move)
-                    if candidate_move
-                    else None,
+                    extracted_completion=(
+                        coords_to_tile(candidate_move) if candidate_move else None
+                    ),
                     occ_tiles=state.board,
                 )
             )

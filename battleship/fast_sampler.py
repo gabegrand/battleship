@@ -231,8 +231,9 @@ class FastSampler:
 
     def constrained_posterior(
         self,
+        true_board: Board,
         n_samples: int,
-        max_samples: int = 1000,
+        max_samples: int = 100000,
         constraints: list = [],
         normalize: bool = True,
     ):
@@ -243,29 +244,33 @@ class FastSampler:
 
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
         total_sampled = 0
+        total_valid = 0
         constraint_satisfactions = []
         active_constraints = constraints.copy()
 
-        while total_sampled < n_samples and total_sampled < max_samples:
+        while total_valid < n_samples and total_sampled < max_samples:
             # Generate candidate boards in batches
             candidate_boards = []
-            for _ in range(2 * (n_samples - total_sampled)):
+            # for _ in range(2 * (n_samples - total_sampled)):
+            for _ in range(2):
                 new_board = self.populate_board()
                 if new_board is not None:
                     candidate_boards.append(new_board)
+                    total_sampled += 1
 
             # Check constraints and update counts
             for new_board in candidate_boards:
-                board_satisfactions = [
-                    constraint(self.board) == constraint(new_board)
-                    for constraint in active_constraints
-                ]
+                board_satisfactions = []
+                for constraint in active_constraints:
+                    board_satisfactions.append(
+                        constraint(true_board) == constraint(new_board.board)
+                    )
                 constraint_satisfactions.append(board_satisfactions)
 
                 if all(board_satisfactions):
                     board_counts += (new_board.board > 0).astype(int)
-                    total_sampled += 1
-                    if total_sampled >= n_samples:
+                    total_valid += 1
+                    if total_valid >= n_samples:
                         break
 
             # Check for poisoned constraints
@@ -277,6 +282,9 @@ class FastSampler:
                         if not active_constraints:
                             break
 
+        print(
+            f"sampled with {len(active_constraints)} constraints: {total_valid} sampled, {total_sampled}/{max_samples} total"
+        )
         if normalize and total_sampled > 0:
             return board_counts / total_sampled
         return board_counts

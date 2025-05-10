@@ -135,7 +135,10 @@ class BattleshipGame:
                 self.state,
                 self.history,
                 sunk_string,
-                self.captain.sampling_constraints,
+                {
+                    "constraints": self.captain.sampling_constraints,
+                    "true_board": self.target.board,
+                },
             )
             self.update_state(coords)
             self.move_count += 1
