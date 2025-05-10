@@ -251,8 +251,7 @@ class FastSampler:
         while total_valid < n_samples and total_sampled < max_samples:
             # Generate candidate boards in batches
             candidate_boards = []
-            # for _ in range(2 * (n_samples - total_sampled)):
-            for _ in range(2):
+            for _ in range(2 * (n_samples - total_valid)):
                 new_board = self.populate_board()
                 if new_board is not None:
                     candidate_boards.append(new_board)
@@ -260,10 +259,12 @@ class FastSampler:
 
             # Check constraints and update counts
             for new_board in candidate_boards:
+                sym_board = self.board.to_symbolic_array()
+                sym_new_board = new_board.to_symbolic_array()
                 board_satisfactions = []
                 for constraint in active_constraints:
                     board_satisfactions.append(
-                        constraint(true_board) == constraint(new_board.board)
+                        constraint(sym_board) == constraint(sym_new_board)
                     )
                 constraint_satisfactions.append(board_satisfactions)
 
@@ -286,7 +287,7 @@ class FastSampler:
             f"sampled with {len(active_constraints)} constraints: {total_valid} sampled, {total_sampled}/{max_samples} total"
         )
         if normalize and total_sampled > 0:
-            return board_counts / total_sampled
+            return board_counts / total_valid
         return board_counts
 
     def heatmap(self, n_samples: int, **fig_kwargs):
