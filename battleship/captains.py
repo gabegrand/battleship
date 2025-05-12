@@ -177,6 +177,8 @@ class LLMDecisionStrategy(DecisionStrategy):
                 sunk=sunk,
             )
 
+            print(decision_prompt.to_chat_format())
+
             candidate_decision = None
             for _ in range(n_attempts):
                 completion = client.chat.completions.create(
@@ -307,6 +309,8 @@ class LLMMoveStrategy(MoveStrategy):
             sunk=sunk,
         )
 
+        print(move_prompt.to_chat_format())
+
         candidate_move = None
         prompts = []
         for _ in range(self.n_attempts):
@@ -414,6 +418,8 @@ class EIGQuestionStrategy(QuestionStrategy):
                 best_eig = eig
                 best_question = candidate_question
 
+            print(f"Candidate question: {candidate_question.text}, EIG: {eig}")
+
             prompts.append(
                 Prompt(
                     prompt=question_prompt.to_chat_format(),
@@ -423,6 +429,8 @@ class EIGQuestionStrategy(QuestionStrategy):
                     eig=eig,
                 )
             )
+
+        print(f"Best question: {best_question.text}, EIG: {best_eig}")
 
         return best_question, CacheData(
             message_text=best_question.text,
