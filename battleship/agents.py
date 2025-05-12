@@ -64,9 +64,9 @@ SUMMARY_CSV_COLUMNS = [
     "f1_score",
 ]
 
-MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
-DECISION_PATTERN = re.compile("^(Question|Move)$")
-MOVE_COT_PATTERN = lambda size: re.compile(
+# MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
+DECISION_PATTERN = re.compile(r"\s*<answer>\s*(Question|Move)\s*</answer>\s*")
+MOVE_PATTERN = lambda size: re.compile(
     rf"\s*<answer>\s*({config_move_regex(size)})\s*</answer>\s*"
 )
 BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
@@ -146,11 +146,11 @@ class CodeQuestion:
 
 
 class NullCodeQuestion(CodeQuestion):
-    def __init__(self):
+    def __init__(self, translation_prompt):
         self.question = None
         self.fn = lambda true_board, partial_board: None
         self.fn_str = None
-        self.translation_prompt = None
+        self.translation_prompt = translation_prompt
         self.full_completion = None
 
 
@@ -261,7 +261,9 @@ class EIGCalculator:
 
     def calculate_eig(self, question, state, pregenerated_question=None, samples=100):
         if pregenerated_question is None:
-            code_question = self.spotter.translate(question, [], state.board)
+            code_question = self.spotter.translate(
+                question=question, occ_tiles=state.board, history=None
+            )
         else:
             code_question = pregenerated_question
 
@@ -272,7 +274,7 @@ class EIGCalculator:
             seed=self.rng,
         )
 
-        results = {"Yes": 0, "No": 0}
+        results = {"True": 0, "False": 0}
         curr_time = time()
         while sum(results.values()) < samples:
             if time() - curr_time > 15:
@@ -281,13 +283,11 @@ class EIGCalculator:
             board = None
             while not board:
                 board = sampler.populate_board()
-            board = board.to_symbolic_array()
-            result = code_question(true_board=board, partial_board=state.board)
-            if type(result) == str:
-                try:
-                    results[result] += 1
-                except:
-                    break
+            result = code_question(true_board=board.board, partial_board=state.board)
+            try:
+                results[str(result)] += 1
+            except:
+                break
 
         if any(v == 0 for v in results.values()):
             return 0

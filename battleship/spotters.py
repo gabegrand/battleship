@@ -87,7 +87,11 @@ class Spotter(Agent):
 
 class DirectSpotterModel(Spotter):
     def _get_model_answer(
-        self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
+        self,
+        question: Question,
+        occ_tiles: np.ndarray,
+        history: List[dict] = None,
+        n_attempts=3,
     ) -> Tuple[Answer, CacheData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
@@ -101,32 +105,25 @@ class DirectSpotterModel(Spotter):
         )
         logging.info(str(prompt))
 
-        completion = client.chat.completions.create(
-            model=self.model_string,
-            messages=prompt.to_chat_format(),
-            temperature=self.temperature,
-        )
-        logging.info(completion.choices[0].message.content)
+        response = None
+        for attempt in range(n_attempts):
+            completion = client.chat.completions.create(
+                model=self.model_string,
+                messages=prompt.to_chat_format(),
+                temperature=self.temperature,
+            )
+            response_match = BOOL_ANSWER_PATTERN.search(
+                completion.choices[0].message.content
+            )
+            if response_match:
+                response = response_match.group(
+                    1
+                )  # This extracts just the "Yes" or "No"
+            else:
+                response = None
 
-        if not self.use_cot:
-            response = completion.choices[0].message.content
-        else:
-            response = None
-            while response is None:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-                response_match = BOOL_ANSWER_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-                if response_match:
-                    response = response_match.group(
-                        1
-                    )  # This extracts just the "Yes" or "No"
-                else:
-                    response = None
+            if response is not None:
+                break
 
         logging.info(response)
 
@@ -134,7 +131,7 @@ class DirectSpotterModel(Spotter):
             response = response.lower()
 
         output_prompt = Prompt(
-            prompt=output_prompt.to_chat_format(),
+            prompt=prompt.to_chat_format(),
             full_completion=completion.choices[0].message.content,
             extracted_completion=response,
             occ_tiles=occ_tiles,
@@ -198,7 +195,7 @@ class CodeSpotterModel(Spotter):
                     f"CodeQuestion.translate(): Error in evaluation (attempt {attempt+1}/{n_attempts}): {e}\n{traceback.format_exc()}"
                 )
 
-        return NullCodeQuestion()
+        return NullCodeQuestion(translation_prompt=translation_prompt)
 
     def extract_code(self, text: str) -> str:
         """
@@ -231,6 +228,12 @@ class CodeSpotterModel(Spotter):
         result = code_question(true_board, partial_board)
 
         # Check if the result is a valid answer
+        if isinstance(result, np.bool_):
+            result = bool(result)
+            logging.warning(
+                f"CodeQuestion() produced a numpy boolean {result}; casting to Python bool."
+            )
+
         if result is True:
             result_text = "yes"
         elif result is False:
