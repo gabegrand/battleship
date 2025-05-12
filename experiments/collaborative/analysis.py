@@ -1,5 +1,8 @@
 import json
 import os
+import warnings
+from typing import List
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +10,22 @@ import pandas as pd
 import seaborn as sns
 
 from battleship.board import Board
+
+
+MODEL_DISPLAY_NAMES = {
+    "claude-3-5-haiku-latest": "claude-3.5-haiku",
+    "claude-3-7-sonnet-latest": "claude-3.7-sonnet",
+    "deepseek/deepseek-chat-v3-0324": "deepseek-chat-v3",
+    "meta-llama/llama-3.1-70b-instruct": "llama-3.1-70b-instruct",
+    "meta-llama/llama-3.1-405b-instruct": "llama-3.1-405b-instruct",
+    "meta-llama/llama-3.3-70b-instruct": "llama-3.3-70b-instruct",
+    "meta-llama/llama-4-maverick": "llama-4-maverick",
+    "meta-llama/llama-4-scout": "llama-4-scout",
+    "gpt-4.1": "gpt-4.1",
+    "gpt-4o": "gpt-4o",
+    "o3": "o3",
+    "o4-mini": "o4-mini",
+}
 
 
 def load_dataset(
@@ -89,3 +108,117 @@ def load_dataset(
     df = pd.concat([df, scores_df], axis=1)
 
     return df
+
+
+def get_gold_answer_dataset(df_gold) -> Tuple[List[bool], List[bool]]:
+    df = df_gold.copy()
+    df = df[~pd.isnull(df["gold_answer"])]
+
+    gold_labels = df["gold_answer"].apply(parse_answer).tolist()
+    human_labels = df["messageText"].apply(parse_answer).tolist()
+
+    assert all(label in [True, False] for label in gold_labels)
+    assert all(label in [True, False, None] for label in human_labels)
+
+    dropped_count = sum(label is None for label in human_labels)
+    print(f"Warning: Dropped {dropped_count} instances where human label is None.")
+    valid_idxs = [i for i, label in enumerate(human_labels) if label is not None]
+    gold_labels = [gold_labels[i] for i in valid_idxs]
+    human_labels = [human_labels[i] for i in valid_idxs]
+    assert all(
+        label in [True, False] for label in gold_labels
+    ), "Gold labels should be True or False"
+    assert all(
+        label in [True, False] for label in human_labels
+    ), "Human labels should be True or False"
+
+    assert len(gold_labels) == len(
+        human_labels
+    ), "Mismatch in lengths of gold and human labels"
+
+    return gold_labels, human_labels
+
+
+def load_spotter_results(path: str):
+    """Load all JSON files in a directory and concatenate them into a single DataFrame."""
+    # List of JSON file paths
+    json_paths = sorted(
+        [
+            os.path.join(path, filename)
+            for filename in os.listdir(path)
+            if filename.endswith(".json")
+        ]
+    )
+
+    # Concatenate DataFrames from all JSON files
+    df = pd.concat([pd.read_json(path) for path in json_paths], ignore_index=True)
+
+    df["answer"] = df["answer"].map(parse_answer)
+    df["true_answer"] = df["true_answer"].map(parse_answer)
+    df["is_correct"] = df["answer"] == df["true_answer"]
+
+    def _get_spotter_type_short(spotter_type, cot):
+        if spotter_type == "DirectSpotterModel" and not cot:
+            return "Base"
+        elif spotter_type == "DirectSpotterModel" and cot:
+            return "+ CoT"
+        elif spotter_type == "CodeSpotterModel" and not cot:
+            return "+ Code"
+        elif spotter_type == "CodeSpotterModel" and cot:
+            return "+ CoT + Code"
+        else:
+            raise ValueError((spotter_type, cot))
+
+    spotter_type_short_order = [
+        "Base",
+        "+ CoT",
+        "+ Code",
+        "+ CoT + Code",
+    ]
+    df["spotter_type_short"] = pd.Categorical(
+        df[["spotterModel", "CoT"]].apply(
+            lambda x: _get_spotter_type_short(x["spotterModel"], x["CoT"]), axis=1
+        ),
+        categories=spotter_type_short_order,
+        ordered=True,
+    )
+
+    df["model_display_name"] = pd.Categorical(
+        df["model"].map(MODEL_DISPLAY_NAMES),
+        categories=list(MODEL_DISPLAY_NAMES.values()),
+        ordered=True,
+    )
+
+    df = df.sort_values(by=["model_display_name", "spotter_type_short"])
+
+    return df
+
+
+def parse_answer(answer: str) -> bool:
+    if isinstance(answer, bool):
+        return answer
+
+    if pd.isnull(answer):
+        return None
+
+    assert isinstance(answer, str), f"Answer should be a string, got {type(answer)}"
+    answer = answer.lower()
+    if answer == "true":
+        return True
+    elif answer == "false":
+        return False
+    elif answer == "yes":
+        return True
+    elif answer == "no":
+        return False
+    elif answer == "(captain timed out)":
+        return None
+    elif answer == "(answer timed out)":
+        return None
+    elif answer == "(no question asked)":
+        return None
+    elif answer == "none":
+        return None
+    else:
+        warnings.warn(f"Unknown answer will be parsed as `null`: {answer}")
+        return None
