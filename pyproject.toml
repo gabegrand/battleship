@@ -20,6 +20,7 @@ matplotlib = "^3.8.1"
 lark = "^1.1.8"
 nltk = "^3.8.1"
 openai = "^1.77.0"
+scikit-learn = "^1.6.1"
 
 [tool.poetry.group.repos.dependencies]
 # expected-information-gain = { path = "./EIG/", develop = true }
