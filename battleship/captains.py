@@ -17,7 +17,6 @@ from battleship.agents import CSV_ROUND_FILE
 from battleship.agents import CSV_STAGE_FILE
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
-from battleship.agents import MOVE_COT_PATTERN
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Prompt
 from battleship.agents import Question
@@ -43,7 +42,9 @@ class DecisionStrategy(ABC):
 
 class MoveStrategy(ABC):
     @abstractmethod
-    def make_move(self, state, history, sunk) -> Tuple[Tuple[int, int], Dict]:
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ) -> Tuple[Tuple[int, int], Dict]:
         pass
 
 
@@ -92,8 +93,14 @@ class Captain(Agent):
         sunk: str,
     ) -> Decision:
         self.decision_counter.increment_counter()
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
         result, decision_cache = self.decision_strategy.make_decision(
-            state, history, questions_remaining, moves_remaining, sunk
+            state,
+            history,
+            questions_remaining,
+            moves_remaining,
+            sunk,
         )
 
         if self.use_cache:
@@ -106,7 +113,12 @@ class Captain(Agent):
 
     def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
         result, move_cache = self.move_strategy.make_move(
-            state, history, sunk, constraints
+            state,
+            history,
+            sunk,
+            self.questions_remaining,
+            self.moves_remaining,
+            constraints,
         )
 
         if self.use_cache:
@@ -119,7 +131,7 @@ class Captain(Agent):
 
     def question(self, state: Board, history: List[Dict], sunk: str):
         result, question_cache = self.question_strategy.ask_question(
-            state, history, sunk
+            state, history, sunk, self.questions_remaining, self.moves_remaining
         )
 
         if self.use_cache:
@@ -158,7 +170,9 @@ class LLMDecisionStrategy(DecisionStrategy):
         self.temperature = temperature
         self.use_cot = use_cot
 
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+    def make_decision(
+        self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
+    ):
         decision = None
         prompts = []
 
@@ -168,27 +182,22 @@ class LLMDecisionStrategy(DecisionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
 
             candidate_decision = None
-            while candidate_decision is None:
+            for _ in range(n_attempts):
                 completion = client.chat.completions.create(
                     model=self.model_string,
                     messages=decision_prompt.to_chat_format(),
                     temperature=self.temperature,
                 )
-                if self.use_cot:
-                    match = ANSWER_MATCH_PATTERN.search(
-                        completion.choices[0].message.content
-                    )
-                    if match is not None:
-                        candidate_decision = match.group(1)
-                else:
-                    candidate_decision = DECISION_PATTERN.match(
-                        completion.choices[0].message.content
-                    ).group(0)
+                match = DECISION_PATTERN.search(completion.choices[0].message.content)
+
+                if match is not None:
+                    candidate_decision = match.group(1)
 
                 prompts.append(
                     Prompt(
@@ -199,11 +208,15 @@ class LLMDecisionStrategy(DecisionStrategy):
                     )
                 )
 
+                if candidate_decision:
+                    break
+
             decision = (
                 Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
             )
         else:
             decision = Decision.MOVE
+
         return decision, CacheData(
             message_text=decision, occ_tiles=state.board, prompts=prompts
         )
@@ -214,7 +227,9 @@ class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
         self.rng = rng
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
@@ -229,7 +244,9 @@ class MAPMoveStrategy(MoveStrategy):
         self.rng = rng
         self.n_samples = n_samples
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -267,14 +284,22 @@ class MAPMoveStrategy(MoveStrategy):
 
 class LLMMoveStrategy(MoveStrategy):
     def __init__(
-        self, model_string, temperature=None, use_cot=False, moves_remaining=None
+        self,
+        model_string,
+        temperature=None,
+        use_cot=False,
+        moves_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
         self.moves_remaining = moves_remaining
+        self.n_attempts = n_attempts
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
@@ -282,30 +307,26 @@ class LLMMoveStrategy(MoveStrategy):
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
-            moves_remaining=self.moves_remaining,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
         candidate_move = None
         prompts = []
-        while candidate_move is None or candidate_move in visible_tiles:
+        for _ in range(self.n_attempts):
+            # while candidate_move is None or candidate_move in visible_tiles:
             completion = client.chat.completions.create(
                 model=self.model_string,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
-            if self.use_cot:
-                match = MOVE_COT_PATTERN(state.size).search(
-                    completion.choices[0].message.content
-                )
-                if match is not None:
-                    candidate_move = tile_to_coords(match.group(1))
-            else:
-                candidate_move = MOVE_PATTERN(state.size).match(
-                    completion.choices[0].message.content
-                )
-                if candidate_move is not None:
-                    candidate_move = tile_to_coords(candidate_move.group())
+
+            candidate_move = MOVE_PATTERN(state.size).search(
+                completion.choices[0].message.content
+            )
+            if candidate_move is not None:
+                candidate_move = tile_to_coords(candidate_move.group(1))
 
             prompts.append(
                 Prompt(
@@ -318,8 +339,15 @@ class LLMMoveStrategy(MoveStrategy):
                 )
             )
 
-        return candidate_move, CacheData(
-            message_text=coords_to_tile(candidate_move),
+            if candidate_move is not None and candidate_move not in visible_tiles:
+                return candidate_move, CacheData(
+                    message_text=coords_to_tile(candidate_move),
+                    occ_tiles=state.board,
+                    prompts=prompts,
+                )
+
+        return None, CacheData(
+            message_text=None,
             occ_tiles=state.board,
             prompts=prompts,
         )
@@ -336,6 +364,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         k=3,
         use_cot=False,
         questions_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.spotter = spotter
@@ -345,8 +374,9 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.use_cot = use_cot
         self.questions_remaining = questions_remaining
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.n_attempts = n_attempts
 
-    def ask_question(self, state, history, sunk):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
 
@@ -357,33 +387,26 @@ class EIGQuestionStrategy(QuestionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=self.questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
 
-            # Generate a candidate question
-            if not self.use_cot:
+            candidate_question_text = None
+            for _ in range(self.n_attempts):
                 completion = client.chat.completions.create(
                     model=self.model_string,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
                 )
-                candidate_question_text = completion.choices[0].message.content
-            else:
-                candidate_question_text = None
-                while candidate_question_text is None:
-                    completion = client.chat.completions.create(
-                        model=self.model_string,
-                        messages=question_prompt.to_chat_format(),
-                        temperature=None,
-                    )
-                    match = ANSWER_MATCH_PATTERN.search(
-                        completion.choices[0].message.content
-                    )
-                    if match:
-                        candidate_question_text = match.group(1)
+                match = ANSWER_MATCH_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+                if match:
+                    candidate_question_text = match.group(1)
 
-            # Create question object
+                if candidate_question_text is not None:
+                    break
             candidate_question = Question(text=candidate_question_text)
 
             # Calculate EIG for this question
@@ -416,72 +439,51 @@ class EIGQuestionStrategy(QuestionStrategy):
 
 class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
-        self, model_string, temperature=None, use_cot=False, questions_remaining=None
+        self,
+        model_string,
+        temperature=None,
+        use_cot=False,
+        spotter=None,
+        rng=None,
+        questions_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
         self.questions_remaining = questions_remaining
+        self.n_attempts = n_attempts
+        self.spotter = spotter
+        self.rng = rng
+        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
 
-    def ask_question(self, state, history, sunk):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
-            q_remaining=self.questions_remaining,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
-        if not self.use_cot:
-            completion = client.chat.completions.create(
-                model=self.model_string,
-                messages=question_prompt.to_chat_format(),
-                temperature=self.temperature,
-            )
-            candidate_question = completion.choices[0].message.content
-        else:
-            candidate_question = None
-            while candidate_question is None:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=question_prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-                candidate_question = ANSWER_MATCH_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-
-                if candidate_question:
-                    candidate_question = candidate_question.group(1)
-                else:
-                    candidate_question = None
-
         prompts = []
-        while candidate_question is None:
+        for _ in range(self.n_attempts):
             completion = client.chat.completions.create(
                 model=self.model_string,
                 messages=question_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
 
-            if self.use_cot:
-                candidate_question = ANSWER_MATCH_PATTERN.search(
-                    completion.choices[0].message.content
-                )
+            candidate_question = ANSWER_MATCH_PATTERN.search(
+                completion.choices[0].message.content
+            )
 
-                if candidate_question:
-                    candidate_question = candidate_question.group(1)
-                else:
-                    candidate_question = None
+            if candidate_question:
+                candidate_question = candidate_question.group(1)
             else:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=question_prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-
-                candidate_question = completion.choices[0].message.content
+                candidate_question = None
 
             prompts.append(
                 Prompt(
@@ -492,6 +494,16 @@ class LLMQuestionStrategy(QuestionStrategy):
                 )
             )
 
+            if candidate_question is not None:
+                break
+
+        eig = self.eig_calculator.calculate_eig(
+            Question(text=candidate_question), state, samples=1000
+        )
+
         return Question(text=candidate_question), CacheData(
-            message_text=candidate_question, occ_tiles=state.board, prompts=prompts
+            message_text=candidate_question,
+            occ_tiles=state.board,
+            prompts=prompts,
+            eig=eig,
         )
