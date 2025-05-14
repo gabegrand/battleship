@@ -85,8 +85,25 @@ class BasePrompt(object):
         """
         raise NotImplementedError()
 
-    def format_history(self) -> str:
-        text = ""
+    def get_prompt_prefix(self) -> List[dict]:
+        messages = []
+
+        system_prompt = PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC
+
+        history_messages = []
+        if self.history is not None:
+            formatted_history = self.format_history()
+            if formatted_history != []:
+                history_messages.append({"role": "system", "content": PROMPT_EXAMPLES})
+                history_messages.extend(formatted_history)
+
+        messages.append({"role": "system", "content": system_prompt})
+        messages.extend(history_messages)
+
+        return messages
+
+    def format_history(self) -> List[dict]:
+        messages = []
         for example in self.history:
             if example["decision"] == Decision.QUESTION:
                 # TODO: Implement dataloader for human data to make this cleaner
@@ -101,21 +118,29 @@ class BasePrompt(object):
                     else example["answer"]
                 )
 
-                text += f"{self.CAPTAIN} (question): {question_text}\n"
-                text += f"{self.SPOTTER} (answer): {answer_text}\n"
+                question = f"{self.CAPTAIN} (question): {question_text}\n"
+                answer = f"{self.SPOTTER} (answer): {answer_text}\n"
+
+                messages.append({"role": "user", "content": question})
+                messages.append({"role": "assistant", "content": answer})
 
             elif example["decision"] == Decision.MOVE:
                 # TODO: Implement dataloader for human data to make this cleaner
-                move_text = (
-                    str(example["move"])
-                    if example.get("move")
-                    else str(coords_to_tile(example["coords"]))
-                )
 
-                text += f"{self.CAPTAIN} (move): {move_text}\n"
+                if example.get("move"):
+                    move_text = str(example["move"])
+                else:
+                    if example.get("coords"):
+                        move_text = str(coords_to_tile(example["coords"]))
+                    else:
+                        move_text = None
+
+                move = f"{self.CAPTAIN} (move): {move_text}\n"
+
+                messages.append({"role": "user", "content": move})
             else:
                 raise ValueError(f"Unknown decision type: {example['decision']}")
-        return text
+        return messages
 
 
 """
@@ -153,7 +178,7 @@ PROMPT_DIRECT = (
 )
 PROMPT_COT = "Please think step-by-step about the task before returning your answer."
 
-PROMPT_EXAMPLES_MOVE = "Here are the past turns in the game so far:\n"
+PROMPT_EXAMPLES = "Here are the past turns in the game so far:\n"
 
 PROMPT_TARGET_BOARD_CAPTAIN = (
     "Here is the partial board, which is the view that is visible to the Captain:\n"
@@ -190,25 +215,13 @@ class SpotterPrompt(BasePrompt):
     def to_chat_format(self):
         messages = []
 
-        # Basic Spotter instructions
-        system_prompt = (
-            PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_TASK_BASE_SPOTTER
-        )
-        # Code vs. direct answering
-        if self.use_code:
-            system_prompt += PROMPT_TASK_CODE_SPOTTER
-        else:
-            system_prompt += PROMPT_TASK_DIRECT_SPOTTER
-
-        # Game history
-        if self.history is not None:
-            system_prompt += "\n\n" + PROMPT_EXAMPLES_MOVE
-            system_prompt += self.format_history()
+        messages_prefix = self.get_prompt_prefix()
 
         # Captain board (partial)
+        board_message = ""
         if self.target_occ_tiles is not None:
             board_str = str(Board.from_occ_tiles(self.target_occ_tiles).to_numpy())
-            system_prompt += "\n\n" + PROMPT_TARGET_BOARD_CAPTAIN + board_str
+            board_message += "\n\n" + PROMPT_TARGET_BOARD_CAPTAIN + board_str
 
         # Spotter board (true)
         board_str = str(
@@ -216,17 +229,28 @@ class SpotterPrompt(BasePrompt):
                 self.target_trial_id, self.target_trial_experiment
             ).to_numpy()
         )
-        system_prompt += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
+        board_message += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
 
-        # Chain-of-thought prompt (optional)
-        if self.use_cot:
-            system_prompt += "\n\n" + PROMPT_COT
+        # Task description
+        postfix = PROMPT_TASK_BASE_SPOTTER
+
+        # Code vs. direct answering
+        if self.use_code:
+            postfix += PROMPT_TASK_CODE_SPOTTER
         else:
-            system_prompt += "\n\n" + PROMPT_DIRECT
+            postfix += PROMPT_TASK_DIRECT_SPOTTER
 
-        system_prompt += "\n\n" + QUESTION_PRESENTATION_PROMPT
+        # Add CoT instruction if needed
+        if self.use_cot:
+            postfix += "\n" + PROMPT_COT
+        else:
+            postfix += "\n" + PROMPT_DIRECT
 
-        messages.append({"role": "system", "content": system_prompt})
+        postfix += "\n" + QUESTION_PRESENTATION_PROMPT
+
+        messages.extend(messages_prefix)
+        messages.append({"role": "system", "content": board_message})
+        messages.append({"role": "system", "content": postfix})
         messages.append(
             {
                 "role": "user",
@@ -252,162 +276,12 @@ PROMPT_TASK_DECISION = (
     "Please answer in a single word: 'Question' or 'Move', and enclose your final answer in <answer></answer> tags, e.g. <answer>Question</answer> or <answer>Move</answer>."
 )
 
-PROMPT_QUESTIONS_REMAINING = (
-    "You can ask {q_remaining} more questions over the course of the game."
-)
-
-PROMPT_SHIP_STATUS = "Ship Status: {sunk}"
-
-PROMPT_CURRENT_BOARD = "Here's your board:"
-
-
-class DecisionPrompt(BasePrompt):
-    """Prompt for generating decisions during a game of Battleship."""
-
-    def __init__(
-        self,
-        target_occ_tiles=None,
-        use_cot=False,
-        history=None,
-        q_remaining=None,
-        sunk=None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.history = history
-        self.q_remaining = q_remaining
-        self.target_occ_tiles = target_occ_tiles
-        self.use_cot = use_cot
-        self.sunk = sunk
-        if self.board_format is None:
-            raise ValueError("Board format must be specified.")
-
-    def to_chat_format(self):
-        messages = []
-
-        # System prompt
-        system_prompt = (
-            PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
-        )
-
-        system_prompt += PROMPT_TASK_DECISION
-
-        # Game history
-        if self.history is not None:
-            system_prompt += "\n\n" + PROMPT_EXAMPLES_MOVE
-            system_prompt += self.format_history()
-
-        # Current game state
-        system_prompt += "\n\n" + PROMPT_QUESTIONS_REMAINING.format(
-            q_remaining=self.q_remaining
-        )
-
-        if self.sunk is not None:
-            system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
-
-        # Board state
-        board_str = (
-            "1, 2, 3, 4, 5, 6, 7, 8\n" + str(self.target_occ_tiles.to_numpy())
-            if self.target_occ_tiles
-            else ""
-        )
-        system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
-
-        # Add CoT instruction if needed
-        if self.use_cot:
-            system_prompt += "\n" + PROMPT_COT
-        else:
-            system_prompt += "\n" + PROMPT_DIRECT
-
-        messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": f"{self.CAPTAIN} (decision): "})
-
-        # print(messages)
-        return messages
-
-
-# ====================
-# Move Prompt Constants
-# ====================
-
 PROMPT_TASK_MOVE = (
     "You will be given a partially-revealed game board. "
     "Your task is to give the coordinates of the hidden tile you think is most likely to contain a ship tile. "
     "Hidden tiles are marked by '-1'. "
     "Respond with only the coordinates (e.g., A1, B2, etc.), and enclose your answer in <answer></answer> tags, e.g. <answer>A1</answer>."
 )
-
-PROMPT_MOVES_REMAINING = "You have {moves_remaining} moves left before the game ends."
-
-
-class MovePrompt(BasePrompt):
-    """Prompt for generating moves during a game of Battleship."""
-
-    def __init__(
-        self,
-        target_occ_tiles=None,
-        use_cot=False,
-        history=None,
-        moves_remaining=None,
-        sunk=None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.history = history
-        self.target_occ_tiles = target_occ_tiles
-        self.use_cot = use_cot
-        self.moves_remaining = moves_remaining
-        self.sunk = sunk
-        if self.board_format is None:
-            raise ValueError("Board format must be specified.")
-
-    def to_chat_format(self):
-        messages = []
-
-        # System prompt
-        system_prompt = (
-            PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
-        )
-
-        system_prompt += PROMPT_TASK_MOVE
-
-        # Game history
-        if self.history:
-            system_prompt += "\n\n" + PROMPT_EXAMPLES_MOVE
-            system_prompt += self.format_history()
-
-        # Current game state
-        system_prompt += "\n\n" + PROMPT_MOVES_REMAINING.format(
-            moves_remaining=self.moves_remaining
-        )
-
-        if self.sunk is not None:
-            system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
-
-        # Board state
-        board_str = (
-            "1, 2, 3, 4, 5, 6, 7, 8\n" + str(self.target_occ_tiles.to_numpy())
-            if self.target_occ_tiles
-            else ""
-        )
-        system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
-
-        # Add CoT instruction if needed
-        if self.use_cot:
-            system_prompt += "\n" + PROMPT_COT
-        else:
-            system_prompt += "\n" + PROMPT_DIRECT
-
-        messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": f"{self.CAPTAIN} (move): "})
-
-        # print(messages)
-        return messages
-
-
-# ====================
-# Question Prompt Constants
-# ====================
 
 PROMPT_TASK_QUESTION = (
     "You will be given a partially-revealed game board. "
@@ -416,90 +290,185 @@ PROMPT_TASK_QUESTION = (
     "Make sure to enclose your question in <answer></answer> tags, e.g. <answer>Is the sky blue?</answer>."
 )
 
-# PROMPT_TASK_QUESTION_COT = (
-#     "You will be given a partially-revealed game board. "
-#     "Your task is to ask a single question that will help you gain the most information possible about the position of the remaining hidden ships on the board. "
-#     "You can ask any question, but it must be answerable with a Boolean answer (Yes/No). "
-#     "Please think about this step by step, and when you've come up with an answer, "
-# )
+PROMPT_QUESTIONS_AND_MOVES_REMAINING = "You can ask {q_remaining} more questions over the course of the game, and can fire {moves_remaining} more times."
 
-PROMPT_EXAMPLES_QUESTION = (
-    "Here are the past turns in the game so far, which include what questions have already been asked about the board, and what moves have already been made. "
-    "Make sure your questions are not similar to each other."
-)
+PROMPT_SHIP_STATUS = "Ship Status: {sunk}"
 
-PROMPT_QUESTIONS_REMAINING_QUESTION = "Including the one you are about to ask, you have {q_remaining} questions remaining."
-
-PROMPT_SEQUENTIAL_QUESTIONS = "You've already considered asking the following questions, so make sure to ask something different: {sequential_questions}."
+PROMPT_CURRENT_BOARD = "Here's your board:"
 
 
-class QuestionPrompt(BasePrompt):
-    """Prompt for generating questions for the Battleship task."""
+class CaptainPrompt(BasePrompt):
+    """Prompt for generating decisions during a game of Battleship."""
 
     def __init__(
         self,
         target_occ_tiles=None,
-        history=None,
         use_cot=False,
-        q_remaining=None,
+        history=None,
+        questions_remaining=None,
+        moves_remaining=None,
         sunk=None,
-        sequential_questions="",
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.history = history
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
         self.target_occ_tiles = target_occ_tiles
         self.use_cot = use_cot
-        self.q_remaining = q_remaining
         self.sunk = sunk
-        self.sequential_questions = sequential_questions
+
+        self.task_prompt = None
+
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
     def to_chat_format(self):
         messages = []
 
-        # System prompt
-        system_prompt = (
-            PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
-        )
-
-        system_prompt += PROMPT_TASK_QUESTION
-
-        # Game history
-        if self.history:
-            system_prompt += "\n\n" + PROMPT_EXAMPLES_QUESTION
-            system_prompt += self.format_history()
-
-        # Current game state
-        system_prompt += "\n\n" + PROMPT_QUESTIONS_REMAINING_QUESTION.format(
-            q_remaining=self.q_remaining
-        )
-
-        if self.sequential_questions:
-            system_prompt += "\n" + PROMPT_SEQUENTIAL_QUESTIONS.format(
-                sequential_questions=self.sequential_questions
-            )
-
-        if self.sunk is not None:
-            system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
+        messages_prefix = self.get_prompt_prefix()
 
         # Board state
         board_str = (
-            "1, 2, 3, 4, 5, 6, 7, 8\n" + str(self.target_occ_tiles.to_numpy())
-            if self.target_occ_tiles
-            else ""
+            str(self.target_occ_tiles.to_numpy()) if self.target_occ_tiles else ""
         )
-        system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
+        board_message = "\n\n" + PROMPT_CURRENT_BOARD + board_str
+
+        # Task description
+        postfix = PROMPT_SYSTEM_CAPTAIN + "\n\n" + self.task_prompt
+
+        # Qs and moves remaining, ship tracker
+        postfix += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
+            q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
+        )
+
+        postfix += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
 
         # Add CoT instruction if needed
         if self.use_cot:
-            system_prompt += "\n" + PROMPT_COT
+            postfix += "\n" + PROMPT_COT
         else:
-            system_prompt += "\n" + PROMPT_DIRECT
+            postfix += "\n" + PROMPT_DIRECT
 
-        messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": f"{self.CAPTAIN} (question): "})
+        messages.extend(messages_prefix)
+        messages.append({"role": "system", "content": board_message})
+        messages.append({"role": "system", "content": postfix})
 
-        # print(messages)
         return messages
+
+        # System prompt
+        # system_prompt = (
+        #     PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
+        # )
+
+        # system_prompt += self.task_prompt
+
+        # # Game history
+        # if self.history is not None:
+        #     system_prompt += "\n\n" + PROMPT_EXAMPLES
+        #     system_prompt += self.format_history()
+
+        # # Current game state
+        # system_prompt += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
+        #     q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
+        # )
+
+        # if self.sunk is not None:
+        #     system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
+
+        # # Board state
+        # board_str = (
+        #     str(self.target_occ_tiles.to_numpy()) if self.target_occ_tiles else ""
+        # )
+        # system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
+
+        # # Add CoT instruction if needed
+        # if self.use_cot:
+        #     system_prompt += "\n" + PROMPT_COT
+        # else:
+        #     system_prompt += "\n" + PROMPT_DIRECT
+
+        # messages.append({"role": "system", "content": system_prompt})
+
+        # return messages
+
+
+class DecisionPrompt(CaptainPrompt):
+    """Prompt for generating decisions during a game of Battleship."""
+
+    def __init__(
+        self,
+        target_occ_tiles=None,
+        use_cot=False,
+        history=None,
+        questions_remaining=None,
+        moves_remaining=None,
+        sunk=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.history = history
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+        self.target_occ_tiles = target_occ_tiles
+        self.use_cot = use_cot
+        self.sunk = sunk
+
+        self.task_prompt = PROMPT_TASK_DECISION
+
+        if self.board_format is None:
+            raise ValueError("Board format must be specified.")
+
+
+class MovePrompt(CaptainPrompt):
+    """Prompt for generating decisions during a game of Battleship."""
+
+    def __init__(
+        self,
+        target_occ_tiles=None,
+        use_cot=False,
+        history=None,
+        questions_remaining=None,
+        moves_remaining=None,
+        sunk=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.history = history
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+        self.target_occ_tiles = target_occ_tiles
+        self.use_cot = use_cot
+        self.sunk = sunk
+
+        self.task_prompt = PROMPT_TASK_MOVE
+
+        if self.board_format is None:
+            raise ValueError("Board format must be specified.")
+
+
+class QuestionPrompt(CaptainPrompt):
+    """Prompt for generating decisions during a game of Battleship."""
+
+    def __init__(
+        self,
+        target_occ_tiles=None,
+        use_cot=False,
+        history=None,
+        questions_remaining=None,
+        moves_remaining=None,
+        sunk=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.history = history
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
+        self.target_occ_tiles = target_occ_tiles
+        self.use_cot = use_cot
+        self.sunk = sunk
+
+        self.task_prompt = PROMPT_TASK_QUESTION
+
+        if self.board_format is None:
+            raise ValueError("Board format must be specified.")

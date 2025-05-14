@@ -42,7 +42,9 @@ class DecisionStrategy(ABC):
 
 class MoveStrategy(ABC):
     @abstractmethod
-    def make_move(self, state, history, sunk) -> Tuple[Tuple[int, int], Dict]:
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ) -> Tuple[Tuple[int, int], Dict]:
         pass
 
 
@@ -111,7 +113,12 @@ class Captain(Agent):
 
     def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
         result, move_cache = self.move_strategy.make_move(
-            state, history, sunk, constraints, self.moves_remaining
+            state,
+            history,
+            sunk,
+            self.questions_remaining,
+            self.moves_remaining,
+            constraints,
         )
 
         if self.use_cache:
@@ -124,7 +131,7 @@ class Captain(Agent):
 
     def question(self, state: Board, history: List[Dict], sunk: str):
         result, question_cache = self.question_strategy.ask_question(
-            state, history, sunk, self.questions_remaining
+            state, history, sunk, self.questions_remaining, self.moves_remaining
         )
 
         if self.use_cache:
@@ -175,11 +182,10 @@ class LLMDecisionStrategy(DecisionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
-
-            print(decision_prompt.to_chat_format())
 
             candidate_decision = None
             for _ in range(n_attempts):
@@ -221,7 +227,9 @@ class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
         self.rng = rng
 
-    def make_move(self, state, history, sunk, constraints, moves_remaining):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
@@ -236,7 +244,9 @@ class MAPMoveStrategy(MoveStrategy):
         self.rng = rng
         self.n_samples = n_samples
 
-    def make_move(self, state, history, sunk, constraints, moves_remaining):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -279,7 +289,7 @@ class LLMMoveStrategy(MoveStrategy):
         temperature=None,
         use_cot=False,
         moves_remaining=None,
-        n_attempts=15,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.temperature = temperature
@@ -287,7 +297,9 @@ class LLMMoveStrategy(MoveStrategy):
         self.moves_remaining = moves_remaining
         self.n_attempts = n_attempts
 
-    def make_move(self, state, history, sunk, constraints, moves_remaining):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
@@ -295,23 +307,22 @@ class LLMMoveStrategy(MoveStrategy):
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
+            questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
-        print(move_prompt.to_chat_format())
-
         candidate_move = None
         prompts = []
-        # for _ in range(self.n_attempts):
-        while candidate_move is None and candidate_move not in visible_tiles:
+        for _ in range(self.n_attempts):
+            # while candidate_move is None or candidate_move in visible_tiles:
             completion = client.chat.completions.create(
                 model=self.model_string,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
 
-            candidate_move = MOVE_PATTERN(state.size).match(
+            candidate_move = MOVE_PATTERN(state.size).search(
                 completion.choices[0].message.content
             )
             if candidate_move is not None:
@@ -328,11 +339,15 @@ class LLMMoveStrategy(MoveStrategy):
                 )
             )
 
-            # if candidate_move is not None and candidate_move not in visible_tiles:
-            #    break
+            if candidate_move is not None and candidate_move not in visible_tiles:
+                return candidate_move, CacheData(
+                    message_text=coords_to_tile(candidate_move),
+                    occ_tiles=state.board,
+                    prompts=prompts,
+                )
 
-        return candidate_move, CacheData(
-            message_text=coords_to_tile(candidate_move),
+        return None, CacheData(
+            message_text=None,
             occ_tiles=state.board,
             prompts=prompts,
         )
@@ -361,7 +376,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
         self.n_attempts = n_attempts
 
-    def ask_question(self, state, history, sunk, questions_remaining):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
 
@@ -372,11 +387,10 @@ class EIGQuestionStrategy(QuestionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
-
-            print(question_prompt.to_chat_format())
 
             candidate_question_text = None
             for _ in range(self.n_attempts):
@@ -405,8 +419,6 @@ class EIGQuestionStrategy(QuestionStrategy):
                 best_eig = eig
                 best_question = candidate_question
 
-            print(f"Candidate question: {candidate_question.text}, EIG: {eig}")
-
             prompts.append(
                 Prompt(
                     prompt=question_prompt.to_chat_format(),
@@ -416,8 +428,6 @@ class EIGQuestionStrategy(QuestionStrategy):
                     eig=eig,
                 )
             )
-
-        print(f"Best question: {best_question.text}, EIG: {best_eig}")
 
         return best_question, CacheData(
             message_text=best_question.text,
@@ -433,6 +443,8 @@ class LLMQuestionStrategy(QuestionStrategy):
         model_string,
         temperature=None,
         use_cot=False,
+        spotter=None,
+        rng=None,
         questions_remaining=None,
         n_attempts=3,
     ):
@@ -441,14 +453,18 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.use_cot = use_cot
         self.questions_remaining = questions_remaining
         self.n_attempts = n_attempts
+        self.spotter = spotter
+        self.rng = rng
+        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
 
-    def ask_question(self, state, history, sunk, questions_remaining):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
-            q_remaining=questions_remaining,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
@@ -481,6 +497,13 @@ class LLMQuestionStrategy(QuestionStrategy):
             if candidate_question is not None:
                 break
 
+        eig = self.eig_calculator.calculate_eig(
+            Question(text=candidate_question), state, samples=1000
+        )
+
         return Question(text=candidate_question), CacheData(
-            message_text=candidate_question, occ_tiles=state.board, prompts=prompts
+            message_text=candidate_question,
+            occ_tiles=state.board,
+            prompts=prompts,
+            eig=eig,
         )
