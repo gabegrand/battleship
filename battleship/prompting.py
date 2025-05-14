@@ -149,7 +149,7 @@ PROMPT_TASK_CODE_SPOTTER = (
 )
 
 PROMPT_DIRECT = (
-    "Return your answer directly. Do not include any extra reasoning or prose."
+    "Return your answer directly. Do not include any extra reasoning or explanation."
 )
 PROMPT_COT = "Please think step-by-step about the task before returning your answer."
 
