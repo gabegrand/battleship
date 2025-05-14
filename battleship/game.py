@@ -138,7 +138,10 @@ class BattleshipGame:
                 sunk_string,
                 self.captain.sampling_constraints,
             )
-            self.update_state(coords)
+
+            if coords is not None:
+                self.update_state(coords)
+
             self.move_count += 1
             self.history.append(
                 {"stage": self.stage_count, "decision": Decision.MOVE, "coords": coords}

@@ -173,8 +173,16 @@ def create_captain(
     elif captain_type == "LLMDecisionCaptain":
         return Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
-            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
-            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(
+                model_string=model,
+                use_cot=False,
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=False,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+            ),
             seed=seed,
             model_string=model,
             use_cache=use_cache,
@@ -185,7 +193,12 @@ def create_captain(
         return Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
             move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
-            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=True,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+            ),
             seed=seed,
             model_string=model,
             use_cache=use_cache,

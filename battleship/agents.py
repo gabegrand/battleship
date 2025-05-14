@@ -65,12 +65,14 @@ SUMMARY_CSV_COLUMNS = [
 ]
 
 # MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
-DECISION_PATTERN = re.compile(r"\s*<answer>\s*(Question|Move)\s*</answer>\s*")
-MOVE_PATTERN = lambda size: re.compile(
-    rf"\s*<answer>\s*({config_move_regex(size)})\s*</answer>\s*"
+DECISION_PATTERN = re.compile(
+    r"\s*<answer>\s*(Question|Move)\s*(<answer>|</answer>)\s*"
 )
-BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
-ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
+MOVE_PATTERN = lambda size: re.compile(
+    rf"\s*<answer>\s*({config_move_regex(size)})\s*(<answer>|</answer>)\s*"
+)
+BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*(<answer>|</answer>)\s*")
+ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*(<answer>|</answer>)\s*")
 CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
 client = OpenAI()
@@ -278,7 +280,6 @@ class EIGCalculator:
         curr_time = time()
         while sum(results.values()) < samples:
             if time() - curr_time > 15:
-                # print("EIG calculation timed out")
                 return float("nan")
             board = None
             while not board:
