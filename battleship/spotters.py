@@ -91,7 +91,7 @@ class DirectSpotterModel(Spotter):
         question: Question,
         occ_tiles: np.ndarray,
         history: List[dict] = None,
-        n_attempts=3,
+        n_attempts=10,
     ) -> Tuple[Answer, CacheData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
@@ -149,7 +149,7 @@ class CodeSpotterModel(Spotter):
         question: Question,
         occ_tiles: np.ndarray,
         history: List[dict],
-        n_attempts: int = 3,
+        n_attempts: int = 10,
     ) -> CodeQuestion:
         translation_prompt = SpotterPrompt(
             target_trial_id=self.board_id,
