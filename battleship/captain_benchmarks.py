@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import glob
+import json
 import os
 import sys
+import uuid
 from copy import deepcopy
 from multiprocessing.dummy import Pool
 from pathlib import Path
 from random import randint
+from time import time
 
 import numpy as np
 import pandas as pd
 
+from battleship.agents import CACHE_DIR
 from battleship.agents import Counter
-from battleship.agents import CSV_ROUND_FILE
-from battleship.agents import SUMMARY_FILE
+from battleship.agents import HUMAN_SUMMARY_DIR
+from battleship.agents import PROMPTS_DIR
+from battleship.agents import RESULTS_DIR
+from battleship.agents import STAGE_DIR
 from battleship.board import Board
 from battleship.captains import AlwaysMoveDecisionStrategy
 from battleship.captains import Captain
@@ -27,27 +34,14 @@ from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
 
-# Define consistent CSV column names
-ROUND_CSV_COLUMNS = ["id", "boardId", "seed", "captainModel", "spotterModel"]
-RESULTS_CSV_COLUMNS = [
-    "roundId",
-    "captainType",
-    "boardId",
-    "hits",
-    "misses",
-    "is_won",
-    "question_count",
-    "precision",
-    "recall",
-    "f1_score",
-]
+HUMAN_MAX_QUESTIONS = 15
 
 
 def get_human_results(gold_annotations_path, round_data_path):
     stage_df = pd.read_csv(gold_annotations_path)
     round_df = pd.read_csv(round_data_path)
 
-    board_ids = round_df[["id", "board_id"]]
+    board_ids = round_df[["id", "board_id", "questionsRemaining"]]
     filtered_stage_df = stage_df[
         [
             "roundID",
@@ -64,15 +58,12 @@ def get_human_results(gold_annotations_path, round_data_path):
     )
 
     question_counts_df = (
-        df[df["messageType"] == "question"]
-        .groupby("roundID")
-        .size()
-        .reset_index(name="question_number")
+        df[df["messageType"] == "question"].groupby("roundID").size().reset_index()
     )
 
     df = df.merge(question_counts_df, on="roundID", how="left")
     result = df.loc[df.groupby("roundID")["index"].idxmax()][
-        ["roundID", "occTiles", "board_id", "question_number"]
+        ["roundID", "occTiles", "board_id", "questionID", "questionsRemaining"]
     ]
     # GG: Why is this needed?
     result = result[
@@ -87,24 +78,30 @@ def get_human_results(gold_annotations_path, round_data_path):
         board_partial = Board.from_occ_tiles(occTiles)
         scores = board_true.score(board_partial)
 
-        data.append(
-            {
-                "roundId": roundID,
-                "captainType": "human",
-                "boardId": board_id,
-                "hits": scores["hits"],
-                "misses": scores["misses"],
-                "precision": scores["precision"],
-                "recall": scores["recall"],
-                "f1_score": scores["f1_score"],
-                "is_won": scores["is_won"],
-                "question_count": result[result["roundID"] == roundID][
-                    "question_number"
-                ].values[0],
-            }
+        questions_asked = HUMAN_MAX_QUESTIONS - int(
+            result[result["roundID"] == roundID]["questionsRemaining"].values[0]
         )
 
-    return pd.DataFrame(data)
+        result_row = {
+            "roundId": roundID,
+            "captainType": "human",
+            "boardId": board_id,
+            "hits": int(scores["hits"]),
+            "misses": int(scores["misses"]),
+            "precision": float(scores["precision"]),
+            "recall": float(scores["recall"]),
+            "f1_score": float(scores["f1_score"]),
+            "is_won": bool(scores["is_won"]),
+            "question_count": questions_asked,
+        }
+        data.append(result_row)
+
+        temp_filename = f"human_{roundID}_{uuid.uuid4()}.json"
+        temp_path = os.path.join(HUMAN_SUMMARY_DIR, temp_filename)
+        with open(temp_path, "w") as f:
+            json.dump(result_row, f, indent=2)
+
+    return data
 
 
 def create_captain(
@@ -318,21 +315,22 @@ def run_single_agent_game(args):
         round_id=round_id,
     )
 
-    # Write round information using consistent column names
-    file_exists = os.path.isfile(CSV_ROUND_FILE)
-    with open(CSV_ROUND_FILE, "a", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=ROUND_CSV_COLUMNS)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(
-            {
-                "id": round_id,
-                "boardId": board_id,
-                "seed": seed,
-                "captainModel": cap_name,
-                "spotterModel": spotter.__class__.__name__,
-            }
-        )
+    # Write round information to JSON file
+    round_info = {
+        "id": round_id,
+        "boardId": board_id,
+        "seed": seed,
+        "captainModel": cap_name,
+        "spotterModel": spotter.__class__.__name__,
+    }
+
+    # Create a unique filename for the round info
+    round_filename = f"round_{round_id}.json"
+    round_dir = os.path.join(RESULTS_DIR, "rounds")
+    os.makedirs(round_dir, exist_ok=True)
+
+    with open(os.path.join(round_dir, round_filename), "w") as f:
+        json.dump(round_info, f, indent=2)
 
     captain.round_id = round_id
 
@@ -353,23 +351,43 @@ def run_single_agent_game(args):
         "roundId": round_id,
         "captainType": cap_name,
         "boardId": board_id,
-        "hits": game.hits,
-        "misses": game.misses,
-        "is_won": game.is_won(),
+        "hits": int(game.hits),
+        "misses": int(game.misses),
+        "is_won": bool(game.is_won()),
         "question_count": game.question_count,
-        "precision": scores["precision"],
-        "recall": scores["recall"],
-        "f1_score": scores["f1_score"],
+        "precision": float(scores["precision"]),
+        "recall": float(scores["recall"]),
+        "f1_score": float(scores["f1_score"]),
     }
 
-    # Write summary information with consistent column order
-    summary_df = pd.DataFrame.from_dict([result])
-    summary_df.to_csv(
-        SUMMARY_FILE,
-        mode="a",
-        header=not os.path.exists(SUMMARY_FILE),
-        index=False,
-    )
+    # Create a unique filename for each result to avoid race conditions
+    safe_model_name = model.replace("/", "-")
+    temp_filename = f"{safe_model_name}_{cap_name}_{round_id}"
+    temp_path = os.path.join(CACHE_DIR, temp_filename + "_summary.json")
+
+    # Gather all prompt files for this round_id
+    prompts_path = os.path.join(CACHE_DIR, temp_filename + "_prompts.json")
+    prompt_files = glob.glob(os.path.join(PROMPTS_DIR, f"prompt_{round_id}*.json"))
+    prompts = []
+    for pf in prompt_files:
+        with open(pf, "r") as f:
+            prompts.append(json.load(f))
+    with open(prompts_path, "w") as f:
+        json.dump(prompts, f, indent=2)
+
+    # Gather all stage files for this round_id
+    stage_path = os.path.join(CACHE_DIR, temp_filename + "_stage.json")
+    stage_files = glob.glob(os.path.join(STAGE_DIR, f"stage_{round_id}*.json"))
+    stages = []
+    for sf in stage_files:
+        with open(sf, "r") as f:
+            stages.append(json.load(f))
+    with open(stage_path, "w") as f:
+        json.dump(stages, f, indent=2)
+
+    # Write individual result to temp file
+    with open(temp_path, "w") as f:
+        json.dump(result, f, indent=2)
 
     return result
 
@@ -381,7 +399,7 @@ def parse_arguments():
     parser.add_argument(
         "--gold-annotations",
         type=str,
-        default="/home/ubuntu/repo_battleship/temp/gold_annotations_partial.csv",
+        default="/home/ubuntu/repo_battleship/gold-v2.csv",
         help="Path to gold annotations CSV",
     )
     parser.add_argument(
@@ -391,10 +409,10 @@ def parse_arguments():
         help="Path to round data CSV",
     )
     parser.add_argument(
-        "--output-file",
+        "--output-dir",
         type=str,
-        default="/home/ubuntu/repo_battleship/temp/total_results.csv",
-        help="Path to output results CSV",
+        default="cache",
+        help="Directory to save results",
     )
 
     # Captain configuration
@@ -480,20 +498,14 @@ def main():
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
 
     # Create output directory if it doesn't exist
-    output_path = Path(args.output_file)
-    os.makedirs(output_path.parent, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, "individual_results"), exist_ok=True)
 
     # Get human results
-    human_results_df = None
+    human_results = []
     if args.include_human:
-        human_results_df = get_human_results(args.gold_annotations, args.round_data)
-        # Ensure column names match our defined schema
-        human_results_df = human_results_df[RESULTS_CSV_COLUMNS]
-        human_results_df.to_csv(args.output_file, index=False)
-        print(f"Wrote human results to {args.output_file}")
-    else:
-        # Initialize empty results file with consistent column names
-        pd.DataFrame(columns=RESULTS_CSV_COLUMNS).to_csv(args.output_file, index=False)
+        human_results = get_human_results(args.gold_annotations, args.round_data)
+        print(f"Processed human results for {len(human_results)} games")
 
     # Prepare a list of tasks (each tuple corresponds to one game run)
     jobs = []
@@ -532,39 +544,14 @@ def main():
         print(f"Running with {proc_count} processes")
         results = pool.map(run_single_agent_game, jobs)
 
-    # Write all results to CSV
-    results_df = pd.DataFrame(results)
-
-    # Ensure all columns match our defined schema
-    for col in RESULTS_CSV_COLUMNS:
-        if col not in results_df.columns:
-            results_df[col] = None
-    results_df = results_df[RESULTS_CSV_COLUMNS]
-
-    # Append to existing file
-    if human_results_df is not None:
-        results_df.to_csv(args.output_file, mode="a", header=False, index=False)
-    else:
-        results_df.to_csv(args.output_file, index=False)
+    total_results = human_results + results
+    temp_filename = f"summaries_{time()}.json"
+    temp_path = os.path.join(CACHE_DIR, temp_filename)
+    with open(temp_path, "w") as f:
+        json.dump(total_results, f, indent=2)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-    print(f"Results saved to {args.output_file}")
-
-    # Print summary statistics
-    print("\nSummary by Captain Type:")
-    summary = (
-        results_df.groupby("captainType")
-        .agg(
-            {
-                "precision": "mean",
-                "recall": "mean",
-                "f1_score": "mean",
-                "question_count": "mean",
-            }
-        )
-        .reset_index()
-    )
-    print(summary)
+    print(f"Results saved to {args.output_dir}")
 
 
 if __name__ == "__main__":
