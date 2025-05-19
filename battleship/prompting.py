@@ -42,8 +42,6 @@ PROMPT_VARIANT_GRID_NUMERIC = (
 PROMPT_VARIANT_TEXTUAL = "The board is represented as a textual description.\n"
 PROMPT_VARIANT_VISUAL = "The board is represented as an image, with light gray indicating hidden tiles, dark gray indicating water tiles, and red, blue and purple indicating ship tiles.\n"
 
-PROMPT_TARGET_BOARD = "Here is the current board:\n"
-
 
 class BasePrompt(object):
     """Base class for constructing prompts for the Battleship task.
@@ -174,11 +172,13 @@ PROMPT_TASK_CODE_SPOTTER = (
 )
 
 PROMPT_DIRECT = (
-    "Return your answer directly. Do not include any extra reasoning or prose."
+    "Return your answer directly. Do not include any extra reasoning or explanation."
 )
 PROMPT_COT = "Please think step-by-step about the task before returning your answer."
 
 PROMPT_EXAMPLES = "Here are the past turns in the game so far:\n"
+
+PROMPT_TARGET_BOARD = "Here is the current board:\n"
 
 PROMPT_TARGET_BOARD_CAPTAIN = (
     "Here is the partial board, which is the view that is visible to the Captain:\n"
@@ -294,8 +294,6 @@ PROMPT_QUESTIONS_AND_MOVES_REMAINING = "You can ask {q_remaining} more questions
 
 PROMPT_SHIP_STATUS = "Ship Status: {sunk}"
 
-PROMPT_CURRENT_BOARD = "Here's your board:"
-
 
 class CaptainPrompt(BasePrompt):
     """Prompt for generating decisions during a game of Battleship."""
@@ -332,7 +330,7 @@ class CaptainPrompt(BasePrompt):
         board_str = (
             str(self.target_occ_tiles.to_numpy()) if self.target_occ_tiles else ""
         )
-        board_message = "\n\n" + PROMPT_CURRENT_BOARD + board_str
+        board_message = "\n\n" + PROMPT_TARGET_BOARD + board_str
 
         # Task description
         postfix = PROMPT_SYSTEM_CAPTAIN + "\n\n" + self.task_prompt
