@@ -12,15 +12,11 @@ from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import CacheData
 from battleship.agents import client
-from battleship.agents import CSV_PROMPTS_FILE
-from battleship.agents import CSV_ROUND_FILE
-from battleship.agents import CSV_STAGE_FILE
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Prompt
 from battleship.agents import Question
-from battleship.agents import SUMMARY_FILE
 from battleship.board import Board
 from battleship.board import coords_to_tile
 from battleship.board import tile_to_coords
@@ -77,12 +73,6 @@ class Captain(Agent):
         self.decision_strategy = decision_strategy
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
-
-        # Default paths that will be overridden with job-specific paths
-        self.csv_stage_file = CSV_STAGE_FILE
-        self.csv_round_file = CSV_ROUND_FILE
-        self.csv_prompts_file = CSV_PROMPTS_FILE
-        self.summary_file = SUMMARY_FILE
 
     def decision(
         self,

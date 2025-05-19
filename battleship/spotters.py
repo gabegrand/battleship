@@ -18,6 +18,7 @@ from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
+from battleship.utils import parse_answer_to_str
 
 logger = logging.getLogger(__name__)
 
@@ -227,20 +228,7 @@ class CodeSpotterModel(Spotter):
 
         result = code_question(true_board, partial_board)
 
-        # Check if the result is a valid answer
-        if isinstance(result, np.bool_):
-            result = bool(result)
-            logging.warning(
-                f"CodeQuestion() produced a numpy boolean {result}; casting to Python bool."
-            )
-
-        if result is True:
-            result_text = "yes"
-        elif result is False:
-            result_text = "no"
-        else:
-            result_text = str(result)
-            logging.warning(f"CodeQuestion() produced invalid answer: {result}")
+        result_text = parse_answer_to_str(result)
 
         output_prompt = Prompt(
             prompt=code_question.translation_prompt.to_chat_format(),

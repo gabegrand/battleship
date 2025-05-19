@@ -20,8 +20,7 @@ from battleship.spotters import DirectSpotterModel
 
 # Set up logging
 logging.basicConfig(
-    # level=logging.INFO,
-    level=logging.CRITICAL,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("spotter_benchmark.log"),
@@ -258,8 +257,8 @@ def process_question_data(question_data):
 
     # Write to a temporary file to avoid race conditions
     # Each process writes to its own unique file
-    temp_filename = f"temp_{uuid.uuid4()}.json"
-    temp_path = os.path.join(output_dir, "temp", temp_filename)
+    temp_filename = f"{model_string}_{uuid.uuid4()}.json"
+    temp_path = os.path.join(output_dir, "individual_results", temp_filename)
 
     # Ensure temp directory exists
     os.makedirs(os.path.dirname(temp_path), exist_ok=True)
@@ -268,7 +267,7 @@ def process_question_data(question_data):
     with open(temp_path, "w") as jsonfile:
         json.dump(data_row, jsonfile, indent=2)
 
-    return data_row["is_correct"], temp_path
+    return temp_path
 
 
 def prepare_question_data(
@@ -362,7 +361,7 @@ def benchmark_on_rounds(
         output_dir,
     )
 
-    # Process all questions in parallel with max 10 workers
+    # Process all questions in parallel
     print(args.processes)
     with mp.Pool(processes=args.processes) as pool:
         results = list(
@@ -373,88 +372,24 @@ def benchmark_on_rounds(
             )
         )
 
-    # Collect all temp file paths
-    correct_count = 0
-    temp_files = []
-    for is_correct, temp_file in results:
-        if is_correct:
-            correct_count += 1
-        temp_files.append(temp_file)
-
     # Now combine all temp files into the final JSON file
-    final_json_path = os.path.join(
-        output_dir, f"{safe_model_string}_{model.__name__}_{use_cot}.json"
-    )
+    round_result_name = f"{safe_model_string}_{model.__name__}_{use_cot}.json"
+    final_json_path = os.path.join(output_dir, round_result_name)
 
     combined_data = []
-    for temp_file in temp_files:
+    for result_file in results:
         try:
-            with open(temp_file, "r") as jsonfile:
+            with open(result_file, "r") as jsonfile:
                 data = json.load(jsonfile)
                 combined_data.append(data)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error reading temp file {temp_file}: {e}")
-        finally:
-            # Clean up temp file
-            try:
-                os.remove(temp_file)
-            except:
-                pass
+            logging.error(f"Error reading temp file {result_file}: {e}")
 
     # Write combined data to final file
     with open(final_json_path, "w") as jsonfile:
         json.dump(combined_data, jsonfile, indent=2)
 
-    # Calculate accuracy
-    if results:
-        accuracy = correct_count / len(results)
-    else:
-        accuracy = 0.0
-
-    # Clean up temp directory
-    try:
-        os.rmdir(os.path.join(output_dir, "temp"))
-    except:
-        pass
-
-    return accuracy
-
-
-def combine_results(output_dir="benchmark_results"):
-    """Combine all individual JSON files into a single results file"""
-    all_files = [
-        os.path.join(output_dir, f)
-        for f in os.listdir(output_dir)
-        if f.endswith(".json")
-        and f != "combined_results.json"
-        and f != "accuracy_summary.json"
-    ]
-
-    if not all_files:
-        print("No result files found to combine.")
-        return None
-
-    # Read all JSON files and combine
-    combined_data = []
-    for file_path in all_files:
-        try:
-            with open(file_path, "r") as jsonfile:
-                data = json.load(jsonfile)
-                # Check if data is a list or a single item
-                if isinstance(data, list):
-                    combined_data.extend(data)
-                else:
-                    combined_data.append(data)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error reading file {file_path}: {e}")
-            continue
-
-    combined_path = os.path.join(output_dir, "combined_results.json")
-    with open(combined_path, "w") as jsonfile:
-        json.dump(combined_data, jsonfile, indent=2)
-
-    print(f"Combined results saved to {combined_path}")
-    return combined_data
+    return round_result_name
 
 
 def run_experiments(
@@ -480,7 +415,7 @@ def run_experiments(
                     f"Benchmarking {spotter.__name__} with language model {llm}, COT: {cot_option}"
                 )
 
-                accuracy = benchmark_on_rounds(
+                result_name = benchmark_on_rounds(
                     df=df,
                     rounds_question_ids=rounds_questions_dict,
                     model=spotter,
@@ -494,28 +429,22 @@ def run_experiments(
                     output_dir=output_dir,
                 )
 
-                result_dict = {
-                    "language_model": llm,
-                    "spotter_model": spotter.__name__,
-                    "cot": cot_option,
-                    "accuracy": accuracy,
-                    "max_rounds": max_rounds,
-                    "max_questions": max_questions,
-                    "use_history": use_history,
-                    "use_cache": use_cache,
-                    "use_captain_board": use_captain_board,
-                }
-                results.append(result_dict)
+                results.append(result_name)
 
-                print(f"Accuracy: {accuracy * 100:.2f}%")
+                # result_dict = {
+                #     "language_model": llm,
+                #     "spotter_model": spotter.__name__,
+                #     "cot": cot_option,
+                #     "accuracy": accuracy,
+                #     "max_rounds": max_rounds,
+                #     "max_questions": max_questions,
+                #     "use_history": use_history,
+                #     "use_cache": use_cache,
+                #     "use_captain_board": use_captain_board,
+                # }
+                # results.append(result_dict)
 
-    # Save the summary as JSON
-    summary_path = os.path.join(output_dir, "accuracy_summary.json")
-    with open(summary_path, "w") as jsonfile:
-        json.dump(results, jsonfile, indent=2)
-
-    # Combine all individual result files
-    combine_results(output_dir)
+                # print(f"Accuracy: {accuracy * 100:.2f}%")
 
     return results
 
@@ -633,7 +562,7 @@ if __name__ == "__main__":
     )
 
     # Run the experiments
-    results = run_experiments(
+    result_names = run_experiments(
         df=df,
         rounds_questions_dict=rounds_questions_dict,
         language_models=args.models,
@@ -648,8 +577,6 @@ if __name__ == "__main__":
     )
 
     print("Experiment completed!")
-    print(f"Results summary:")
-    for result in results:
-        print(
-            f"  {result['language_model']} - {result['spotter_model']} - CoT: {result['cot']} - Accuracy: {result['accuracy'] * 100:.2f}%"
-        )
+    print("Generated result files:")
+    for result_name in result_names:
+        print(f"- {result_name}")
