@@ -20,8 +20,7 @@ from battleship.spotters import DirectSpotterModel
 
 # Set up logging
 logging.basicConfig(
-    # level=logging.INFO,
-    level=logging.CRITICAL,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("spotter_benchmark.log"),
