@@ -9,7 +9,6 @@ from multiprocessing.dummy import Pool
 import numpy as np
 import pandas as pd
 
-from battleship.agents import CACHE_DIR
 from battleship.agents import Counter
 from battleship.agents import EXPERIMENTAL_RESULTS_DIR
 from battleship.agents import HUMAN_SUMMARY_DIR
