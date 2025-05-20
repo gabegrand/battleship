@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 import argparse
-import csv
 import glob
 import json
 import os
-import sys
 import uuid
-from copy import deepcopy
 from multiprocessing.dummy import Pool
-from pathlib import Path
-from random import randint
-from time import time
 
 import numpy as np
 import pandas as pd
 
-from battleship.agents import CACHE_DIR
 from battleship.agents import Counter
+from battleship.agents import EXPERIMENTAL_RESULTS_DIR
 from battleship.agents import HUMAN_SUMMARY_DIR
 from battleship.agents import PROMPTS_DIR
-from battleship.agents import RESULTS_DIR
+from battleship.agents import ROUND_RESULTS_DIR
 from battleship.agents import STAGE_DIR
 from battleship.board import Board
 from battleship.captains import AlwaysMoveDecisionStrategy
@@ -324,14 +318,6 @@ def run_single_agent_game(args):
         "spotterModel": spotter.__class__.__name__,
     }
 
-    # Create a unique filename for the round info
-    round_filename = f"round_{round_id}.json"
-    round_dir = os.path.join(RESULTS_DIR, "rounds")
-    os.makedirs(round_dir, exist_ok=True)
-
-    with open(os.path.join(round_dir, round_filename), "w") as f:
-        json.dump(round_info, f, indent=2)
-
     captain.round_id = round_id
 
     game = BattleshipGame(
@@ -347,7 +333,7 @@ def run_single_agent_game(args):
     scores = game.score()
 
     # Ensure consistent column names in the result data
-    result = {
+    summary = {
         "roundId": round_id,
         "captainType": cap_name,
         "boardId": board_id,
@@ -363,33 +349,20 @@ def run_single_agent_game(args):
     # Create a unique filename for each result to avoid race conditions
     safe_model_name = model.replace("/", "-")
     temp_filename = f"{safe_model_name}_{cap_name}_{round_id}"
-    temp_path = os.path.join(CACHE_DIR, temp_filename + "_summary.json")
 
-    # Gather all prompt files for this round_id
-    prompts_path = os.path.join(CACHE_DIR, temp_filename + "_prompts.json")
-    prompt_files = glob.glob(os.path.join(PROMPTS_DIR, f"prompt_{round_id}*.json"))
-    prompts = []
-    for pf in prompt_files:
-        with open(pf, "r") as f:
-            prompts.append(json.load(f))
-    with open(prompts_path, "w") as f:
-        json.dump(prompts, f, indent=2)
+    results = {}
+    for result in ["prompt", "stage"]:
+        home_dir = PROMPTS_DIR if result == "prompt" else STAGE_DIR
+        result_path = os.path.join(ROUND_RESULTS_DIR, temp_filename + f"_{result}.json")
+        source_files = glob.glob(os.path.join(home_dir, f"{result}_{round_id}*.json"))
+        results[result] = []
+        for f in source_files:
+            with open(f, "r") as f:
+                results[result].append(json.load(f))
+        with open(result_path, "w") as f:
+            json.dump(results[result], f, indent=2)
 
-    # Gather all stage files for this round_id
-    stage_path = os.path.join(CACHE_DIR, temp_filename + "_stage.json")
-    stage_files = glob.glob(os.path.join(STAGE_DIR, f"stage_{round_id}*.json"))
-    stages = []
-    for sf in stage_files:
-        with open(sf, "r") as f:
-            stages.append(json.load(f))
-    with open(stage_path, "w") as f:
-        json.dump(stages, f, indent=2)
-
-    # Write individual result to temp file
-    with open(temp_path, "w") as f:
-        json.dump(result, f, indent=2)
-
-    return result
+    return summary, results["stage"], results["prompt"], round_info
 
 
 def parse_arguments():
@@ -544,11 +517,30 @@ def main():
         print(f"Running with {proc_count} processes")
         results = pool.map(run_single_agent_game, jobs)
 
-    total_results = human_results + results
-    temp_filename = f"summaries_{time()}.json"
-    temp_path = os.path.join(CACHE_DIR, temp_filename)
-    with open(temp_path, "w") as f:
-        json.dump(total_results, f, indent=2)
+    # Prepare data structures
+    summaries_data = human_results.copy() if human_results else []
+    stages_data = []
+    prompts_data = []
+    rounds_data = []
+
+    for summary, stage, prompt, round_info in results:
+        summaries_data.append(summary)
+        stages_data.append(stage)
+        prompts_data.append(prompt)
+        rounds_data.append(round_info)
+
+    # Write all files
+    file_pairs = [
+        ("summaries.json", summaries_data),
+        ("stages.json", stages_data),
+        ("prompts.json", prompts_data),
+        ("rounds.json", rounds_data),
+    ]
+
+    for filename, data in file_pairs:
+        filepath = os.path.join(EXPERIMENTAL_RESULTS_DIR, filename)
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
     print(f"Results saved to {args.output_dir}")
