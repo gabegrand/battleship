@@ -1,13 +1,10 @@
-import csv
 import json
-import logging
 import os
 import re
 import traceback
 import uuid
 from abc import ABC
 from dataclasses import dataclass
-from math import log2
 from pathlib import Path
 from time import time
 
@@ -23,6 +20,12 @@ CACHE_DIR.mkdir(exist_ok=True)
 
 RESULTS_DIR = Path(os.path.join(CACHE_DIR, "individual_results"))
 RESULTS_DIR.mkdir(exist_ok=True)
+
+ROUND_RESULTS_DIR = Path(os.path.join(CACHE_DIR, "round_results"))
+ROUND_RESULTS_DIR.mkdir(exist_ok=True)
+
+EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{time()}"))
+EXPERIMENTAL_RESULTS_DIR.mkdir(exist_ok=True)
 
 STAGE_DIR = Path(os.path.join(RESULTS_DIR, "stages"))
 PROMPTS_DIR = Path(os.path.join(RESULTS_DIR, "prompts"))
