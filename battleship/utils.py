@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -50,3 +53,23 @@ def parse_answer_to_str(answer: bool) -> str:
     if isinstance(answer, np.bool_):
         answer = bool(answer)
     return _parse_answer(answer, ANSWER_BOOL_STRING_MAP)
+
+
+# Project root is one level up from this file (battleship/utils.py -> project_root)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def resolve_project_path(relative_path):
+    """
+    Resolve a path relative to the project root.
+
+    Args:
+        relative_path: Path relative to project root (str or Path)
+
+    Returns:
+        Path: Absolute path resolved from project root
+    """
+    if os.path.isabs(relative_path):
+        return Path(relative_path)
+
+    return PROJECT_ROOT / relative_path

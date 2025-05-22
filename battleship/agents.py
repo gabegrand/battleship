@@ -9,7 +9,6 @@ from pathlib import Path
 from time import time
 
 import numpy as np
-from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
@@ -45,8 +44,6 @@ MOVE_PATTERN = lambda size: re.compile(
 BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*(<answer>|</answer>)\s*")
 ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*(<answer>|</answer>)\s*")
 CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
-
-client = OpenAI()
 
 
 @dataclass

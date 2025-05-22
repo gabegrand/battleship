@@ -27,6 +27,7 @@ from battleship.captains import ProbabilisticDecisionStrategy
 from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
+from battleship.utils import resolve_project_path
 
 HUMAN_MAX_QUESTIONS = 15
 
@@ -375,13 +376,13 @@ def parse_arguments():
     parser.add_argument(
         "--gold-annotations",
         type=str,
-        default="/home/ubuntu/repo_battleship/gold-v2.csv",
+        default="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
         help="Path to gold annotations CSV",
     )
     parser.add_argument(
         "--round-data",
         type=str,
-        default="/home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv",
+        default="experiments/collaborative/data/battleship-final-data/round.csv",
         help="Path to round data CSV",
     )
     parser.add_argument(
@@ -469,18 +470,25 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
+    # Resolve paths relative to project root
+    gold_annotations_path = resolve_project_path(args.gold_annotations)
+    round_data_path = resolve_project_path(args.round_data)
+    output_dir = resolve_project_path(args.output_dir)
+
     # Setup board IDs if not specified
     if args.board_ids is None:
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
 
     # Create output directory if it doesn't exist
-    os.makedirs(args.output_dir, exist_ok=True)
-    os.makedirs(os.path.join(args.output_dir, "individual_results"), exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "individual_results"), exist_ok=True)
 
     # Get human results
     human_results = []
     if args.include_human:
-        human_results = get_human_results(args.gold_annotations, args.round_data)
+        human_results = get_human_results(
+            str(gold_annotations_path), str(round_data_path)
+        )
         print(f"Processed human results for {len(human_results)} games")
 
     # Prepare a list of tasks (each tuple corresponds to one game run)
@@ -546,7 +554,7 @@ def main():
             json.dump(data, f, indent=2)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-    print(f"Results saved to {args.output_dir}")
+    print(f"Results saved to {output_dir}")
 
 
 if __name__ == "__main__":
