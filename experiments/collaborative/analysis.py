@@ -27,6 +27,16 @@ MODEL_DISPLAY_NAMES = {
     "o4-mini": "o4-mini",
 }
 
+GOLD_ANSWER_LABEL = "gold_answer"
+
+GOLD_CATEGORY_LABELS = {
+    "gold_discourse": "Discourse",
+    "gold_stateful": "Stateful",
+    "gold_vague": "Vague",
+    "gold_ambiguous": "Ambiguous",
+    "gold_unanswerable": "Unanswerable",
+}
+
 
 def load_dataset(
     experiment_path: str, use_gold: bool = False, drop_incomplete: bool = False
