@@ -81,6 +81,24 @@ class Captain(Agent):
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
 
+        # Set client for strategies that need it
+        self._set_client_for_strategies()
+
+    def _set_client_for_strategies(self):
+        """Set the OpenAI client for strategies that need it."""
+        if (
+            hasattr(self.decision_strategy, "client")
+            and self.decision_strategy.client is None
+        ):
+            self.decision_strategy.client = self.client
+        if hasattr(self.move_strategy, "client") and self.move_strategy.client is None:
+            self.move_strategy.client = self.client
+        if (
+            hasattr(self.question_strategy, "client")
+            and self.question_strategy.client is None
+        ):
+            self.question_strategy.client = self.client
+
     def decision(
         self,
         state: Board,
@@ -162,7 +180,7 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
 
 
 class LLMDecisionStrategy(DecisionStrategy):
-    def __init__(self, model_string, temperature=None, use_cot=False):
+    def __init__(self, model_string, temperature=None, use_cot=False, client=None):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
@@ -293,6 +311,7 @@ class LLMMoveStrategy(MoveStrategy):
         use_cot=False,
         moves_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
@@ -369,6 +388,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         use_cot=False,
         questions_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.spotter = spotter
@@ -452,6 +472,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         rng=None,
         questions_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
