@@ -11,7 +11,6 @@ import numpy as np
 from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import CacheData
-from battleship.agents import client
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
 from battleship.agents import MOVE_PATTERN
@@ -73,6 +72,24 @@ class Captain(Agent):
         self.decision_strategy = decision_strategy
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
+
+        # Set client for strategies that need it
+        self._set_client_for_strategies()
+
+    def _set_client_for_strategies(self):
+        """Set the OpenAI client for strategies that need it."""
+        if (
+            hasattr(self.decision_strategy, "client")
+            and self.decision_strategy.client is None
+        ):
+            self.decision_strategy.client = self.client
+        if hasattr(self.move_strategy, "client") and self.move_strategy.client is None:
+            self.move_strategy.client = self.client
+        if (
+            hasattr(self.question_strategy, "client")
+            and self.question_strategy.client is None
+        ):
+            self.question_strategy.client = self.client
 
     def decision(
         self,
@@ -155,10 +172,11 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
 
 
 class LLMDecisionStrategy(DecisionStrategy):
-    def __init__(self, model_string, temperature=None, use_cot=False):
+    def __init__(self, model_string, temperature=None, use_cot=False, client=None):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
+        self.client = client
 
     def make_decision(
         self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
@@ -179,7 +197,7 @@ class LLMDecisionStrategy(DecisionStrategy):
 
             candidate_decision = None
             for _ in range(n_attempts):
-                completion = client.chat.completions.create(
+                completion = self.client.chat.completions.create(
                     model=self.model_string,
                     messages=decision_prompt.to_chat_format(),
                     temperature=self.temperature,
@@ -280,12 +298,14 @@ class LLMMoveStrategy(MoveStrategy):
         use_cot=False,
         moves_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
         self.moves_remaining = moves_remaining
         self.n_attempts = n_attempts
+        self.client = client
 
     def make_move(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
@@ -306,7 +326,7 @@ class LLMMoveStrategy(MoveStrategy):
         prompts = []
         for _ in range(self.n_attempts):
             # while candidate_move is None or candidate_move in visible_tiles:
-            completion = client.chat.completions.create(
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
@@ -355,6 +375,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         use_cot=False,
         questions_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.spotter = spotter
@@ -365,6 +386,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.questions_remaining = questions_remaining
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
         self.n_attempts = n_attempts
+        self.client = client
 
     def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
@@ -384,7 +406,7 @@ class EIGQuestionStrategy(QuestionStrategy):
 
             candidate_question_text = None
             for _ in range(self.n_attempts):
-                completion = client.chat.completions.create(
+                completion = self.client.chat.completions.create(
                     model=self.model_string,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
@@ -437,6 +459,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         rng=None,
         questions_remaining=None,
         n_attempts=3,
+        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
@@ -446,6 +469,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.spotter = spotter
         self.rng = rng
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.client = client
 
     def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
@@ -460,7 +484,7 @@ class LLMQuestionStrategy(QuestionStrategy):
 
         prompts = []
         for _ in range(self.n_attempts):
-            completion = client.chat.completions.create(
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=question_prompt.to_chat_format(),
                 temperature=self.temperature,

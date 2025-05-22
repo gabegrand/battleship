@@ -10,7 +10,6 @@ from battleship.agents import Agent
 from battleship.agents import Answer
 from battleship.agents import BOOL_ANSWER_PATTERN
 from battleship.agents import CacheData
-from battleship.agents import client
 from battleship.agents import CODE_ANSWER_PATTERN
 from battleship.agents import CodeQuestion
 from battleship.agents import NullCodeQuestion
@@ -108,7 +107,7 @@ class DirectSpotterModel(Spotter):
 
         response = None
         for attempt in range(n_attempts):
-            completion = client.chat.completions.create(
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=prompt.to_chat_format(),
                 temperature=self.temperature,
@@ -166,7 +165,7 @@ class CodeSpotterModel(Spotter):
 
         # Generate code using the translation prompt
         for attempt in range(n_attempts):
-            completion = client.chat.completions.create(
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=translation_prompt.to_chat_format(),
                 temperature=self.temperature,
