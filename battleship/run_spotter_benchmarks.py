@@ -17,6 +17,7 @@ from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
+from battleship.utils import resolve_project_path
 
 # Set up logging
 logging.basicConfig(
@@ -34,12 +35,16 @@ ALL_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"
 
 
 def load_data(
-    stages_path="/home/ubuntu/repo_battleship/gold-v2.csv",
-    rounds_path="/home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv",
+    stages_path="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
+    rounds_path="experiments/collaborative/data/battleship-final-data/round.csv",
     goldAnnotations=[],
 ):
-    stage_df = pd.read_csv(stages_path)
-    round_df = pd.read_csv(rounds_path)
+    # Resolve paths relative to project root
+    stages_path = resolve_project_path(stages_path)
+    rounds_path = resolve_project_path(rounds_path)
+
+    stage_df = pd.read_csv(str(stages_path))
+    round_df = pd.read_csv(str(rounds_path))
 
     board_ids = round_df[["id", "board_id"]]
 
