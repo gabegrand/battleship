@@ -73,24 +73,6 @@ class Captain(Agent):
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
 
-        # Set client for strategies that need it
-        self._set_client_for_strategies()
-
-    def _set_client_for_strategies(self):
-        """Set the OpenAI client for strategies that need it."""
-        if (
-            hasattr(self.decision_strategy, "client")
-            and self.decision_strategy.client is None
-        ):
-            self.decision_strategy.client = self.client
-        if hasattr(self.move_strategy, "client") and self.move_strategy.client is None:
-            self.move_strategy.client = self.client
-        if (
-            hasattr(self.question_strategy, "client")
-            and self.question_strategy.client is None
-        ):
-            self.question_strategy.client = self.client
-
     def decision(
         self,
         state: Board,
@@ -521,3 +503,258 @@ class LLMQuestionStrategy(QuestionStrategy):
             prompts=prompts,
             eig=eig,
         )
+
+
+def create_captain(
+    captain_type,
+    seed,
+    model,
+    use_cache,
+    map_samples=None,
+    prob_q_prob=None,
+    eig_samples=None,
+    eig_k=None,
+):
+    """
+    Factory function to create Captain instances with properly configured strategies.
+
+    This function creates a Captain with the appropriate strategies and passes the
+    OpenAI client to strategies that need it, avoiding the global client instantiation issue.
+    """
+    from battleship.spotters import CodeSpotterModel
+
+    # Initialize spotter for EIG captains
+    eig_spotter = CodeSpotterModel(
+        board_id="B01",
+        board_experiment="collaborative",
+        model_string=model,
+        temperature=None,
+        use_cot=True,
+    )
+
+    if captain_type == "RandomCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "MAPCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=map_samples
+            ),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "ProbabilisticCaptain":
+        captain = Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "ProbabilisticCaptain_cot":
+        captain = Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "LLMDecisionCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            move_strategy=LLMMoveStrategy(
+                model_string=model,
+                use_cot=False,
+                client=None,
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=False,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "LLMDecisionCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=True,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "EIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "EIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.move_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "MAPEIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=False, client=None
+            ),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    elif captain_type == "MAPEIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=eig_spotter,
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+                client=None,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        # Pass client to strategies that need it
+        captain.decision_strategy.client = captain.client
+        captain.question_strategy.client = captain.client
+        return captain
+
+    else:
+        raise ValueError(f"Unknown captain type: {captain_type}")
