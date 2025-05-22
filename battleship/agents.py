@@ -9,6 +9,7 @@ from pathlib import Path
 from time import time
 
 import numpy as np
+from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
@@ -171,6 +172,7 @@ class Agent(ABC):
         self.index_counter = index_counter
         self.stage_list = []
         self.prompt_list = []
+        self.client = OpenAI()
 
     def write_cache(self, message_type: str = None, cache_data: CacheData = None):
         """Append a new entry to the JSON cache."""
