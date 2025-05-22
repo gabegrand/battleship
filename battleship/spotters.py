@@ -12,12 +12,14 @@ from battleship.agents import BOOL_ANSWER_PATTERN
 from battleship.agents import CacheData
 from battleship.agents import CODE_ANSWER_PATTERN
 from battleship.agents import CodeQuestion
+from battleship.agents import get_openai_client
 from battleship.agents import NullCodeQuestion
 from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
 from battleship.utils import parse_answer_to_str
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ class Spotter(Agent):
         self.board_experiment = board_experiment
         self.temperature = temperature
         self.spotter_benchmark = spotter_benchmark
+        self.client = get_openai_client()
 
         # Use proper Agent initialization to handle model string and cache path
         super().__init__(

@@ -47,6 +47,10 @@ ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*(<answer>|</answer>)\s
 CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
 
+def get_openai_client():
+    return OpenAI()
+
+
 @dataclass
 class Question:
     text: str
@@ -172,7 +176,6 @@ class Agent(ABC):
         self.index_counter = index_counter
         self.stage_list = []
         self.prompt_list = []
-        self.client = OpenAI()
 
     def write_cache(self, message_type: str = None, cache_data: CacheData = None):
         """Append a new entry to the JSON cache."""
