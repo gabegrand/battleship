@@ -162,7 +162,7 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
 
 
 class LLMDecisionStrategy(DecisionStrategy):
-    def __init__(self, model_string, temperature=None, use_cot=False, client=None):
+    def __init__(self, model_string, temperature=None, use_cot=False):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
@@ -293,7 +293,6 @@ class LLMMoveStrategy(MoveStrategy):
         use_cot=False,
         moves_remaining=None,
         n_attempts=3,
-        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
@@ -370,7 +369,6 @@ class EIGQuestionStrategy(QuestionStrategy):
         use_cot=False,
         questions_remaining=None,
         n_attempts=3,
-        client=None,
     ):
         self.model_string = model_string
         self.spotter = spotter
@@ -454,7 +452,6 @@ class LLMQuestionStrategy(QuestionStrategy):
         rng=None,
         questions_remaining=None,
         n_attempts=3,
-        client=None,
     ):
         self.model_string = model_string
         self.temperature = temperature
