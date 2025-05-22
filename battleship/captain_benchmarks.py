@@ -18,6 +18,7 @@ from battleship.agents import STAGE_DIR
 from battleship.board import Board
 from battleship.captains import AlwaysMoveDecisionStrategy
 from battleship.captains import Captain
+from battleship.captains import create_captain
 from battleship.captains import EIGQuestionStrategy
 from battleship.captains import LLMDecisionStrategy
 from battleship.captains import LLMMoveStrategy
