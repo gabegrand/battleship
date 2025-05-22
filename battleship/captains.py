@@ -81,24 +81,6 @@ class Captain(Agent):
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
 
-        # Set client for strategies that need it
-        self._set_client_for_strategies()
-
-    def _set_client_for_strategies(self):
-        """Set the OpenAI client for strategies that need it."""
-        if (
-            hasattr(self.decision_strategy, "client")
-            and self.decision_strategy.client is None
-        ):
-            self.decision_strategy.client = self.client
-        if hasattr(self.move_strategy, "client") and self.move_strategy.client is None:
-            self.move_strategy.client = self.client
-        if (
-            hasattr(self.question_strategy, "client")
-            and self.question_strategy.client is None
-        ):
-            self.question_strategy.client = self.client
-
     def decision(
         self,
         state: Board,
