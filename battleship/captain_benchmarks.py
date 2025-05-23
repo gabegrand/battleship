@@ -5,30 +5,39 @@ import json
 import os
 import uuid
 from multiprocessing.dummy import Pool
+from pathlib import Path
+from time import time
 
 import numpy as np
 import pandas as pd
 
 from battleship.agents import Counter
-from battleship.agents import EXPERIMENTAL_RESULTS_DIR
-from battleship.agents import HUMAN_SUMMARY_DIR
-from battleship.agents import PROMPTS_DIR
-from battleship.agents import ROUND_RESULTS_DIR
-from battleship.agents import STAGE_DIR
 from battleship.board import Board
-from battleship.captains import AlwaysMoveDecisionStrategy
-from battleship.captains import Captain
 from battleship.captains import create_captain
-from battleship.captains import EIGQuestionStrategy
-from battleship.captains import LLMDecisionStrategy
-from battleship.captains import LLMMoveStrategy
-from battleship.captains import LLMQuestionStrategy
-from battleship.captains import MAPMoveStrategy
-from battleship.captains import ProbabilisticDecisionStrategy
-from battleship.captains import RandomMoveStrategy
 from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
 from battleship.utils import resolve_project_path
+
+# Directory setup
+CACHE_DIR = Path(f"./cache")
+CACHE_DIR.mkdir(exist_ok=True)
+
+RESULTS_DIR = Path(os.path.join(CACHE_DIR, "individual_results"))
+RESULTS_DIR.mkdir(exist_ok=True)
+
+ROUND_RESULTS_DIR = Path(os.path.join(CACHE_DIR, "round_results"))
+ROUND_RESULTS_DIR.mkdir(exist_ok=True)
+
+EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{time()}"))
+EXPERIMENTAL_RESULTS_DIR.mkdir(exist_ok=True)
+
+STAGE_DIR = Path(os.path.join(RESULTS_DIR, "stages"))
+PROMPTS_DIR = Path(os.path.join(RESULTS_DIR, "prompts"))
+STAGE_DIR.mkdir(exist_ok=True)
+PROMPTS_DIR.mkdir(exist_ok=True)
+
+HUMAN_SUMMARY_DIR = Path(os.path.join(RESULTS_DIR, "human_summaries"))
+HUMAN_SUMMARY_DIR.mkdir(exist_ok=True)
 
 HUMAN_MAX_QUESTIONS = 15
 
@@ -118,6 +127,9 @@ def run_single_agent_game(args):
     decision_counter = Counter()
     index_counter = Counter()
 
+    # Set directory paths for caching
+    captain.stage_dir = STAGE_DIR
+    captain.prompts_dir = PROMPTS_DIR
     captain.index_counter = index_counter
     captain.decision_counter = decision_counter
 
@@ -131,6 +143,8 @@ def run_single_agent_game(args):
         decision_counter=decision_counter,
         index_counter=index_counter,
         round_id=round_id,
+        stage_dir=STAGE_DIR,
+        prompts_dir=PROMPTS_DIR,
     )
 
     # Write round information to JSON file

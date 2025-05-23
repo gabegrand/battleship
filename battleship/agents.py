@@ -5,35 +5,14 @@ import traceback
 import uuid
 from abc import ABC
 from dataclasses import dataclass
-from pathlib import Path
-from time import time
 
 import numpy as np
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
 from battleship.utils import parse_answer_to_str
-
-CACHE_DIR = Path(f"./cache")
-CACHE_DIR.mkdir(exist_ok=True)
-
-RESULTS_DIR = Path(os.path.join(CACHE_DIR, "individual_results"))
-RESULTS_DIR.mkdir(exist_ok=True)
-
-ROUND_RESULTS_DIR = Path(os.path.join(CACHE_DIR, "round_results"))
-ROUND_RESULTS_DIR.mkdir(exist_ok=True)
-
-EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{time()}"))
-EXPERIMENTAL_RESULTS_DIR.mkdir(exist_ok=True)
-
-STAGE_DIR = Path(os.path.join(RESULTS_DIR, "stages"))
-PROMPTS_DIR = Path(os.path.join(RESULTS_DIR, "prompts"))
-STAGE_DIR.mkdir(exist_ok=True)
-PROMPTS_DIR.mkdir(exist_ok=True)
-
-HUMAN_SUMMARY_DIR = Path(os.path.join(RESULTS_DIR, "human_summaries"))
-HUMAN_SUMMARY_DIR.mkdir(exist_ok=True)
 
 # MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
 DECISION_PATTERN = re.compile(
@@ -48,6 +27,7 @@ CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
 
 def get_openai_client():
+    load_dotenv()
     return OpenAI()
 
 
@@ -166,6 +146,8 @@ class Agent(ABC):
         decision_counter: Counter = None,
         index_counter: Counter = None,
         round_id: str = None,
+        stage_dir: str = None,
+        prompts_dir: str = None,
     ):
         self.round_id = round_id
         self.use_cot = use_cot
@@ -176,9 +158,27 @@ class Agent(ABC):
         self.index_counter = index_counter
         self.stage_list = []
         self.prompt_list = []
+        self.stage_dir = stage_dir
+        self.prompts_dir = prompts_dir
 
-    def write_cache(self, message_type: str = None, cache_data: CacheData = None):
+    def write_cache(
+        self,
+        message_type: str = None,
+        cache_data: CacheData = None,
+        stage_dir=None,
+        prompts_dir=None,
+    ):
         """Append a new entry to the JSON cache."""
+
+        # Use instance variables as defaults if not provided
+        if stage_dir is None:
+            stage_dir = self.stage_dir
+        if prompts_dir is None:
+            prompts_dir = self.prompts_dir
+
+        # Skip caching if directories are not set
+        if stage_dir is None or prompts_dir is None:
+            return
 
         def option_to_str(option):
             return option if option is not None else ""
@@ -205,7 +205,7 @@ class Agent(ABC):
         # Create unique filename for the stage data to avoid race conditions
         stage_filename = f"stage_{self.round_id}_{stage_id}_{uuid.uuid4()}.json"
 
-        stage_path = os.path.join(STAGE_DIR, stage_filename)
+        stage_path = os.path.join(stage_dir, stage_filename)
 
         # Write stage data to a JSON file
         with open(stage_path, "w") as f:
@@ -230,7 +230,7 @@ class Agent(ABC):
 
                 # Create unique filename for the prompt data
                 prompt_filename = f"prompt_{self.round_id}_{stage_id}_{prompt_counter.counter}_{uuid.uuid4()}.json"
-                prompt_path = os.path.join(PROMPTS_DIR, prompt_filename)
+                prompt_path = os.path.join(prompts_dir, prompt_filename)
 
                 # Write prompt data to a JSON file
                 with open(prompt_path, "w") as f:
