@@ -1,79 +1,34 @@
-import csv
+import json
 import os
 import re
 import traceback
+import uuid
 from abc import ABC
 from dataclasses import dataclass
-from math import log2
-from pathlib import Path
-from time import time
 
 import numpy as np
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
+from battleship.utils import parse_answer_to_str
 
-CACHE_DIR = Path(f"./cache")
-CACHE_DIR.mkdir(exist_ok=True)
-
-# Consistent CSV file paths
-CSV_STAGE_FILE = CACHE_DIR / f"stage.csv"
-CSV_ROUND_FILE = CACHE_DIR / f"round.csv"
-CSV_PROMPTS_FILE = CACHE_DIR / f"prompts.csv"
-SUMMARY_FILE = CACHE_DIR / f"summary.csv"
-
-# Define consistent CSV column names
-STAGE_CSV_COLUMNS = [
-    "round_id",
-    "index",
-    "messageType",
-    "messageText",
-    "mapProb",
-    "eig",
-    "occTiles",
-    "question_id",
-    "modelBackend",
-]
-
-ROUND_CSV_COLUMNS = ["id", "boardId", "seed", "captainModel", "spotterModel"]
-
-PROMPTS_CSV_COLUMNS = [
-    "round_id",
-    "stage_index",
-    "prompt_index",
-    "prompt",
-    "full_completion",
-    "extracted_completion",
-    "eig",
-    "map_prob",
-    "occ_tiles",
-    "modelBackend",
-]
-
-SUMMARY_CSV_COLUMNS = [
-    "roundId",
-    "captainType",
-    "boardId",
-    "hits",
-    "misses",
-    "is_won",
-    "questionsAsked",
-    "precision",
-    "recall",
-    "f1_score",
-]
-
-MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
-DECISION_PATTERN = re.compile("^(Question|Move)$")
-MOVE_COT_PATTERN = lambda size: re.compile(
-    rf"\s*<answer>\s*({config_move_regex(size)})\s*</answer>\s*"
+# MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
+DECISION_PATTERN = re.compile(
+    r"\s*<answer>\s*(Question|Move)\s*(<answer>|</answer>)\s*"
 )
-BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*</answer>\s*")
-ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*</answer>\s*")
+MOVE_PATTERN = lambda size: re.compile(
+    rf"\s*<answer>\s*({config_move_regex(size)})\s*(<answer>|</answer>)\s*"
+)
+BOOL_ANSWER_PATTERN = re.compile(r"\s*<answer>\s*(Yes|No)\s*(<answer>|</answer>)\s*")
+ANSWER_MATCH_PATTERN = re.compile(r"\s*<answer>\s*(.*?)\s*(<answer>|</answer>)\s*")
 CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
-client = OpenAI()
+
+def get_openai_client():
+    load_dotenv()
+    return OpenAI()
 
 
 @dataclass
@@ -146,11 +101,11 @@ class CodeQuestion:
 
 
 class NullCodeQuestion(CodeQuestion):
-    def __init__(self):
+    def __init__(self, translation_prompt):
         self.question = None
         self.fn = lambda true_board, partial_board: None
         self.fn_str = None
-        self.translation_prompt = None
+        self.translation_prompt = translation_prompt
         self.full_completion = None
 
 
@@ -191,6 +146,8 @@ class Agent(ABC):
         decision_counter: Counter = None,
         index_counter: Counter = None,
         round_id: str = None,
+        stage_dir: str = None,
+        prompts_dir: str = None,
     ):
         self.round_id = round_id
         self.use_cot = use_cot
@@ -199,9 +156,29 @@ class Agent(ABC):
         self.use_cache = use_cache
         self.decision_counter = decision_counter
         self.index_counter = index_counter
+        self.stage_list = []
+        self.prompt_list = []
+        self.stage_dir = stage_dir
+        self.prompts_dir = prompts_dir
 
-    def write_cache(self, message_type: str = None, cache_data: CacheData = None):
-        """Append a new entry to the CSV cache."""
+    def write_cache(
+        self,
+        message_type: str = None,
+        cache_data: CacheData = None,
+        stage_dir=None,
+        prompts_dir=None,
+    ):
+        """Append a new entry to the JSON cache."""
+
+        # Use instance variables as defaults if not provided
+        if stage_dir is None:
+            stage_dir = self.stage_dir
+        if prompts_dir is None:
+            prompts_dir = self.prompts_dir
+
+        # Skip caching if directories are not set
+        if stage_dir is None or prompts_dir is None:
+            return
 
         def option_to_str(option):
             return option if option is not None else ""
@@ -211,46 +188,53 @@ class Agent(ABC):
             if cache_data.occ_tiles is not None
             else ""
         )
-        exists = os.path.isfile(CSV_STAGE_FILE)
-        with open(CSV_STAGE_FILE, "a", newline="") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=STAGE_CSV_COLUMNS)
-            if not exists:
-                writer.writeheader()
-            stage_id = self.index_counter.increment_counter()
-            writer.writerow(
-                {
+        stage_id = self.index_counter.increment_counter()
+        # Create stage data entry
+        stage_data = {
+            "round_id": self.round_id,
+            "index": stage_id,
+            "messageType": message_type,
+            "messageText": option_to_str(cache_data.message_text),
+            "mapProb": option_to_str(cache_data.map_prob),
+            "eig": option_to_str(cache_data.eig),
+            "occTiles": option_to_str(occ_tiles_str),
+            "question_id": self.decision_counter.counter,
+            "modelBackend": self.model_string,  # Include model backend
+        }
+
+        # Create unique filename for the stage data to avoid race conditions
+        stage_filename = f"stage_{self.round_id}_{stage_id}_{uuid.uuid4()}.json"
+
+        stage_path = os.path.join(stage_dir, stage_filename)
+
+        # Write stage data to a JSON file
+        with open(stage_path, "w") as f:
+            json.dump(stage_data, f, indent=2)
+
+        # Handle prompts if they exist
+        if cache_data.prompts is not None:
+            prompt_counter = Counter()
+            for prompt in cache_data.prompts:
+                prompt_data = {
                     "round_id": self.round_id,
-                    "index": stage_id,
-                    "messageType": message_type,
-                    "messageText": option_to_str(cache_data.message_text),
-                    "mapProb": option_to_str(cache_data.map_prob),
-                    "eig": option_to_str(cache_data.eig),
-                    "occTiles": option_to_str(occ_tiles_str),
-                    "question_id": self.decision_counter.counter,
+                    "stage_index": stage_id,
+                    "prompt_index": prompt_counter.increment_counter(),
+                    "prompt": prompt.prompt,
+                    "full_completion": prompt.full_completion,
+                    "extracted_completion": str(prompt.extracted_completion),
+                    "eig": prompt.eig,
+                    "map_prob": prompt.map_prob,
+                    "occ_tiles": np.array2string(prompt.occ_tiles),
                     "modelBackend": self.model_string,  # Include model backend
                 }
-            )
-            if cache_data.prompts is not None:
-                with open(CSV_PROMPTS_FILE, "a", newline="") as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames=PROMPTS_CSV_COLUMNS)
-                    if not exists:
-                        writer.writeheader()
-                    prompt_counter = Counter()
-                    for prompt in cache_data.prompts:
-                        writer.writerow(
-                            {
-                                "round_id": self.round_id,
-                                "stage_index": stage_id,
-                                "prompt_index": prompt_counter.increment_counter(),
-                                "prompt": prompt.prompt,
-                                "full_completion": prompt.full_completion,
-                                "extracted_completion": prompt.extracted_completion,
-                                "eig": prompt.eig,
-                                "map_prob": prompt.map_prob,
-                                "occ_tiles": prompt.occ_tiles,
-                                "modelBackend": self.model_string,  # Include model backend
-                            }
-                        )
+
+                # Create unique filename for the prompt data
+                prompt_filename = f"prompt_{self.round_id}_{stage_id}_{prompt_counter.counter}_{uuid.uuid4()}.json"
+                prompt_path = os.path.join(prompts_dir, prompt_filename)
+
+                # Write prompt data to a JSON file
+                with open(prompt_path, "w") as f:
+                    json.dump(prompt_data, f, indent=2)
 
 
 class EIGCalculator:
@@ -261,7 +245,9 @@ class EIGCalculator:
 
     def calculate_eig(self, question, state, pregenerated_question=None, samples=100):
         if pregenerated_question is None:
-            code_question = self.spotter.translate(question, [], state.board)
+            code_question = self.spotter.translate(
+                question=question, occ_tiles=state.board, history=None
+            )
         else:
             code_question = pregenerated_question
 
@@ -272,22 +258,20 @@ class EIGCalculator:
             seed=self.rng,
         )
 
-        results = {"Yes": 0, "No": 0}
+        results = {"yes": 0, "no": 0}
         curr_time = time()
         while sum(results.values()) < samples:
             if time() - curr_time > 15:
-                # print("EIG calculation timed out")
                 return float("nan")
             board = None
             while not board:
                 board = sampler.populate_board()
-            board = board.to_symbolic_array()
-            result = code_question(true_board=board, partial_board=state.board)
-            if type(result) == str:
-                try:
-                    results[result] += 1
-                except:
-                    break
+            result = code_question(true_board=board.board, partial_board=state.board)
+            try:
+                result = parse_answer_to_str(result)
+                results[result] += 1
+            except:
+                break
 
         if any(v == 0 for v in results.values()):
             return 0
