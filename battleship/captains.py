@@ -61,9 +61,16 @@ class Captain(Agent):
         model_string=None,
         temperature=None,
         round_id=None,
+        stage_dir=None,
+        prompts_dir=None,
     ):
         super().__init__(
-            seed=seed, model_string=model_string, use_cache=use_cache, round_id=round_id
+            seed=seed,
+            model_string=model_string,
+            use_cache=use_cache,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         self.temperature = temperature
         self.sampling_constraints = []
