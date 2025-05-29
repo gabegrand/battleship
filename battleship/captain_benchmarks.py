@@ -236,7 +236,7 @@ def create_captain(
         return Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed), n_samples=eig_samples, board_id=None
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -256,7 +256,7 @@ def create_captain(
         return Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed), n_samples=eig_samples, board_id=None
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -284,6 +284,9 @@ def run_single_agent_game(args):
         captain.question_strategy, "spotter"
     ):
         captain.question_strategy.spotter.board_id = board_id
+
+    if hasattr(captain, "move_strategy") and hasattr(captain.move_strategy, "board_id"):
+        captain.move_strategy.board_id = board_id
 
     # Set the captain's seed
     captain.seed = seed
@@ -444,7 +447,7 @@ def parse_arguments():
 
     # Captain-specific parameters
     parser.add_argument(
-        "--map-samples", type=int, default=100, help="Number of samples for MAPCaptain"
+        "--map-samples", type=int, default=1000, help="Number of samples for MAPCaptain"
     )
     parser.add_argument(
         "--prob-q-prob",

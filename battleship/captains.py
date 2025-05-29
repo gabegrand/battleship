@@ -230,9 +230,10 @@ class RandomMoveStrategy(MoveStrategy):
 
 
 class MAPMoveStrategy(MoveStrategy):
-    def __init__(self, rng, n_samples=10000):
+    def __init__(self, rng, n_samples=1000, board_id=None):
         self.rng = rng
         self.n_samples = n_samples
+        self.board_id = board_id
 
     def make_move(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
@@ -245,9 +246,13 @@ class MAPMoveStrategy(MoveStrategy):
         )
 
         if constraints != []:
-            # Compute the raw posterior counts over board positions
+            true_board = Board.from_trial_id(trial_id=self.board_id).to_numpy()
+
             posterior = sampler.constrained_posterior(
-                n_samples=self.n_samples, normalize=False, constraints=constraints
+                ground_truth=true_board,
+                n_samples=self.n_samples,
+                normalize=False,
+                constraints=constraints,
             )
         else:
             # Compute the raw posterior counts over board positions
