@@ -3,10 +3,11 @@ import argparse
 import glob
 import json
 import os
+import sys
+import time
 import uuid
 from multiprocessing.dummy import Pool
 from pathlib import Path
-from time import time
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,8 @@ RESULTS_DIR.mkdir(exist_ok=True)
 ROUND_RESULTS_DIR = Path(os.path.join(CACHE_DIR, "round_results"))
 ROUND_RESULTS_DIR.mkdir(exist_ok=True)
 
-EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{time()}"))
+readable_time = time.strftime("%Y_%m_%d_%H_%M_%S")
+EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{readable_time}"))
 EXPERIMENTAL_RESULTS_DIR.mkdir(exist_ok=True)
 
 STAGE_DIR = Path(os.path.join(RESULTS_DIR, "stages"))
@@ -38,8 +40,9 @@ PROMPTS_DIR.mkdir(exist_ok=True)
 
 HUMAN_SUMMARY_DIR = Path(os.path.join(RESULTS_DIR, "human_summaries"))
 HUMAN_SUMMARY_DIR.mkdir(exist_ok=True)
-
 HUMAN_MAX_QUESTIONS = 15
+
+COMMAND_FILE_NAME = "command.txt"
 
 
 def get_human_results(gold_annotations_path, round_data_path):
@@ -307,6 +310,13 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
+    # Save the command used to run the script
+    command = " ".join(["python"] + sys.argv)
+    command_path = os.path.join(EXPERIMENTAL_RESULTS_DIR, COMMAND_FILE_NAME)
+    with open(command_path, "w") as f:
+        f.write(command)
+    print(f"Command saved to {command_path}")
+
     # Resolve paths relative to project root
     gold_annotations_path = resolve_project_path(args.gold_annotations)
     round_data_path = resolve_project_path(args.round_data)
@@ -379,7 +389,7 @@ def main():
 
     # Write all files
     file_pairs = [
-        ("summaries.json", summaries_data),
+        ("summary.json", summaries_data),
         ("stages.json", stages_data),
         ("prompts.json", prompts_data),
         ("rounds.json", rounds_data),
