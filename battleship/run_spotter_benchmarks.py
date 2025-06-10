@@ -1,8 +1,10 @@
 import argparse
-import csv
+import json
 import logging
 import multiprocessing.dummy as mp
 import os
+import tempfile
+import uuid
 from functools import partial
 
 import numpy as np
@@ -15,6 +17,7 @@ from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
+from battleship.utils import resolve_project_path
 
 # Set up logging
 logging.basicConfig(
@@ -32,12 +35,16 @@ ALL_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"
 
 
 def load_data(
-    stages_path="/home/ubuntu/repo_battleship/gold-v2.csv",
-    rounds_path="/home/ubuntu/repo_battleship/battleship/experiments/collaborative/battleship-final-data/round.csv",
+    stages_path="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
+    rounds_path="experiments/collaborative/data/battleship-final-data/round.csv",
     goldAnnotations=[],
 ):
-    stage_df = pd.read_csv(stages_path)
-    round_df = pd.read_csv(rounds_path)
+    # Resolve paths relative to project root
+    stages_path = resolve_project_path(stages_path)
+    rounds_path = resolve_project_path(rounds_path)
+
+    stage_df = pd.read_csv(str(stages_path))
+    round_df = pd.read_csv(str(rounds_path))
 
     board_ids = round_df[["id", "board_id"]]
 
@@ -227,7 +234,7 @@ def process_question_data(question_data):
     else:
         answer_text = None
 
-    # Extract necessary data for CSV
+    # Extract necessary data for JSON
     data_row = {
         "model": model_string,
         "CoT": use_cot,
@@ -253,20 +260,19 @@ def process_question_data(question_data):
     for annotation, value in gold_annotations.items():
         data_row[f"gold_{annotation}"] = value
 
-    # Replace slashes with a safe character for filenames (e.g., underscores or hyphens)
-    safe_model_string = model_string.replace("/", "-")
+    # Write to a temporary file to avoid race conditions
+    # Each process writes to its own unique file
+    temp_filename = f"{model_string}_{uuid.uuid4()}.json"
+    temp_path = os.path.join(output_dir, "individual_results", temp_filename)
 
-    # Append to model-specific CSV file using the safe model string
-    csv_path = os.path.join(
-        output_dir, f"{safe_model_string}_{model_class.__name__}_{use_cot}.csv"
-    )
+    # Ensure temp directory exists
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
 
-    # Use a lock to prevent race conditions when writing to the same file
-    with open(csv_path, "a", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=list(data_row.keys()))
-        writer.writerow(data_row)
+    # Write the single result to the temporary file
+    with open(temp_path, "w") as jsonfile:
+        json.dump(data_row, jsonfile, indent=2)
 
-    return data_row["is_correct"]
+    return temp_path
 
 
 def prepare_question_data(
@@ -338,68 +344,11 @@ def benchmark_on_rounds(
     use_captain_board=False,
     output_dir="benchmark_results",
 ):
-    # Create output directory if it doesn't exist
+    # Create output directory and temp subdirectory if they don't exist
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "temp"), exist_ok=True)
 
     safe_model_string = model_string.replace("/", "-")
-
-    # Create the model-specific CSV file with headers
-    csv_path = os.path.join(
-        output_dir, f"{safe_model_string}_{model.__name__}_{use_cot}.csv"
-    )
-
-    # Get a sample question to determine all the fieldnames including gold annotations
-    sample_question_data = next(
-        iter(
-            prepare_question_data(
-                df,
-                rounds_question_ids,
-                model,
-                model_string,
-                temperature,
-                use_history,
-                1,
-                1,
-                use_cache,
-                use_cot,
-                use_captain_board,
-                output_dir,
-            )
-        ),
-        None,
-    )
-
-    if sample_question_data:
-        sample_context = retrieve_context(
-            sample_question_data[2], sample_question_data[0]
-        )
-        gold_annotation_keys = [
-            f"gold_{k}" for k in sample_context["context"]["gold_annotations"].keys()
-        ]
-    else:
-        gold_annotation_keys = [f"gold_{k}" for k in ALL_ANNOTATIONS]
-
-    if not os.path.exists(csv_path):
-        with open(csv_path, "w", newline="") as csvfile:
-            fieldnames = [
-                "model",
-                "CoT",
-                "spotterModel",
-                "roundID",
-                "questionID",
-                "question",
-                "program",
-                "occTiles",
-                "answer",
-                "EIG",
-                "full_completion",
-                "prompt",
-                "true_answer",
-                "is_correct",
-            ] + gold_annotation_keys
-
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
 
     # Prepare all question data for parallel processing
     all_question_data = prepare_question_data(
@@ -417,7 +366,8 @@ def benchmark_on_rounds(
         output_dir,
     )
 
-    # Process all questions in parallel with max 10 workers
+    # Process all questions in parallel
+    print(args.processes)
     with mp.Pool(processes=args.processes) as pool:
         results = list(
             tqdm(
@@ -427,50 +377,24 @@ def benchmark_on_rounds(
             )
         )
 
-    # Calculate accuracy
-    if results:
-        accuracy = sum(1 for r in results if r) / len(results)
-    else:
-        accuracy = 0.0
+    # Now combine all temp files into the final JSON file
+    round_result_name = f"{safe_model_string}_{model.__name__}_{use_cot}.json"
+    final_json_path = os.path.join(output_dir, round_result_name)
 
-    return accuracy
+    combined_data = []
+    for result_file in results:
+        try:
+            with open(result_file, "r") as jsonfile:
+                data = json.load(jsonfile)
+                combined_data.append(data)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.error(f"Error reading temp file {result_file}: {e}")
 
+    # Write combined data to final file
+    with open(final_json_path, "w") as jsonfile:
+        json.dump(combined_data, jsonfile, indent=2)
 
-def combine_results(output_dir="benchmark_results"):
-    """Combine all individual CSV files into a single results file"""
-    all_files = [
-        os.path.join(output_dir, f)
-        for f in os.listdir(output_dir)
-        if f.endswith(".csv")
-        and f != "combined_results.csv"
-        and f != "accuracy_summary.csv"
-    ]
-
-    if not all_files:
-        print("No result files found to combine.")
-        return None
-
-    # Read all CSVs and determine all possible columns
-    all_columns = set()
-    dfs = []
-
-    for file_path in all_files:
-        df = pd.read_csv(file_path)
-        all_columns.update(df.columns)
-        dfs.append(df)
-
-    # Create a combined dataframe with all columns
-    combined_df = pd.DataFrame(columns=list(all_columns))
-
-    # Append each dataframe, filling missing columns with NaN
-    for df in dfs:
-        combined_df = pd.concat([combined_df, df], ignore_index=True)
-
-    combined_path = os.path.join(output_dir, "combined_results.csv")
-    combined_df.to_csv(combined_path, index=False)
-
-    print(f"Combined results saved to {combined_path}")
-    return combined_df
+    return round_result_name
 
 
 def run_experiments(
@@ -487,7 +411,7 @@ def run_experiments(
     output_dir="benchmark_results",
 ):
     """Run experiments with all combinations of models and options"""
-    results = {"language_model": [], "spotter_model": [], "accuracy": [], "cot": []}
+    results = []
 
     for llm in language_models:
         for spotter in spotter_models:
@@ -496,7 +420,7 @@ def run_experiments(
                     f"Benchmarking {spotter.__name__} with language model {llm}, COT: {cot_option}"
                 )
 
-                accuracy = benchmark_on_rounds(
+                result_name = benchmark_on_rounds(
                     df=df,
                     rounds_question_ids=rounds_questions_dict,
                     model=spotter,
@@ -510,21 +434,24 @@ def run_experiments(
                     output_dir=output_dir,
                 )
 
-                results["language_model"].append(llm)
-                results["spotter_model"].append(spotter.__name__)
-                results["cot"].append(cot_option)
-                results["accuracy"].append(accuracy)
+                results.append(result_name)
 
-                print(f"Accuracy: {accuracy * 100:.2f}%")
+                # result_dict = {
+                #     "language_model": llm,
+                #     "spotter_model": spotter.__name__,
+                #     "cot": cot_option,
+                #     "accuracy": accuracy,
+                #     "max_rounds": max_rounds,
+                #     "max_questions": max_questions,
+                #     "use_history": use_history,
+                #     "use_cache": use_cache,
+                #     "use_captain_board": use_captain_board,
+                # }
+                # results.append(result_dict)
 
-    # Convert the results to a df for easier manipulation
-    results_df = pd.DataFrame(results)
-    results_df.to_csv(os.path.join(output_dir, "accuracy_summary.csv"), index=False)
+                # print(f"Accuracy: {accuracy * 100:.2f}%")
 
-    # Combine all individual result files
-    combine_results(output_dir)
-
-    return results_df
+    return results
 
 
 if __name__ == "__main__":
@@ -534,12 +461,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--stages",
         type=str,
-        help="Path to the stage.csv file.",
+        help="Path to the stages CSV file containing question data.",
     )
     parser.add_argument(
         "--rounds",
         type=str,
-        help="Path to the round.csv file.",
+        help="Path to the rounds CSV file containing round data.",
     )
     parser.add_argument(
         "--output_dir",
@@ -600,7 +527,7 @@ if __name__ == "__main__":
         nargs="+",
         choices=ALL_ANNOTATIONS + ["answer"],
         default=[],
-        help="Space-separated list of gold annotations from [answer, ambiguous, contextual, unanswerable].",
+        help="Space-separated list of gold annotations to filter on.",
     )
     parser.add_argument(
         "--cot_options",
@@ -640,7 +567,7 @@ if __name__ == "__main__":
     )
 
     # Run the experiments
-    results_df = run_experiments(
+    result_names = run_experiments(
         df=df,
         rounds_questions_dict=rounds_questions_dict,
         language_models=args.models,
@@ -655,4 +582,6 @@ if __name__ == "__main__":
     )
 
     print("Experiment completed!")
-    print(f"Results summary:\n{results_df}")
+    print("Generated result files:")
+    for result_name in result_names:
+        print(f"- {result_name}")

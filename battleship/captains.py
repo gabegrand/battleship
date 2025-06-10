@@ -11,17 +11,12 @@ import numpy as np
 from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import CacheData
-from battleship.agents import client
-from battleship.agents import CSV_PROMPTS_FILE
-from battleship.agents import CSV_ROUND_FILE
-from battleship.agents import CSV_STAGE_FILE
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
-from battleship.agents import MOVE_COT_PATTERN
+from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Prompt
 from battleship.agents import Question
-from battleship.agents import SUMMARY_FILE
 from battleship.board import Board
 from battleship.board import coords_to_tile
 from battleship.board import tile_to_coords
@@ -43,7 +38,9 @@ class DecisionStrategy(ABC):
 
 class MoveStrategy(ABC):
     @abstractmethod
-    def make_move(self, state, history, sunk) -> Tuple[Tuple[int, int], Dict]:
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ) -> Tuple[Tuple[int, int], Dict]:
         pass
 
 
@@ -64,9 +61,16 @@ class Captain(Agent):
         model_string=None,
         temperature=None,
         round_id=None,
+        stage_dir=None,
+        prompts_dir=None,
     ):
         super().__init__(
-            seed=seed, model_string=model_string, use_cache=use_cache, round_id=round_id
+            seed=seed,
+            model_string=model_string,
+            use_cache=use_cache,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         self.temperature = temperature
         self.sampling_constraints = []
@@ -77,12 +81,6 @@ class Captain(Agent):
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
 
-        # Default paths that will be overridden with job-specific paths
-        self.csv_stage_file = CSV_STAGE_FILE
-        self.csv_round_file = CSV_ROUND_FILE
-        self.csv_prompts_file = CSV_PROMPTS_FILE
-        self.summary_file = SUMMARY_FILE
-
     def decision(
         self,
         state: Board,
@@ -92,8 +90,14 @@ class Captain(Agent):
         sunk: str,
     ) -> Decision:
         self.decision_counter.increment_counter()
+        self.questions_remaining = questions_remaining
+        self.moves_remaining = moves_remaining
         result, decision_cache = self.decision_strategy.make_decision(
-            state, history, questions_remaining, moves_remaining, sunk
+            state,
+            history,
+            questions_remaining,
+            moves_remaining,
+            sunk,
         )
 
         if self.use_cache:
@@ -106,7 +110,12 @@ class Captain(Agent):
 
     def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
         result, move_cache = self.move_strategy.make_move(
-            state, history, sunk, constraints
+            state,
+            history,
+            sunk,
+            self.questions_remaining,
+            self.moves_remaining,
+            constraints,
         )
 
         if self.use_cache:
@@ -119,7 +128,7 @@ class Captain(Agent):
 
     def question(self, state: Board, history: List[Dict], sunk: str):
         result, question_cache = self.question_strategy.ask_question(
-            state, history, sunk
+            state, history, sunk, self.questions_remaining, self.moves_remaining
         )
 
         if self.use_cache:
@@ -157,8 +166,11 @@ class LLMDecisionStrategy(DecisionStrategy):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
+        self.client = get_openai_client()
 
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+    def make_decision(
+        self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
+    ):
         decision = None
         prompts = []
 
@@ -168,27 +180,22 @@ class LLMDecisionStrategy(DecisionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
 
             candidate_decision = None
-            while candidate_decision is None:
-                completion = client.chat.completions.create(
+            for _ in range(n_attempts):
+                completion = self.client.chat.completions.create(
                     model=self.model_string,
                     messages=decision_prompt.to_chat_format(),
                     temperature=self.temperature,
                 )
-                if self.use_cot:
-                    match = ANSWER_MATCH_PATTERN.search(
-                        completion.choices[0].message.content
-                    )
-                    if match is not None:
-                        candidate_decision = match.group(1)
-                else:
-                    candidate_decision = DECISION_PATTERN.match(
-                        completion.choices[0].message.content
-                    ).group(0)
+                match = DECISION_PATTERN.search(completion.choices[0].message.content)
+
+                if match is not None:
+                    candidate_decision = match.group(1)
 
                 prompts.append(
                     Prompt(
@@ -199,11 +206,15 @@ class LLMDecisionStrategy(DecisionStrategy):
                     )
                 )
 
+                if candidate_decision:
+                    break
+
             decision = (
                 Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
             )
         else:
             decision = Decision.MOVE
+
         return decision, CacheData(
             message_text=decision, occ_tiles=state.board, prompts=prompts
         )
@@ -214,7 +225,9 @@ class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
         self.rng = rng
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
@@ -225,11 +238,14 @@ class RandomMoveStrategy(MoveStrategy):
 
 
 class MAPMoveStrategy(MoveStrategy):
-    def __init__(self, rng, n_samples=10000):
+    def __init__(self, rng, n_samples=1000, board_id=None):
         self.rng = rng
         self.n_samples = n_samples
+        self.board_id = board_id
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -238,9 +254,13 @@ class MAPMoveStrategy(MoveStrategy):
         )
 
         if constraints != []:
-            # Compute the raw posterior counts over board positions
+            true_board = Board.from_trial_id(trial_id=self.board_id).to_numpy()
+
             posterior = sampler.constrained_posterior(
-                n_samples=self.n_samples, normalize=False, constraints=constraints
+                ground_truth=true_board,
+                n_samples=self.n_samples,
+                normalize=False,
+                constraints=constraints,
             )
         else:
             # Compute the raw posterior counts over board positions
@@ -267,14 +287,23 @@ class MAPMoveStrategy(MoveStrategy):
 
 class LLMMoveStrategy(MoveStrategy):
     def __init__(
-        self, model_string, temperature=None, use_cot=False, moves_remaining=None
+        self,
+        model_string,
+        temperature=None,
+        use_cot=False,
+        moves_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
         self.moves_remaining = moves_remaining
+        self.n_attempts = n_attempts
+        self.client = get_openai_client()
 
-    def make_move(self, state, history, sunk, constraints):
+    def make_move(
+        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+    ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
@@ -282,30 +311,26 @@ class LLMMoveStrategy(MoveStrategy):
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
-            moves_remaining=self.moves_remaining,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
         candidate_move = None
         prompts = []
-        while candidate_move is None or candidate_move in visible_tiles:
-            completion = client.chat.completions.create(
+        for _ in range(self.n_attempts):
+            # while candidate_move is None or candidate_move in visible_tiles:
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
-            if self.use_cot:
-                match = MOVE_COT_PATTERN(state.size).search(
-                    completion.choices[0].message.content
-                )
-                if match is not None:
-                    candidate_move = tile_to_coords(match.group(1))
-            else:
-                candidate_move = MOVE_PATTERN(state.size).match(
-                    completion.choices[0].message.content
-                )
-                if candidate_move is not None:
-                    candidate_move = tile_to_coords(candidate_move.group())
+
+            candidate_move = MOVE_PATTERN(state.size).search(
+                completion.choices[0].message.content
+            )
+            if candidate_move is not None:
+                candidate_move = tile_to_coords(candidate_move.group(1))
 
             prompts.append(
                 Prompt(
@@ -318,8 +343,15 @@ class LLMMoveStrategy(MoveStrategy):
                 )
             )
 
-        return candidate_move, CacheData(
-            message_text=coords_to_tile(candidate_move),
+            if candidate_move is not None and candidate_move not in visible_tiles:
+                return candidate_move, CacheData(
+                    message_text=coords_to_tile(candidate_move),
+                    occ_tiles=state.board,
+                    prompts=prompts,
+                )
+
+        return None, CacheData(
+            message_text=None,
             occ_tiles=state.board,
             prompts=prompts,
         )
@@ -336,6 +368,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         k=3,
         use_cot=False,
         questions_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.spotter = spotter
@@ -345,8 +378,10 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.use_cot = use_cot
         self.questions_remaining = questions_remaining
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.n_attempts = n_attempts
+        self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
 
@@ -357,33 +392,26 @@ class EIGQuestionStrategy(QuestionStrategy):
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
-                q_remaining=self.questions_remaining,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
                 sunk=sunk,
             )
 
-            # Generate a candidate question
-            if not self.use_cot:
-                completion = client.chat.completions.create(
+            candidate_question_text = None
+            for _ in range(self.n_attempts):
+                completion = self.client.chat.completions.create(
                     model=self.model_string,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
                 )
-                candidate_question_text = completion.choices[0].message.content
-            else:
-                candidate_question_text = None
-                while candidate_question_text is None:
-                    completion = client.chat.completions.create(
-                        model=self.model_string,
-                        messages=question_prompt.to_chat_format(),
-                        temperature=None,
-                    )
-                    match = ANSWER_MATCH_PATTERN.search(
-                        completion.choices[0].message.content
-                    )
-                    if match:
-                        candidate_question_text = match.group(1)
+                match = ANSWER_MATCH_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+                if match:
+                    candidate_question_text = match.group(1)
 
-            # Create question object
+                if candidate_question_text is not None:
+                    break
             candidate_question = Question(text=candidate_question_text)
 
             # Calculate EIG for this question
@@ -416,72 +444,52 @@ class EIGQuestionStrategy(QuestionStrategy):
 
 class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
-        self, model_string, temperature=None, use_cot=False, questions_remaining=None
+        self,
+        model_string,
+        temperature=None,
+        use_cot=False,
+        spotter=None,
+        rng=None,
+        questions_remaining=None,
+        n_attempts=3,
     ):
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
         self.questions_remaining = questions_remaining
+        self.n_attempts = n_attempts
+        self.spotter = spotter
+        self.rng = rng
+        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk):
+    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
-            q_remaining=self.questions_remaining,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
             sunk=sunk,
         )
 
-        if not self.use_cot:
-            completion = client.chat.completions.create(
-                model=self.model_string,
-                messages=question_prompt.to_chat_format(),
-                temperature=self.temperature,
-            )
-            candidate_question = completion.choices[0].message.content
-        else:
-            candidate_question = None
-            while candidate_question is None:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=question_prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-                candidate_question = ANSWER_MATCH_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-
-                if candidate_question:
-                    candidate_question = candidate_question.group(1)
-                else:
-                    candidate_question = None
-
         prompts = []
-        while candidate_question is None:
-            completion = client.chat.completions.create(
+        for _ in range(self.n_attempts):
+            completion = self.client.chat.completions.create(
                 model=self.model_string,
                 messages=question_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
 
-            if self.use_cot:
-                candidate_question = ANSWER_MATCH_PATTERN.search(
-                    completion.choices[0].message.content
-                )
+            candidate_question = ANSWER_MATCH_PATTERN.search(
+                completion.choices[0].message.content
+            )
 
-                if candidate_question:
-                    candidate_question = candidate_question.group(1)
-                else:
-                    candidate_question = None
+            if candidate_question:
+                candidate_question = candidate_question.group(1)
             else:
-                completion = client.chat.completions.create(
-                    model=self.model_string,
-                    messages=question_prompt.to_chat_format(),
-                    temperature=self.temperature,
-                )
-
-                candidate_question = completion.choices[0].message.content
+                candidate_question = None
 
             prompts.append(
                 Prompt(
@@ -492,6 +500,216 @@ class LLMQuestionStrategy(QuestionStrategy):
                 )
             )
 
-        return Question(text=candidate_question), CacheData(
-            message_text=candidate_question, occ_tiles=state.board, prompts=prompts
+            if candidate_question is not None:
+                break
+
+        eig = self.eig_calculator.calculate_eig(
+            Question(text=candidate_question), state, samples=1000
         )
+
+        return Question(text=candidate_question), CacheData(
+            message_text=candidate_question,
+            occ_tiles=state.board,
+            prompts=prompts,
+            eig=eig,
+        )
+
+
+def create_captain(
+    captain_type,
+    seed,
+    model,
+    use_cache,
+    map_samples=None,
+    prob_q_prob=None,
+    eig_samples=None,
+    eig_k=None,
+):
+    """
+    Factory function to create Captain instances with properly configured strategies.
+    """
+    from battleship.spotters import CodeSpotterModel
+
+    # Initialize spotter for EIG captains
+    def _get_spotter():
+        return CodeSpotterModel(
+            board_id="B01",
+            board_experiment="collaborative",
+            model_string=model,
+            temperature=None,
+            use_cot=True,
+        )
+
+    if captain_type == "RandomCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "MAPCaptain":
+        return Captain(
+            decision_strategy=AlwaysMoveDecisionStrategy(),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=map_samples
+            ),
+            question_strategy=None,
+            seed=seed,
+            use_cache=use_cache,
+            round_id=None,
+        )
+
+    elif captain_type == "ProbabilisticCaptain":
+        captain = Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "ProbabilisticCaptain_cot":
+        captain = Captain(
+            decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "LLMDecisionCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(
+                model_string=model,
+                use_cot=False,
+            ),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=False,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "LLMDecisionCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            question_strategy=LLMQuestionStrategy(
+                model_string=model,
+                use_cot=True,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "EIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "EIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            move_strategy=LLMMoveStrategy(
+                model_string=model, use_cot=True, client=None
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "MAPEIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    elif captain_type == "MAPEIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed), n_samples=eig_samples
+            ),
+            question_strategy=EIGQuestionStrategy(
+                model_string=model,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            model_string=model,
+            use_cache=use_cache,
+            round_id=None,
+        )
+        return captain
+
+    else:
+        raise ValueError(f"Unknown captain type: {captain_type}")

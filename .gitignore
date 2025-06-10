@@ -31,6 +31,7 @@ experiments/collaborative/battleship-final-data
 experiments/collaborative/reports_battleship-final-data
 experiments/collaborative/reports_battleship-final-data-old
 battleship/cache
+battleship/benchmark_results
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -174,3 +175,5 @@ cython_debug/
 experiments/collaborative/data/
 experiments/prolific/battleship/.empirica/empirica.toml
 experiments/prolific/battleship/package-lock.json
+
+cache/

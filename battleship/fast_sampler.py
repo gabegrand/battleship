@@ -231,53 +231,44 @@ class FastSampler:
 
     def constrained_posterior(
         self,
-        n_samples: int,
-        max_samples: int = 1000,
+        ground_truth: Board,
+        n_samples: int = 10000,
+        min_samples: int = 50,
         constraints: list = [],
         normalize: bool = True,
     ):
         """Computes an approximate posterior distribution over ship locations with constraints."""
-        assert (
-            n_samples <= max_samples
-        ), "n_samples must be less than or equal to max_samples"
 
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
         total_sampled = 0
         constraint_satisfactions = []
         active_constraints = constraints.copy()
 
-        while total_sampled < n_samples and total_sampled < max_samples:
-            # Generate candidate boards in batches
-            candidate_boards = []
-            for _ in range(2 * (n_samples - total_sampled)):
-                new_board = self.populate_board()
-                if new_board is not None:
-                    candidate_boards.append(new_board)
+        candidate_boards = []
+        for _ in range(n_samples):
+            new_board = self.populate_board()
+            if new_board is not None:
+                candidate_boards.append(new_board)
 
-            # Check constraints and update counts
-            for new_board in candidate_boards:
-                board_satisfactions = [
-                    constraint(self.board) == constraint(new_board)
-                    for constraint in active_constraints
-                ]
-                constraint_satisfactions.append(board_satisfactions)
+        # Check constraints and update counts
+        for new_board in candidate_boards:
+            board_satisfactions = [
+                constraint(ground_truth, self.board.board)
+                == constraint(new_board, self.board.board)
+                for constraint in active_constraints
+            ]
+            constraint_satisfactions.append(board_satisfactions)
 
-                if all(board_satisfactions):
-                    board_counts += (new_board.board > 0).astype(int)
-                    total_sampled += 1
-                    if total_sampled >= n_samples:
-                        break
+            if all(board_satisfactions):
+                board_counts += (new_board.board > 0).astype(int)
+                total_sampled += 1
+                if total_sampled >= n_samples:
+                    break
 
-            # Check for poisoned constraints
-            if constraint_satisfactions:
-                constraint_results = list(zip(*constraint_satisfactions))
-                for i, results in enumerate(constraint_results):
-                    if not any(results):
-                        active_constraints.pop(i)
-                        if not active_constraints:
-                            break
+        if total_sampled < min_samples:
+            return self.compute_posterior(n_samples, normalize=normalize)
 
-        if normalize and total_sampled > 0:
+        if normalize:
             return board_counts / total_sampled
         return board_counts
 
