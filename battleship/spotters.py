@@ -9,7 +9,6 @@ import numpy as np
 from battleship.agents import Agent
 from battleship.agents import Answer
 from battleship.agents import BOOL_ANSWER_PATTERN
-from battleship.agents import CacheData
 from battleship.agents import CODE_ANSWER_PATTERN
 from battleship.agents import CodeQuestion
 from battleship.agents import get_openai_client
@@ -29,7 +28,6 @@ class Spotter(Agent):
         self,
         board_id,
         board_experiment,
-        use_cache=True,
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
@@ -50,7 +48,6 @@ class Spotter(Agent):
         super().__init__(
             seed=None,
             model_string=model_string,
-            use_cache=use_cache,
             use_cot=use_cot,
             decision_counter=decision_counter,
             index_counter=index_counter,
@@ -69,22 +66,11 @@ class Spotter(Agent):
         self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
     ) -> Answer:
         self.index_counter.increment_counter()
-        result, answer_cache = self._get_model_answer(
+        return self._get_model_answer(
             question,
             occ_tiles=occ_tiles,
             history=history,
         )
-
-        if self.spotter_benchmark is None:
-            if self.use_cache:
-                self.write_cache(
-                    message_type="ANSWER",
-                    cache_data=answer_cache,
-                )
-
-            return result
-        else:
-            return result, answer_cache
 
 
 # ---------------------
@@ -99,7 +85,7 @@ class DirectSpotterModel(Spotter):
         occ_tiles: np.ndarray,
         history: List[dict] = None,
         n_attempts=10,
-    ) -> Tuple[Answer, CacheData]:
+    ) -> Answer:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
             target_trial_experiment=self.board_experiment,
@@ -137,17 +123,7 @@ class DirectSpotterModel(Spotter):
         if isinstance(response, str):
             response = response.lower()
 
-        output_prompt = Prompt(
-            prompt=prompt.to_chat_format(),
-            full_completion=completion.choices[0].message.content,
-            extracted_completion=response,
-            occ_tiles=occ_tiles,
-        )
-
-        answer = Answer(text=response)
-        return answer, CacheData(
-            message_text=response, occ_tiles=occ_tiles, prompts=[output_prompt]
-        )
+        return Answer(text=response)
 
 
 class CodeSpotterModel(Spotter):
@@ -219,7 +195,7 @@ class CodeSpotterModel(Spotter):
         question: Question,
         occ_tiles: np.ndarray,
         history: List[dict],
-    ) -> Tuple[Answer, CacheData]:
+    ) -> Answer:
         code_question = self.translate(
             question,
             occ_tiles=occ_tiles,
@@ -236,13 +212,4 @@ class CodeSpotterModel(Spotter):
 
         result_text = parse_answer_to_str(result)
 
-        output_prompt = Prompt(
-            prompt=code_question.translation_prompt.to_chat_format(),
-            full_completion=code_question.full_completion,
-            extracted_completion=result,
-            occ_tiles=occ_tiles,
-        )
-
-        return Answer(text=result_text, code_question=code_question), CacheData(
-            message_text=result_text, occ_tiles=occ_tiles, prompts=[output_prompt]
-        )
+        return Answer(text=result_text, code_question=code_question)

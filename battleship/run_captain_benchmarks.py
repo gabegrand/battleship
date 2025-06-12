@@ -137,7 +137,6 @@ def run_single_agent_game(args):
         ROUND_RESULTS_DIR,
         STAGE_DIR,
         PROMPTS_DIR,
-        use_cache,
         map_samples,
         prob_q_prob,
         eig_samples,
@@ -152,7 +151,6 @@ def run_single_agent_game(args):
         seed=seed,
         model=model,
         board_id=board_id,
-        use_cache=use_cache,
         map_samples=map_samples,
         prob_q_prob=prob_q_prob,
         eig_samples=eig_samples,
@@ -172,7 +170,6 @@ def run_single_agent_game(args):
     spotter = CodeSpotterModel(
         board_id,
         "collaborative",
-        use_cache=True,
         model_string=model,
         temperature=None,
         use_cot=True,
@@ -300,7 +297,6 @@ def main():
                         ROUND_RESULTS_DIR,
                         STAGE_DIR,
                         PROMPTS_DIR,
-                        args.use_cache,
                         args.map_samples,
                         args.prob_q_prob,
                         args.eig_samples,
@@ -385,7 +381,6 @@ def parse_arguments():
 
     # Model configuration
     parser.add_argument("--model", type=str, default="gpt-4o", help="LLM model to use")
-    parser.add_argument("--use-cache", action="store_true", help="Cache results")
 
     # Experiment settings
     parser.add_argument(

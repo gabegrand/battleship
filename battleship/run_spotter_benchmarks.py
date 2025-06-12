@@ -191,7 +191,6 @@ def process_question_data(question_data):
         model_string,
         temperature,
         use_history,
-        use_cache,
         use_cot,
         use_captain_board,
         output_dir,
@@ -212,7 +211,6 @@ def process_question_data(question_data):
     spotter_model = model_class(
         board_id=question_board,
         board_experiment="collaborative",
-        use_cache=use_cache,
         model_string=model_string,
         temperature=temperature,
         use_cot=use_cot,
@@ -222,7 +220,7 @@ def process_question_data(question_data):
     )
 
     question = Question(text=question_text)
-    result, answer_cache = spotter_model.answer(
+    result = spotter_model.answer(
         question,
         occ_tiles=Board.from_occ_tiles(question_captain_board).to_numpy(),
         history=examples if use_history else None,
@@ -250,8 +248,6 @@ def process_question_data(question_data):
         )
         if result.code_question
         else None,
-        "full_completion": answer_cache.prompts[-1].full_completion,
-        "prompt": answer_cache.prompts[-1].prompt,
         "true_answer": ground_truth_answer,
         "is_correct": answer_text == ground_truth_answer,
     }
@@ -284,7 +280,6 @@ def prepare_question_data(
     use_history,
     max_rounds,
     max_questions,
-    use_cache,
     use_cot,
     use_captain_board,
     output_dir,
@@ -320,7 +315,6 @@ def prepare_question_data(
                     model_string,
                     temperature,
                     use_history,
-                    use_cache,
                     use_cot,
                     use_captain_board,
                     output_dir,
@@ -339,7 +333,6 @@ def benchmark_on_rounds(
     use_history=False,
     max_rounds=10,
     max_questions=10,
-    use_cache=True,
     use_cot=False,
     use_captain_board=False,
     output_dir="benchmark_results",
@@ -360,7 +353,6 @@ def benchmark_on_rounds(
         use_history,
         max_rounds,
         max_questions,
-        use_cache,
         use_cot,
         use_captain_board,
         output_dir,
@@ -406,7 +398,6 @@ def run_experiments(
     max_rounds=20,
     max_questions=20,
     use_history=True,
-    use_cache=False,
     use_captain_board=False,
     output_dir="benchmark_results",
 ):
@@ -427,7 +418,6 @@ def run_experiments(
                     model_string=llm,
                     max_rounds=max_rounds,
                     max_questions=max_questions,
-                    use_cache=use_cache,
                     use_cot=cot_option,
                     use_history=use_history,
                     use_captain_board=use_captain_board,
@@ -435,21 +425,6 @@ def run_experiments(
                 )
 
                 results.append(result_name)
-
-                # result_dict = {
-                #     "language_model": llm,
-                #     "spotter_model": spotter.__name__,
-                #     "cot": cot_option,
-                #     "accuracy": accuracy,
-                #     "max_rounds": max_rounds,
-                #     "max_questions": max_questions,
-                #     "use_history": use_history,
-                #     "use_cache": use_cache,
-                #     "use_captain_board": use_captain_board,
-                # }
-                # results.append(result_dict)
-
-                # print(f"Accuracy: {accuracy * 100:.2f}%")
 
     return results
 
@@ -512,11 +487,6 @@ if __name__ == "__main__":
         help="Flag to include history in the benchmark.",
     )
     parser.add_argument(
-        "--use_cache",
-        action="store_true",
-        help="Flag to enable cache usage.",
-    )
-    parser.add_argument(
         "--use_captain_board",
         action="store_true",
         help="Flag to use captain board in the model.",
@@ -576,7 +546,6 @@ if __name__ == "__main__":
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
-        use_cache=args.use_cache,
         use_captain_board=args.use_captain_board,
         output_dir=args.output_dir,
     )

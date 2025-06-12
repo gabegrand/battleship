@@ -35,9 +35,6 @@ def get_openai_client():
 class Question:
     text: str
 
-    def get_cache_key(self, board_id):
-        return f"{self.text.lower().replace(' ','_').replace('/','_')}_{board_id}"
-
 
 @dataclass
 class Prompt:
@@ -47,15 +44,6 @@ class Prompt:
     eig: float = None
     map_prob: float = None
     occ_tiles: np.ndarray = None
-
-
-@dataclass
-class CacheData:
-    message_text: str = None
-    eig: float = None
-    map_prob: float = None
-    occ_tiles: np.ndarray = None
-    prompts: list[Prompt] = None
 
 
 class CodeQuestion:
@@ -142,7 +130,6 @@ class Agent(ABC):
         seed: int = None,
         model_string: str = None,
         use_cot: bool = False,
-        use_cache: bool = False,
         decision_counter: Counter = None,
         index_counter: Counter = None,
         round_id: str = None,
@@ -153,88 +140,12 @@ class Agent(ABC):
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
-        self.use_cache = use_cache
         self.decision_counter = decision_counter
         self.index_counter = index_counter
         self.stage_list = []
         self.prompt_list = []
         self.stage_dir = stage_dir
         self.prompts_dir = prompts_dir
-
-    def write_cache(
-        self,
-        message_type: str = None,
-        cache_data: CacheData = None,
-        stage_dir=None,
-        prompts_dir=None,
-    ):
-        """Append a new entry to the JSON cache."""
-
-        # Use instance variables as defaults if not provided
-        if stage_dir is None:
-            stage_dir = self.stage_dir
-        if prompts_dir is None:
-            prompts_dir = self.prompts_dir
-
-        # Skip caching if directories are not set
-        if stage_dir is None or prompts_dir is None:
-            return
-
-        def option_to_str(option):
-            return option if option is not None else ""
-
-        occ_tiles_str = (
-            np.array2string(cache_data.occ_tiles)
-            if cache_data.occ_tiles is not None
-            else ""
-        )
-        stage_id = self.index_counter.increment_counter()
-        # Create stage data entry
-        stage_data = {
-            "round_id": self.round_id,
-            "index": stage_id,
-            "messageType": message_type,
-            "messageText": option_to_str(cache_data.message_text),
-            "mapProb": option_to_str(cache_data.map_prob),
-            "eig": option_to_str(cache_data.eig),
-            "occTiles": option_to_str(occ_tiles_str),
-            "question_id": self.decision_counter.counter,
-            "modelBackend": self.model_string,  # Include model backend
-        }
-
-        # Create unique filename for the stage data to avoid race conditions
-        stage_filename = f"stage_{self.round_id}_{stage_id}_{uuid.uuid4()}.json"
-
-        stage_path = os.path.join(stage_dir, stage_filename)
-
-        # Write stage data to a JSON file
-        with open(stage_path, "w") as f:
-            json.dump(stage_data, f, indent=2)
-
-        # Handle prompts if they exist
-        if cache_data.prompts is not None:
-            prompt_counter = Counter()
-            for prompt in cache_data.prompts:
-                prompt_data = {
-                    "round_id": self.round_id,
-                    "stage_index": stage_id,
-                    "prompt_index": prompt_counter.increment_counter(),
-                    "prompt": prompt.prompt,
-                    "full_completion": prompt.full_completion,
-                    "extracted_completion": str(prompt.extracted_completion),
-                    "eig": prompt.eig,
-                    "map_prob": prompt.map_prob,
-                    "occ_tiles": np.array2string(prompt.occ_tiles),
-                    "modelBackend": self.model_string,  # Include model backend
-                }
-
-                # Create unique filename for the prompt data
-                prompt_filename = f"prompt_{self.round_id}_{stage_id}_{prompt_counter.counter}_{uuid.uuid4()}.json"
-                prompt_path = os.path.join(prompts_dir, prompt_filename)
-
-                # Write prompt data to a JSON file
-                with open(prompt_path, "w") as f:
-                    json.dump(prompt_data, f, indent=2)
 
 
 class EIGCalculator:
