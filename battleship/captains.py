@@ -238,10 +238,10 @@ class RandomMoveStrategy(MoveStrategy):
 
 
 class MAPMoveStrategy(MoveStrategy):
-    def __init__(self, rng, n_samples=1000, board_id=None):
+    def __init__(self, rng, board_id, n_samples=1000):
         self.rng = rng
-        self.n_samples = n_samples
         self.board_id = board_id
+        self.n_samples = n_samples
 
     def make_move(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
@@ -520,10 +520,14 @@ def create_captain(
     seed,
     model,
     use_cache,
+    board_id,
     map_samples=None,
     prob_q_prob=None,
     eig_samples=None,
     eig_k=None,
+    round_id=None,
+    stage_dir=None,
+    prompts_dir=None,
 ):
     """
     Factory function to create Captain instances with properly configured strategies.
@@ -533,7 +537,7 @@ def create_captain(
     # Initialize spotter for EIG captains
     def _get_spotter():
         return CodeSpotterModel(
-            board_id="B01",
+            board_id=board_id,
             board_experiment="collaborative",
             model_string=model,
             temperature=None,
@@ -547,19 +551,25 @@ def create_captain(
             question_strategy=None,
             seed=seed,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
 
     elif captain_type == "MAPCaptain":
         return Captain(
             decision_strategy=AlwaysMoveDecisionStrategy(),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=map_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=map_samples,
             ),
             question_strategy=None,
             seed=seed,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
 
     elif captain_type == "ProbabilisticCaptain":
@@ -570,7 +580,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -586,7 +598,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -606,7 +620,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -623,7 +639,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -642,7 +660,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -665,7 +685,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -673,7 +695,9 @@ def create_captain(
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -686,7 +710,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -694,7 +720,9 @@ def create_captain(
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -707,7 +735,9 @@ def create_captain(
             seed=seed,
             model_string=model,
             use_cache=use_cache,
-            round_id=None,
+            round_id=round_id,
+            stage_dir=stage_dir,
+            prompts_dir=prompts_dir,
         )
         return captain
 

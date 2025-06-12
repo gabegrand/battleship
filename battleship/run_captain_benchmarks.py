@@ -127,8 +127,7 @@ def get_human_results(gold_annotations_path, round_data_path):
 def run_single_agent_game(args):
     (
         round_id,
-        cap_name,
-        captain,
+        captain_type,
         seed,
         board_id,
         max_questions,
@@ -138,29 +137,35 @@ def run_single_agent_game(args):
         ROUND_RESULTS_DIR,
         STAGE_DIR,
         PROMPTS_DIR,
+        use_cache,
+        map_samples,
+        prob_q_prob,
+        eig_samples,
+        eig_k,
     ) = args
 
-    # Update spotter board ID for EIG captains
-    if hasattr(captain, "question_strategy") and hasattr(
-        captain.question_strategy, "spotter"
-    ):
-        captain.question_strategy.spotter.board_id = board_id
+    captain = create_captain(
+        captain_type=captain_type,
+        seed=seed,
+        model=model,
+        board_id=board_id,
+        use_cache=use_cache,
+        map_samples=map_samples,
+        prob_q_prob=prob_q_prob,
+        eig_samples=eig_samples,
+        eig_k=eig_k,
+        round_id=round_id,
+        stage_dir=STAGE_DIR,
+        prompts_dir=PROMPTS_DIR,
+    )
 
-    if hasattr(captain, "move_strategy") and hasattr(captain.move_strategy, "board_id"):
-        captain.move_strategy.board_id = board_id
-
-    # Set the captain's seed
-    captain.seed = seed
-
-    print(f"{cap_name} started with {board_id} & seed {seed}")
+    print(f"{captain_type} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
 
     decision_counter = Counter()
     index_counter = Counter()
 
-    # Set directory paths for caching
-    captain.stage_dir = STAGE_DIR
-    captain.prompts_dir = PROMPTS_DIR
+    # Set runtime counters
     captain.index_counter = index_counter
     captain.decision_counter = decision_counter
 
@@ -183,11 +188,9 @@ def run_single_agent_game(args):
         "id": round_id,
         "boardId": board_id,
         "seed": seed,
-        "captainModel": cap_name,
+        "captainModel": captain_type,
         "spotterModel": spotter.__class__.__name__,
     }
-
-    captain.round_id = round_id
 
     # Setup game save directory for history
     game_save_dir = EXPERIMENTAL_RESULTS_DIR / f"game_{round_id}"
@@ -204,14 +207,14 @@ def run_single_agent_game(args):
     game.play()
     # Save game history to file
     game.save()
-    print(f"{cap_name} finished with {board_id} & seed {seed}")
+    print(f"{captain_type} finished with {board_id} & seed {seed}")
 
     scores = game.score()
 
     # Ensure consistent column names in the result data
     summary = {
         "roundId": round_id,
-        "captainType": cap_name,
+        "captainType": captain_type,
         "boardId": board_id,
         "hits": int(game.hits),
         "misses": int(game.misses),
@@ -224,7 +227,7 @@ def run_single_agent_game(args):
 
     # Create a unique filename for each result to avoid race conditions
     safe_model_name = model.replace("/", "-")
-    temp_filename = f"{safe_model_name}_{cap_name}_{round_id}"
+    temp_filename = f"{safe_model_name}_{captain_type}_{round_id}"
 
     results = {}
     for result in ["prompt", "stage"]:
@@ -282,16 +285,6 @@ def main():
     for seed in args.seeds:
         for board_id in args.board_ids:
             for captain_type in args.captains:
-                captain = create_captain(
-                    captain_type=captain_type,
-                    seed=seed,
-                    model=args.model,
-                    use_cache=args.use_cache,
-                    map_samples=args.map_samples,
-                    prob_q_prob=args.prob_q_prob,
-                    eig_samples=args.eig_samples,
-                    eig_k=args.eig_k,
-                )
                 round_id = uuid.uuid4().hex[
                     :8
                 ]  # Generate a short unique ID for the round
@@ -299,7 +292,6 @@ def main():
                     (
                         round_id,
                         captain_type,
-                        captain,
                         seed,
                         board_id,
                         args.max_questions,
@@ -309,6 +301,11 @@ def main():
                         ROUND_RESULTS_DIR,
                         STAGE_DIR,
                         PROMPTS_DIR,
+                        args.use_cache,
+                        args.map_samples,
+                        args.prob_q_prob,
+                        args.eig_samples,
+                        args.eig_k,
                     )
                 )
 
