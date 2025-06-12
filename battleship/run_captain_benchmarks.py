@@ -144,6 +144,9 @@ def run_single_agent_game(args):
         eig_k,
     ) = args
 
+    print(f"{captain_type} started with {board_id} & seed {seed}")
+    board = Board.from_trial_id(board_id)
+
     captain = create_captain(
         captain_type=captain_type,
         seed=seed,
@@ -158,9 +161,6 @@ def run_single_agent_game(args):
         stage_dir=STAGE_DIR,
         prompts_dir=PROMPTS_DIR,
     )
-
-    print(f"{captain_type} started with {board_id} & seed {seed}")
-    board = Board.from_trial_id(board_id)
 
     decision_counter = Counter()
     index_counter = Counter()
@@ -205,7 +205,6 @@ def run_single_agent_game(args):
         save_dir=str(game_save_dir),
     )
     game.play()
-    # Save game history to file
     game.save()
     print(f"{captain_type} finished with {board_id} & seed {seed}")
 

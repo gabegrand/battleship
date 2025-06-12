@@ -141,6 +141,7 @@ class BattleshipGame:
                     "decision": Decision.QUESTION,
                     "question": q,
                     "answer": a,
+                    "state": self.state.board.tolist(),
                 }
             )
         elif decision == Decision.MOVE:
@@ -159,9 +160,8 @@ class BattleshipGame:
                 {
                     "stage": self.stage_count,
                     "decision": Decision.MOVE,
-                    "coords": tuple(int(x) for x in coords)
-                    if coords is not None
-                    else None,
+                    "coords": tuple(int(x) for x in coords),
+                    "state": self.state.board.tolist(),
                 }
             )
         else:
