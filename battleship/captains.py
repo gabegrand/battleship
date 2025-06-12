@@ -59,15 +59,11 @@ class Captain(Agent):
         model_string=None,
         temperature=None,
         round_id=None,
-        stage_dir=None,
-        prompts_dir=None,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         self.temperature = temperature
         self.sampling_constraints = []
@@ -410,8 +406,6 @@ def create_captain(
     eig_samples=None,
     eig_k=None,
     round_id=None,
-    stage_dir=None,
-    prompts_dir=None,
 ):
     """
     Factory function to create Captain instances with properly configured strategies.
@@ -435,8 +429,6 @@ def create_captain(
             question_strategy=None,
             seed=seed,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
 
     elif captain_type == "MAPCaptain":
@@ -450,8 +442,6 @@ def create_captain(
             question_strategy=None,
             seed=seed,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
 
     elif captain_type == "ProbabilisticCaptain":
@@ -462,8 +452,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -479,8 +467,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -500,8 +486,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -518,8 +502,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -538,8 +520,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -562,8 +542,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -586,8 +564,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 
@@ -610,8 +586,6 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
         return captain
 

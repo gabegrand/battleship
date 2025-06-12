@@ -35,8 +35,6 @@ class Spotter(Agent):
         index_counter=None,
         round_id=None,
         spotter_benchmark=None,
-        stage_dir=None,
-        prompts_dir=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
@@ -52,8 +50,6 @@ class Spotter(Agent):
             decision_counter=decision_counter,
             index_counter=index_counter,
             round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
         )
 
     @abstractmethod

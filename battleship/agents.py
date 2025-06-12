@@ -133,8 +133,6 @@ class Agent(ABC):
         decision_counter: Counter = None,
         index_counter: Counter = None,
         round_id: str = None,
-        stage_dir: str = None,
-        prompts_dir: str = None,
     ):
         self.round_id = round_id
         self.use_cot = use_cot
@@ -144,8 +142,6 @@ class Agent(ABC):
         self.index_counter = index_counter
         self.stage_list = []
         self.prompt_list = []
-        self.stage_dir = stage_dir
-        self.prompts_dir = prompts_dir
 
 
 class EIGCalculator:

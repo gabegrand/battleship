@@ -6,7 +6,6 @@ import sys
 import time
 import uuid
 from multiprocessing.dummy import Pool
-from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -20,40 +19,20 @@ from battleship.spotters import CodeSpotterModel
 from battleship.utils import resolve_project_path
 
 
-def create_experiment_dir(root: str = None) -> Tuple:
+def create_experiment_dir(root: str = None) -> str:
     """
-    Create experiment directories under the given cache root and return paths.
-    Returns (cache_dir, results_dir, round_results_dir, experimental_results_dir,
-             stage_dir, prompts_dir, human_summary_dir)
+    Create experiment directory under the given root and return path.
+    Returns the path to the experimental results directory.
     """
     if root is None:
         root = resolve_project_path("experiments/collaborative/captain_benchmarks")
-    root = Path(root)
 
-    root.mkdir(exist_ok=True)
-    experimental_results_dir = root / f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
-    experimental_results_dir.mkdir(exist_ok=True)
-
-    individual_results_dir = experimental_results_dir / "individual_results"
-    individual_results_dir.mkdir(exist_ok=True)
-    round_results_dir = experimental_results_dir / "round_results"
-    round_results_dir.mkdir(exist_ok=True)
-
-    stage_dir = individual_results_dir / "stages"
-    prompts_dir = individual_results_dir / "prompts"
-    stage_dir.mkdir(exist_ok=True)
-    prompts_dir.mkdir(exist_ok=True)
-    human_summary_dir = individual_results_dir / "human_summaries"
-    human_summary_dir.mkdir(exist_ok=True)
-    return (
-        root,
-        individual_results_dir,
-        round_results_dir,
-        experimental_results_dir,
-        stage_dir,
-        prompts_dir,
-        human_summary_dir,
+    experimental_results_dir = os.path.join(
+        root, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
     )
+    os.makedirs(experimental_results_dir)
+
+    return experimental_results_dir
 
 
 ## Experiment directory setup
@@ -134,9 +113,6 @@ def run_single_agent_game(args):
         max_moves,
         model,
         EXPERIMENTAL_RESULTS_DIR,
-        ROUND_RESULTS_DIR,
-        STAGE_DIR,
-        PROMPTS_DIR,
         map_samples,
         prob_q_prob,
         eig_samples,
@@ -156,8 +132,6 @@ def run_single_agent_game(args):
         eig_samples=eig_samples,
         eig_k=eig_k,
         round_id=round_id,
-        stage_dir=STAGE_DIR,
-        prompts_dir=PROMPTS_DIR,
     )
 
     decision_counter = Counter()
@@ -176,8 +150,6 @@ def run_single_agent_game(args):
         decision_counter=decision_counter,
         index_counter=index_counter,
         round_id=round_id,
-        stage_dir=STAGE_DIR,
-        prompts_dir=PROMPTS_DIR,
     )
 
     # Write round information to JSON file
@@ -190,7 +162,7 @@ def run_single_agent_game(args):
     }
 
     # Setup game save directory for history
-    game_save_dir = EXPERIMENTAL_RESULTS_DIR / f"game_{round_id}"
+    game_save_dir = os.path.join(EXPERIMENTAL_RESULTS_DIR, f"game_{round_id}")
 
     # Initialize game with save_dir
     game = BattleshipGame(
@@ -221,37 +193,13 @@ def run_single_agent_game(args):
         "f1_score": float(scores["f1_score"]),
     }
 
-    # Create a unique filename for each result to avoid race conditions
-    safe_model_name = model.replace("/", "-")
-    temp_filename = f"{safe_model_name}_{captain_type}_{round_id}"
-
-    results = {}
-    for result in ["prompt", "stage"]:
-        home_dir = PROMPTS_DIR if result == "prompt" else STAGE_DIR
-        result_path = os.path.join(ROUND_RESULTS_DIR, temp_filename + f"_{result}.json")
-        source_files = glob.glob(os.path.join(home_dir, f"{result}_{round_id}*.json"))
-        results[result] = []
-        for f in source_files:
-            with open(f, "r") as f:
-                results[result].append(json.load(f))
-        with open(result_path, "w") as f:
-            json.dump(results[result], f, indent=2)
-
-    return summary, results["stage"], results["prompt"], round_info
+    return summary, round_info
 
 
 def main():
     args = parse_arguments()
 
-    (
-        CACHE_DIR,
-        RESULTS_DIR,
-        ROUND_RESULTS_DIR,
-        EXPERIMENTAL_RESULTS_DIR,
-        STAGE_DIR,
-        PROMPTS_DIR,
-        HUMAN_SUMMARY_DIR,
-    ) = create_experiment_dir()
+    EXPERIMENTAL_RESULTS_DIR = create_experiment_dir()
 
     # Save the command used to run the script
     command = " ".join(["python"] + sys.argv)
@@ -294,9 +242,6 @@ def main():
                         args.max_moves,
                         args.model,
                         EXPERIMENTAL_RESULTS_DIR,
-                        ROUND_RESULTS_DIR,
-                        STAGE_DIR,
-                        PROMPTS_DIR,
                         args.map_samples,
                         args.prob_q_prob,
                         args.eig_samples,
@@ -315,21 +260,15 @@ def main():
 
     # Prepare data structures
     summaries_data = human_results.copy() if human_results else []
-    stages_data = []
-    prompts_data = []
     rounds_data = []
 
-    for summary, stage, prompt, round_info in results:
+    for summary, round_info in results:
         summaries_data.append(summary)
-        stages_data.append(stage)
-        prompts_data.append(prompt)
         rounds_data.append(round_info)
 
     # Write all files
     file_pairs = [
         ("summary.json", summaries_data),
-        ("stages.json", stages_data),
-        ("prompts.json", prompts_data),
         ("rounds.json", rounds_data),
     ]
 
