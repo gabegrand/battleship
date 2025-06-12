@@ -27,21 +27,13 @@ def create_experiment_dir(root: str = None) -> str:
     if root is None:
         root = resolve_project_path("experiments/collaborative/captain_benchmarks")
 
-    experimental_results_dir = os.path.join(
-        root, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
-    )
-    os.makedirs(experimental_results_dir)
+    experiment_dir = os.path.join(root, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}")
+    os.makedirs(experiment_dir)
 
-    return experimental_results_dir
+    return experiment_dir
 
 
-## Experiment directory setup
-HUMAN_MAX_QUESTIONS = 15
-
-COMMAND_FILE_NAME = "command.txt"
-
-
-def get_human_results(gold_annotations_path, round_data_path):
+def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
     stage_df = pd.read_csv(gold_annotations_path)
     round_df = pd.read_csv(round_data_path)
 
@@ -82,7 +74,7 @@ def get_human_results(gold_annotations_path, round_data_path):
         board_partial = Board.from_occ_tiles(occTiles)
         scores = board_true.score(board_partial)
 
-        questions_asked = HUMAN_MAX_QUESTIONS - int(
+        questions_asked = max_questions - int(
             result[result["roundID"] == roundID]["questionsRemaining"].values[0]
         )
 
@@ -152,19 +144,9 @@ def run_single_agent_game(args):
         round_id=round_id,
     )
 
-    # Write round information to JSON file
-    round_info = {
-        "id": round_id,
-        "boardId": board_id,
-        "seed": seed,
-        "captainModel": captain_type,
-        "spotterModel": spotter.__class__.__name__,
-    }
-
     # Setup game save directory for history
     game_save_dir = os.path.join(EXPERIMENTAL_RESULTS_DIR, f"game_{round_id}")
 
-    # Initialize game with save_dir
     game = BattleshipGame(
         board_target=board,
         captain=captain,
@@ -191,19 +173,21 @@ def run_single_agent_game(args):
         "precision": float(scores["precision"]),
         "recall": float(scores["recall"]),
         "f1_score": float(scores["f1_score"]),
+        "seed": seed,
+        "spotterModel": spotter.__class__.__name__,
     }
 
-    return summary, round_info
+    return summary
 
 
 def main():
     args = parse_arguments()
 
-    EXPERIMENTAL_RESULTS_DIR = create_experiment_dir()
+    experiment_dir = create_experiment_dir()
 
     # Save the command used to run the script
     command = " ".join(["python"] + sys.argv)
-    command_path = os.path.join(EXPERIMENTAL_RESULTS_DIR, COMMAND_FILE_NAME)
+    command_path = os.path.join(experiment_dir, "command.txt")
     with open(command_path, "w") as f:
         f.write(command)
     print(f"Command saved to {command_path}")
@@ -241,7 +225,7 @@ def main():
                         args.max_questions,
                         args.max_moves,
                         args.model,
-                        EXPERIMENTAL_RESULTS_DIR,
+                        experiment_dir,
                         args.map_samples,
                         args.prob_q_prob,
                         args.eig_samples,
@@ -260,25 +244,15 @@ def main():
 
     # Prepare data structures
     summaries_data = human_results.copy() if human_results else []
-    rounds_data = []
+    summaries_data.extend(results)
 
-    for summary, round_info in results:
-        summaries_data.append(summary)
-        rounds_data.append(round_info)
-
-    # Write all files
-    file_pairs = [
-        ("summary.json", summaries_data),
-        ("rounds.json", rounds_data),
-    ]
-
-    for filename, data in file_pairs:
-        filepath = os.path.join(EXPERIMENTAL_RESULTS_DIR, filename)
-        with open(filepath, "w") as f:
-            json.dump(data, f, indent=2)
+    # Write summary file
+    summary_path = os.path.join(experiment_dir, "summary.json")
+    with open(summary_path, "w") as f:
+        json.dump(summaries_data, f, indent=2)
 
     print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-    print(f"Results saved to {EXPERIMENTAL_RESULTS_DIR}")
+    print(f"Results saved to {experiment_dir}")
 
 
 def parse_arguments():
