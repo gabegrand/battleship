@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import glob
 import json
@@ -8,6 +7,7 @@ import time
 import uuid
 from multiprocessing.dummy import Pool
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,27 +19,44 @@ from battleship.game import BattleshipGame
 from battleship.spotters import CodeSpotterModel
 from battleship.utils import resolve_project_path
 
-# Directory setup
-CACHE_DIR = Path(f"./cache")
-CACHE_DIR.mkdir(exist_ok=True)
 
-RESULTS_DIR = Path(os.path.join(CACHE_DIR, "individual_results"))
-RESULTS_DIR.mkdir(exist_ok=True)
+def create_experiment_dir(root: str = None) -> Tuple:
+    """
+    Create experiment directories under the given cache root and return paths.
+    Returns (cache_dir, results_dir, round_results_dir, experimental_results_dir,
+             stage_dir, prompts_dir, human_summary_dir)
+    """
+    if root is None:
+        root = resolve_project_path("experiments/collaborative/captain_benchmarks")
+    root = Path(root)
 
-ROUND_RESULTS_DIR = Path(os.path.join(CACHE_DIR, "round_results"))
-ROUND_RESULTS_DIR.mkdir(exist_ok=True)
+    root.mkdir(exist_ok=True)
+    experimental_results_dir = root / f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
+    experimental_results_dir.mkdir(exist_ok=True)
 
-readable_time = time.strftime("%Y_%m_%d_%H_%M_%S")
-EXPERIMENTAL_RESULTS_DIR = Path(os.path.join(CACHE_DIR, f"results_{readable_time}"))
-EXPERIMENTAL_RESULTS_DIR.mkdir(exist_ok=True)
+    individual_results_dir = experimental_results_dir / "individual_results"
+    individual_results_dir.mkdir(exist_ok=True)
+    round_results_dir = experimental_results_dir / "round_results"
+    round_results_dir.mkdir(exist_ok=True)
 
-STAGE_DIR = Path(os.path.join(RESULTS_DIR, "stages"))
-PROMPTS_DIR = Path(os.path.join(RESULTS_DIR, "prompts"))
-STAGE_DIR.mkdir(exist_ok=True)
-PROMPTS_DIR.mkdir(exist_ok=True)
+    stage_dir = individual_results_dir / "stages"
+    prompts_dir = individual_results_dir / "prompts"
+    stage_dir.mkdir(exist_ok=True)
+    prompts_dir.mkdir(exist_ok=True)
+    human_summary_dir = individual_results_dir / "human_summaries"
+    human_summary_dir.mkdir(exist_ok=True)
+    return (
+        root,
+        individual_results_dir,
+        round_results_dir,
+        experimental_results_dir,
+        stage_dir,
+        prompts_dir,
+        human_summary_dir,
+    )
 
-HUMAN_SUMMARY_DIR = Path(os.path.join(RESULTS_DIR, "human_summaries"))
-HUMAN_SUMMARY_DIR.mkdir(exist_ok=True)
+
+## Experiment directory setup
 HUMAN_MAX_QUESTIONS = 15
 
 COMMAND_FILE_NAME = "command.txt"
@@ -104,16 +121,24 @@ def get_human_results(gold_annotations_path, round_data_path):
         }
         data.append(result_row)
 
-        temp_filename = f"human_{roundID}_{uuid.uuid4()}.json"
-        temp_path = os.path.join(HUMAN_SUMMARY_DIR, temp_filename)
-        with open(temp_path, "w") as f:
-            json.dump(result_row, f, indent=2)
-
     return data
 
 
 def run_single_agent_game(args):
-    round_id, cap_name, captain, seed, board_id, max_questions, max_moves, model = args
+    (
+        round_id,
+        cap_name,
+        captain,
+        seed,
+        board_id,
+        max_questions,
+        max_moves,
+        model,
+        EXPERIMENTAL_RESULTS_DIR,
+        ROUND_RESULTS_DIR,
+        STAGE_DIR,
+        PROMPTS_DIR,
+    ) = args
 
     # Update spotter board ID for EIG captains
     if hasattr(captain, "question_strategy") and hasattr(
@@ -164,14 +189,21 @@ def run_single_agent_game(args):
 
     captain.round_id = round_id
 
+    # Setup game save directory for history
+    game_save_dir = EXPERIMENTAL_RESULTS_DIR / f"game_{round_id}"
+
+    # Initialize game with save_dir
     game = BattleshipGame(
         board_target=board,
-        max_questions=max_questions,
-        max_moves=max_moves,
         captain=captain,
         spotter=spotter,
+        max_questions=max_questions,
+        max_moves=max_moves,
+        save_dir=str(game_save_dir),
     )
     game.play()
+    # Save game history to file
+    game.save()
     print(f"{cap_name} finished with {board_id} & seed {seed}")
 
     scores = game.score()
@@ -209,6 +241,115 @@ def run_single_agent_game(args):
     return summary, results["stage"], results["prompt"], round_info
 
 
+def main():
+    args = parse_arguments()
+
+    (
+        CACHE_DIR,
+        RESULTS_DIR,
+        ROUND_RESULTS_DIR,
+        EXPERIMENTAL_RESULTS_DIR,
+        STAGE_DIR,
+        PROMPTS_DIR,
+        HUMAN_SUMMARY_DIR,
+    ) = create_experiment_dir()
+
+    # Save the command used to run the script
+    command = " ".join(["python"] + sys.argv)
+    command_path = os.path.join(EXPERIMENTAL_RESULTS_DIR, COMMAND_FILE_NAME)
+    with open(command_path, "w") as f:
+        f.write(command)
+    print(f"Command saved to {command_path}")
+
+    # Resolve paths relative to project root
+    gold_annotations_path = resolve_project_path(args.gold_annotations)
+    round_data_path = resolve_project_path(args.round_data)
+
+    # Setup board IDs if not specified
+    if args.board_ids is None:
+        args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
+
+    # Get human results
+    human_results = []
+    if args.include_human:
+        human_results = get_human_results(
+            str(gold_annotations_path), str(round_data_path)
+        )
+        print(f"Processed human results for {len(human_results)} games")
+
+    # Prepare a list of tasks (each tuple corresponds to one game run)
+    jobs = []
+    for seed in args.seeds:
+        for board_id in args.board_ids:
+            for captain_type in args.captains:
+                captain = create_captain(
+                    captain_type=captain_type,
+                    seed=seed,
+                    model=args.model,
+                    use_cache=args.use_cache,
+                    map_samples=args.map_samples,
+                    prob_q_prob=args.prob_q_prob,
+                    eig_samples=args.eig_samples,
+                    eig_k=args.eig_k,
+                )
+                round_id = uuid.uuid4().hex[
+                    :8
+                ]  # Generate a short unique ID for the round
+                jobs.append(
+                    (
+                        round_id,
+                        captain_type,
+                        captain,
+                        seed,
+                        board_id,
+                        args.max_questions,
+                        args.max_moves,
+                        args.model,
+                        EXPERIMENTAL_RESULTS_DIR,
+                        ROUND_RESULTS_DIR,
+                        STAGE_DIR,
+                        PROMPTS_DIR,
+                    )
+                )
+
+    print(f"Running {len(jobs)} benchmark games...")
+
+    results = []
+    # Run with multiprocessing
+    with Pool(processes=args.processes) as pool:
+        proc_count = pool._processes
+        print(f"Running with {proc_count} processes")
+        results = pool.map(run_single_agent_game, jobs)
+
+    # Prepare data structures
+    summaries_data = human_results.copy() if human_results else []
+    stages_data = []
+    prompts_data = []
+    rounds_data = []
+
+    for summary, stage, prompt, round_info in results:
+        summaries_data.append(summary)
+        stages_data.append(stage)
+        prompts_data.append(prompt)
+        rounds_data.append(round_info)
+
+    # Write all files
+    file_pairs = [
+        ("summary.json", summaries_data),
+        ("stages.json", stages_data),
+        ("prompts.json", prompts_data),
+        ("rounds.json", rounds_data),
+    ]
+
+    for filename, data in file_pairs:
+        filepath = os.path.join(EXPERIMENTAL_RESULTS_DIR, filename)
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
+    print(f"Results saved to {EXPERIMENTAL_RESULTS_DIR}")
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run Battleship Captain benchmarks")
 
@@ -224,12 +365,6 @@ def parse_arguments():
         type=str,
         default="experiments/collaborative/data/battleship-final-data/round.csv",
         help="Path to round data CSV",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="cache",
-        help="Directory to save results",
     )
 
     # Captain configuration
@@ -305,103 +440,6 @@ def parse_arguments():
     parser.add_argument("--eig-k", type=int, default=10, help="K value for EIGCaptain")
 
     return parser.parse_args()
-
-
-def main():
-    args = parse_arguments()
-
-    # Save the command used to run the script
-    command = " ".join(["python"] + sys.argv)
-    command_path = os.path.join(EXPERIMENTAL_RESULTS_DIR, COMMAND_FILE_NAME)
-    with open(command_path, "w") as f:
-        f.write(command)
-    print(f"Command saved to {command_path}")
-
-    # Resolve paths relative to project root
-    gold_annotations_path = resolve_project_path(args.gold_annotations)
-    round_data_path = resolve_project_path(args.round_data)
-    output_dir = resolve_project_path(args.output_dir)
-
-    # Setup board IDs if not specified
-    if args.board_ids is None:
-        args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
-
-    # Create output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "individual_results"), exist_ok=True)
-
-    # Get human results
-    human_results = []
-    if args.include_human:
-        human_results = get_human_results(
-            str(gold_annotations_path), str(round_data_path)
-        )
-        print(f"Processed human results for {len(human_results)} games")
-
-    # Prepare a list of tasks (each tuple corresponds to one game run)
-    jobs = []
-    for seed in args.seeds:
-        for board_id in args.board_ids:
-            for captain_type in args.captains:
-                captain = create_captain(
-                    captain_type=captain_type,
-                    seed=seed,
-                    model=args.model,
-                    use_cache=args.use_cache,
-                    map_samples=args.map_samples,
-                    prob_q_prob=args.prob_q_prob,
-                    eig_samples=args.eig_samples,
-                    eig_k=args.eig_k,
-                )
-                jobs.append(
-                    (
-                        hash(captain_type + str(seed) + board_id + str(args)),
-                        captain_type,
-                        captain,
-                        seed,
-                        board_id,
-                        args.max_questions,
-                        args.max_moves,
-                        args.model,
-                    )
-                )
-
-    print(f"Running {len(jobs)} benchmark games...")
-
-    results = []
-    # Run with multiprocessing
-    with Pool(processes=args.processes) as pool:
-        proc_count = pool._processes
-        print(f"Running with {proc_count} processes")
-        results = pool.map(run_single_agent_game, jobs)
-
-    # Prepare data structures
-    summaries_data = human_results.copy() if human_results else []
-    stages_data = []
-    prompts_data = []
-    rounds_data = []
-
-    for summary, stage, prompt, round_info in results:
-        summaries_data.append(summary)
-        stages_data.append(stage)
-        prompts_data.append(prompt)
-        rounds_data.append(round_info)
-
-    # Write all files
-    file_pairs = [
-        ("summary.json", summaries_data),
-        ("stages.json", stages_data),
-        ("prompts.json", prompts_data),
-        ("rounds.json", rounds_data),
-    ]
-
-    for filename, data in file_pairs:
-        filepath = os.path.join(EXPERIMENTAL_RESULTS_DIR, filename)
-        with open(filepath, "w") as f:
-            json.dump(data, f, indent=2)
-
-    print(f"Completed {len(results)} agent games out of {len(jobs)} jobs")
-    print(f"Results saved to {output_dir}")
 
 
 if __name__ == "__main__":

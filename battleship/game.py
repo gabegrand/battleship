@@ -1,5 +1,7 @@
 """Core game logic for Battleship."""
+import json
 import logging
+import os
 from copy import deepcopy
 from enum import StrEnum
 from typing import Dict
@@ -32,6 +34,7 @@ class BattleshipGame:
         board_start=None,
         max_questions: int = 15,
         max_moves: int = 40,
+        save_dir: str = None,
     ):
         self.captain = captain
         self.spotter = spotter
@@ -52,6 +55,14 @@ class BattleshipGame:
         self.move_count = 0
 
         self.history = []
+
+        # Setup save directory for game history if provided
+        self.save_dir = save_dir
+        if self.save_dir is not None:
+            os.makedirs(self.save_dir, exist_ok=True)
+            self.save_path = os.path.join(self.save_dir, "game.json")
+        else:
+            self.save_path = None
 
     def __len__(self):
         return self.stage_count
@@ -99,6 +110,7 @@ class BattleshipGame:
             self.next_stage()
 
     def next_stage(self):
+        # TODO: Move string formatting logic into the Agent classes
         sunk_string = ", ".join(
             [
                 f"{ship}: {'sunk' if status else 'not sunk'}"
@@ -144,7 +156,13 @@ class BattleshipGame:
 
             self.move_count += 1
             self.history.append(
-                {"stage": self.stage_count, "decision": Decision.MOVE, "coords": coords}
+                {
+                    "stage": self.stage_count,
+                    "decision": Decision.MOVE,
+                    "coords": tuple(int(x) for x in coords)
+                    if coords is not None
+                    else None,
+                }
             )
         else:
             raise ValueError(f"Invalid decision: {decision}")
@@ -173,3 +191,10 @@ class BattleshipGame:
 
     def score(self):
         return self.target.score(self.state)
+
+    def save(self):
+        if self.save_path is None:
+            return
+
+        with open(self.save_path, "w") as f:
+            json.dump(self.history, f, indent=4)
