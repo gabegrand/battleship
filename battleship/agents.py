@@ -5,6 +5,7 @@ import traceback
 import uuid
 from abc import ABC
 from dataclasses import dataclass
+from typing import Tuple
 
 import numpy as np
 from dotenv import load_dotenv
@@ -32,18 +33,97 @@ def get_openai_client():
 
 
 @dataclass
-class Question:
-    text: str
+class Prompt:
+    index: int  # Sequential index of the action
+    action: str  # "decision", "question", "move", "answer"
+    prompt: str = None  # The prompt text
+    full_completion: str = None  # Raw completion from OpenAI
+    extracted_completion: str = None  # Parsed completion
+    completion_id: str = None  # OpenAI completion ID
+    question: "Question" = None  # For question actions
+    answer: "Answer" = None  # For question/answer actions
+    decision: str = None  # For decision actions
+    move: Tuple[int, int] = None  # For move actions
+    timestamp: float = None  # When the action was taken
+    eig: float = None  # For EIG calculations
+    map_prob: float = None  # For MAP calculations
+    occ_tiles: np.ndarray = None  # Board state at time of action
+
+    def to_dict(self) -> dict:
+        """Convert prompt to dictionary format for JSON serialization."""
+        return {
+            "index": self.index,
+            "action": self.action,
+            "prompt": self.prompt,
+            "completion_id": self.completion_id,
+            "question": self.question.to_dict() if self.question else None,
+            "answer": self.answer.to_dict() if self.answer else None,
+            "decision": self.decision,
+            "move": self.move,
+            "timestamp": self.timestamp,
+            "eig": self.eig,
+            "map_prob": self.map_prob,
+            "occ_tiles": self.occ_tiles.tolist()
+            if self.occ_tiles is not None
+            else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Prompt":
+        """Create a Prompt instance from a dictionary."""
+        return cls(
+            index=data["index"],
+            action=data["action"],
+            prompt=data.get("prompt"),
+            full_completion=data.get("full_completion"),
+            extracted_completion=data.get("extracted_completion"),
+            completion_id=data.get("completion_id"),
+            question=Question.from_dict(data["question"])
+            if data.get("question")
+            else None,
+            answer=Answer.from_dict(data["answer"]) if data.get("answer") else None,
+            decision=data.get("decision"),
+            move=tuple(data["move"]) if data.get("move") else None,
+            timestamp=data.get("timestamp"),
+            eig=data.get("eig"),
+            map_prob=data.get("map_prob"),
+            occ_tiles=np.array(data["occ_tiles"]) if data.get("occ_tiles") else None,
+        )
 
 
 @dataclass
-class Prompt:
-    prompt: str = None
-    full_completion: str = None
-    extracted_completion: str = None
-    eig: float = None
-    map_prob: float = None
-    occ_tiles: np.ndarray = None
+class Question:
+    text: str
+
+    def to_dict(self) -> dict:
+        return {"text": self.text}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Question":
+        return cls(text=data["text"])
+
+
+@dataclass
+class Answer:
+    text: str
+    code_question: "CodeQuestion" = None
+
+    def to_dict(self) -> dict:
+        return {
+            "text": self.text,
+            "code_question": self.code_question.to_dict()
+            if self.code_question
+            else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Answer":
+        return cls(
+            text=data["text"],
+            code_question=CodeQuestion.from_dict(data["code_question"])
+            if data.get("code_question")
+            else None,
+        )
 
 
 class CodeQuestion:
@@ -87,6 +167,23 @@ class CodeQuestion:
         except:
             return None
 
+    def to_dict(self) -> dict:
+        return {
+            "question": self.question,
+            "fn_str": self.fn_str,
+            "translation_prompt": str(self.translation_prompt),
+            "full_completion": self.full_completion,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CodeQuestion":
+        return cls(
+            question=data["question"],
+            fn_text=data["fn_str"],
+            translation_prompt=data["translation_prompt"],
+            full_completion=data["full_completion"],
+        )
+
 
 class NullCodeQuestion(CodeQuestion):
     def __init__(self, translation_prompt):
@@ -95,12 +192,6 @@ class NullCodeQuestion(CodeQuestion):
         self.fn_str = None
         self.translation_prompt = translation_prompt
         self.full_completion = None
-
-
-@dataclass
-class Answer:
-    text: str
-    code_question: CodeQuestion = None
 
 
 # ---------------------
@@ -140,7 +231,6 @@ class Agent(ABC):
         self.model_string = model_string
         self.decision_counter = decision_counter
         self.index_counter = index_counter
-        self.stage_list = []
         self.prompt_list = []
 
 

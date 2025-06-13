@@ -1,6 +1,7 @@
 import argparse
 import glob
 import json
+import logging
 import os
 import sys
 import time
@@ -104,7 +105,7 @@ def run_single_agent_game(args):
         max_questions,
         max_moves,
         model,
-        EXPERIMENTAL_RESULTS_DIR,
+        experiment_dir,
         map_samples,
         prob_q_prob,
         eig_samples,
@@ -113,6 +114,24 @@ def run_single_agent_game(args):
 
     print(f"{captain_type} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
+
+    # Create round directory and subdirectories
+    round_dir = os.path.join(experiment_dir, "rounds", f"round_{round_id}")
+    captain_dir = os.path.join(round_dir, "captain")
+    spotter_dir = os.path.join(round_dir, "spotter")
+    captain_completions_dir = os.path.join(captain_dir, "completions")
+    spotter_completions_dir = os.path.join(spotter_dir, "completions")
+
+    os.makedirs(round_dir, exist_ok=True)
+    os.makedirs(captain_dir, exist_ok=True)
+    os.makedirs(spotter_dir, exist_ok=True)
+    os.makedirs(captain_completions_dir, exist_ok=True)
+    os.makedirs(spotter_completions_dir, exist_ok=True)
+
+    # Initialize counters for tracking completions
+    completion_counter = Counter()
+    decision_counter = Counter()
+    index_counter = Counter()
 
     captain = create_captain(
         captain_type=captain_type,
@@ -124,14 +143,14 @@ def run_single_agent_game(args):
         eig_samples=eig_samples,
         eig_k=eig_k,
         round_id=round_id,
+        json_path=os.path.join(captain_dir, "captain.json"),
+        completions_dir=captain_completions_dir,
     )
-
-    decision_counter = Counter()
-    index_counter = Counter()
 
     # Set runtime counters
     captain.index_counter = index_counter
     captain.decision_counter = decision_counter
+    captain.completion_counter = completion_counter
 
     spotter = CodeSpotterModel(
         board_id,
@@ -142,10 +161,9 @@ def run_single_agent_game(args):
         decision_counter=decision_counter,
         index_counter=index_counter,
         round_id=round_id,
+        json_path=os.path.join(spotter_dir, "spotter.json"),
+        completions_dir=spotter_completions_dir,
     )
-
-    # Setup game save directory for history
-    game_save_dir = os.path.join(EXPERIMENTAL_RESULTS_DIR, f"game_{round_id}")
 
     game = BattleshipGame(
         board_target=board,
@@ -153,7 +171,7 @@ def run_single_agent_game(args):
         spotter=spotter,
         max_questions=max_questions,
         max_moves=max_moves,
-        save_dir=str(game_save_dir),
+        save_dir=round_dir,
     )
     game.play()
     game.save()
@@ -192,6 +210,17 @@ def main():
         f.write(command)
     print(f"Command saved to {command_path}")
 
+    # Create rounds directory
+    rounds_dir = os.path.join(experiment_dir, "rounds")
+    os.makedirs(rounds_dir, exist_ok=True)
+
+    # Setup logging
+    logging.basicConfig(
+        filename=os.path.join(experiment_dir, "run.log"),
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
     # Resolve paths relative to project root
     gold_annotations_path = resolve_project_path(args.gold_annotations)
     round_data_path = resolve_project_path(args.round_data)
@@ -213,9 +242,8 @@ def main():
     for seed in args.seeds:
         for board_id in args.board_ids:
             for captain_type in args.captains:
-                round_id = uuid.uuid4().hex[
-                    :8
-                ]  # Generate a short unique ID for the round
+                # Generate a short unique ID for the round
+                round_id = uuid.uuid4().hex[:8]
                 jobs.append(
                     (
                         round_id,

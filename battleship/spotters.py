@@ -35,14 +35,17 @@ class Spotter(Agent):
         index_counter=None,
         round_id=None,
         spotter_benchmark=None,
+        json_path=None,
+        completions_dir=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
         self.spotter_benchmark = spotter_benchmark
+        self.json_path = json_path
+        self.completions_dir = completions_dir
         self.client = get_openai_client()
 
-        # Use proper Agent initialization to handle model string and cache path
         super().__init__(
             seed=None,
             model_string=model_string,
