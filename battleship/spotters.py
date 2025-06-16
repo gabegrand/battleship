@@ -153,7 +153,6 @@ class DirectAnswerStrategy(AnswerStrategy):
             completion=completion.model_dump() if completion else None,
             question=question,
             answer=answer,
-            timestamp=time.time(),
         )
 
         return answer, action_data
@@ -273,7 +272,6 @@ class CodeAnswerStrategy(AnswerStrategy):
             prompt="Code translation and execution",  # Could be more detailed
             question=question,
             answer=answer,
-            timestamp=time.time(),
         )
 
         return answer, action_data

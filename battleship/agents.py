@@ -49,10 +49,14 @@ class ActionData:
     map_prob: float = None  # For MAP calculations
     occ_tiles: np.ndarray = None  # Board state at time of action
 
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = time.time()
+
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "index": self.index,
+            "index": int(self.index),  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -60,13 +64,21 @@ class ActionData:
             "question": self.question.to_dict() if self.question else None,
             "answer": self.answer.to_dict() if self.answer else None,
             "decision": self.decision,
-            "move": self.move,
-            "timestamp": self.timestamp,
-            "eig": self.eig,
-            "map_prob": self.map_prob,
-            "occ_tiles": self.occ_tiles.tolist()
+            "move": tuple(int(x) for x in self.move)
+            if self.move
+            else None,  # Convert numpy.int64 to Python int
+            "timestamp": float(self.timestamp)
+            if self.timestamp
+            else None,  # Convert numpy.float64 to Python float
+            "eig": float(self.eig)
+            if self.eig is not None
+            else None,  # Convert numpy.float64 to Python float
+            "map_prob": float(self.map_prob)
+            if self.map_prob is not None
+            else None,  # Convert numpy.float64 to Python float
+            "occ_tiles": self.occ_tiles.astype(int).tolist()
             if self.occ_tiles is not None
-            else None,
+            else None,  # Convert numpy array to Python list
         }
 
     @classmethod

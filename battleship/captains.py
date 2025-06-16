@@ -1,9 +1,4 @@
-import json
-import os
 import time
-from abc import ABC
-from abc import abstractmethod
-from dataclasses import dataclass
 from random import random
 from typing import Dict
 from typing import List
@@ -116,8 +111,7 @@ class AlwaysMoveDecisionStrategy(DecisionStrategy):
         action_data = ActionData(
             index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="decision",
-            decision="Move",
-            timestamp=time.time(),
+            decision=Decision.MOVE,
         )
         return Decision.MOVE, action_data
 
@@ -130,16 +124,13 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
     def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         if random() < self.q_prob and questions_remaining > 0:
             decision = Decision.QUESTION
-            decision_str = "Question"
         else:
             decision = Decision.MOVE
-            decision_str = "Move"
 
         action_data = ActionData(
             index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="decision",
-            decision=decision_str,
-            timestamp=time.time(),
+            decision=decision,
         )
         return decision, action_data
 
@@ -188,29 +179,22 @@ class LLMDecisionStrategy(DecisionStrategy):
                     candidate_decision = match.group(1)
                     break
 
-            # Create an ActionData object to store the interaction
-            action_data = ActionData(
-                index=self.index_counter.increment_counter(),
-                action="decision",
-                prompt=str(decision_prompt),
-                completion=completion.model_dump() if completion else None,
-                decision=candidate_decision,
-                timestamp=time.time(),
-            )
-
             decision = (
                 Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
             )
-            return decision, action_data
 
-        # No questions remaining, return Move decision
+        else:
+            decision = Decision.MOVE
+
+        # Create an ActionData object to store the interaction
         action_data = ActionData(
             index=self.index_counter.increment_counter(),
             action="decision",
-            decision="Move",
-            timestamp=time.time(),
+            prompt=str(decision_prompt),
+            completion=completion.model_dump() if completion else None,
+            decision=decision,
         )
-        return Decision.MOVE, action_data
+        return decision, action_data
 
 
 # Example move strategies
@@ -231,7 +215,6 @@ class RandomMoveStrategy(MoveStrategy):
             index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="move",
             move=coords,
-            timestamp=time.time(),
         )
         return coords, action_data
 
@@ -285,7 +268,6 @@ class MAPMoveStrategy(MoveStrategy):
             action="move",
             move=move,
             map_prob=float(posterior.max()),
-            timestamp=time.time(),
         )
         return move, action_data
 
@@ -346,7 +328,6 @@ class LLMMoveStrategy(MoveStrategy):
                         prompt=str(move_prompt),
                         completion=completion.model_dump(),
                         move=candidate_move,
-                        timestamp=time.time(),
                     )
 
                     return candidate_move, action_data
@@ -358,7 +339,6 @@ class LLMMoveStrategy(MoveStrategy):
             prompt=str(move_prompt),
             completion=completion.model_dump() if completion else None,
             move=None,
-            timestamp=time.time(),
         )
         return None, action_data
 
@@ -394,6 +374,7 @@ class EIGQuestionStrategy(QuestionStrategy):
     def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
+        best_action_data = None
 
         for _ in range(self.k):
             question_prompt = QuestionPrompt(
@@ -442,18 +423,15 @@ class EIGQuestionStrategy(QuestionStrategy):
                 completion_id=completion.id if completion else None,
                 question=candidate_question,
                 eig=eig,
-                timestamp=time.time(),
             )
-
-            # Save both action data and raw completion
-            self._save_interaction(action_data, completion)
 
             # Update best question if this one has higher EIG
             if eig > best_eig:
                 best_eig = eig
                 best_question = candidate_question
+                best_action_data = action_data
 
-        return best_question
+        return best_question, best_action_data
 
 
 class LLMQuestionStrategy(QuestionStrategy):
@@ -516,15 +494,22 @@ class LLMQuestionStrategy(QuestionStrategy):
                     full_completion=completion.choices[0].message.content,
                     completion_id=completion.id,
                     question=question,
-                    timestamp=time.time(),
                 )
 
-                # Save both action data and raw completion
-                self._save_interaction(action_data, completion)
+                return question, action_data
 
-                return question
-
-        return None
+        # If no valid question found, return None with ActionData
+        action_data = ActionData(
+            index=self.index_counter.increment_counter(),
+            action="question",
+            prompt=str(question_prompt),
+            full_completion=completion.choices[0].message.content
+            if completion
+            else None,
+            completion_id=completion.id if completion else None,
+            question=None,
+        )
+        return None, action_data
 
 
 def create_captain(
@@ -563,6 +548,7 @@ def create_captain(
             question_strategy=None,
             seed=seed,
             round_id=round_id,
+            json_path=json_path,
         )
 
     elif captain_type == "MAPCaptain":
@@ -576,6 +562,7 @@ def create_captain(
             question_strategy=None,
             seed=seed,
             round_id=round_id,
+            json_path=json_path,
         )
 
     elif captain_type == "ProbabilisticCaptain":
@@ -594,6 +581,7 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -613,6 +601,7 @@ def create_captain(
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -632,10 +621,13 @@ def create_captain(
                 model_string=model,
                 use_cot=False,
                 index_counter=index_counter,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -655,10 +647,13 @@ def create_captain(
                 model_string=model,
                 use_cot=True,
                 index_counter=index_counter,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -681,13 +676,12 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                questions_remaining=None,
-                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -710,13 +704,12 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                questions_remaining=None,
-                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -739,13 +732,12 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                questions_remaining=None,
-                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
@@ -768,13 +760,12 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                questions_remaining=None,
-                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
             round_id=round_id,
+            json_path=json_path,
         )
         return captain
 
