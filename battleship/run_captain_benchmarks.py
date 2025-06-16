@@ -16,7 +16,7 @@ from battleship.agents import Counter
 from battleship.board import Board
 from battleship.captains import create_captain
 from battleship.game import BattleshipGame
-from battleship.spotters import CodeSpotterModel
+from battleship.spotters import create_spotter
 from battleship.utils import resolve_project_path
 
 
@@ -119,14 +119,10 @@ def run_single_agent_game(args):
     round_dir = os.path.join(experiment_dir, "rounds", f"round_{round_id}")
     captain_dir = os.path.join(round_dir, "captain")
     spotter_dir = os.path.join(round_dir, "spotter")
-    captain_completions_dir = os.path.join(captain_dir, "completions")
-    spotter_completions_dir = os.path.join(spotter_dir, "completions")
 
     os.makedirs(round_dir, exist_ok=True)
     os.makedirs(captain_dir, exist_ok=True)
     os.makedirs(spotter_dir, exist_ok=True)
-    os.makedirs(captain_completions_dir, exist_ok=True)
-    os.makedirs(spotter_completions_dir, exist_ok=True)
 
     # Initialize counters for tracking completions
     completion_counter = Counter()
@@ -144,17 +140,16 @@ def run_single_agent_game(args):
         eig_k=eig_k,
         round_id=round_id,
         json_path=os.path.join(captain_dir, "captain.json"),
-        completions_dir=captain_completions_dir,
     )
 
     # Set runtime counters
     captain.index_counter = index_counter
     captain.decision_counter = decision_counter
-    captain.completion_counter = completion_counter
 
-    spotter = CodeSpotterModel(
-        board_id,
-        "collaborative",
+    spotter = create_spotter(
+        spotter_type="CodeSpotterModel",
+        board_id=board_id,
+        board_experiment="collaborative",
         model_string=model,
         temperature=None,
         use_cot=True,
@@ -162,7 +157,6 @@ def run_single_agent_game(args):
         index_counter=index_counter,
         round_id=round_id,
         json_path=os.path.join(spotter_dir, "spotter.json"),
-        completions_dir=spotter_completions_dir,
     )
 
     game = BattleshipGame(

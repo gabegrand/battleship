@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 import traceback
 import uuid
 from abc import ABC
@@ -33,13 +34,12 @@ def get_openai_client():
 
 
 @dataclass
-class Prompt:
+class ActionData:
     index: int  # Sequential index of the action
     action: str  # "decision", "question", "move", "answer"
     prompt: str = None  # The prompt text
-    full_completion: str = None  # Raw completion from OpenAI
+    completion: dict = None  # Full completion object as JSON
     extracted_completion: str = None  # Parsed completion
-    completion_id: str = None  # OpenAI completion ID
     question: "Question" = None  # For question actions
     answer: "Answer" = None  # For question/answer actions
     decision: str = None  # For decision actions
@@ -50,12 +50,13 @@ class Prompt:
     occ_tiles: np.ndarray = None  # Board state at time of action
 
     def to_dict(self) -> dict:
-        """Convert prompt to dictionary format for JSON serialization."""
+        """Convert action data to dictionary format for JSON serialization."""
         return {
             "index": self.index,
             "action": self.action,
             "prompt": self.prompt,
-            "completion_id": self.completion_id,
+            "completion": self.completion,
+            "extracted_completion": self.extracted_completion,
             "question": self.question.to_dict() if self.question else None,
             "answer": self.answer.to_dict() if self.answer else None,
             "decision": self.decision,
@@ -69,15 +70,14 @@ class Prompt:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Prompt":
-        """Create a Prompt instance from a dictionary."""
+    def from_dict(cls, data: dict) -> "ActionData":
+        """Create an ActionData instance from a dictionary."""
         return cls(
             index=data["index"],
             action=data["action"],
             prompt=data.get("prompt"),
-            full_completion=data.get("full_completion"),
+            completion=data.get("completion"),
             extracted_completion=data.get("extracted_completion"),
-            completion_id=data.get("completion_id"),
             question=Question.from_dict(data["question"])
             if data.get("question")
             else None,
@@ -224,6 +224,7 @@ class Agent(ABC):
         decision_counter: Counter = None,
         index_counter: Counter = None,
         round_id: str = None,
+        json_path: str = None,
     ):
         self.round_id = round_id
         self.use_cot = use_cot
@@ -231,7 +232,25 @@ class Agent(ABC):
         self.model_string = model_string
         self.decision_counter = decision_counter
         self.index_counter = index_counter
+        self.json_path = json_path
         self.prompt_list = []
+
+    def save_action_data(self, action_data: ActionData):
+        """Save action data to JSON file."""
+        if not self.json_path:
+            return
+
+        # Load existing data
+        try:
+            with open(self.json_path, "r") as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = []
+
+        # Add new action
+        data.append(action_data.to_dict())
+        with open(self.json_path, "w") as f:
+            json.dump(data, f, indent=2)
 
 
 class EIGCalculator:

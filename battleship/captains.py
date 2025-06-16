@@ -11,13 +11,13 @@ from typing import Tuple
 
 import numpy as np
 
+from battleship.agents import ActionData
 from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
 from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
-from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.board import coords_to_tile
@@ -27,61 +27,10 @@ from battleship.game import Decision
 from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
-
-
-# Strategy interfaces
-class BaseStrategy(ABC):
-    def __init__(self, json_path=None, completions_dir=None, index_counter=None):
-        self.json_path = json_path
-        self.completions_dir = completions_dir
-        self.index_counter = index_counter
-
-    def _save_interaction(self, prompt: Prompt, completion=None):
-        """Save both the prompt data and raw completion."""
-        if not self.json_path:
-            return
-
-        # Load existing data
-        try:
-            with open(self.json_path, "r") as f:
-                data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = []
-
-        # Add new prompt
-        data.append(prompt.to_dict())
-        with open(self.json_path, "w") as f:
-            json.dump(data, f, indent=2)
-
-        # Save raw completion if available
-        if completion and self.completions_dir:
-            completion_path = os.path.join(
-                self.completions_dir, f"completion_{prompt.index:06d}.json"
-            )
-            with open(completion_path, "w") as f:
-                json.dump(completion.model_dump(), f, indent=2)
-
-
-class DecisionStrategy(BaseStrategy):
-    @abstractmethod
-    def make_decision(
-        self, state, history, questions_remaining, moves_remaining, sunk
-    ) -> Decision:
-        pass
-
-
-class MoveStrategy(BaseStrategy):
-    @abstractmethod
-    def make_move(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
-    ) -> Tuple[int, int]:
-        pass
-
-
-class QuestionStrategy(BaseStrategy):
-    @abstractmethod
-    def ask_question(self, state, history, sunk) -> Question:
-        pass
+from battleship.strategies import BaseStrategy
+from battleship.strategies import DecisionStrategy
+from battleship.strategies import MoveStrategy
+from battleship.strategies import QuestionStrategy
 
 
 class Captain(Agent):
@@ -94,11 +43,13 @@ class Captain(Agent):
         model_string=None,
         temperature=None,
         round_id=None,
+        json_path=None,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
             round_id=round_id,
+            json_path=json_path,
         )
         self.temperature = temperature
         self.sampling_constraints = []
@@ -120,7 +71,7 @@ class Captain(Agent):
         self.decision_counter.increment_counter()
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-        return self.decision_strategy.make_decision(
+        decision, action_data = self.decision_strategy.make_decision(
             state,
             history,
             questions_remaining,
@@ -128,8 +79,13 @@ class Captain(Agent):
             sunk,
         )
 
+        # Save the action data
+        self.save_action_data(action_data)
+
+        return decision
+
     def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
-        return self.move_strategy.make_move(
+        move, action_data = self.move_strategy.make_move(
             state,
             history,
             sunk,
@@ -138,26 +94,54 @@ class Captain(Agent):
             constraints,
         )
 
+        # Save the action data
+        self.save_action_data(action_data)
+
+        return move
+
     def question(self, state: Board, history: List[Dict], sunk: str):
-        return self.question_strategy.ask_question(
+        question, action_data = self.question_strategy.ask_question(
             state, history, sunk, self.questions_remaining, self.moves_remaining
         )
+
+        # Save the action data
+        self.save_action_data(action_data)
+
+        return question
 
 
 # Example decision strategies
 class AlwaysMoveDecisionStrategy(DecisionStrategy):
     def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
-        return Decision.MOVE
+        action_data = ActionData(
+            index=self.index_counter.increment_counter() if self.index_counter else 0,
+            action="decision",
+            decision="Move",
+            timestamp=time.time(),
+        )
+        return Decision.MOVE, action_data
 
 
 class ProbabilisticDecisionStrategy(DecisionStrategy):
     def __init__(self, q_prob=0.5):
+        super().__init__()
         self.q_prob = q_prob
 
     def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         if random() < self.q_prob and questions_remaining > 0:
-            return Decision.QUESTION
-        return Decision.MOVE
+            decision = Decision.QUESTION
+            decision_str = "Question"
+        else:
+            decision = Decision.MOVE
+            decision_str = "Move"
+
+        action_data = ActionData(
+            index=self.index_counter.increment_counter() if self.index_counter else 0,
+            action="decision",
+            decision=decision_str,
+            timestamp=time.time(),
+        )
+        return decision, action_data
 
 
 class LLMDecisionStrategy(DecisionStrategy):
@@ -166,13 +150,9 @@ class LLMDecisionStrategy(DecisionStrategy):
         model_string,
         temperature=None,
         use_cot=False,
-        json_path=None,
-        completions_dir=None,
         index_counter=None,
     ):
         super().__init__(
-            json_path=json_path,
-            completions_dir=completions_dir,
             index_counter=index_counter,
         )
         self.model_string = model_string
@@ -208,29 +188,35 @@ class LLMDecisionStrategy(DecisionStrategy):
                     candidate_decision = match.group(1)
                     break
 
-            # Create a Prompt object to store the interaction
-            prompt = Prompt(
+            # Create an ActionData object to store the interaction
+            action_data = ActionData(
                 index=self.index_counter.increment_counter(),
                 action="decision",
                 prompt=str(decision_prompt),
-                full_completion=completion.choices[0].message.content
-                if completion
-                else None,
-                completion_id=completion.id if completion else None,
+                completion=completion.model_dump() if completion else None,
                 decision=candidate_decision,
                 timestamp=time.time(),
             )
 
-            # Save both prompt and raw completion
-            self._save_interaction(prompt, completion)
+            decision = (
+                Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
+            )
+            return decision, action_data
 
-            return Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
-        return Decision.MOVE
+        # No questions remaining, return Move decision
+        action_data = ActionData(
+            index=self.index_counter.increment_counter(),
+            action="decision",
+            decision="Move",
+            timestamp=time.time(),
+        )
+        return Decision.MOVE, action_data
 
 
 # Example move strategies
 class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
+        super().__init__()
         self.rng = rng
 
     def make_move(
@@ -240,11 +226,19 @@ class RandomMoveStrategy(MoveStrategy):
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
         coords = self.rng.choice(hidden_tiles)
-        return tuple(coords)
+
+        action_data = ActionData(
+            index=self.index_counter.increment_counter() if self.index_counter else 0,
+            action="move",
+            move=coords,
+            timestamp=time.time(),
+        )
+        return coords, action_data
 
 
 class MAPMoveStrategy(MoveStrategy):
     def __init__(self, rng, board_id, n_samples=1000):
+        super().__init__()
         self.rng = rng
         self.board_id = board_id
         self.n_samples = n_samples
@@ -284,7 +278,16 @@ class MAPMoveStrategy(MoveStrategy):
 
         # Map the flat index back to 2D coordinates
         move_coords = np.unravel_index(flat_idx, state.board.shape)
-        return tuple(move_coords)
+        move = tuple(move_coords)
+
+        action_data = ActionData(
+            index=self.index_counter.increment_counter() if self.index_counter else 0,
+            action="move",
+            move=move,
+            map_prob=float(posterior.max()),
+            timestamp=time.time(),
+        )
+        return move, action_data
 
 
 class LLMMoveStrategy(MoveStrategy):
@@ -295,13 +298,9 @@ class LLMMoveStrategy(MoveStrategy):
         use_cot=False,
         moves_remaining=None,
         n_attempts=3,
-        json_path=None,
-        completions_dir=None,
         index_counter=None,
     ):
         super().__init__(
-            json_path=json_path,
-            completions_dir=completions_dir,
             index_counter=index_counter,
         )
         self.model_string = model_string
@@ -340,23 +339,28 @@ class LLMMoveStrategy(MoveStrategy):
             if candidate_move is not None:
                 candidate_move = tile_to_coords(candidate_move.group(1))
                 if candidate_move not in visible_tiles:
-                    # Create a Prompt object to store the interaction
-                    prompt = Prompt(
+                    # Create an ActionData object to store the interaction
+                    action_data = ActionData(
                         index=self.index_counter.increment_counter(),
                         action="move",
                         prompt=str(move_prompt),
-                        full_completion=completion.choices[0].message.content,
-                        completion_id=completion.id,
+                        completion=completion.model_dump(),
                         move=candidate_move,
                         timestamp=time.time(),
                     )
 
-                    # Save both prompt and raw completion
-                    self._save_interaction(prompt, completion)
+                    return candidate_move, action_data
 
-                    return candidate_move
-
-        return None
+        # If no valid move found, return None with ActionData
+        action_data = ActionData(
+            index=self.index_counter.increment_counter(),
+            action="move",
+            prompt=str(move_prompt),
+            completion=completion.model_dump() if completion else None,
+            move=None,
+            timestamp=time.time(),
+        )
+        return None, action_data
 
 
 # Example question strategies
@@ -371,13 +375,9 @@ class EIGQuestionStrategy(QuestionStrategy):
         use_cot=False,
         questions_remaining=None,
         n_attempts=3,
-        json_path=None,
-        completions_dir=None,
         index_counter=None,
     ):
         super().__init__(
-            json_path=json_path,
-            completions_dir=completions_dir,
             index_counter=index_counter,
         )
         self.model_string = model_string
@@ -431,8 +431,8 @@ class EIGQuestionStrategy(QuestionStrategy):
                 candidate_question, state, samples=self.samples
             )
 
-            # Create a Prompt object to store the interaction
-            prompt = Prompt(
+            # Create an ActionData object to store the interaction
+            action_data = ActionData(
                 index=self.index_counter.increment_counter(),
                 action="question",
                 prompt=str(question_prompt),
@@ -445,8 +445,8 @@ class EIGQuestionStrategy(QuestionStrategy):
                 timestamp=time.time(),
             )
 
-            # Save both prompt and raw completion
-            self._save_interaction(prompt, completion)
+            # Save both action data and raw completion
+            self._save_interaction(action_data, completion)
 
             # Update best question if this one has higher EIG
             if eig > best_eig:
@@ -466,13 +466,9 @@ class LLMQuestionStrategy(QuestionStrategy):
         rng=None,
         questions_remaining=None,
         n_attempts=3,
-        json_path=None,
-        completions_dir=None,
         index_counter=None,
     ):
         super().__init__(
-            json_path=json_path,
-            completions_dir=completions_dir,
             index_counter=index_counter,
         )
         self.model_string = model_string
@@ -512,8 +508,8 @@ class LLMQuestionStrategy(QuestionStrategy):
                 candidate_question = candidate_question.group(1)
                 question = Question(text=candidate_question)
 
-                # Create a Prompt object to store the interaction
-                prompt = Prompt(
+                # Create an ActionData object to store the interaction
+                action_data = ActionData(
                     index=self.index_counter.increment_counter(),
                     action="question",
                     prompt=str(question_prompt),
@@ -523,8 +519,8 @@ class LLMQuestionStrategy(QuestionStrategy):
                     timestamp=time.time(),
                 )
 
-                # Save both prompt and raw completion
-                self._save_interaction(prompt, completion)
+                # Save both action data and raw completion
+                self._save_interaction(action_data, completion)
 
                 return question
 
@@ -588,15 +584,11 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             seed=seed,
@@ -611,15 +603,11 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             seed=seed,
@@ -633,25 +621,17 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
             ),
             seed=seed,
             model_string=model,
@@ -664,25 +644,17 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
             ),
             seed=seed,
             model_string=model,
@@ -695,15 +667,11 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=EIGQuestionStrategy(
@@ -713,8 +681,8 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
+                questions_remaining=None,
+                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
@@ -728,15 +696,11 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             question_strategy=EIGQuestionStrategy(
@@ -746,8 +710,8 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
+                questions_remaining=None,
+                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
@@ -761,8 +725,6 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=MAPMoveStrategy(
@@ -777,8 +739,8 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                json_path=json_path,
-                completions_dir=completions_dir,
+                questions_remaining=None,
+                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
@@ -792,8 +754,6 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
                 index_counter=index_counter,
             ),
             move_strategy=MAPMoveStrategy(
@@ -808,8 +768,8 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                json_path=json_path,
-                completions_dir=completions_dir,
+                questions_remaining=None,
+                n_attempts=3,
                 index_counter=index_counter,
             ),
             seed=seed,
