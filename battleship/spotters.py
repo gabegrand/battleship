@@ -56,7 +56,7 @@ class Spotter(Agent):
     def answer(
         self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
     ) -> Answer:
-        answer, action_data = self.answer_strategy.answer_question(
+        answer, action_data = self.answer_strategy(
             question=question,
             occ_tiles=occ_tiles,
             history=history,
@@ -90,7 +90,7 @@ class DirectAnswerStrategy(AnswerStrategy):
         self.use_cot = use_cot
         self.client = get_openai_client()
 
-    def answer_question(
+    def __call__(
         self,
         question: Question,
         occ_tiles: np.ndarray,
@@ -229,7 +229,7 @@ class CodeAnswerStrategy(AnswerStrategy):
         else:
             return None
 
-    def answer_question(
+    def __call__(
         self,
         question: Question,
         occ_tiles: np.ndarray,

@@ -63,9 +63,7 @@ class Captain(Agent):
         moves_remaining: int,
         sunk: str,
     ) -> Decision:
-        self.questions_remaining = questions_remaining
-        self.moves_remaining = moves_remaining
-        decision, action_data = self.decision_strategy.make_decision(
+        decision, action_data = self.decision_strategy(
             state,
             history,
             questions_remaining,
@@ -78,13 +76,21 @@ class Captain(Agent):
 
         return decision
 
-    def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
-        move, action_data = self.move_strategy.make_move(
+    def move(
+        self,
+        state: Board,
+        history: List[Dict],
+        sunk: str,
+        questions_remaining: int,
+        moves_remaining: int,
+        constraints: List,
+    ):
+        move, action_data = self.move_strategy(
             state,
             history,
             sunk,
-            self.questions_remaining,
-            self.moves_remaining,
+            questions_remaining,
+            moves_remaining,
             constraints,
         )
 
@@ -93,9 +99,16 @@ class Captain(Agent):
 
         return move
 
-    def question(self, state: Board, history: List[Dict], sunk: str):
-        question, action_data = self.question_strategy.ask_question(
-            state, history, sunk, self.questions_remaining, self.moves_remaining
+    def question(
+        self,
+        state: Board,
+        history: List[Dict],
+        sunk: str,
+        questions_remaining: int,
+        moves_remaining: int,
+    ):
+        question, action_data = self.question_strategy(
+            state, history, sunk, questions_remaining, moves_remaining
         )
 
         # Save the action data
@@ -106,7 +119,7 @@ class Captain(Agent):
 
 # Example decision strategies
 class AlwaysMoveDecisionStrategy(DecisionStrategy):
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
         action_data = ActionData(
             action="decision",
             decision=Decision.MOVE,
@@ -119,7 +132,7 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
         super().__init__()
         self.q_prob = q_prob
 
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
+    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
         if random() < self.q_prob and questions_remaining > 0:
             decision = Decision.QUESTION
         else:
@@ -145,7 +158,7 @@ class LLMDecisionStrategy(DecisionStrategy):
         self.use_cot = use_cot
         self.client = get_openai_client()
 
-    def make_decision(
+    def __call__(
         self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
     ):
         if questions_remaining > 0:
@@ -196,13 +209,13 @@ class RandomMoveStrategy(MoveStrategy):
         super().__init__()
         self.rng = rng
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
-        coords = self.rng.choice(hidden_tiles)
+        coords = tuple(self.rng.choice(hidden_tiles))
 
         action_data = ActionData(
             action="move",
@@ -218,7 +231,7 @@ class MAPMoveStrategy(MoveStrategy):
         self.board_id = board_id
         self.n_samples = n_samples
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         sampler = FastSampler(
@@ -269,18 +282,16 @@ class LLMMoveStrategy(MoveStrategy):
         model_string,
         temperature=None,
         use_cot=False,
-        moves_remaining=None,
         n_attempts=3,
     ):
         super().__init__()
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
-        self.moves_remaining = moves_remaining
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
@@ -339,7 +350,6 @@ class EIGQuestionStrategy(QuestionStrategy):
         samples=100,
         k=3,
         use_cot=False,
-        questions_remaining=None,
         n_attempts=3,
     ):
         super().__init__()
@@ -349,12 +359,11 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.samples = samples
         self.k = k
         self.use_cot = use_cot
-        self.questions_remaining = questions_remaining
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
         best_action_data = None
@@ -424,21 +433,19 @@ class LLMQuestionStrategy(QuestionStrategy):
         use_cot=False,
         spotter=None,
         rng=None,
-        questions_remaining=None,
         n_attempts=3,
     ):
         super().__init__()
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
-        self.questions_remaining = questions_remaining
         self.n_attempts = n_attempts
         self.spotter = spotter
         self.rng = rng
         self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
         self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",

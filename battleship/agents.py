@@ -59,7 +59,7 @@ class ActionData:
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "stage_index": int(self.index),  # Convert numpy.int64 to Python int
+            "stage_index": int(self.stage_index),  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -245,7 +245,7 @@ class Agent(ABC):
             data = []
 
         # Add stage index to action data
-        action_data.index = self.stage_index
+        action_data.stage_index = self.stage_index
 
         # Add new action
         data.append(action_data.to_dict())

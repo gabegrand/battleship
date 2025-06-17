@@ -127,7 +127,13 @@ class BattleshipGame:
         )
 
         if decision == Decision.QUESTION:
-            q = self.captain.question(self.state, self.history, sunk_string)
+            q = self.captain.question(
+                self.state,
+                self.history,
+                sunk_string,
+                questions_remaining=self.max_questions - self.question_count,
+                moves_remaining=self.max_moves - self.move_count,
+            )
             a = self.spotter.answer(
                 question=q, occ_tiles=self.state.board, history=self.history
             )
@@ -149,7 +155,9 @@ class BattleshipGame:
                 self.state,
                 self.history,
                 sunk_string,
-                self.captain.sampling_constraints,
+                questions_remaining=self.max_questions - self.question_count,
+                moves_remaining=self.max_moves - self.move_count,
+                constraints=self.captain.sampling_constraints,
             )
 
             if coords is not None:
