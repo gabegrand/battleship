@@ -12,7 +12,6 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from battleship.agents import Counter
 from battleship.board import Board
 from battleship.captains import create_captain
 from battleship.game import BattleshipGame
@@ -124,11 +123,6 @@ def run_single_agent_game(args):
     os.makedirs(captain_dir, exist_ok=True)
     os.makedirs(spotter_dir, exist_ok=True)
 
-    # Initialize counters for tracking completions
-    completion_counter = Counter()
-    decision_counter = Counter()
-    index_counter = Counter()
-
     captain = create_captain(
         captain_type=captain_type,
         seed=seed,
@@ -142,10 +136,6 @@ def run_single_agent_game(args):
         json_path=os.path.join(captain_dir, "captain.json"),
     )
 
-    # Set runtime counters
-    captain.index_counter = index_counter
-    captain.decision_counter = decision_counter
-
     spotter = create_spotter(
         spotter_type="CodeSpotterModel",
         board_id=board_id,
@@ -153,8 +143,6 @@ def run_single_agent_game(args):
         model_string=model,
         temperature=None,
         use_cot=True,
-        decision_counter=decision_counter,
-        index_counter=index_counter,
         round_id=round_id,
         json_path=os.path.join(spotter_dir, "spotter.json"),
     )

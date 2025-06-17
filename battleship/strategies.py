@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 
 class BaseStrategy(ABC):
-    def __init__(self, index_counter=None):
-        self.index_counter = index_counter
+    def __init__(self):
+        pass
 
 
 class DecisionStrategy(BaseStrategy):

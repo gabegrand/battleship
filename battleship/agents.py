@@ -35,19 +35,22 @@ def get_openai_client():
 
 @dataclass
 class ActionData:
-    index: int  # Sequential index of the action
-    action: str  # "decision", "question", "move", "answer"
-    prompt: str = None  # The prompt text
-    completion: dict = None  # Full completion object as JSON
-    extracted_completion: str = None  # Parsed completion
+    stage_index: int = None  # Corresponds to the stage index of the game
+    timestamp: float = None  # When the action was taken
+
+    action: str = None  # "decision", "question", "move", "answer"
     question: "Question" = None  # For question actions
     answer: "Answer" = None  # For question/answer actions
     decision: str = None  # For decision actions
     move: Tuple[int, int] = None  # For move actions
-    timestamp: float = None  # When the action was taken
+
     eig: float = None  # For EIG calculations
     map_prob: float = None  # For MAP calculations
     occ_tiles: np.ndarray = None  # Board state at time of action
+
+    prompt: str = None  # The prompt text
+    completion: dict = None  # Full completion object as JSON
+    extracted_completion: str = None  # Parsed completion
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -56,7 +59,7 @@ class ActionData:
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "index": int(self.index),  # Convert numpy.int64 to Python int
+            "stage_index": int(self.index),  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -64,35 +67,37 @@ class ActionData:
             "question": self.question.to_dict() if self.question else None,
             "answer": self.answer.to_dict() if self.answer else None,
             "decision": self.decision,
-            "move": tuple(int(x) for x in self.move)
-            if self.move
-            else None,  # Convert numpy.int64 to Python int
-            "timestamp": float(self.timestamp)
-            if self.timestamp
-            else None,  # Convert numpy.float64 to Python float
-            "eig": float(self.eig)
-            if self.eig is not None
-            else None,  # Convert numpy.float64 to Python float
-            "map_prob": float(self.map_prob)
-            if self.map_prob is not None
-            else None,  # Convert numpy.float64 to Python float
-            "occ_tiles": self.occ_tiles.astype(int).tolist()
-            if self.occ_tiles is not None
-            else None,  # Convert numpy array to Python list
+            "move": (
+                tuple(int(x) for x in self.move) if self.move else None
+            ),  # Convert numpy.int64 to Python int
+            "timestamp": (
+                float(self.timestamp) if self.timestamp else None
+            ),  # Convert numpy.float64 to Python float
+            "eig": (
+                float(self.eig) if self.eig is not None else None
+            ),  # Convert numpy.float64 to Python float
+            "map_prob": (
+                float(self.map_prob) if self.map_prob is not None else None
+            ),  # Convert numpy.float64 to Python float
+            "occ_tiles": (
+                self.occ_tiles.astype(int).tolist()
+                if self.occ_tiles is not None
+                else None
+            ),  # Convert numpy array to Python list
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> "ActionData":
         """Create an ActionData instance from a dictionary."""
         return cls(
-            index=data["index"],
+            stage_index=data["stage_index"],
             action=data["action"],
             prompt=data.get("prompt"),
             completion=data.get("completion"),
             extracted_completion=data.get("extracted_completion"),
-            question=Question.from_dict(data["question"])
-            if data.get("question")
-            else None,
+            question=(
+                Question.from_dict(data["question"]) if data.get("question") else None
+            ),
             answer=Answer.from_dict(data["answer"]) if data.get("answer") else None,
             decision=data.get("decision"),
             move=tuple(data["move"]) if data.get("move") else None,
@@ -211,30 +216,12 @@ class NullCodeQuestion(CodeQuestion):
 # ---------------------
 
 
-class Counter:
-    def __init__(self):
-        self.counter = 0
-
-    def increment_counter(self):
-        self.counter += 1
-        return self.counter
-
-
 class Agent(ABC):
-    # Class variable for global counter
-    action_counter = 0
-
-    def increment_counter(self):
-        self.action_counter += 1
-        return self.action_counter
-
     def __init__(
         self,
         seed: int = None,
         model_string: str = None,
         use_cot: bool = False,
-        decision_counter: Counter = None,
-        index_counter: Counter = None,
         round_id: str = None,
         json_path: str = None,
     ):
@@ -242,10 +229,8 @@ class Agent(ABC):
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
-        self.decision_counter = decision_counter
-        self.index_counter = index_counter
         self.json_path = json_path
-        self.prompt_list = []
+        self.stage_index = 0
 
     def save_action_data(self, action_data: ActionData):
         """Save action data to JSON file."""
@@ -258,6 +243,9 @@ class Agent(ABC):
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             data = []
+
+        # Add stage index to action data
+        action_data.index = self.stage_index
 
         # Add new action
         data.append(action_data.to_dict())

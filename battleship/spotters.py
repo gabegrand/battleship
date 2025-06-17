@@ -34,8 +34,6 @@ class Spotter(Agent):
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
-        decision_counter=None,
-        index_counter=None,
         round_id=None,
         spotter_benchmark=None,
         json_path=None,
@@ -51,8 +49,6 @@ class Spotter(Agent):
             seed=None,
             model_string=model_string,
             use_cot=use_cot,
-            decision_counter=decision_counter,
-            index_counter=index_counter,
             round_id=round_id,
             json_path=json_path,
         )
@@ -60,7 +56,6 @@ class Spotter(Agent):
     def answer(
         self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
     ) -> Answer:
-        self.index_counter.increment_counter()
         answer, action_data = self.answer_strategy.answer_question(
             question=question,
             occ_tiles=occ_tiles,
@@ -86,11 +81,8 @@ class DirectAnswerStrategy(AnswerStrategy):
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.model_string = model_string
@@ -147,7 +139,6 @@ class DirectAnswerStrategy(AnswerStrategy):
 
         # Create ActionData object
         action_data = ActionData(
-            index=self.index_counter.increment_counter(),
             action="answer",
             prompt=str(prompt),
             completion=completion.model_dump() if completion else None,
@@ -166,11 +157,8 @@ class CodeAnswerStrategy(AnswerStrategy):
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.model_string = model_string
@@ -267,7 +255,6 @@ class CodeAnswerStrategy(AnswerStrategy):
 
         # Create ActionData object
         action_data = ActionData(
-            index=self.index_counter.increment_counter(),
             action="answer",
             prompt="Code translation and execution",  # Could be more detailed
             question=question,
@@ -296,7 +283,6 @@ class DirectSpotterModel(Spotter):
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
             "json_path": kwargs.get("json_path"),
-            "index_counter": kwargs.get("index_counter"),
         }
 
         answer_strategy = DirectAnswerStrategy(**strategy_kwargs)
@@ -317,7 +303,6 @@ class CodeSpotterModel(Spotter):
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
             "json_path": kwargs.get("json_path"),
-            "index_counter": kwargs.get("index_counter"),
         }
 
         answer_strategy = CodeAnswerStrategy(**strategy_kwargs)
@@ -348,7 +333,6 @@ def create_spotter(
             model_string=model_string,
             temperature=temperature,
             use_cot=use_cot,
-            index_counter=index_counter,
         )
     elif spotter_type == "CodeSpotterModel":
         answer_strategy = CodeAnswerStrategy(
@@ -357,7 +341,6 @@ def create_spotter(
             model_string=model_string,
             temperature=temperature,
             use_cot=use_cot,
-            index_counter=index_counter,
         )
     else:
         raise ValueError(f"Unknown spotter type: {spotter_type}")
@@ -369,8 +352,6 @@ def create_spotter(
         model_string=model_string,
         temperature=temperature,
         use_cot=use_cot,
-        decision_counter=decision_counter,
-        index_counter=index_counter,
         round_id=round_id,
         spotter_benchmark=spotter_benchmark,
         json_path=json_path,

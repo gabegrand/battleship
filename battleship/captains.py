@@ -63,7 +63,6 @@ class Captain(Agent):
         moves_remaining: int,
         sunk: str,
     ) -> Decision:
-        self.decision_counter.increment_counter()
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
         decision, action_data = self.decision_strategy.make_decision(
@@ -109,7 +108,6 @@ class Captain(Agent):
 class AlwaysMoveDecisionStrategy(DecisionStrategy):
     def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
         action_data = ActionData(
-            index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="decision",
             decision=Decision.MOVE,
         )
@@ -128,7 +126,6 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
             decision = Decision.MOVE
 
         action_data = ActionData(
-            index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="decision",
             decision=decision,
         )
@@ -141,11 +138,8 @@ class LLMDecisionStrategy(DecisionStrategy):
         model_string,
         temperature=None,
         use_cot=False,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
@@ -188,7 +182,6 @@ class LLMDecisionStrategy(DecisionStrategy):
 
         # Create an ActionData object to store the interaction
         action_data = ActionData(
-            index=self.index_counter.increment_counter(),
             action="decision",
             prompt=str(decision_prompt),
             completion=completion.model_dump() if completion else None,
@@ -212,7 +205,6 @@ class RandomMoveStrategy(MoveStrategy):
         coords = self.rng.choice(hidden_tiles)
 
         action_data = ActionData(
-            index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="move",
             move=coords,
         )
@@ -264,7 +256,6 @@ class MAPMoveStrategy(MoveStrategy):
         move = tuple(move_coords)
 
         action_data = ActionData(
-            index=self.index_counter.increment_counter() if self.index_counter else 0,
             action="move",
             move=move,
             map_prob=float(posterior.max()),
@@ -280,11 +271,8 @@ class LLMMoveStrategy(MoveStrategy):
         use_cot=False,
         moves_remaining=None,
         n_attempts=3,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
@@ -323,7 +311,6 @@ class LLMMoveStrategy(MoveStrategy):
                 if candidate_move not in visible_tiles:
                     # Create an ActionData object to store the interaction
                     action_data = ActionData(
-                        index=self.index_counter.increment_counter(),
                         action="move",
                         prompt=str(move_prompt),
                         completion=completion.model_dump(),
@@ -334,7 +321,6 @@ class LLMMoveStrategy(MoveStrategy):
 
         # If no valid move found, return None with ActionData
         action_data = ActionData(
-            index=self.index_counter.increment_counter(),
             action="move",
             prompt=str(move_prompt),
             completion=completion.model_dump() if completion else None,
@@ -355,11 +341,8 @@ class EIGQuestionStrategy(QuestionStrategy):
         use_cot=False,
         questions_remaining=None,
         n_attempts=3,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.model_string = model_string
         self.spotter = spotter
         self.rng = rng
@@ -414,7 +397,6 @@ class EIGQuestionStrategy(QuestionStrategy):
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
-                index=self.index_counter.increment_counter(),
                 action="question",
                 prompt=str(question_prompt),
                 full_completion=completion.choices[0].message.content
@@ -444,11 +426,8 @@ class LLMQuestionStrategy(QuestionStrategy):
         rng=None,
         questions_remaining=None,
         n_attempts=3,
-        index_counter=None,
     ):
-        super().__init__(
-            index_counter=index_counter,
-        )
+        super().__init__()
         self.model_string = model_string
         self.temperature = temperature
         self.use_cot = use_cot
@@ -488,7 +467,6 @@ class LLMQuestionStrategy(QuestionStrategy):
 
                 # Create an ActionData object to store the interaction
                 action_data = ActionData(
-                    index=self.index_counter.increment_counter(),
                     action="question",
                     prompt=str(question_prompt),
                     full_completion=completion.choices[0].message.content,
@@ -500,7 +478,6 @@ class LLMQuestionStrategy(QuestionStrategy):
 
         # If no valid question found, return None with ActionData
         action_data = ActionData(
-            index=self.index_counter.increment_counter(),
             action="question",
             prompt=str(question_prompt),
             full_completion=completion.choices[0].message.content
@@ -524,7 +501,6 @@ def create_captain(
     round_id=None,
     json_path=None,
     completions_dir=None,
-    index_counter=None,
 ):
     """
     Factory function to create Captain instances with properly configured strategies.
@@ -571,12 +547,10 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
@@ -591,12 +565,10 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
@@ -610,17 +582,14 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
@@ -636,17 +605,14 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             question_strategy=LLMQuestionStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
@@ -662,12 +628,10 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -676,7 +640,6 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
@@ -690,12 +653,10 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             move_strategy=LLMMoveStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             question_strategy=EIGQuestionStrategy(
                 model_string=model,
@@ -704,7 +665,6 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
@@ -718,7 +678,6 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             move_strategy=MAPMoveStrategy(
                 rng=np.random.default_rng(seed),
@@ -732,7 +691,6 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=False,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,
@@ -746,7 +704,6 @@ def create_captain(
             decision_strategy=LLMDecisionStrategy(
                 model_string=model,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             move_strategy=MAPMoveStrategy(
                 rng=np.random.default_rng(seed),
@@ -760,7 +717,6 @@ def create_captain(
                 samples=eig_samples,
                 k=eig_k,
                 use_cot=True,
-                index_counter=index_counter,
             ),
             seed=seed,
             model_string=model,

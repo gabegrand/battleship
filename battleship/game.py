@@ -50,7 +50,7 @@ class BattleshipGame:
         self.max_questions = max_questions
         self.max_moves = max_moves
 
-        self.stage_count = 0
+        self.stage_index = 0
         self.question_count = 0
         self.move_count = 0
 
@@ -65,12 +65,12 @@ class BattleshipGame:
             self.save_path = None
 
     def __len__(self):
-        return self.stage_count
+        return self.stage_index
 
     def __repr__(self):
         return (
             f"BattleshipGame(\n"
-            f"  stage={self.stage_count},\n"
+            f"  stage={self.stage_index},\n"
             f"  hits={self.hits},\n"
             f"  misses={self.misses},\n"
             f"  questions={self.question_count}/{self.max_questions},\n"
@@ -137,7 +137,7 @@ class BattleshipGame:
             self.question_count += 1
             self.history.append(
                 {
-                    "stage": self.stage_count,
+                    "stage": self.stage_index,
                     "decision": Decision.QUESTION,
                     "question": q,
                     "answer": a,
@@ -158,7 +158,7 @@ class BattleshipGame:
             self.move_count += 1
             self.history.append(
                 {
-                    "stage": self.stage_count,
+                    "stage": self.stage_index,
                     "decision": Decision.MOVE,
                     "coords": tuple(int(x) for x in coords),
                     "state": self.state.board.tolist(),
@@ -167,7 +167,9 @@ class BattleshipGame:
         else:
             raise ValueError(f"Invalid decision: {decision}")
 
-        self.stage_count += 1
+        self.stage_index += 1
+        self.captain.stage_index += 1
+        self.spotter.stage_index += 1
 
     def update_state(self, coords: Tuple[int, int]):
         if self.state.board[coords].item() != Board.hidden:
@@ -197,4 +199,4 @@ class BattleshipGame:
             return
 
         with open(self.save_path, "w") as f:
-            json.dump(self.history, f, indent=4)
+            json.dump(self.history, f, indent=2)
