@@ -67,6 +67,19 @@ class Spotter(Agent):
 
         return answer
 
+    def translate(
+        self,
+        question: Question,
+        occ_tiles: np.ndarray,
+        history: List[dict],
+    ) -> CodeQuestion:
+        if hasattr(self.answer_strategy, "translate"):
+            return self.answer_strategy.translate(question, occ_tiles, history)
+        else:
+            raise NotImplementedError(
+                f"Spotter {self.__class__.__name__} does not have a translate method."
+            )
+
 
 # ---------------------
 # Answer Strategy Classes
@@ -210,14 +223,16 @@ class CodeAnswerStrategy(AnswerStrategy):
                     question=question,
                     fn_text=fn_text,
                     translation_prompt=translation_prompt,
-                    full_completion=content,
+                    completion=completion.model_dump(),
                 )
             except Exception as e:
                 logging.error(
                     f"CodeQuestion.translate(): Error in evaluation (attempt {attempt+1}/{n_attempts}): {e}\n{traceback.format_exc()}"
                 )
 
-        return NullCodeQuestion(translation_prompt=translation_prompt)
+        return NullCodeQuestion(
+            question=question, translation_prompt=translation_prompt
+        )
 
     def extract_code(self, text: str) -> str:
         """
@@ -282,7 +297,6 @@ class DirectSpotterModel(Spotter):
             "model_string": kwargs.get("model_string", "gpt-4o"),
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
-            "json_path": kwargs.get("json_path"),
         }
 
         answer_strategy = DirectAnswerStrategy(**strategy_kwargs)
@@ -302,7 +316,6 @@ class CodeSpotterModel(Spotter):
             "model_string": kwargs.get("model_string", "gpt-4o"),
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
-            "json_path": kwargs.get("json_path"),
         }
 
         answer_strategy = CodeAnswerStrategy(**strategy_kwargs)

@@ -191,12 +191,14 @@ class LLMDecisionStrategy(DecisionStrategy):
             )
 
         else:
+            completion = None
+            decision_prompt = None
             decision = Decision.MOVE
 
         # Create an ActionData object to store the interaction
         action_data = ActionData(
             action="decision",
-            prompt=str(decision_prompt),
+            prompt=str(decision_prompt) if decision_prompt else None,
             completion=completion.model_dump() if completion else None,
             decision=decision,
         )
@@ -408,10 +410,7 @@ class EIGQuestionStrategy(QuestionStrategy):
             action_data = ActionData(
                 action="question",
                 prompt=str(question_prompt),
-                full_completion=completion.choices[0].message.content
-                if completion
-                else None,
-                completion_id=completion.id if completion else None,
+                completion=completion.model_dump(),
                 question=candidate_question,
                 eig=eig,
             )
@@ -476,8 +475,8 @@ class LLMQuestionStrategy(QuestionStrategy):
                 action_data = ActionData(
                     action="question",
                     prompt=str(question_prompt),
-                    full_completion=completion.choices[0].message.content,
-                    completion_id=completion.id,
+                    completion=completion.model_dump(),
+                    extracted_completion=candidate_question,
                     question=question,
                 )
 
@@ -487,10 +486,8 @@ class LLMQuestionStrategy(QuestionStrategy):
         action_data = ActionData(
             action="question",
             prompt=str(question_prompt),
-            full_completion=completion.choices[0].message.content
-            if completion
-            else None,
-            completion_id=completion.id if completion else None,
+            completion=completion.model_dump() if completion else None,
+            extracted_completion=None,
             question=None,
         )
         return None, action_data

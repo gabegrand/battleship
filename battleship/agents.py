@@ -146,16 +146,20 @@ class Answer:
 class CodeQuestion:
     def __init__(
         self,
-        question: str,
+        question: Question,
         fn_text: str,
-        translation_prompt,
-        full_completion,
+        translation_prompt: str,
+        completion: dict,
     ):
+        if not isinstance(question, Question):
+            raise ValueError(
+                f"question must be an instance of Question, got {type(question)}"
+            )
+
         self.question = question
         self.fn_str = fn_text
         self.translation_prompt = translation_prompt
-        self.full_completion = full_completion
-
+        self.completion = completion
         self.__evaluate_fn_text()
 
     def __evaluate_fn_text(self):
@@ -186,10 +190,10 @@ class CodeQuestion:
 
     def to_dict(self) -> dict:
         return {
-            "question": self.question,
+            "question": self.question.to_dict(),
             "fn_str": self.fn_str,
             "translation_prompt": str(self.translation_prompt),
-            "full_completion": self.full_completion,
+            "completion": self.completion,
         }
 
     @classmethod
@@ -198,17 +202,17 @@ class CodeQuestion:
             question=data["question"],
             fn_text=data["fn_str"],
             translation_prompt=data["translation_prompt"],
-            full_completion=data["full_completion"],
+            completion=data["completion"],
         )
 
 
 class NullCodeQuestion(CodeQuestion):
-    def __init__(self, translation_prompt):
-        self.question = None
+    def __init__(self, question, translation_prompt):
+        self.question = question
         self.fn = lambda true_board, partial_board: None
         self.fn_str = None
         self.translation_prompt = translation_prompt
-        self.full_completion = None
+        self.completion = None
 
 
 # ---------------------
@@ -275,9 +279,9 @@ class EIGCalculator:
         )
 
         results = {"yes": 0, "no": 0}
-        curr_time = time()
+        curr_time = time.time()
         while sum(results.values()) < samples:
-            if time() - curr_time > 15:
+            if time.time() - curr_time > 15:
                 return float("nan")
             board = None
             while not board:
