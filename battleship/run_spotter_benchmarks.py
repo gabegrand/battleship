@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from battleship.agents import Counter
 from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
@@ -205,17 +204,12 @@ def process_question_data(question_data):
     ground_truth_answer = question_context["context"]["true_answer"]
     gold_annotations = question_context["context"]["gold_annotations"]
 
-    decision_counter = Counter()
-    index_counter = Counter()
-
     spotter_model = model_class(
         board_id=question_board,
         board_experiment="collaborative",
         model_string=model_string,
         temperature=temperature,
         use_cot=use_cot,
-        decision_counter=decision_counter,
-        index_counter=index_counter,
         spotter_benchmark=True,
     )
 
