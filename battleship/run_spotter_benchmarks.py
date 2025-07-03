@@ -3,14 +3,19 @@ import json
 import logging
 import multiprocessing.dummy as mp
 import os
-import tempfile
+import time
 import uuid
-from functools import partial
+from dataclasses import dataclass
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from battleship.agents import ActionData
 from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
@@ -28,16 +33,67 @@ logging.basicConfig(
     ],
 )
 
-# LOAD DATA
-
 ALL_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"]
 
 
-def load_data(
-    stages_path="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
-    rounds_path="experiments/collaborative/data/battleship-final-data/round.csv",
-    goldAnnotations=[],
-):
+@dataclass
+class SpotterBenchmarkConfig:
+    """Configuration for spotter benchmark experiments."""
+
+    model_class: type
+    model_string: str
+    temperature: Optional[float]
+    use_history: bool
+    use_cot: bool
+    use_captain_board: bool
+    max_rounds: int
+    max_questions: int
+    output_dir: str
+    experiment_name: str = None
+
+    def __post_init__(self):
+        if self.experiment_name is None:
+            safe_model = self.model_string.replace("/", "-")
+            self.experiment_name = (
+                f"{safe_model}_{self.model_class.__name__}_{self.use_cot}"
+            )
+
+
+@dataclass
+class QuestionContext:
+    """Context data for a question being processed."""
+
+    question_text: str
+    board_id: str
+    true_answer: str
+    occ_tiles: str
+    gold_annotations: Dict[str, bool]
+    history: List[Dict[str, str]]
+    round_id: str
+    question_id: int
+
+
+def create_experiment_dir(root: str = None) -> str:
+    """Create experiment directory and return path."""
+    if root is None:
+        root = resolve_project_path("experiments/collaborative/spotter_benchmarks")
+
+    experiment_dir = os.path.join(root, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}")
+    os.makedirs(experiment_dir, exist_ok=True)
+
+    # Create subdirectories
+    os.makedirs(os.path.join(experiment_dir, "rounds"), exist_ok=True)
+
+    return experiment_dir
+
+
+def load_benchmark_data(
+    stages_path: str, rounds_path: str, gold_annotations: List[str] = None
+) -> Tuple[pd.DataFrame, Dict[str, List[int]]]:
+    """Load and filter benchmark data."""
+    if gold_annotations is None:
+        gold_annotations = []
+
     # Resolve paths relative to project root
     stages_path = resolve_project_path(stages_path)
     rounds_path = resolve_project_path(rounds_path)
@@ -67,19 +123,23 @@ def load_data(
         board_ids, left_on="roundID", right_on="id", how="inner"
     )
 
-    print(len(stage_df))
+    logging.info(f"Initial data size: {len(stage_df)}")
 
-    for annotation in goldAnnotations:
+    # Apply gold annotation filters
+    for annotation in gold_annotations:
         if annotation == "answer":
             stage_df = stage_df[(stage_df["gold_answer"].notna())]
-        if annotation in ALL_ANNOTATIONS:
+        elif annotation in ALL_ANNOTATIONS:
             stage_df = stage_df[stage_df[f"gold_{annotation}"] == False]
+        else:
+            raise ValueError(f"Invalid annotation: {annotation}")
 
-    print(len(stage_df))
+    logging.info(f"Filtered data size: {len(stage_df)}")
 
+    # Build rounds-questions mapping
     rounds_questions_list = list(zip(stage_df["roundID"], stage_df["questionID"]))
     rounds_questions_list = [
-        i for i in rounds_questions_list if i[0] in round_df["id"].tolist()
+        item for item in rounds_questions_list if item[0] in round_df["id"].tolist()
     ]
     rounds_questions_dict = {key: [] for key, _ in rounds_questions_list}
     for key, value in rounds_questions_list:
@@ -88,360 +148,390 @@ def load_data(
     return df, rounds_questions_dict
 
 
-def calculate_EIG(question, board):
-    """EIG Calculator"""
+def extract_question_context(
+    question_id: int, round_data: pd.DataFrame, round_id: str
+) -> QuestionContext:
+    """Extract context for a specific question."""
+    question_history_data = round_data[round_data["questionID"] < question_id]
+    question_data = round_data[round_data["questionID"] == question_id]
+
+    # Extract question details
+    question_text = question_data[question_data["messageType"] == "question"][
+        "messageText"
+    ].iloc[0]
+    question_captain_board = question_data[question_data["messageType"] == "question"][
+        "occTiles"
+    ].iloc[0]
+    question_board_id = question_data[question_data["messageType"] == "question"][
+        "board_id"
+    ].iloc[0]
+    ground_truth_answer = question_data[question_data["messageType"] == "answer"][
+        "gold_answer"
+    ].iloc[0]
+
+    # Extract gold annotations
+    gold_annotations = {}
+    for annotation in ALL_ANNOTATIONS:
+        try:
+            gold_annotations[annotation] = question_data[
+                question_data["messageType"] == "answer"
+            ][f"gold_{annotation}"].iloc[0]
+        except (IndexError, KeyError):
+            gold_annotations[annotation] = None
+
+    # Extract history
+    previous_decision_ids = sorted(
+        list(set(question_history_data["questionID"].tolist()))
+    )
+
+    history = []
+    for decision_id in previous_decision_ids:
+        id_actions = question_history_data[
+            question_history_data["questionID"] == decision_id
+        ]
+        try:
+            decision = id_actions[id_actions["messageType"] == "decision"][
+                "messageText"
+            ].iloc[0]
+
+            # Remap "fire" -> "move"
+            if decision == "fire":
+                decision = "move"
+
+            example = {
+                "decision": decision,
+                "question": None,
+                "answer": None,
+                "move": None,
+            }
+
+            if decision == "question":
+                example["question"] = id_actions[
+                    id_actions["messageType"] == "question"
+                ]["messageText"].iloc[0]
+                try:
+                    example["answer"] = id_actions[
+                        id_actions["messageType"] == "answer"
+                    ]["messageText"].iloc[0]
+                except (IndexError, KeyError):
+                    example["answer"] = "Not answered"
+            else:
+                try:
+                    example["move"] = id_actions[id_actions["messageType"] == "move"][
+                        "messageText"
+                    ].iloc[0]
+                except (IndexError, KeyError):
+                    continue
+
+            history.append(example)
+        except (IndexError, KeyError):
+            continue
+
+    return QuestionContext(
+        question_text=question_text,
+        board_id=question_board_id,
+        true_answer=ground_truth_answer,
+        occ_tiles=question_captain_board,
+        gold_annotations=gold_annotations,
+        history=history,
+        round_id=round_id,
+        question_id=question_id,
+    )
+
+
+def calculate_question_eig(question, board: Board) -> float:
+    """Calculate Expected Information Gain for a question."""
     calculator = EIGCalculator(seed=0, spotter=None)
     return calculator.calculate_eig(
         None, board, pregenerated_question=question, samples=100
     )
 
 
-def retrieve_context(question_id, round_data):
-    question_history_data = round_data[round_data["questionID"] < question_id]
-    question_data = round_data[round_data["questionID"] == question_id]
+def process_single_question(
+    context: QuestionContext, config: SpotterBenchmarkConfig, round_data: pd.DataFrame
+) -> Dict:
+    """Process a single question and return results."""
 
-    # QUESTION AND ITS BOARD
-    question_text = question_data[question_data["messageType"] == "question"][
-        "messageText"
-    ].tolist()[0]
-    question_captain_board = question_data[question_data["messageType"] == "question"][
-        "occTiles"
-    ].tolist()[0]
-    question_board_id = question_data[question_data["messageType"] == "question"][
-        "board_id"
-    ].tolist()[0]
-    ground_truth_answer = question_data[question_data["messageType"] == "answer"][
-        "gold_answer"
-    ].tolist()[0]
-
-    # Extract all gold annotations
-    gold_annotations = {}
-    for annotation in ALL_ANNOTATIONS:
-        try:
-            gold_annotations[annotation] = question_data[
-                question_data["messageType"] == "answer"
-            ][f"gold_{annotation}"].tolist()[0]
-        except (IndexError, KeyError):
-            gold_annotations[annotation] = None
-
-    # QUESTION HISTORY decision, question, answer, move
-    previous_decision_ids = sorted(
-        list(set(question_history_data["questionID"].tolist()))
+    # Create round directory structure
+    round_dir = os.path.join(
+        config.output_dir, "rounds", f"round_{context.round_id}", context.question_id
     )
+    spotter_dir = os.path.join(round_dir, "spotter")
+    os.makedirs(spotter_dir, exist_ok=True)
 
-    examples = []
-    for id in previous_decision_ids:
-        decision, question, answer, move = None, None, None, None
-        id_actions = question_history_data[question_history_data["questionID"] == id]
-        try:
-            decision = id_actions[id_actions["messageType"] == "decision"][
-                "messageText"
-            ].tolist()[0]
-
-            # Remap "fire" -> "move"
-            if decision == "fire":
-                decision = "move"
-
-            if decision == "question":
-                question = id_actions[id_actions["messageType"] == "question"][
-                    "messageText"
-                ].tolist()[0]
-                try:
-                    answer = id_actions[id_actions["messageType"] == "answer"][
-                        "messageText"
-                    ].tolist()[0]
-                except:
-                    answer = "Not answered"
-            else:
-                move = id_actions[id_actions["messageType"] == "move"][
-                    "messageText"
-                ].tolist()[0]
-
-            dict_example = {
-                "decision": decision,
-                "question": question,
-                "answer": answer,
-                "move": move,
-            }
-            examples.append(dict_example)
-        except IndexError:
-            continue
-
-    return {
-        "context": {
-            "text": question_text,
-            "board_id": question_board_id,
-            "true_answer": ground_truth_answer,
-            "occ_tiles": question_captain_board,
-            "gold_annotations": gold_annotations,
-        },
-        "history": examples,
-    }
-
-
-def process_question_data(question_data):
-    """Process a single question with pre-extracted data"""
-
-    (
-        round_data,
-        round_id,
-        question_id,
-        model_class,
-        model_string,
-        temperature,
-        use_history,
-        use_cot,
-        use_captain_board,
-        output_dir,
-    ) = question_data
-
-    question_context = retrieve_context(question_id, round_data)
-
-    examples = question_context["history"]
-    question_board = question_context["context"]["board_id"]
-    question_text = question_context["context"]["text"]
-    question_captain_board = question_context["context"]["occ_tiles"]
-    ground_truth_answer = question_context["context"]["true_answer"]
-    gold_annotations = question_context["context"]["gold_annotations"]
-
-    spotter_model = model_class(
-        board_id=question_board,
+    # Initialize spotter model
+    spotter_model = config.model_class(
+        board_id=context.board_id,
         board_experiment="collaborative",
-        model_string=model_string,
-        temperature=temperature,
-        use_cot=use_cot,
+        model_string=config.model_string,
+        temperature=config.temperature,
+        use_cot=config.use_cot,
         spotter_benchmark=True,
+        round_id=f"{context.round_id}_{context.question_id}",
+        json_path=os.path.join(spotter_dir, "spotter.json"),
     )
 
-    question = Question(text=question_text)
+    # Process question
+    question = Question(text=context.question_text)
     result = spotter_model.answer(
         question,
-        occ_tiles=Board.from_occ_tiles(question_captain_board).to_numpy(),
-        history=examples if use_history else None,
+        occ_tiles=Board.from_occ_tiles(context.occ_tiles).to_numpy(),
+        history=context.history if config.use_history else None,
     )
 
-    # Get answer from result
-    if isinstance(result.text, str):
-        answer_text = result.text.lower()
-    else:
-        answer_text = None
+    # Extract answer
+    answer_text = result.text.lower() if isinstance(result.text, str) else None
 
-    # Extract necessary data for JSON
-    data_row = {
-        "model": model_string,
-        "CoT": use_cot,
-        "spotterModel": model_class.__name__,
-        "roundID": round_id,
-        "questionID": question_id,
-        "question": question_text,
+    # Calculate EIG if we have a code question
+    eig_value = None
+    if result.code_question:
+        try:
+            eig_value = calculate_question_eig(
+                result.code_question, Board.from_occ_tiles(context.occ_tiles)
+            )
+        except Exception as e:
+            logging.warning(f"Failed to calculate EIG: {e}")
+
+    # Create result summary
+    result_summary = {
+        "model": config.model_string,
+        "CoT": bool(config.use_cot),
+        "spotterModel": config.model_class.__name__,
+        "roundID": str(context.round_id),
+        "questionID": int(context.question_id),
+        "question": context.question_text,
         "program": result.code_question.fn_str if result.code_question else None,
-        "occTiles": question_captain_board,
+        "occTiles": context.occ_tiles,
         "answer": answer_text,
-        "EIG": calculate_EIG(
-            result.code_question, Board.from_occ_tiles(question_captain_board)
-        )
-        if result.code_question
-        else None,
-        "true_answer": ground_truth_answer,
-        "is_correct": answer_text == ground_truth_answer,
+        "EIG": float(eig_value) if eig_value is not None else None,
+        "true_answer": context.true_answer,
+        "is_correct": bool(answer_text == context.true_answer)
+        if answer_text
+        else False,
+        "round_dir": round_dir,
     }
 
-    # Add all gold annotations to the data row
-    for annotation, value in gold_annotations.items():
-        data_row[f"gold_{annotation}"] = value
+    # Add gold annotations (ensure proper type conversion)
+    for annotation, value in context.gold_annotations.items():
+        if value is not None:
+            result_summary[f"gold_{annotation}"] = (
+                bool(value) if isinstance(value, (bool, np.bool_)) else value
+            )
+        else:
+            result_summary[f"gold_{annotation}"] = None
 
-    # Write to a temporary file to avoid race conditions
-    # Each process writes to its own unique file
-    temp_filename = f"{model_string}_{uuid.uuid4()}.json"
-    temp_path = os.path.join(output_dir, "individual_results", temp_filename)
-
-    # Ensure temp directory exists
-    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-
-    # Write the single result to the temporary file
-    with open(temp_path, "w") as jsonfile:
-        json.dump(data_row, jsonfile, indent=2)
-
-    return temp_path
+    return result_summary
 
 
-def prepare_question_data(
-    df,
-    rounds_question_ids,
-    model,
-    model_string,
-    temperature,
-    use_history,
-    max_rounds,
-    max_questions,
-    use_cot,
-    use_captain_board,
-    output_dir,
-):
-    """Prepare all question data for parallel processing"""
-    all_question_data = []
-    round_list = list(rounds_question_ids.keys())[:max_rounds]
+def run_spotter_benchmark(
+    df: pd.DataFrame,
+    rounds_questions_dict: Dict[str, List[int]],
+    config: SpotterBenchmarkConfig,
+    processes: int = None,
+) -> List[Dict]:
+    """Run benchmark for a single spotter configuration."""
+
+    if processes is None:
+        processes = os.cpu_count()
+
+    logging.info(f"Running benchmark: {config.experiment_name}")
+
+    # Prepare all questions for processing
+    all_contexts = []
+    round_list = list(rounds_questions_dict.keys())[: config.max_rounds]
 
     for round_id in round_list:
         round_data = df[df["roundID"] == round_id]
-        question_ids = sorted(rounds_question_ids[round_id])
+        question_ids = sorted(rounds_questions_dict[round_id])
 
-        clean_q_ids = list(
-            set(
-                [
-                    i
-                    for i in question_ids
-                    if "question"
-                    in round_data[round_data["questionID"] == i]["messageType"].tolist()
-                ]
-            )
-        )
+        # Filter to questions that actually have question messages
+        valid_question_ids = [
+            qid
+            for qid in question_ids
+            if "question"
+            in round_data[round_data["questionID"] == qid]["messageType"].values
+        ]
 
-        clean_q_ids = clean_q_ids[:max_questions]
+        valid_question_ids = valid_question_ids[: config.max_questions]
 
-        for question_id in clean_q_ids:
-            all_question_data.append(
-                (
-                    round_data,
-                    round_id,
-                    question_id,
-                    model,
-                    model_string,
-                    temperature,
-                    use_history,
-                    use_cot,
-                    use_captain_board,
-                    output_dir,
-                )
-            )
+        for question_id in valid_question_ids:
+            context = extract_question_context(question_id, round_data, round_id)
+            all_contexts.append((context, config, round_data))
 
-    return all_question_data
+    # Process questions in parallel
+    logging.info(f"Processing {len(all_contexts)} questions with {processes} processes")
 
+    def process_wrapper(args):
+        context, config, round_data = args
+        return process_single_question(context, config, round_data)
 
-def benchmark_on_rounds(
-    df,
-    rounds_question_ids,
-    model,
-    model_string,
-    temperature=1.0,
-    use_history=False,
-    max_rounds=10,
-    max_questions=10,
-    use_cot=False,
-    use_captain_board=False,
-    output_dir="benchmark_results",
-):
-    # Create output directory and temp subdirectory if they don't exist
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "temp"), exist_ok=True)
-
-    safe_model_string = model_string.replace("/", "-")
-
-    # Prepare all question data for parallel processing
-    all_question_data = prepare_question_data(
-        df,
-        rounds_question_ids,
-        model,
-        model_string,
-        temperature,
-        use_history,
-        max_rounds,
-        max_questions,
-        use_cot,
-        use_captain_board,
-        output_dir,
-    )
-
-    # Process all questions in parallel
-    print(args.processes)
-    with mp.Pool(processes=args.processes) as pool:
+    with mp.Pool(processes=processes) as pool:
         results = list(
             tqdm(
-                pool.imap(process_question_data, all_question_data),
-                total=len(all_question_data),
-                desc=f"Processing {model.__name__} with {model_string}",
+                pool.imap(process_wrapper, all_contexts),
+                total=len(all_contexts),
+                desc=f"Processing {config.model_class.__name__} with {config.model_string}",
             )
         )
 
-    # Now combine all temp files into the final JSON file
-    round_result_name = f"{safe_model_string}_{model.__name__}_{use_cot}.json"
-    final_json_path = os.path.join(output_dir, round_result_name)
+    # Save combined results
+    results_file = os.path.join(config.output_dir, f"{config.experiment_name}.json")
+    with open(results_file, "w") as f:
+        json.dump(results, f, indent=2)
 
-    combined_data = []
-    for result_file in results:
-        try:
-            with open(result_file, "r") as jsonfile:
-                data = json.load(jsonfile)
-                combined_data.append(data)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logging.error(f"Error reading temp file {result_file}: {e}")
-
-    # Write combined data to final file
-    with open(final_json_path, "w") as jsonfile:
-        json.dump(combined_data, jsonfile, indent=2)
-
-    return round_result_name
+    logging.info(f"Saved {len(results)} results to {results_file}")
+    return results
 
 
-def run_experiments(
-    df,
-    rounds_questions_dict,
-    language_models=["gpt-4o"],
-    spotter_models=[DirectSpotterModel, CodeSpotterModel],
-    cot_options=[True, False],
-    max_rounds=20,
-    max_questions=20,
-    use_history=True,
-    use_captain_board=False,
-    output_dir="benchmark_results",
-):
-    """Run experiments with all combinations of models and options"""
-    results = []
+def run_all_experiments(
+    df: pd.DataFrame,
+    rounds_questions_dict: Dict[str, List[int]],
+    language_models: List[str] = None,
+    spotter_models: List[type] = None,
+    cot_options: List[bool] = None,
+    max_rounds: int = 20,
+    max_questions: int = 20,
+    use_history: bool = True,
+    use_captain_board: bool = False,
+    temperature: float = None,
+    output_dir: str = "benchmark_results",
+    processes: int = None,
+) -> List[str]:
+    """Run experiments with all combinations of models and options."""
+
+    if language_models is None:
+        language_models = ["gpt-4o"]
+    if spotter_models is None:
+        spotter_models = [DirectSpotterModel, CodeSpotterModel]
+    if cot_options is None:
+        cot_options = [True, False]
+
+    experiment_files = []
 
     for llm in language_models:
         for spotter in spotter_models:
             for cot_option in cot_options:
-                print(
-                    f"Benchmarking {spotter.__name__} with language model {llm}, COT: {cot_option}"
-                )
-
-                result_name = benchmark_on_rounds(
-                    df=df,
-                    rounds_question_ids=rounds_questions_dict,
-                    model=spotter,
+                config = SpotterBenchmarkConfig(
+                    model_class=spotter,
                     model_string=llm,
+                    temperature=temperature,
+                    use_history=use_history,
+                    use_cot=cot_option,
+                    use_captain_board=use_captain_board,
                     max_rounds=max_rounds,
                     max_questions=max_questions,
-                    use_cot=cot_option,
-                    use_history=use_history,
-                    use_captain_board=use_captain_board,
                     output_dir=output_dir,
                 )
 
-                results.append(result_name)
+                results = run_spotter_benchmark(
+                    df, rounds_questions_dict, config, processes
+                )
 
-    return results
+                experiment_files.append(f"{config.experiment_name}.json")
+
+    return experiment_files
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for spotter benchmarks."""
+    args = parse_arguments()
+
+    # Create experiment directory
+    experiment_dir = create_experiment_dir()
+
+    # Save command used to run the script
+    command = " ".join(
+        ["python"]
+        + ["run_spotter_benchmarks.py"]
+        + [
+            f"--{arg.replace('_', '-')} {getattr(args, arg)}"
+            for arg in vars(args)
+            if getattr(args, arg) is not None
+        ]
+    )
+    with open(os.path.join(experiment_dir, "command.txt"), "w") as f:
+        f.write(command)
+
+    # Setup logging to experiment directory
+    log_handler = logging.FileHandler(os.path.join(experiment_dir, "benchmark.log"))
+    log_handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    )
+    logging.getLogger().addHandler(log_handler)
+
+    logging.info(f"Starting spotter benchmark experiment in {experiment_dir}")
+
+    # Convert spotter model names to classes
+    spotter_model_map = {
+        "CodeSpotterModel": CodeSpotterModel,
+        "DirectSpotterModel": DirectSpotterModel,
+    }
+
+    spotter_models = [
+        spotter_model_map[name]
+        for name in args.spotter_models
+        if name in spotter_model_map
+    ]
+
+    # Convert COT options
+    cot_options = [opt.lower() == "true" for opt in args.cot_options]
+
+    # Load data
+    df, rounds_questions_dict = load_benchmark_data(
+        stages_path=args.stages,
+        rounds_path=args.rounds,
+        gold_annotations=args.gold_annotations,
+    )
+
+    # Run experiments
+    result_files = run_all_experiments(
+        df=df,
+        rounds_questions_dict=rounds_questions_dict,
+        language_models=args.models,
+        spotter_models=spotter_models,
+        cot_options=cot_options,
+        max_rounds=args.max_rounds,
+        max_questions=args.max_questions,
+        use_history=args.use_history,
+        use_captain_board=args.use_captain_board,
+        temperature=args.temperature,
+        output_dir=experiment_dir,
+        processes=args.processes,
+    )
+
+    # Create summary
+    summary = {
+        "experiment_dir": experiment_dir,
+        "total_experiments": len(result_files),
+        "result_files": result_files,
+        "args": vars(args),
+    }
+
+    with open(os.path.join(experiment_dir, "summary.json"), "w") as f:
+        json.dump(summary, f, indent=2)
+
+    logging.info("Experiment completed!")
+    logging.info(f"Results saved to: {experiment_dir}")
+    for result_file in result_files:
+        logging.info(f"- {result_file}")
+
+
+def parse_arguments():
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Run benchmarks on rounds with customizable options."
+        description="Run benchmarks on spotter models with customizable options."
     )
     parser.add_argument(
         "--stages",
         type=str,
+        default="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
         help="Path to the stages CSV file containing question data.",
     )
     parser.add_argument(
         "--rounds",
         type=str,
+        default="experiments/collaborative/data/battleship-final-data/round.csv",
         help="Path to the rounds CSV file containing round data.",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default="benchmark_results",
-        help="Directory to save results.",
     )
     parser.add_argument(
         "--models",
@@ -507,44 +597,8 @@ if __name__ == "__main__":
         help="Number of parallel processes to use.",
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # Convert string spotter model names to actual classes
-    spotter_model_map = {
-        "CodeSpotterModel": CodeSpotterModel,
-        "DirectSpotterModel": DirectSpotterModel,
-    }
 
-    spotter_models = [
-        spotter_model_map[name]
-        for name in args.spotter_models
-        if name in spotter_model_map
-    ]
-
-    # Convert string cot options to boolean
-    cot_options = [opt.lower() == "true" for opt in args.cot_options]
-
-    df, rounds_questions_dict = load_data(
-        stages_path=args.stages,
-        rounds_path=args.rounds,
-        goldAnnotations=args.gold_annotations,
-    )
-
-    # Run the experiments
-    result_names = run_experiments(
-        df=df,
-        rounds_questions_dict=rounds_questions_dict,
-        language_models=args.models,
-        spotter_models=spotter_models,
-        cot_options=cot_options,
-        max_rounds=args.max_rounds,
-        max_questions=args.max_questions,
-        use_history=args.use_history,
-        use_captain_board=args.use_captain_board,
-        output_dir=args.output_dir,
-    )
-
-    print("Experiment completed!")
-    print("Generated result files:")
-    for result_name in result_names:
-        print(f"- {result_name}")
+if __name__ == "__main__":
+    main()
