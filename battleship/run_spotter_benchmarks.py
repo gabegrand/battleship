@@ -142,15 +142,74 @@ def load_benchmark_data(
     logging.info(f"Filtered data size: {len(stage_df)}")
 
     # Build rounds-questions mapping
-    rounds_questions_list = list(zip(stage_df["roundID"], stage_df["questionID"]))
-    rounds_questions_list = [
-        item for item in rounds_questions_list if item[0] in round_df["id"].tolist()
-    ]
-    rounds_questions_dict = {key: [] for key, _ in rounds_questions_list}
-    for key, value in rounds_questions_list:
-        rounds_questions_dict[key].append(value)
+    valid_round_ids = set(round_df["id"].tolist())
+    rounds_questions_dict = {}
+
+    for round_id, group in stage_df.groupby("roundID"):
+        if round_id in valid_round_ids:
+            question_ids = sorted(group["questionID"].unique())
+            rounds_questions_dict[str(round_id)] = question_ids
 
     return df, rounds_questions_dict
+
+
+def safe_extract_value(df: pd.DataFrame, message_type: str, column: str, default=None):
+    """Safely extract a value from a filtered DataFrame."""
+    filtered = df[df["messageType"] == message_type]
+    if filtered.empty:
+        return default
+    try:
+        return filtered[column].iloc[0]
+    except (IndexError, KeyError):
+        return default
+
+
+def extract_gold_annotations(question_data: pd.DataFrame) -> Dict[str, bool]:
+    """Extract gold annotations from question data."""
+    gold_annotations = {}
+    answer_data = question_data[question_data["messageType"] == "answer"]
+
+    if answer_data.empty:
+        return {annotation: None for annotation in ALL_ANNOTATIONS}
+
+    for annotation in ALL_ANNOTATIONS:
+        try:
+            gold_annotations[annotation] = answer_data[f"gold_{annotation}"].iloc[0]
+        except (IndexError, KeyError):
+            gold_annotations[annotation] = None
+
+    return gold_annotations
+
+
+def extract_history_entry(id_actions: pd.DataFrame) -> Optional[Dict[str, str]]:
+    """Extract a single history entry from action data."""
+    # Get decision type
+    decision = safe_extract_value(id_actions, "decision", "messageText")
+    if decision is None:
+        return None
+
+    # Remap "fire" -> "move"
+    if decision == "fire":
+        decision = "move"
+
+    example = {
+        "decision": decision,
+        "question": None,
+        "answer": None,
+        "move": None,
+    }
+
+    if decision == "question":
+        example["question"] = safe_extract_value(id_actions, "question", "messageText")
+        example["answer"] = safe_extract_value(
+            id_actions, "answer", "messageText", default="Not answered"
+        )
+    else:
+        example["move"] = safe_extract_value(id_actions, "move", "messageText")
+        if example["move"] is None:
+            return None  # Skip entries without valid move data
+
+    return example
 
 
 def extract_question_context(
@@ -160,29 +219,14 @@ def extract_question_context(
     question_history_data = round_data[round_data["questionID"] < question_id]
     question_data = round_data[round_data["questionID"] == question_id]
 
-    # Extract question details
-    question_text = question_data[question_data["messageType"] == "question"][
-        "messageText"
-    ].iloc[0]
-    question_captain_board = question_data[question_data["messageType"] == "question"][
-        "occTiles"
-    ].iloc[0]
-    question_board_id = question_data[question_data["messageType"] == "question"][
-        "board_id"
-    ].iloc[0]
-    ground_truth_answer = question_data[question_data["messageType"] == "answer"][
-        "gold_answer"
-    ].iloc[0]
+    # Extract question details using safe extraction
+    question_text = safe_extract_value(question_data, "question", "messageText")
+    question_captain_board = safe_extract_value(question_data, "question", "occTiles")
+    question_board_id = safe_extract_value(question_data, "question", "board_id")
+    ground_truth_answer = safe_extract_value(question_data, "answer", "gold_answer")
 
     # Extract gold annotations
-    gold_annotations = {}
-    for annotation in ALL_ANNOTATIONS:
-        try:
-            gold_annotations[annotation] = question_data[
-                question_data["messageType"] == "answer"
-            ][f"gold_{annotation}"].iloc[0]
-        except (IndexError, KeyError):
-            gold_annotations[annotation] = None
+    gold_annotations = extract_gold_annotations(question_data)
 
     # Extract history
     previous_decision_ids = sorted(
@@ -194,43 +238,10 @@ def extract_question_context(
         id_actions = question_history_data[
             question_history_data["questionID"] == decision_id
         ]
-        try:
-            decision = id_actions[id_actions["messageType"] == "decision"][
-                "messageText"
-            ].iloc[0]
 
-            # Remap "fire" -> "move"
-            if decision == "fire":
-                decision = "move"
-
-            example = {
-                "decision": decision,
-                "question": None,
-                "answer": None,
-                "move": None,
-            }
-
-            if decision == "question":
-                example["question"] = id_actions[
-                    id_actions["messageType"] == "question"
-                ]["messageText"].iloc[0]
-                try:
-                    example["answer"] = id_actions[
-                        id_actions["messageType"] == "answer"
-                    ]["messageText"].iloc[0]
-                except (IndexError, KeyError):
-                    example["answer"] = "Not answered"
-            else:
-                try:
-                    example["move"] = id_actions[id_actions["messageType"] == "move"][
-                        "messageText"
-                    ].iloc[0]
-                except (IndexError, KeyError):
-                    continue
-
-            history.append(example)
-        except (IndexError, KeyError):
-            continue
+        history_entry = extract_history_entry(id_actions)
+        if history_entry is not None:
+            history.append(history_entry)
 
     return QuestionContext(
         question_text=question_text,
@@ -253,7 +264,7 @@ def calculate_question_eig(question, board: Board) -> float:
     )
 
 
-def process_single_question(
+def run_single_question(
     context: QuestionContext, config: SpotterBenchmarkConfig, round_data: pd.DataFrame
 ) -> Dict:
     """Process a single question and return results."""
@@ -331,7 +342,7 @@ def process_single_question(
     return result_summary
 
 
-def run_spotter_benchmark(
+def run_single_experiment(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
     config: SpotterBenchmarkConfig,
@@ -374,7 +385,7 @@ def run_spotter_benchmark(
 
     def process_wrapper(args):
         context, config, round_data = args
-        return process_single_question(context, config, round_data)
+        return run_single_question(context, config, round_data)
 
     with mp.Pool(processes=processes) as pool:
         results = list(
@@ -420,7 +431,7 @@ def run_all_experiments(
                     experiment_dir=experiment_dir,
                 )
 
-                results = run_spotter_benchmark(
+                results = run_single_experiment(
                     df, rounds_questions_dict, config, processes
                 )
 
