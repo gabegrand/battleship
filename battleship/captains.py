@@ -509,11 +509,12 @@ def create_captain(
     """
     Factory function to create Captain instances with properly configured strategies.
     """
-    from battleship.spotters import CodeSpotterModel
+    from battleship.spotters import create_spotter
 
     # Initialize spotter for EIG captains
     def _get_spotter():
-        return CodeSpotterModel(
+        return create_spotter(
+            spotter_type="CodeSpotterModel",
             board_id=board_id,
             board_experiment="collaborative",
             model_string=model,

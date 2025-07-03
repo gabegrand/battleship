@@ -20,8 +20,7 @@ from battleship.agents import Answer
 from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
-from battleship.spotters import CodeSpotterModel
-from battleship.spotters import DirectSpotterModel
+from battleship.spotters import create_spotter
 from battleship.utils import resolve_project_path
 
 # Set up logging
@@ -41,7 +40,7 @@ GOLD_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable
 class SpotterBenchmarkConfig:
     """Configuration for spotter benchmark experiments."""
 
-    model_class: type
+    spotter_type: str
     model_string: str
     temperature: Optional[float]
     use_history: bool
@@ -54,9 +53,7 @@ class SpotterBenchmarkConfig:
     def __post_init__(self):
         if self.experiment_name is None:
             safe_model = self.model_string.replace("/", "-")
-            self.experiment_name = (
-                f"{safe_model}_{self.model_class.__name__}_{self.use_cot}"
-            )
+            self.experiment_name = f"{safe_model}_{self.spotter_type}_{self.use_cot}"
 
 
 @dataclass
@@ -293,7 +290,8 @@ def run_single_question(
     os.makedirs(spotter_dir, exist_ok=True)
 
     # Initialize spotter model
-    spotter_model = config.model_class(
+    spotter_model = create_spotter(
+        spotter_type=config.spotter_type,
         board_id=context.board_id,
         board_experiment="collaborative",
         model_string=config.model_string,
@@ -326,7 +324,7 @@ def run_single_question(
     result_summary = {
         "model": config.model_string,
         "CoT": bool(config.use_cot),
-        "spotterModel": config.model_class.__name__,
+        "spotterModel": config.spotter_type,
         "roundID": str(context.round_id),
         "questionID": int(context.question_id),
         "question": context.question_text,
@@ -397,7 +395,7 @@ def run_single_experiment(
             tqdm(
                 pool.imap(process_wrapper, all_contexts),
                 total=len(all_contexts),
-                desc=f"Processing {config.model_class.__name__} with {config.model_string}",
+                desc=f"Processing {config.spotter_type} with {config.model_string}",
             )
         )
 
@@ -409,7 +407,7 @@ def run_all_experiments(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
     language_models: List[str] = ["gpt-4o-mini"],
-    spotter_models: List[type] = [DirectSpotterModel, CodeSpotterModel],
+    spotter_models: List[str] = ["DirectSpotterModel", "CodeSpotterModel"],
     cot_options: List[bool] = [True, False],
     max_rounds: int = None,
     max_questions: int = None,
@@ -426,7 +424,7 @@ def run_all_experiments(
         for spotter in spotter_models:
             for cot_option in cot_options:
                 config = SpotterBenchmarkConfig(
-                    model_class=spotter,
+                    spotter_type=spotter,
                     model_string=llm,
                     temperature=temperature,
                     use_history=use_history,
@@ -469,18 +467,6 @@ def main():
 
     logging.info(f"Starting spotter benchmark experiment in {experiment_dir}")
 
-    # Convert spotter model names to classes
-    spotter_model_map = {
-        "CodeSpotterModel": CodeSpotterModel,
-        "DirectSpotterModel": DirectSpotterModel,
-    }
-
-    spotter_models = [
-        spotter_model_map[name]
-        for name in args.spotter_models
-        if name in spotter_model_map
-    ]
-
     # Load data
     df, rounds_questions_dict = load_benchmark_data(
         stages_path=args.stages,
@@ -493,7 +479,7 @@ def main():
         df=df,
         rounds_questions_dict=rounds_questions_dict,
         language_models=args.models,
-        spotter_models=spotter_models,
+        spotter_models=args.spotter_models,
         cot_options=args.cot_options,
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
@@ -514,7 +500,7 @@ def main():
         "total_results": len(all_results),
         "experiment_args": vars(args),
         "experiments_run": len(args.models)
-        * len(spotter_models)
+        * len(args.spotter_models)
         * len(args.cot_options),
     }
 
