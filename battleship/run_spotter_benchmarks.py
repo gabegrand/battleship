@@ -34,7 +34,7 @@ logging.basicConfig(
     ],
 )
 
-ALL_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"]
+GOLD_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"]
 
 
 @dataclass
@@ -134,21 +134,34 @@ def load_benchmark_data(
     for annotation in gold_annotations:
         if annotation == "answer":
             stage_df = stage_df[(stage_df["gold_answer"].notna())]
-        elif annotation in ALL_ANNOTATIONS:
+        elif annotation in GOLD_ANNOTATIONS:
             stage_df = stage_df[stage_df[f"gold_{annotation}"] == False]
         else:
             raise ValueError(f"Invalid annotation: {annotation}")
 
     logging.info(f"Filtered data size: {len(stage_df)}")
 
-    # Build rounds-questions mapping
-    valid_round_ids = set(round_df["id"].tolist())
+    # Build rounds-questions mapping from the merged dataframe
+    all_round_ids = set(round_df["id"].tolist())
     rounds_questions_dict = {}
 
-    for round_id, group in stage_df.groupby("roundID"):
-        if round_id in valid_round_ids:
+    for round_id, group in df.groupby("roundID"):
+        if round_id in all_round_ids:
             question_ids = sorted(group["questionID"].unique())
-            rounds_questions_dict[str(round_id)] = question_ids
+
+            # Filter to questions that actually have question messages
+            valid_question_ids = [
+                qid
+                for qid in question_ids
+                if "question" in group[group["questionID"] == qid]["messageType"].values
+            ]
+
+            if len(valid_question_ids) > 0:
+                rounds_questions_dict[str(round_id)] = valid_question_ids
+
+    logging.warning(
+        f"Found {len(all_round_ids) - len(rounds_questions_dict)} rounds with no valid questions - these will be skipped."
+    )
 
     return df, rounds_questions_dict
 
@@ -170,9 +183,9 @@ def extract_gold_annotations(question_data: pd.DataFrame) -> Dict[str, bool]:
     answer_data = question_data[question_data["messageType"] == "answer"]
 
     if answer_data.empty:
-        return {annotation: None for annotation in ALL_ANNOTATIONS}
+        return {annotation: None for annotation in GOLD_ANNOTATIONS}
 
-    for annotation in ALL_ANNOTATIONS:
+    for annotation in GOLD_ANNOTATIONS:
         try:
             gold_annotations[annotation] = answer_data[f"gold_{annotation}"].iloc[0]
         except (IndexError, KeyError):
@@ -365,18 +378,10 @@ def run_single_experiment(
         round_data = df[df["roundID"] == round_id]
         question_ids = sorted(rounds_questions_dict[round_id])
 
-        # Filter to questions that actually have question messages
-        valid_question_ids = [
-            qid
-            for qid in question_ids
-            if "question"
-            in round_data[round_data["questionID"] == qid]["messageType"].values
-        ]
-
         if config.max_questions is not None:
-            valid_question_ids = valid_question_ids[: config.max_questions]
+            question_ids = question_ids[: config.max_questions]
 
-        for question_id in valid_question_ids:
+        for question_id in question_ids:
             context = extract_question_context(question_id, round_data, round_id)
             all_contexts.append((context, config, round_data))
 
@@ -476,9 +481,6 @@ def main():
         if name in spotter_model_map
     ]
 
-    # Convert COT options
-    cot_options = [opt.lower() == "true" for opt in args.cot_options]
-
     # Load data
     df, rounds_questions_dict = load_benchmark_data(
         stages_path=args.stages,
@@ -492,7 +494,7 @@ def main():
         rounds_questions_dict=rounds_questions_dict,
         language_models=args.models,
         spotter_models=spotter_models,
-        cot_options=cot_options,
+        cot_options=args.cot_options,
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
@@ -511,7 +513,9 @@ def main():
         "experiment_dir": experiment_dir,
         "total_results": len(all_results),
         "experiment_args": vars(args),
-        "experiments_run": len(args.models) * len(spotter_models) * len(cot_options),
+        "experiments_run": len(args.models)
+        * len(spotter_models)
+        * len(args.cot_options),
     }
 
     metadata_path = os.path.join(experiment_dir, "metadata.json")
@@ -585,17 +589,16 @@ def parse_arguments():
         "--gold-annotations",
         type=str,
         nargs="+",
-        choices=ALL_ANNOTATIONS + ["answer"],
+        choices=GOLD_ANNOTATIONS + ["answer"],
         default=[],
         help="Space-separated list of gold annotations to filter on.",
     )
     parser.add_argument(
         "--cot-options",
-        type=str,
+        type=bool,
         nargs="+",
-        choices=["True", "False", "true", "false"],
-        default=["True", "False"],
-        help="Space-separated list of chain-of-thought options. Use 'True'/'False' or 'true'/'false'.",
+        default=[True, False],
+        help="Space-separated list of chain-of-thought options. Use 'True'/'False'.",
     )
     parser.add_argument(
         "--experiment-dir-base",
