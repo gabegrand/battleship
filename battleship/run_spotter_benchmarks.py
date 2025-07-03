@@ -4,24 +4,27 @@ import logging
 import multiprocessing.dummy as mp
 import os
 import time
-import uuid
+import warnings
 from dataclasses import dataclass
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from battleship.agents import ActionData
 from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
 from battleship.utils import resolve_project_path
+from experiments.collaborative.analysis import get_spotter_type_short
+from experiments.collaborative.analysis import MODEL_DISPLAY_NAMES
+from experiments.collaborative.analysis import parse_answer
 
 # Set up logging
 logging.basicConfig(
@@ -71,6 +74,33 @@ class QuestionContext:
     history: List[Dict[str, str]]
     round_id: str
     question_id: int
+
+
+def process_result_for_analysis(result: Dict) -> Dict:
+    """Process a raw result dict and add analysis-ready fields."""
+    processed = result.copy()
+
+    # Parse answers to boolean
+    processed["answer_parsed"] = parse_answer(result["answer"])
+    processed["true_answer_parsed"] = parse_answer(result["true_answer"])
+    processed["is_correct"] = (
+        processed["answer_parsed"] == processed["true_answer_parsed"]
+        if processed["answer_parsed"] is not None
+        and processed["true_answer_parsed"] is not None
+        else False
+    )
+
+    # Add spotter type categorization
+    processed["spotter_type_short"] = get_spotter_type_short(
+        result["spotterModel"], result["CoT"]
+    )
+
+    # Add model display name
+    processed["model_display_name"] = MODEL_DISPLAY_NAMES.get(
+        result["model"], result["model"]
+    )
+
+    return processed
 
 
 def create_experiment_dir(root: str = None) -> str:
@@ -254,7 +284,10 @@ def process_single_question(
 
     # Create round directory structure
     round_dir = os.path.join(
-        config.output_dir, "rounds", f"round_{context.round_id}", context.question_id
+        config.output_dir,
+        "rounds",
+        f"round_{context.round_id}",
+        str(context.question_id),  # separate subdirectory for each question
     )
     spotter_dir = os.path.join(round_dir, "spotter")
     os.makedirs(spotter_dir, exist_ok=True)
@@ -374,12 +407,7 @@ def run_spotter_benchmark(
             )
         )
 
-    # Save combined results
-    results_file = os.path.join(config.output_dir, f"{config.experiment_name}.json")
-    with open(results_file, "w") as f:
-        json.dump(results, f, indent=2)
-
-    logging.info(f"Saved {len(results)} results to {results_file}")
+    logging.info(f"Completed {len(results)} questions for {config.experiment_name}")
     return results
 
 
@@ -396,7 +424,7 @@ def run_all_experiments(
     temperature: float = None,
     output_dir: str = "benchmark_results",
     processes: int = None,
-) -> List[str]:
+) -> List[Dict]:
     """Run experiments with all combinations of models and options."""
 
     if language_models is None:
@@ -406,7 +434,7 @@ def run_all_experiments(
     if cot_options is None:
         cot_options = [True, False]
 
-    experiment_files = []
+    all_results = []
 
     for llm in language_models:
         for spotter in spotter_models:
@@ -427,9 +455,12 @@ def run_all_experiments(
                     df, rounds_questions_dict, config, processes
                 )
 
-                experiment_files.append(f"{config.experiment_name}.json")
+                # Process each result for analysis and add to collection
+                for result in results:
+                    processed_result = process_result_for_analysis(result)
+                    all_results.append(processed_result)
 
-    return experiment_files
+    return all_results
 
 
 def main():
@@ -484,7 +515,7 @@ def main():
     )
 
     # Run experiments
-    result_files = run_all_experiments(
+    all_results = run_all_experiments(
         df=df,
         rounds_questions_dict=rounds_questions_dict,
         language_models=args.models,
@@ -499,21 +530,28 @@ def main():
         processes=args.processes,
     )
 
-    # Create summary
-    summary = {
+    # Save results to summary.json (following captain benchmarks pattern)
+    summary_path = os.path.join(experiment_dir, "summary.json")
+    with open(summary_path, "w") as f:
+        json.dump(all_results, f, indent=2)
+
+    # Create metadata file for experiment info
+    metadata = {
         "experiment_dir": experiment_dir,
-        "total_experiments": len(result_files),
-        "result_files": result_files,
-        "args": vars(args),
+        "total_results": len(all_results),
+        "experiment_args": vars(args),
+        "experiments_run": len(args.models) * len(spotter_models) * len(cot_options),
     }
 
-    with open(os.path.join(experiment_dir, "summary.json"), "w") as f:
-        json.dump(summary, f, indent=2)
+    metadata_path = os.path.join(experiment_dir, "metadata.json")
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
 
     logging.info("Experiment completed!")
     logging.info(f"Results saved to: {experiment_dir}")
-    for result_file in result_files:
-        logging.info(f"- {result_file}")
+    logging.info(f"- summary.json: {len(all_results)} question results")
+    logging.info(f"- metadata.json: experiment configuration")
+    logging.info(f"- rounds/: individual spotter.json files with ActionData")
 
 
 def parse_arguments():

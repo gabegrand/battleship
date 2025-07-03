@@ -149,59 +149,22 @@ def get_gold_answer_dataset(df_gold) -> Tuple[List[bool], List[bool]]:
     return gold_labels, human_labels
 
 
-def load_spotter_results(path: str):
-    """Load all JSON files in a directory and concatenate them into a single DataFrame."""
-    # List of JSON file paths
-    json_paths = sorted(
-        [
-            os.path.join(path, filename)
-            for filename in os.listdir(path)
-            if filename.endswith(".json")
-        ]
-    )
+def get_spotter_type_short(spotter_type: str, cot: bool) -> str:
+    """Get short spotter type label for categorization."""
+    if spotter_type == "DirectSpotterModel" and not cot:
+        return "Base"
+    elif spotter_type == "DirectSpotterModel" and cot:
+        return "+ CoT"
+    elif spotter_type == "CodeSpotterModel" and not cot:
+        return "+ Code"
+    elif spotter_type == "CodeSpotterModel" and cot:
+        return "+ CoT + Code"
+    else:
+        raise ValueError(f"Unknown spotter type combination: {spotter_type}, {cot}")
 
-    # Concatenate DataFrames from all JSON files
-    df = pd.concat([pd.read_json(path) for path in json_paths], ignore_index=True)
 
-    df["answer"] = df["answer"].map(parse_answer)
-    df["true_answer"] = df["true_answer"].map(parse_answer)
-    df["is_correct"] = df["answer"] == df["true_answer"]
-
-    def _get_spotter_type_short(spotter_type, cot):
-        if spotter_type == "DirectSpotterModel" and not cot:
-            return "Base"
-        elif spotter_type == "DirectSpotterModel" and cot:
-            return "+ CoT"
-        elif spotter_type == "CodeSpotterModel" and not cot:
-            return "+ Code"
-        elif spotter_type == "CodeSpotterModel" and cot:
-            return "+ CoT + Code"
-        else:
-            raise ValueError((spotter_type, cot))
-
-    spotter_type_short_order = [
-        "Base",
-        "+ CoT",
-        "+ Code",
-        "+ CoT + Code",
-    ]
-    df["spotter_type_short"] = pd.Categorical(
-        df[["spotterModel", "CoT"]].apply(
-            lambda x: _get_spotter_type_short(x["spotterModel"], x["CoT"]), axis=1
-        ),
-        categories=spotter_type_short_order,
-        ordered=True,
-    )
-
-    df["model_display_name"] = pd.Categorical(
-        df["model"].map(MODEL_DISPLAY_NAMES),
-        categories=list(MODEL_DISPLAY_NAMES.values()),
-        ordered=True,
-    )
-
-    df = df.sort_values(by=["model_display_name", "spotter_type_short"])
-
-    return df
+# Note: load_spotter_results function is deprecated.
+# Use summary.json from run_spotter_benchmarks.py which is analysis-ready.
 
 
 def parse_answer(answer: str) -> bool:
