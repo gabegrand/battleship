@@ -4,11 +4,15 @@ import re
 import time
 import traceback
 import uuid
+import warnings
 from abc import ABC
 from dataclasses import dataclass
+from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -124,10 +128,56 @@ class Question:
 class Answer:
     text: str
     code_question: "CodeQuestion" = None
+    _value: Optional[bool] = None
+
+    def __post_init__(self):
+        """Parse the answer text once upon creation."""
+        if self._value is None:
+            self._value = self.parse(self.text)
+
+    @property
+    def value(self) -> Optional[bool]:
+        """Get the cached parsed boolean value of the answer text."""
+        return self._value
+
+    @staticmethod
+    def parse(answer: Union[str, bool, None]) -> Optional[bool]:
+        """Parse answer text into boolean or None."""
+        if isinstance(answer, bool):
+            return answer
+
+        if pd.isnull(answer) or answer is None:
+            return None
+
+        if not isinstance(answer, str):
+            warnings.warn(f"Answer should be a string, got {type(answer)}: {answer}")
+            return None
+
+        answer = answer.lower()
+        if answer == "true":
+            return True
+        elif answer == "false":
+            return False
+        elif answer == "yes":
+            return True
+        elif answer == "no":
+            return False
+        elif answer == "(captain timed out)":
+            return None
+        elif answer == "(answer timed out)":
+            return None
+        elif answer == "(no question asked)":
+            return None
+        elif answer == "none":
+            return None
+        else:
+            warnings.warn(f"Unknown answer will be parsed as `null`: {answer}")
+            return None
 
     def to_dict(self) -> dict:
         return {
             "text": self.text,
+            "value": self.value,
             "code_question": self.code_question.to_dict()
             if self.code_question
             else None,
@@ -135,12 +185,15 @@ class Answer:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Answer":
-        return cls(
+        # If value is already in the dict, use it to avoid re-parsing
+        answer = cls(
             text=data["text"],
             code_question=CodeQuestion.from_dict(data["code_question"])
             if data.get("code_question")
             else None,
+            _value=data.get("value"),  # Use cached value if available
         )
+        return answer
 
 
 class CodeQuestion:

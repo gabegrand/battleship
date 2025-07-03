@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from battleship.agents import Answer
 from battleship.board import Board
 
 
@@ -23,11 +24,12 @@ MODEL_DISPLAY_NAMES = {
     "meta-llama/llama-4-scout": "llama-4-scout",
     "gpt-4.1": "gpt-4.1",
     "gpt-4o": "gpt-4o",
+    "gpt-4o-mini": "gpt-4o-mini",
     "o3": "o3",
     "o4-mini": "o4-mini",
 }
 
-GOLD_ANSWER_LABEL = "gold_answer"
+GOLD_ANSWER_LABEL = "gold_answer_text"
 
 GOLD_CATEGORY_LABELS = {
     "gold_discourse": "Discourse",
@@ -124,8 +126,8 @@ def get_gold_answer_dataset(df_gold) -> Tuple[List[bool], List[bool]]:
     df = df_gold.copy()
     df = df[~pd.isnull(df["gold_answer"])]
 
-    gold_labels = df["gold_answer"].apply(parse_answer).tolist()
-    human_labels = df["messageText"].apply(parse_answer).tolist()
+    gold_labels = df["gold_answer"].apply(Answer.parse).tolist()
+    human_labels = df["messageText"].apply(Answer.parse).tolist()
 
     assert all(label in [True, False] for label in gold_labels)
     assert all(label in [True, False, None] for label in human_labels)
@@ -161,37 +163,3 @@ def get_spotter_type_short(spotter_type: str, cot: bool) -> str:
         return "+ CoT + Code"
     else:
         raise ValueError(f"Unknown spotter type combination: {spotter_type}, {cot}")
-
-
-# Note: load_spotter_results function is deprecated.
-# Use summary.json from run_spotter_benchmarks.py which is analysis-ready.
-
-
-def parse_answer(answer: str) -> bool:
-    if isinstance(answer, bool):
-        return answer
-
-    if pd.isnull(answer):
-        return None
-
-    assert isinstance(answer, str), f"Answer should be a string, got {type(answer)}"
-    answer = answer.lower()
-    if answer == "true":
-        return True
-    elif answer == "false":
-        return False
-    elif answer == "yes":
-        return True
-    elif answer == "no":
-        return False
-    elif answer == "(captain timed out)":
-        return None
-    elif answer == "(answer timed out)":
-        return None
-    elif answer == "(no question asked)":
-        return None
-    elif answer == "none":
-        return None
-    else:
-        warnings.warn(f"Unknown answer will be parsed as `null`: {answer}")
-        return None

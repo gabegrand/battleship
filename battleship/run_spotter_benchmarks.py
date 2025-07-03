@@ -4,7 +4,6 @@ import logging
 import multiprocessing.dummy as mp
 import os
 import time
-import warnings
 from dataclasses import dataclass
 from typing import Dict
 from typing import List
@@ -16,15 +15,13 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from battleship.agents import Answer
 from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import CodeSpotterModel
 from battleship.spotters import DirectSpotterModel
 from battleship.utils import resolve_project_path
-from experiments.collaborative.analysis import get_spotter_type_short
-from experiments.collaborative.analysis import MODEL_DISPLAY_NAMES
-from experiments.collaborative.analysis import parse_answer
 
 # Set up logging
 logging.basicConfig(
@@ -68,39 +65,13 @@ class QuestionContext:
 
     question_text: str
     board_id: str
-    true_answer: str
+    gold_answer_text: str
+    gold_answer_value: Optional[bool]
     occ_tiles: str
     gold_annotations: Dict[str, bool]
     history: List[Dict[str, str]]
     round_id: str
     question_id: int
-
-
-def process_result_for_analysis(result: Dict) -> Dict:
-    """Process a raw result dict and add analysis-ready fields."""
-    processed = result.copy()
-
-    # Parse answers to boolean
-    processed["answer_parsed"] = parse_answer(result["answer"])
-    processed["true_answer_parsed"] = parse_answer(result["true_answer"])
-    processed["is_correct"] = (
-        processed["answer_parsed"] == processed["true_answer_parsed"]
-        if processed["answer_parsed"] is not None
-        and processed["true_answer_parsed"] is not None
-        else False
-    )
-
-    # Add spotter type categorization
-    processed["spotter_type_short"] = get_spotter_type_short(
-        result["spotterModel"], result["CoT"]
-    )
-
-    # Add model display name
-    processed["model_display_name"] = MODEL_DISPLAY_NAMES.get(
-        result["model"], result["model"]
-    )
-
-    return processed
 
 
 def create_experiment_dir(root: str = None) -> str:
@@ -260,7 +231,8 @@ def extract_question_context(
     return QuestionContext(
         question_text=question_text,
         board_id=question_board_id,
-        true_answer=ground_truth_answer,
+        gold_answer_text=ground_truth_answer,
+        gold_answer_value=Answer.parse(ground_truth_answer),
         occ_tiles=question_captain_board,
         gold_annotations=gold_annotations,
         history=history,
@@ -312,9 +284,6 @@ def process_single_question(
         history=context.history if config.use_history else None,
     )
 
-    # Extract answer
-    answer_text = result.text.lower() if isinstance(result.text, str) else None
-
     # Calculate EIG if we have a code question
     eig_value = None
     if result.code_question:
@@ -325,7 +294,7 @@ def process_single_question(
         except Exception as e:
             logging.warning(f"Failed to calculate EIG: {e}")
 
-    # Create result summary
+    # Create result summary with parsed values
     result_summary = {
         "model": config.model_string,
         "CoT": bool(config.use_cot),
@@ -335,11 +304,13 @@ def process_single_question(
         "question": context.question_text,
         "program": result.code_question.fn_str if result.code_question else None,
         "occTiles": context.occ_tiles,
-        "answer": answer_text,
+        "answer_text": result.text,
+        "answer_value": result.value,
         "EIG": float(eig_value) if eig_value is not None else None,
-        "true_answer": context.true_answer,
-        "is_correct": bool(answer_text == context.true_answer)
-        if answer_text
+        "gold_answer_text": context.gold_answer_text,
+        "gold_answer_value": context.gold_answer_value,
+        "is_correct": bool(result.value == context.gold_answer_value)
+        if result.value is not None and context.gold_answer_value is not None
         else False,
         "round_dir": round_dir,
     }
@@ -455,10 +426,7 @@ def run_all_experiments(
                     df, rounds_questions_dict, config, processes
                 )
 
-                # Process each result for analysis and add to collection
-                for result in results:
-                    processed_result = process_result_for_analysis(result)
-                    all_results.append(processed_result)
+                all_results.extend(results)
 
     return all_results
 
