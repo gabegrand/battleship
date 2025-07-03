@@ -160,6 +160,10 @@ def load_benchmark_data(
         f"Found {len(all_round_ids) - len(rounds_questions_dict)} rounds with no valid questions - these will be skipped."
     )
 
+    logging.info(
+        f"Found {len(rounds_questions_dict)} rounds with {sum([len(qids) for qids in rounds_questions_dict.values()])} total valid questions"
+    )
+
     return df, rounds_questions_dict
 
 
