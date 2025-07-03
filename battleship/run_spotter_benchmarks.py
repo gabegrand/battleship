@@ -3,6 +3,7 @@ import json
 import logging
 import multiprocessing.dummy as mp
 import os
+import sys
 import time
 from dataclasses import dataclass
 from typing import Dict
@@ -45,10 +46,9 @@ class SpotterBenchmarkConfig:
     temperature: Optional[float]
     use_history: bool
     use_cot: bool
-    use_captain_board: bool
     max_rounds: int
     max_questions: int
-    output_dir: str
+    experiment_dir: str
     experiment_name: str = None
 
     def __post_init__(self):
@@ -74,12 +74,16 @@ class QuestionContext:
     question_id: int
 
 
-def create_experiment_dir(root: str = None) -> str:
+def create_experiment_dir(experiment_dir_base: str = None) -> str:
     """Create experiment directory and return path."""
-    if root is None:
-        root = resolve_project_path("experiments/collaborative/spotter_benchmarks")
+    if experiment_dir_base is None:
+        experiment_dir_base = resolve_project_path(
+            "experiments/collaborative/spotter_benchmarks"
+        )
 
-    experiment_dir = os.path.join(root, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}")
+    experiment_dir = os.path.join(
+        experiment_dir_base, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
+    )
     os.makedirs(experiment_dir, exist_ok=True)
 
     # Create subdirectories
@@ -256,7 +260,7 @@ def process_single_question(
 
     # Create round directory structure
     round_dir = os.path.join(
-        config.output_dir,
+        config.experiment_dir,
         "rounds",
         f"round_{context.round_id}",
         str(context.question_id),  # separate subdirectory for each question
@@ -342,7 +346,9 @@ def run_spotter_benchmark(
 
     # Prepare all questions for processing
     all_contexts = []
-    round_list = list(rounds_questions_dict.keys())[: config.max_rounds]
+    round_list = list(rounds_questions_dict.keys())
+    if config.max_rounds is not None:
+        round_list = round_list[: config.max_rounds]
 
     for round_id in round_list:
         round_data = df[df["roundID"] == round_id]
@@ -356,7 +362,8 @@ def run_spotter_benchmark(
             in round_data[round_data["questionID"] == qid]["messageType"].values
         ]
 
-        valid_question_ids = valid_question_ids[: config.max_questions]
+        if config.max_questions is not None:
+            valid_question_ids = valid_question_ids[: config.max_questions]
 
         for question_id in valid_question_ids:
             context = extract_question_context(question_id, round_data, round_id)
@@ -385,25 +392,17 @@ def run_spotter_benchmark(
 def run_all_experiments(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
-    language_models: List[str] = None,
-    spotter_models: List[type] = None,
-    cot_options: List[bool] = None,
-    max_rounds: int = 20,
-    max_questions: int = 20,
+    language_models: List[str] = ["gpt-4o-mini"],
+    spotter_models: List[type] = [DirectSpotterModel, CodeSpotterModel],
+    cot_options: List[bool] = [True, False],
+    max_rounds: int = None,
+    max_questions: int = None,
     use_history: bool = True,
-    use_captain_board: bool = False,
     temperature: float = None,
-    output_dir: str = "benchmark_results",
+    experiment_dir: str = None,
     processes: int = None,
 ) -> List[Dict]:
     """Run experiments with all combinations of models and options."""
-
-    if language_models is None:
-        language_models = ["gpt-4o"]
-    if spotter_models is None:
-        spotter_models = [DirectSpotterModel, CodeSpotterModel]
-    if cot_options is None:
-        cot_options = [True, False]
 
     all_results = []
 
@@ -416,10 +415,9 @@ def run_all_experiments(
                     temperature=temperature,
                     use_history=use_history,
                     use_cot=cot_option,
-                    use_captain_board=use_captain_board,
                     max_rounds=max_rounds,
                     max_questions=max_questions,
-                    output_dir=output_dir,
+                    experiment_dir=experiment_dir,
                 )
 
                 results = run_spotter_benchmark(
@@ -436,20 +434,15 @@ def main():
     args = parse_arguments()
 
     # Create experiment directory
-    experiment_dir = create_experiment_dir()
+    experiment_dir_base = resolve_project_path(args.experiment_dir_base)
+    experiment_dir = create_experiment_dir(experiment_dir_base)
 
-    # Save command used to run the script
-    command = " ".join(
-        ["python"]
-        + ["run_spotter_benchmarks.py"]
-        + [
-            f"--{arg.replace('_', '-')} {getattr(args, arg)}"
-            for arg in vars(args)
-            if getattr(args, arg) is not None
-        ]
-    )
-    with open(os.path.join(experiment_dir, "command.txt"), "w") as f:
+    # Save the command used to run the script
+    command = " ".join(["python"] + sys.argv)
+    command_path = os.path.join(experiment_dir, "command.txt")
+    with open(command_path, "w") as f:
         f.write(command)
+    print(f"Command saved to {command_path}")
 
     # Setup logging to experiment directory
     log_handler = logging.FileHandler(os.path.join(experiment_dir, "benchmark.log"))
@@ -492,9 +485,8 @@ def main():
         max_rounds=args.max_rounds,
         max_questions=args.max_questions,
         use_history=args.use_history,
-        use_captain_board=args.use_captain_board,
         temperature=args.temperature,
-        output_dir=experiment_dir,
+        experiment_dir=experiment_dir,
         processes=args.processes,
     )
 
@@ -543,11 +535,11 @@ def parse_arguments():
         "--models",
         type=str,
         nargs="+",
-        default=["gpt-4o"],
+        default=["gpt-4o-mini"],
         help="Space-separated list of language models to test.",
     )
     parser.add_argument(
-        "--spotter_models",
+        "--spotter-models",
         type=str,
         nargs="+",
         default=["CodeSpotterModel", "DirectSpotterModel"],
@@ -560,29 +552,26 @@ def parse_arguments():
         help="The model temperature to use.",
     )
     parser.add_argument(
-        "--max_rounds",
+        "--max-rounds",
         type=int,
-        default=20,
-        help="Maximum number of rounds to process.",
+        default=None,
+        help="Maximum number of rounds to process (default: None, process all rounds).",
     )
     parser.add_argument(
-        "--max_questions",
+        "--max-questions",
         type=int,
-        default=20,
-        help="Maximum number of questions per round to process.",
+        default=None,
+        help="Maximum number of questions per round to process (default: None, process all questions).",
     )
     parser.add_argument(
-        "--use_history",
-        action="store_true",
-        help="Flag to include history in the benchmark.",
+        "--use-history",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include history in the spotter context.",
     )
+
     parser.add_argument(
-        "--use_captain_board",
-        action="store_true",
-        help="Flag to use captain board in the model.",
-    )
-    parser.add_argument(
-        "--gold_annotations",
+        "--gold-annotations",
         type=str,
         nargs="+",
         choices=ALL_ANNOTATIONS + ["answer"],
@@ -590,11 +579,18 @@ def parse_arguments():
         help="Space-separated list of gold annotations to filter on.",
     )
     parser.add_argument(
-        "--cot_options",
+        "--cot-options",
         type=str,
         nargs="+",
+        choices=["True", "False", "true", "false"],
         default=["True", "False"],
-        help="Space-separated list of chain-of-thought options (True/False).",
+        help="Space-separated list of chain-of-thought options. Use 'True'/'False' or 'true'/'false'.",
+    )
+    parser.add_argument(
+        "--experiment-dir-base",
+        type=str,
+        default="experiments/collaborative/spotter_benchmarks",
+        help="Base directory for experiment output.",
     )
     parser.add_argument(
         "--processes",
