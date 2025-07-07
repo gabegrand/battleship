@@ -258,11 +258,7 @@ class CodeAnswerStrategy(AnswerStrategy):
 
         partial_board = occ_tiles.copy()
 
-        result = code_question(true_board, partial_board)
-
-        result_text = parse_answer_to_str(result)
-
-        answer = Answer(text=result_text, code_question=code_question)
+        answer = code_question(true_board=true_board, partial_board=partial_board)
 
         # Create ActionData object
         action_data = ActionData(

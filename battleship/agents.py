@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import time
@@ -19,6 +20,9 @@ from openai import OpenAI
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
 from battleship.utils import parse_answer_to_str
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # MOVE_PATTERN = lambda size: re.compile(f"^{config_move_regex(size)}$")
 DECISION_PATTERN = re.compile(
@@ -237,9 +241,11 @@ class CodeQuestion:
 
     def __call__(self, true_board: np.ndarray, partial_board: np.ndarray) -> bool:
         try:
-            return self.fn(true_board, partial_board)
+            fn_return_value = self.fn(true_board, partial_board)
         except:
             return None
+
+        return Answer(text=fn_return_value, code_question=self)
 
     def to_dict(self) -> dict:
         return {
@@ -309,19 +315,13 @@ class Agent(ABC):
 
 
 class EIGCalculator:
-    def __init__(self, seed, spotter):
+    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000):
         self.seed = seed
         self.rng = np.random.default_rng(seed)
-        self.spotter = spotter
+        self.timeout = timeout
+        self.samples = samples
 
-    def calculate_eig(self, question, state, pregenerated_question=None, samples=100):
-        if pregenerated_question is None:
-            code_question = self.spotter.translate(
-                question=question, occ_tiles=state.board, history=None
-            )
-        else:
-            code_question = pregenerated_question
-
+    def __call__(self, code_question: CodeQuestion, state: Board):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -329,27 +329,38 @@ class EIGCalculator:
             seed=self.rng,
         )
 
-        results = {"yes": 0, "no": 0}
+        results = {True: 0, False: 0}
         curr_time = time.time()
-        while sum(results.values()) < samples:
-            if time.time() - curr_time > 15:
+        while sum(results.values()) < self.samples:
+            if time.time() - curr_time > self.timeout:
                 return float("nan")
+
+            # This could result in an infinite loop if the sampler is unable to populate a board
             board = None
             while not board:
                 board = sampler.populate_board()
-            result = code_question(true_board=board.board, partial_board=state.board)
-            try:
-                result = parse_answer_to_str(result)
-                results[result] += 1
-            except:
+
+            answer: Answer = code_question(
+                true_board=board.board, partial_board=state.board
+            )
+
+            if answer.value is True:
+                results[True] += 1
+            elif answer.value is False:
+                results[False] += 1
+            else:
+                # We assume that further answers will also be None
+                logger.warning(
+                    f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
+                )
                 break
 
         if any(v == 0 for v in results.values()):
             return 0
-        else:
-            return np.log2(samples) - sum(
-                [p / samples * np.log2(p) for p in results.values()]
-            )
+
+        return np.log2(self.samples) - sum(
+            [p / self.samples * np.log2(p) for p in results.values()]
+        )
 
 
 def config_move_regex(size):

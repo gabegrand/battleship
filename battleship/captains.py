@@ -358,7 +358,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.samples = samples
         self.k = k
         self.use_cot = use_cot
-        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.eig_calculator = EIGCalculator(seed=self.rng, samples=self.samples)
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
@@ -398,17 +398,22 @@ class EIGQuestionStrategy(QuestionStrategy):
 
             candidate_question = Question(text=candidate_question_text)
 
-            # Calculate EIG for this question
-            eig = self.eig_calculator.calculate_eig(
-                candidate_question, state, samples=self.samples
+            # First translate the question
+            code_question = self.spotter.translate(
+                question=candidate_question,
+                occ_tiles=state.board,
+                history=history,
             )
+
+            # Then calculate EIG
+            eig = self.eig_calculator(code_question, state)
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
                 action="question",
                 prompt=str(question_prompt),
                 completion=completion.model_dump(),
-                question=candidate_question,
+                question=code_question,
                 eig=eig,
             )
 
@@ -438,7 +443,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.n_attempts = n_attempts
         self.spotter = spotter
         self.rng = rng
-        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.eig_calculator = EIGCalculator(seed=self.rng)
         self.client = get_openai_client()
 
     def __call__(self, state, history, sunk, questions_remaining, moves_remaining):

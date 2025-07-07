@@ -49,6 +49,7 @@ class SpotterBenchmarkConfig:
     max_rounds: int
     max_questions: int
     experiment_dir: str
+    eig_samples: int = 1000
     experiment_name: str = None
 
     def __post_init__(self):
@@ -270,14 +271,6 @@ def extract_question_context(
     )
 
 
-def calculate_question_eig(question, board: Board) -> float:
-    """Calculate Expected Information Gain for a question."""
-    calculator = EIGCalculator(seed=0, spotter=None)
-    return calculator.calculate_eig(
-        None, board, pregenerated_question=question, samples=100
-    )
-
-
 def run_single_question(
     context: QuestionContext, config: SpotterBenchmarkConfig, round_data: pd.DataFrame
 ) -> Dict:
@@ -318,7 +311,8 @@ def run_single_question(
     eig_value = None
     if result.code_question:
         try:
-            eig_value = calculate_question_eig(
+            calculator = EIGCalculator(seed=0, samples=config.eig_samples)
+            eig_value = calculator(
                 result.code_question, Board.from_occ_tiles(context.occ_tiles)
             )
         except Exception as e:
@@ -416,6 +410,7 @@ def run_all_experiments(
     use_history: bool = True,
     temperature: float = None,
     experiment_dir: str = None,
+    eig_samples: int = 1000,
     processes: int = None,
 ) -> List[Dict]:
     """Run experiments with all combinations of models and options."""
@@ -434,6 +429,7 @@ def run_all_experiments(
                     max_rounds=max_rounds,
                     max_questions=max_questions,
                     experiment_dir=experiment_dir,
+                    eig_samples=eig_samples,
                 )
 
                 results = run_single_experiment(
@@ -488,6 +484,7 @@ def main():
         use_history=args.use_history,
         temperature=args.temperature,
         experiment_dir=experiment_dir,
+        eig_samples=args.eig_samples,
         processes=args.processes,
     )
 
@@ -587,6 +584,12 @@ def parse_arguments():
         nargs="+",
         default=[False, True],
         help="Space-separated list of chain-of-thought options. Use 'true'/'false'.",
+    )
+    parser.add_argument(
+        "--eig-samples",
+        type=int,
+        default=1000,
+        help="Number of samples for EIG calculations. Only used for CodeSpotterModel.",
     )
     parser.add_argument(
         "--experiment-dir-base",
