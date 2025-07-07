@@ -21,6 +21,7 @@ from battleship.agents import EIGCalculator
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.spotters import create_spotter
+from battleship.utils import PROJECT_ROOT
 from battleship.utils import resolve_project_path
 
 # Set up logging
@@ -289,6 +290,9 @@ def run_single_question(
         config.experiment_name,
         f"round_{context.round_id}",
     )
+    json_path = os.path.join(
+        spotter_dir, f"question_{str(context.question_id).zfill(2)}.json"
+    )
     os.makedirs(spotter_dir, exist_ok=True)
 
     # Initialize spotter model
@@ -299,9 +303,7 @@ def run_single_question(
         model_string=config.model_string,
         temperature=config.temperature,
         use_cot=config.use_cot,
-        json_path=os.path.join(
-            spotter_dir, f"question_{str(context.question_id).zfill(2)}.json"
-        ),
+        json_path=json_path,
     )
 
     # Process question
@@ -325,22 +327,20 @@ def run_single_question(
     # Create result summary with parsed values
     result_summary = {
         "model": config.model_string,
-        "CoT": bool(config.use_cot),
-        "spotterModel": config.spotter_type,
-        "roundID": str(context.round_id),
-        "questionID": int(context.question_id),
+        "use_cot": bool(config.use_cot),
+        "spotter_type": config.spotter_type,
+        "round_id": str(context.round_id),
+        "question_id": int(context.question_id),
         "question": context.question_text,
         "program": result.code_question.fn_str if result.code_question else None,
-        "occTiles": context.occ_tiles,
+        "occ_tiles": context.occ_tiles,
         "answer_text": result.text,
         "answer_value": result.value,
-        "EIG": float(eig_value) if eig_value is not None else None,
+        "eig_value": float(eig_value) if eig_value is not None else None,
         "gold_answer_text": context.gold_answer_text,
         "gold_answer_value": context.gold_answer_value,
-        "is_correct": bool(result.value == context.gold_answer_value)
-        if result.value is not None and context.gold_answer_value is not None
-        else False,
-        "spotter_dir": spotter_dir,
+        "is_correct": bool(result.value == context.gold_answer_value),
+        "spotter_json": os.path.relpath(json_path, PROJECT_ROOT),
     }
 
     # Add gold annotations (ensure proper type conversion)
