@@ -74,18 +74,19 @@ class QuestionContext:
     question_id: int
 
 
-def create_experiment_dir(experiment_dir_base: str = None) -> str:
+def create_experiment_dir(experiment_dir: str = None) -> str:
     """Create experiment directory and return path."""
-    if experiment_dir_base is None:
-        experiment_dir_base = resolve_project_path(
-            "experiments/collaborative/spotter_benchmarks"
+    if experiment_dir is None:
+        experiment_dir = resolve_project_path(
+            os.path.join(
+                "experiments",
+                "collaborative",
+                "spotter_benchmarks",
+                f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}",
+            )
         )
 
-    experiment_dir = os.path.join(
-        experiment_dir_base, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
-    )
     os.makedirs(experiment_dir, exist_ok=True)
-
     return experiment_dir
 
 
@@ -445,8 +446,12 @@ def main():
     args = parse_arguments()
 
     # Create experiment directory
-    experiment_dir_base = resolve_project_path(args.experiment_dir_base)
-    experiment_dir = create_experiment_dir(experiment_dir_base)
+    if args.experiment_dir:
+        experiment_dir = create_experiment_dir(
+            resolve_project_path(args.experiment_dir)
+        )
+    else:
+        experiment_dir = create_experiment_dir()
 
     # Save the command used to run the script
     command = " ".join(["python"] + sys.argv)
@@ -519,6 +524,12 @@ def parse_arguments():
         description="Run benchmarks on spotter models with customizable options."
     )
     parser.add_argument(
+        "--experiment-dir",
+        type=str,
+        default=None,
+        help="Full path to experiment directory. If not provided, will create a timestamped directory in experiments/collaborative/spotter_benchmarks.",
+    )
+    parser.add_argument(
         "--stages",
         type=str,
         default="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
@@ -589,12 +600,6 @@ def parse_arguments():
         type=int,
         default=1000,
         help="Number of samples for EIG calculations. Only used for CodeSpotterModel.",
-    )
-    parser.add_argument(
-        "--experiment-dir-base",
-        type=str,
-        default="experiments/collaborative/spotter_benchmarks",
-        help="Base directory for experiment output.",
     )
     parser.add_argument(
         "--processes",
