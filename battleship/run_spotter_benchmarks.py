@@ -53,7 +53,9 @@ class SpotterBenchmarkConfig:
     def __post_init__(self):
         if self.experiment_name is None:
             safe_model = self.model_string.replace("/", "-")
-            self.experiment_name = f"{safe_model}_{self.spotter_type}_{self.use_cot}"
+            self.experiment_name = (
+                f"{safe_model}_{self.spotter_type}_{'cot' if self.use_cot else ''}"
+            )
 
 
 @dataclass
@@ -82,9 +84,6 @@ def create_experiment_dir(experiment_dir_base: str = None) -> str:
         experiment_dir_base, f"run_{time.strftime('%Y_%m_%d_%H_%M_%S')}"
     )
     os.makedirs(experiment_dir, exist_ok=True)
-
-    # Create subdirectories
-    os.makedirs(os.path.join(experiment_dir, "rounds"), exist_ok=True)
 
     return experiment_dir
 
@@ -284,13 +283,13 @@ def run_single_question(
     """Process a single question and return results."""
 
     # Create round directory structure
-    round_dir = os.path.join(
+    spotter_dir = os.path.join(
         config.experiment_dir,
-        "rounds",
+        "spotters",
+        config.experiment_name,
         f"round_{context.round_id}",
-        str(context.question_id),  # separate subdirectory for each question
+        f"question_{context.question_id}",  # separate subdirectory for each question
     )
-    spotter_dir = os.path.join(round_dir, "spotter")
     os.makedirs(spotter_dir, exist_ok=True)
 
     # Initialize spotter model
@@ -342,7 +341,7 @@ def run_single_question(
         "is_correct": bool(result.value == context.gold_answer_value)
         if result.value is not None and context.gold_answer_value is not None
         else False,
-        "round_dir": round_dir,
+        "spotter_dir": spotter_dir,
     }
 
     # Add gold annotations (ensure proper type conversion)
@@ -599,8 +598,8 @@ def parse_arguments():
     parser.add_argument(
         "--processes",
         type=int,
-        default=os.cpu_count(),
-        help="Number of parallel processes to use.",
+        default=None,
+        help="Number of parallel processes to use. If not provided, will use all available cores.",
     )
 
     return parser.parse_args()
