@@ -132,7 +132,6 @@ def run_single_agent_game(args):
         prob_q_prob=prob_q_prob,
         eig_samples=eig_samples,
         eig_k=eig_k,
-        round_id=round_id,
         json_path=os.path.join(captain_dir, "captain.json"),
     )
 
@@ -143,7 +142,6 @@ def run_single_agent_game(args):
         model_string=model,
         temperature=None,
         use_cot=True,
-        round_id=round_id,
         json_path=os.path.join(spotter_dir, "spotter.json"),
     )
 

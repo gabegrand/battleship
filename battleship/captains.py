@@ -37,20 +37,17 @@ class Captain(Agent):
         seed: int = None,
         model_string=None,
         temperature=None,
-        round_id=None,
         json_path=None,
     ):
         super().__init__(
             seed=seed,
             model_string=model_string,
-            round_id=round_id,
             json_path=json_path,
         )
         self.temperature = temperature
         self.sampling_constraints = []
 
         # Optional strategies for modular approach
-        self.round_id = round_id
         self.decision_strategy = decision_strategy
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
@@ -502,7 +499,6 @@ def create_captain(
     prob_q_prob=None,
     eig_samples=None,
     eig_k=None,
-    round_id=None,
     json_path=None,
     completions_dir=None,
 ):
@@ -528,7 +524,6 @@ def create_captain(
             move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
             question_strategy=None,
             seed=seed,
-            round_id=round_id,
             json_path=json_path,
         )
 
@@ -542,7 +537,6 @@ def create_captain(
             ),
             question_strategy=None,
             seed=seed,
-            round_id=round_id,
             json_path=json_path,
         )
 
@@ -559,7 +553,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -577,7 +570,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -600,7 +592,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -623,7 +614,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -648,7 +638,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -673,7 +662,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -699,7 +687,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain
@@ -725,7 +712,6 @@ def create_captain(
             ),
             seed=seed,
             model_string=model,
-            round_id=round_id,
             json_path=json_path,
         )
         return captain

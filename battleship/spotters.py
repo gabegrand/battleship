@@ -34,14 +34,11 @@ class Spotter(Agent):
         model_string="gpt-4o",
         temperature=None,
         use_cot=False,
-        round_id=None,
-        spotter_benchmark=None,
         json_path=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
-        self.spotter_benchmark = spotter_benchmark
         self.answer_strategy = answer_strategy
         self.client = get_openai_client()
 
@@ -49,7 +46,6 @@ class Spotter(Agent):
             seed=None,
             model_string=model_string,
             use_cot=use_cot,
-            round_id=round_id,
             json_path=json_path,
         )
 
@@ -329,10 +325,6 @@ def create_spotter(
     model_string="gpt-4o",
     temperature=None,
     use_cot=False,
-    decision_counter=None,
-    index_counter=None,
-    round_id=None,
-    spotter_benchmark=None,
     json_path=None,
 ):
     """
@@ -365,7 +357,5 @@ def create_spotter(
         model_string=model_string,
         temperature=temperature,
         use_cot=use_cot,
-        round_id=round_id,
-        spotter_benchmark=spotter_benchmark,
         json_path=json_path,
     )

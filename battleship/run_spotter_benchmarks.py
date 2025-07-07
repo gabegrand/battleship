@@ -54,7 +54,7 @@ class SpotterBenchmarkConfig:
         if self.experiment_name is None:
             safe_model = self.model_string.replace("/", "-")
             self.experiment_name = (
-                f"{safe_model}_{self.spotter_type}_{'cot' if self.use_cot else ''}"
+                f"{safe_model}_{self.spotter_type}{'_cot' if self.use_cot else ''}"
             )
 
 
@@ -288,7 +288,6 @@ def run_single_question(
         "spotters",
         config.experiment_name,
         f"round_{context.round_id}",
-        f"question_{context.question_id}",  # separate subdirectory for each question
     )
     os.makedirs(spotter_dir, exist_ok=True)
 
@@ -300,9 +299,9 @@ def run_single_question(
         model_string=config.model_string,
         temperature=config.temperature,
         use_cot=config.use_cot,
-        spotter_benchmark=True,
-        round_id=f"{context.round_id}_{context.question_id}",
-        json_path=os.path.join(spotter_dir, "spotter.json"),
+        json_path=os.path.join(
+            spotter_dir, f"question_{str(context.question_id).zfill(2)}.json"
+        ),
     )
 
     # Process question
@@ -584,10 +583,10 @@ def parse_arguments():
     )
     parser.add_argument(
         "--cot-options",
-        type=bool,
+        type=str_to_bool,
         nargs="+",
-        default=[True, False],
-        help="Space-separated list of chain-of-thought options. Use 'True'/'False'.",
+        default=[False, True],
+        help="Space-separated list of chain-of-thought options. Use 'true'/'false'.",
     )
     parser.add_argument(
         "--experiment-dir-base",
@@ -603,6 +602,16 @@ def parse_arguments():
     )
 
     return parser.parse_args()
+
+
+def str_to_bool(value: str) -> bool:
+    """Convert string representation of boolean to actual boolean."""
+    if value.lower() in ("true", "1"):
+        return True
+    elif value.lower() in ("false", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError(f"Boolean value expected, got: {value}")
 
 
 if __name__ == "__main__":

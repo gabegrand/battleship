@@ -279,10 +279,8 @@ class Agent(ABC):
         seed: int = None,
         model_string: str = None,
         use_cot: bool = False,
-        round_id: str = None,
         json_path: str = None,
     ):
-        self.round_id = round_id
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
         self.model_string = model_string
