@@ -3,15 +3,12 @@ import base64
 import io
 import os
 from enum import StrEnum
-from typing import List
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.colors import ListedColormap
 
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "R": 1, "G": 2, "P": 3, "O": 4}
 BOARD_COLOR_MAPPING = {

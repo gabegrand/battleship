@@ -1,10 +1,8 @@
 import json
 import logging
-import os
 import re
 import time
 import traceback
-import uuid
 import warnings
 from abc import ABC
 from dataclasses import dataclass
@@ -19,7 +17,6 @@ from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
-from battleship.utils import parse_answer_to_str
 
 # Set up logging
 logger = logging.getLogger(__name__)

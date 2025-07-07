@@ -4,8 +4,6 @@ import logging
 import os
 from copy import deepcopy
 from enum import StrEnum
-from typing import Dict
-from typing import List
 from typing import Tuple
 from typing import Type
 
@@ -13,8 +11,6 @@ import numpy as np
 from IPython.display import display
 
 from battleship.board import Board
-from battleship.board import BOARD_SYMBOL_MAPPING
-from battleship.board import SYMBOL_MEANING_MAPPING
 
 
 logger = logging.getLogger(__name__)

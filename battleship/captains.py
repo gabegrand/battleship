@@ -1,8 +1,6 @@
-import time
 from random import random
 from typing import Dict
 from typing import List
-from typing import Tuple
 
 import numpy as np
 
@@ -15,14 +13,12 @@ from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Question
 from battleship.board import Board
-from battleship.board import coords_to_tile
 from battleship.board import tile_to_coords
 from battleship.fast_sampler import FastSampler
 from battleship.game import Decision
 from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
-from battleship.strategies import BaseStrategy
 from battleship.strategies import DecisionStrategy
 from battleship.strategies import MoveStrategy
 from battleship.strategies import QuestionStrategy

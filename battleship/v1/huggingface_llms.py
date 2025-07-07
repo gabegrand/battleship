@@ -2,17 +2,13 @@
 import logging
 import os
 from typing import List
-from typing import Union
 
-import pandas as pd
 import torch
 from optimum.bettertransformer import BetterTransformer
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 from transformers import StoppingCriteria
 from transformers import StoppingCriteriaList
-
-from battleship.v1.prompting import BasePrompt
 
 
 class HuggingFaceModel(object):

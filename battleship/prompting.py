@@ -1,8 +1,6 @@
 from typing import Dict
 from typing import List
 
-import numpy as np
-
 from battleship.board import Board
 from battleship.board import BoardFormat
 from battleship.board import coords_to_tile

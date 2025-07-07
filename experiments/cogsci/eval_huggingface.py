@@ -9,7 +9,6 @@ import time
 import numpy as np
 import pandas as pd
 from hfppl.llms import CachedCausalLM
-from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS

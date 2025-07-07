@@ -1,5 +1,4 @@
 import random
-import sys
 
 from nltk import CFG
 from nltk.grammar import Nonterminal

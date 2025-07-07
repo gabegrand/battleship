@@ -1,7 +1,5 @@
 import logging
-import time
 import traceback
-from abc import abstractmethod
 from typing import List
 from typing import Tuple
 
@@ -19,7 +17,6 @@ from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
 from battleship.strategies import AnswerStrategy
-from battleship.utils import parse_answer_to_str
 
 
 logger = logging.getLogger(__name__)

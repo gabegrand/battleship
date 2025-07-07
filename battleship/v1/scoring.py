@@ -1,7 +1,6 @@
 import itertools
 import os
 from multiprocessing import get_context
-from multiprocessing import Pool
 
 import numpy as np
 from tqdm import tqdm

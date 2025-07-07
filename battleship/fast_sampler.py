@@ -4,7 +4,6 @@ Author: Gabe Grand (grandg@mit.edu)
 """
 from collections import defaultdict
 from enum import StrEnum
-from time import time
 from typing import List
 
 import numpy as np

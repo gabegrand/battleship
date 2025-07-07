@@ -1,13 +1,10 @@
 import json
 import os
-import warnings
 from typing import List
 from typing import Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 from battleship.agents import Answer
 from battleship.board import Board
