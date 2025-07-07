@@ -1,11 +1,11 @@
 import argparse
+import concurrent.futures
 import json
 import logging
 import os
 import sys
 import time
 import uuid
-from multiprocessing.dummy import Pool
 
 import numpy as np
 import pandas as pd
@@ -242,11 +242,16 @@ def main():
     print(f"Running {len(jobs)} benchmark games...")
 
     results = []
-    # Run with multiprocessing
-    with Pool(processes=args.processes) as pool:
-        proc_count = pool._processes
-        print(f"Running with {proc_count} processes")
-        results = pool.map(run_single_agent_game, jobs)
+    # Run with ThreadPoolExecutor (concurrent.futures)
+    max_workers = args.max_workers
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_job = {
+            executor.submit(run_single_agent_game, job): job for job in jobs
+        }
+        print(f"Running with {executor._max_workers} threads...")
+        for future in concurrent.futures.as_completed(future_to_job):
+            result = future.result()
+            results.append(result)
 
     # Prepare data structures
     summaries_data = human_results.copy() if human_results else []
@@ -322,10 +327,10 @@ def parse_arguments():
         "--max-moves", type=int, default=40, help="Maximum moves per game"
     )
     parser.add_argument(
-        "--processes",
+        "--max-workers",
         type=int,
         default=None,
-        help="Number of processes to use (defaults to CPU count)",
+        help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
     )
     parser.add_argument(
         "--include-human", action="store_true", help="Include human results in output"

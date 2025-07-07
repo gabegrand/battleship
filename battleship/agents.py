@@ -17,6 +17,7 @@ from openai import OpenAI
 
 from battleship.board import Board
 from battleship.fast_sampler import FastSampler
+from battleship.utils import parse_answer_to_str
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -144,8 +145,8 @@ class Answer:
     @staticmethod
     def parse(answer: Union[str, bool, None]) -> Optional[bool]:
         """Parse answer text into boolean or None."""
-        if isinstance(answer, bool):
-            return answer
+        if isinstance(answer, (bool, np.bool_)):
+            return bool(answer)
 
         if pd.isnull(answer) or answer is None:
             return None
@@ -238,11 +239,11 @@ class CodeQuestion:
 
     def __call__(self, true_board: np.ndarray, partial_board: np.ndarray) -> bool:
         try:
-            fn_return_value = self.fn(true_board, partial_board)
+            fn_return_text = parse_answer_to_str(self.fn(true_board, partial_board))
         except:
             return None
 
-        return Answer(text=fn_return_value, code_question=self)
+        return Answer(text=fn_return_text, code_question=self)
 
     def to_dict(self) -> dict:
         return {

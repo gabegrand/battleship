@@ -1,10 +1,11 @@
 import argparse
+import concurrent.futures
 import json
 import logging
-import multiprocessing.dummy as mp
 import os
 import sys
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict
 from typing import List
@@ -126,39 +127,33 @@ def load_benchmark_data(
         board_ids, left_on="roundID", right_on="id", how="inner"
     )
 
-    logging.info(f"Initial data size: {len(stage_df)}")
-
-    # Apply gold annotation filters
-    for annotation in gold_annotations:
-        if annotation == "answer":
-            stage_df = stage_df[(stage_df["gold_answer"].notna())]
-        elif annotation in GOLD_ANNOTATIONS:
-            stage_df = stage_df[stage_df[f"gold_{annotation}"] == False]
-        else:
-            raise ValueError(f"Invalid annotation: {annotation}")
-
-    logging.info(f"Filtered data size: {len(stage_df)}")
-
     # Build rounds-questions mapping from the merged dataframe
-    all_round_ids = set(round_df["id"].tolist())
-    rounds_questions_dict = {}
+    rounds_questions_dict = defaultdict(set)
 
-    for round_id, group in df.groupby("roundID"):
-        if round_id in all_round_ids:
-            question_ids = sorted(group["questionID"].unique())
+    for (round_id, question_id), group in df.groupby(["roundID", "questionID"]):
+        # Ensure that the question has a question row
+        if "question" not in group["messageType"].values:
+            continue
 
-            # Filter to questions that actually have question messages
-            valid_question_ids = [
-                qid
-                for qid in question_ids
-                if "question" in group[group["questionID"] == qid]["messageType"].values
-            ]
+        # Ensure that the question has an answer row
+        answer_data = group[group["messageType"] == "answer"]
+        if answer_data.empty:
+            continue
+        answer_data = answer_data.iloc[0]
 
-            if len(valid_question_ids) > 0:
-                rounds_questions_dict[str(round_id)] = valid_question_ids
+        # Ensure that the gold answer is not NaN
+        if pd.isna(answer_data["gold_answer"]):
+            continue
+
+        # Filter out questions where the gold annotation field is True
+        for annotation in gold_annotations:
+            if answer_data[f"gold_{annotation}"] == True:
+                continue
+
+        rounds_questions_dict[str(round_id)].add(question_id)
 
     logging.warning(
-        f"Found {len(all_round_ids) - len(rounds_questions_dict)} rounds with no valid questions - these will be skipped."
+        f"Found {df['roundID'].nunique() - len(rounds_questions_dict)} rounds with no valid questions - these will be skipped."
     )
 
     logging.info(
@@ -186,6 +181,8 @@ def extract_gold_annotations(question_data: pd.DataFrame) -> Dict[str, bool]:
 
     if answer_data.empty:
         return {annotation: None for annotation in GOLD_ANNOTATIONS}
+
+    gold_annotations["answer"] = answer_data["gold_answer"].iloc[0]
 
     for annotation in GOLD_ANNOTATIONS:
         try:
@@ -353,12 +350,9 @@ def run_single_experiment(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
     config: SpotterBenchmarkConfig,
-    processes: int = None,
+    max_workers: int = None,
 ) -> List[Dict]:
     """Run benchmark for a single spotter configuration."""
-
-    if processes is None:
-        processes = os.cpu_count()
 
     logging.info(f"Running benchmark: {config.experiment_name}")
 
@@ -379,17 +373,15 @@ def run_single_experiment(
             context = extract_question_context(question_id, round_data, round_id)
             all_contexts.append((context, config, round_data))
 
-    # Process questions in parallel
-    logging.info(f"Processing {len(all_contexts)} questions with {processes} processes")
-
     def process_wrapper(args):
         context, config, round_data = args
         return run_single_question(context, config, round_data)
 
-    with mp.Pool(processes=processes) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        logging.info(f"Running with {executor._max_workers} threads...")
         results = list(
             tqdm(
-                pool.imap(process_wrapper, all_contexts),
+                executor.map(process_wrapper, all_contexts),
                 total=len(all_contexts),
                 desc=f"Processing {config.spotter_type} with {config.model_string}",
             )
@@ -411,7 +403,7 @@ def run_all_experiments(
     temperature: float = None,
     experiment_dir: str = None,
     eig_samples: int = 1000,
-    processes: int = None,
+    max_workers: int = None,
 ) -> List[Dict]:
     """Run experiments with all combinations of models and options."""
 
@@ -433,7 +425,7 @@ def run_all_experiments(
                 )
 
                 results = run_single_experiment(
-                    df, rounds_questions_dict, config, processes
+                    df, rounds_questions_dict, config, max_workers
                 )
 
                 all_results.extend(results)
@@ -489,7 +481,7 @@ def main():
         temperature=args.temperature,
         experiment_dir=experiment_dir,
         eig_samples=args.eig_samples,
-        processes=args.processes,
+        max_workers=args.max_workers,
     )
 
     # Save results to summary.json (following captain benchmarks pattern)
@@ -499,7 +491,7 @@ def main():
 
     # Create metadata file for experiment info
     metadata = {
-        "experiment_dir": experiment_dir,
+        "experiment_dir": str(experiment_dir),
         "total_results": len(all_results),
         "experiment_args": vars(args),
         "experiments_run": len(args.models)
@@ -584,7 +576,7 @@ def parse_arguments():
         "--gold-annotations",
         type=str,
         nargs="+",
-        choices=GOLD_ANNOTATIONS + ["answer"],
+        choices=GOLD_ANNOTATIONS,
         default=[],
         help="Space-separated list of gold annotations to filter on.",
     )
@@ -602,10 +594,10 @@ def parse_arguments():
         help="Number of samples for EIG calculations. Only used for CodeSpotterModel.",
     )
     parser.add_argument(
-        "--processes",
+        "--max-workers",
         type=int,
         default=None,
-        help="Number of parallel processes to use. If not provided, will use all available cores.",
+        help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
     )
 
     return parser.parse_args()
