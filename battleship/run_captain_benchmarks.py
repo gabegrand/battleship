@@ -9,6 +9,7 @@ import uuid
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.captains import create_captain
@@ -248,17 +249,18 @@ def main():
 
     print(f"Running {len(jobs)} benchmark games...")
 
-    results = []
     # Run with ThreadPoolExecutor (concurrent.futures)
     max_workers = args.max_workers
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_job = {
-            executor.submit(run_single_agent_game, job): job for job in jobs
-        }
-        print(f"Running with {executor._max_workers} threads...")
-        for future in concurrent.futures.as_completed(future_to_job):
-            result = future.result()
-            results.append(result)
+        logging.info(f"Running with max {executor._max_workers} worker threads...")
+        # executor.map() preserves order - results will be in same order as jobs
+        results = list(
+            tqdm(
+                executor.map(run_single_agent_game, jobs),
+                total=len(jobs),
+                desc="Running captain benchmark games",
+            )
+        )
 
     # Prepare data structures
     summaries_data = human_results.copy() if human_results else []

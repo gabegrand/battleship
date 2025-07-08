@@ -378,7 +378,8 @@ def run_single_experiment(
         return run_single_question(context, config, round_data)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        logging.info(f"Running with {executor._max_workers} threads...")
+        logging.info(f"Running with max {executor._max_workers} worker threads...")
+        # executor.map() preserves order - results will be in same order as all_contexts
         results = list(
             tqdm(
                 executor.map(process_wrapper, all_contexts),
