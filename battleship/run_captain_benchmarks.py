@@ -109,7 +109,7 @@ def run_single_agent_game(args):
         eig_k,
     ) = args
 
-    print(f"{captain_type} started with {board_id} & seed {seed}")
+    print(f"{captain_type} {round_id} started with {board_id} & seed {seed}")
     board = Board.from_trial_id(board_id)
 
     # Create round directory and subdirectories
@@ -153,7 +153,7 @@ def run_single_agent_game(args):
     )
     game.play()
     game.save()
-    print(f"{captain_type} finished with {board_id} & seed {seed}")
+    print(f"{captain_type} {round_id} finished with {board_id} & seed {seed}")
 
     scores = game.score()
 

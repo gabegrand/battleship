@@ -133,8 +133,10 @@ class BattleshipGame:
             a = self.spotter.answer(
                 question=q, occ_tiles=self.state.board, history=self.history
             )
-            if a.code_question is not None:
-                self.captain.sampling_constraints.append(a.code_question)
+
+            if a is not None:
+                if a.code_question is not None:
+                    self.captain.sampling_constraints.append(a.code_question)
 
             self.question_count += 1
             self.history.append(
@@ -159,15 +161,16 @@ class BattleshipGame:
             if coords is not None:
                 self.update_state(coords)
 
-            self.move_count += 1
             self.history.append(
                 {
                     "stage": self.stage_index,
                     "decision": Decision.MOVE,
-                    "coords": tuple(int(x) for x in coords),
+                    "coords": tuple(int(x) for x in coords) if coords is not None else None,
                     "state": self.state.board.tolist(),
                 }
             )
+
+            self.move_count += 1
         else:
             raise ValueError(f"Invalid decision: {decision}")
 

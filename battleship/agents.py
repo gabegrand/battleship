@@ -342,7 +342,13 @@ class EIGCalculator:
                 true_board=board.board, partial_board=state.board
             )
 
-            if answer.value is True:
+            if answer is None or answer.value is None:
+                # We assume that further answers will also be None
+                logger.warning(
+                    f"CodeQuestion returned None - skipping EIG calculation"
+                )
+                break
+            elif answer.value is True:
                 results[True] += 1
             elif answer.value is False:
                 results[False] += 1
