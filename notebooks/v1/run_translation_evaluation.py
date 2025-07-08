@@ -2,15 +2,9 @@ import os
 
 import pandas as pd
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
 
 from battleship.translator import Translator
-from eig import compute_eig_fast
-from eig.battleship import BattleshipHypothesis
-from eig.battleship import Executor
 from eig.battleship import Parser
-from eig.battleship import Ship
 from eig.battleship.program import ProgramSyntaxError
 
 # Load HF_AUTH_TOKEN from .hf_auth_token

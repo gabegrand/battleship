@@ -1,24 +1,22 @@
 import logging
 import traceback
-from abc import abstractmethod
 from typing import List
 from typing import Tuple
 
 import numpy as np
 
+from battleship.agents import ActionData
 from battleship.agents import Agent
 from battleship.agents import Answer
 from battleship.agents import BOOL_ANSWER_PATTERN
-from battleship.agents import CacheData
 from battleship.agents import CODE_ANSWER_PATTERN
 from battleship.agents import CodeQuestion
 from battleship.agents import get_openai_client
 from battleship.agents import NullCodeQuestion
-from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
 from battleship.prompting import SpotterPrompt
-from battleship.utils import parse_answer_to_str
+from battleship.strategies import AnswerStrategy
 
 
 logger = logging.getLogger(__name__)
@@ -29,77 +27,82 @@ class Spotter(Agent):
         self,
         board_id,
         board_experiment,
-        use_cache=True,
-        model_string="gpt-4o",
+        answer_strategy=None,
+        llm="gpt-4o-mini",
         temperature=None,
         use_cot=False,
-        decision_counter=None,
-        index_counter=None,
-        round_id=None,
-        spotter_benchmark=None,
-        stage_dir=None,
-        prompts_dir=None,
+        json_path=None,
     ):
         self.board_id = board_id
         self.board_experiment = board_experiment
         self.temperature = temperature
-        self.spotter_benchmark = spotter_benchmark
+        self.answer_strategy = answer_strategy
         self.client = get_openai_client()
 
-        # Use proper Agent initialization to handle model string and cache path
         super().__init__(
             seed=None,
-            model_string=model_string,
-            use_cache=use_cache,
+            llm=llm,
             use_cot=use_cot,
-            decision_counter=decision_counter,
-            index_counter=index_counter,
-            round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
+            json_path=json_path,
         )
-
-    @abstractmethod
-    def _get_model_answer(
-        self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
-    ) -> Answer:
-        raise NotImplementedError
 
     def answer(
         self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
     ) -> Answer:
-        self.index_counter.increment_counter()
-        result, answer_cache = self._get_model_answer(
-            question,
+        answer, action_data = self.answer_strategy(
+            question=question,
             occ_tiles=occ_tiles,
             history=history,
         )
 
-        if self.spotter_benchmark is None:
-            if self.use_cache:
-                self.write_cache(
-                    message_type="ANSWER",
-                    cache_data=answer_cache,
-                )
+        # Save the action data
+        self.save_action_data(action_data)
 
-            return result
+        return answer
+
+    def translate(
+        self,
+        question: Question,
+        occ_tiles: np.ndarray,
+        history: List[dict],
+    ) -> CodeQuestion:
+        if hasattr(self.answer_strategy, "translate"):
+            return self.answer_strategy.translate(question, occ_tiles, history)
         else:
-            return result, answer_cache
+            raise NotImplementedError(
+                f"Spotter {self.__class__.__name__} does not have a translate method."
+            )
 
 
 # ---------------------
-# Spotter Classes
+# Answer Strategy Classes
 # ---------------------
 
 
-class DirectSpotterModel(Spotter):
-    def _get_model_answer(
+class DirectAnswerStrategy(AnswerStrategy):
+    def __init__(
+        self,
+        board_id,
+        board_experiment,
+        llm="gpt-4o-mini",
+        temperature=None,
+        use_cot=False,
+    ):
+        super().__init__()
+        self.board_id = board_id
+        self.board_experiment = board_experiment
+        self.llm = llm
+        self.temperature = temperature
+        self.use_cot = use_cot
+        self.client = get_openai_client()
+
+    def __call__(
         self,
         question: Question,
         occ_tiles: np.ndarray,
         history: List[dict] = None,
         n_attempts=10,
-    ) -> Tuple[Answer, CacheData]:
+    ) -> Tuple[Answer, ActionData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
             target_trial_experiment=self.board_experiment,
@@ -113,9 +116,10 @@ class DirectSpotterModel(Spotter):
         logging.info(str(prompt))
 
         response = None
+        completion = None
         for attempt in range(n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -137,20 +141,37 @@ class DirectSpotterModel(Spotter):
         if isinstance(response, str):
             response = response.lower()
 
-        output_prompt = Prompt(
-            prompt=prompt.to_chat_format(),
-            full_completion=completion.choices[0].message.content,
-            extracted_completion=response,
-            occ_tiles=occ_tiles,
-        )
-
         answer = Answer(text=response)
-        return answer, CacheData(
-            message_text=response, occ_tiles=occ_tiles, prompts=[output_prompt]
+
+        # Create ActionData object
+        action_data = ActionData(
+            action="answer",
+            prompt=str(prompt),
+            completion=completion.model_dump() if completion else None,
+            question=question,
+            answer=answer,
         )
 
+        return answer, action_data
 
-class CodeSpotterModel(Spotter):
+
+class CodeAnswerStrategy(AnswerStrategy):
+    def __init__(
+        self,
+        board_id,
+        board_experiment,
+        llm="gpt-4o-mini",
+        temperature=None,
+        use_cot=False,
+    ):
+        super().__init__()
+        self.board_id = board_id
+        self.board_experiment = board_experiment
+        self.llm = llm
+        self.temperature = temperature
+        self.use_cot = use_cot
+        self.client = get_openai_client()
+
     def translate(
         self,
         question: Question,
@@ -173,7 +194,7 @@ class CodeSpotterModel(Spotter):
         # Generate code using the translation prompt
         for attempt in range(n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=translation_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -195,14 +216,16 @@ class CodeSpotterModel(Spotter):
                     question=question,
                     fn_text=fn_text,
                     translation_prompt=translation_prompt,
-                    full_completion=content,
+                    completion=completion.model_dump(),
                 )
             except Exception as e:
                 logging.error(
                     f"CodeQuestion.translate(): Error in evaluation (attempt {attempt+1}/{n_attempts}): {e}\n{traceback.format_exc()}"
                 )
 
-        return NullCodeQuestion(translation_prompt=translation_prompt)
+        return NullCodeQuestion(
+            question=question, translation_prompt=translation_prompt
+        )
 
     def extract_code(self, text: str) -> str:
         """
@@ -214,12 +237,12 @@ class CodeSpotterModel(Spotter):
         else:
             return None
 
-    def _get_model_answer(
+    def __call__(
         self,
         question: Question,
         occ_tiles: np.ndarray,
         history: List[dict],
-    ) -> Tuple[Answer, CacheData]:
+    ) -> Tuple[Answer, ActionData]:
         code_question = self.translate(
             question,
             occ_tiles=occ_tiles,
@@ -232,17 +255,100 @@ class CodeSpotterModel(Spotter):
 
         partial_board = occ_tiles.copy()
 
-        result = code_question(true_board, partial_board)
+        answer = code_question(true_board=true_board, partial_board=partial_board)
 
-        result_text = parse_answer_to_str(result)
-
-        output_prompt = Prompt(
-            prompt=code_question.translation_prompt.to_chat_format(),
-            full_completion=code_question.full_completion,
-            extracted_completion=result,
-            occ_tiles=occ_tiles,
+        # Create ActionData object
+        action_data = ActionData(
+            action="answer",
+            prompt="Code translation and execution",  # Could be more detailed
+            question=question,
+            answer=answer,
         )
 
-        return Answer(text=result_text, code_question=code_question), CacheData(
-            message_text=result_text, occ_tiles=occ_tiles, prompts=[output_prompt]
+        return answer, action_data
+
+
+# ---------------------
+# Legacy Classes (for backward compatibility)
+# ---------------------
+
+
+class DirectSpotterModel(Spotter):
+    """Legacy class - use Spotter with DirectAnswerStrategy instead"""
+
+    def __init__(self, *args, **kwargs):
+        # Extract strategy-specific parameters
+        strategy_kwargs = {
+            "board_id": args[0] if len(args) > 0 else kwargs.get("board_id"),
+            "board_experiment": args[1]
+            if len(args) > 1
+            else kwargs.get("board_experiment"),
+            "llm": kwargs.get("llm", "gpt-4o-mini"),
+            "temperature": kwargs.get("temperature"),
+            "use_cot": kwargs.get("use_cot", False),
+        }
+
+        answer_strategy = DirectAnswerStrategy(**strategy_kwargs)
+        super().__init__(answer_strategy=answer_strategy, *args, **kwargs)
+
+
+class CodeSpotterModel(Spotter):
+    """Legacy class - use Spotter with CodeAnswerStrategy instead"""
+
+    def __init__(self, *args, **kwargs):
+        # Extract strategy-specific parameters
+        strategy_kwargs = {
+            "board_id": args[0] if len(args) > 0 else kwargs.get("board_id"),
+            "board_experiment": args[1]
+            if len(args) > 1
+            else kwargs.get("board_experiment"),
+            "llm": kwargs.get("llm", "gpt-4o-mini"),
+            "temperature": kwargs.get("temperature"),
+            "use_cot": kwargs.get("use_cot", False),
+        }
+
+        answer_strategy = CodeAnswerStrategy(**strategy_kwargs)
+        super().__init__(answer_strategy=answer_strategy, *args, **kwargs)
+
+
+def create_spotter(
+    spotter_type,
+    board_id,
+    board_experiment,
+    llm="gpt-4o-mini",
+    temperature=None,
+    use_cot=False,
+    json_path=None,
+):
+    """
+    Factory function to create Spotter instances with properly configured answer strategies.
+    """
+
+    if spotter_type == "DirectSpotterModel":
+        answer_strategy = DirectAnswerStrategy(
+            board_id=board_id,
+            board_experiment=board_experiment,
+            llm=llm,
+            temperature=temperature,
+            use_cot=use_cot,
         )
+    elif spotter_type == "CodeSpotterModel":
+        answer_strategy = CodeAnswerStrategy(
+            board_id=board_id,
+            board_experiment=board_experiment,
+            llm=llm,
+            temperature=temperature,
+            use_cot=use_cot,
+        )
+    else:
+        raise ValueError(f"Unknown spotter type: {spotter_type}")
+
+    return Spotter(
+        board_id=board_id,
+        board_experiment=board_experiment,
+        answer_strategy=answer_strategy,
+        llm=llm,
+        temperature=temperature,
+        use_cot=use_cot,
+        json_path=json_path,
+    )

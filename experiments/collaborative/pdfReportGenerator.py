@@ -8,7 +8,6 @@ import pandas
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch

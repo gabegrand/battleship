@@ -172,6 +172,8 @@ cython_debug/
 # MacOS
 .DS_Store
 
+experiments/collaborative/captain_benchmarks/
+experiments/collaborative/spotter_benchmarks/
 experiments/collaborative/data/
 experiments/prolific/battleship/.empirica/empirica.toml
 experiments/prolific/battleship/package-lock.json

@@ -1,9 +1,9 @@
 """Core game logic for Battleship."""
+import json
 import logging
+import os
 from copy import deepcopy
 from enum import StrEnum
-from typing import Dict
-from typing import List
 from typing import Tuple
 from typing import Type
 
@@ -11,8 +11,6 @@ import numpy as np
 from IPython.display import display
 
 from battleship.board import Board
-from battleship.board import BOARD_SYMBOL_MAPPING
-from battleship.board import SYMBOL_MEANING_MAPPING
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +30,7 @@ class BattleshipGame:
         board_start=None,
         max_questions: int = 15,
         max_moves: int = 40,
+        save_dir: str = None,
     ):
         self.captain = captain
         self.spotter = spotter
@@ -47,19 +46,27 @@ class BattleshipGame:
         self.max_questions = max_questions
         self.max_moves = max_moves
 
-        self.stage_count = 0
+        self.stage_index = 0
         self.question_count = 0
         self.move_count = 0
 
         self.history = []
 
+        # Setup save directory for game history if provided
+        self.save_dir = save_dir
+        if self.save_dir is not None:
+            os.makedirs(self.save_dir, exist_ok=True)
+            self.save_path = os.path.join(self.save_dir, "game.json")
+        else:
+            self.save_path = None
+
     def __len__(self):
-        return self.stage_count
+        return self.stage_index
 
     def __repr__(self):
         return (
             f"BattleshipGame(\n"
-            f"  stage={self.stage_count},\n"
+            f"  stage={self.stage_index},\n"
             f"  hits={self.hits},\n"
             f"  misses={self.misses},\n"
             f"  questions={self.question_count}/{self.max_questions},\n"
@@ -99,6 +106,7 @@ class BattleshipGame:
             self.next_stage()
 
     def next_stage(self):
+        # TODO: Move string formatting logic into the Agent classes
         sunk_string = ", ".join(
             [
                 f"{ship}: {'sunk' if status else 'not sunk'}"
@@ -115,20 +123,29 @@ class BattleshipGame:
         )
 
         if decision == Decision.QUESTION:
-            q = self.captain.question(self.state, self.history, sunk_string)
+            q = self.captain.question(
+                self.state,
+                self.history,
+                sunk_string,
+                questions_remaining=self.max_questions - self.question_count,
+                moves_remaining=self.max_moves - self.move_count,
+            )
             a = self.spotter.answer(
                 question=q, occ_tiles=self.state.board, history=self.history
             )
-            if a.code_question is not None:
-                self.captain.sampling_constraints.append(a.code_question)
+
+            if a is not None:
+                if a.code_question is not None:
+                    self.captain.sampling_constraints.append(a.code_question)
 
             self.question_count += 1
             self.history.append(
                 {
-                    "stage": self.stage_count,
+                    "stage": self.stage_index,
                     "decision": Decision.QUESTION,
-                    "question": q,
-                    "answer": a,
+                    "question": q.to_dict(),
+                    "answer": a.to_dict(),
+                    "state": self.state.board.tolist(),
                 }
             )
         elif decision == Decision.MOVE:
@@ -136,20 +153,30 @@ class BattleshipGame:
                 self.state,
                 self.history,
                 sunk_string,
-                self.captain.sampling_constraints,
+                questions_remaining=self.max_questions - self.question_count,
+                moves_remaining=self.max_moves - self.move_count,
+                constraints=self.captain.sampling_constraints,
             )
 
             if coords is not None:
                 self.update_state(coords)
 
-            self.move_count += 1
             self.history.append(
-                {"stage": self.stage_count, "decision": Decision.MOVE, "coords": coords}
+                {
+                    "stage": self.stage_index,
+                    "decision": Decision.MOVE,
+                    "coords": tuple(int(x) for x in coords) if coords is not None else None,
+                    "state": self.state.board.tolist(),
+                }
             )
+
+            self.move_count += 1
         else:
             raise ValueError(f"Invalid decision: {decision}")
 
-        self.stage_count += 1
+        self.stage_index += 1
+        self.captain.stage_index += 1
+        self.spotter.stage_index += 1
 
     def update_state(self, coords: Tuple[int, int]):
         if self.state.board[coords].item() != Board.hidden:
@@ -173,3 +200,10 @@ class BattleshipGame:
 
     def score(self):
         return self.target.score(self.state)
+
+    def save(self):
+        if self.save_path is None:
+            return
+
+        with open(self.save_path, "w") as f:
+            json.dump(self.history, f, indent=2)

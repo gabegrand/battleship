@@ -1,16 +1,12 @@
 import argparse
 import os
 import time
-from math import ceil
-from typing import List
 
 import pandas as pd
-from tqdm import tqdm
 
 from battleship.board import Board
 from battleship.board import TRIAL_IDS
 from battleship.v1.grammar import BattleshipGrammar
-from battleship.v1.scoring import _compute_score_batch
 from battleship.v1.scoring import compute_score_parallel
 
 

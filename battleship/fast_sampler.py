@@ -4,7 +4,6 @@ Author: Gabe Grand (grandg@mit.edu)
 """
 from collections import defaultdict
 from enum import StrEnum
-from time import time
 from typing import List
 
 import numpy as np
@@ -231,8 +230,8 @@ class FastSampler:
 
     def constrained_posterior(
         self,
-        ground_truth: Board,
-        n_samples: int = 10000,
+        true_board: Board,
+        n_samples: int = 1000,
         min_samples: int = 50,
         constraints: list = [],
         normalize: bool = True,
@@ -241,8 +240,11 @@ class FastSampler:
 
         board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
         total_sampled = 0
-        constraint_satisfactions = []
         active_constraints = constraints.copy()
+        true_answers = [
+            code_question(true_board, self.board.board)
+            for code_question in active_constraints
+        ]
 
         candidate_boards = []
         for _ in range(n_samples):
@@ -252,14 +254,18 @@ class FastSampler:
 
         # Check constraints and update counts
         for new_board in candidate_boards:
-            board_satisfactions = [
-                constraint(ground_truth, self.board.board)
-                == constraint(new_board, self.board.board)
-                for constraint in active_constraints
-            ]
-            constraint_satisfactions.append(board_satisfactions)
+            # TODO: constraint return type is now Answer, not bool
+            for code_question, true_answer in zip(active_constraints, true_answers):
+                # Skip if the true answer or its value is None
+                if true_answer is None or true_answer.value is None:
+                    continue
 
-            if all(board_satisfactions):
+                # Evaluate the new answer and skip if it is None or its value is different from the true answer
+                new_answer = code_question(new_board, self.board.board)
+                if new_answer is None or new_answer.value != true_answer.value:
+                    continue
+
+                # Count the board if it satisfies all constraints and break if we have enough samples
                 board_counts += (new_board.board > 0).astype(int)
                 total_sampled += 1
                 if total_sampled >= n_samples:

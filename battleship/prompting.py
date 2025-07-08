@@ -1,8 +1,6 @@
 from typing import Dict
 from typing import List
 
-import numpy as np
-
 from battleship.board import Board
 from battleship.board import BoardFormat
 from battleship.board import coords_to_tile
@@ -106,12 +104,12 @@ class BasePrompt(object):
             if example["decision"] == Decision.QUESTION:
                 # TODO: Implement dataloader for human data to make this cleaner
                 question_text = (
-                    example["question"].text
+                    example["question"]["text"]
                     if type(example["question"]) != str
                     else example["question"]
                 )
                 answer_text = (
-                    example["answer"].text
+                    example["answer"]["text"]
                     if type(example["answer"]) != str
                     else example["answer"]
                 )

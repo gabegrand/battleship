@@ -1,53 +1,27 @@
-from abc import ABC
-from abc import abstractmethod
-from dataclasses import dataclass
 from random import random
 from typing import Dict
 from typing import List
-from typing import Tuple
 
 import numpy as np
 
+from battleship.agents import ActionData
 from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
-from battleship.agents import CacheData
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
 from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
-from battleship.agents import Prompt
 from battleship.agents import Question
 from battleship.board import Board
-from battleship.board import coords_to_tile
 from battleship.board import tile_to_coords
 from battleship.fast_sampler import FastSampler
 from battleship.game import Decision
 from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
-
-
-# Strategy interfaces
-class DecisionStrategy(ABC):
-    @abstractmethod
-    def make_decision(
-        self, state, history, questions_remaining, moves_remaining, sunk
-    ) -> Tuple[Decision, Dict]:
-        pass
-
-
-class MoveStrategy(ABC):
-    @abstractmethod
-    def make_move(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
-    ) -> Tuple[Tuple[int, int], Dict]:
-        pass
-
-
-class QuestionStrategy(ABC):
-    @abstractmethod
-    def ask_question(self, state, history, sunk) -> Tuple[Question, Dict]:
-        pass
+from battleship.strategies import DecisionStrategy
+from battleship.strategies import MoveStrategy
+from battleship.strategies import QuestionStrategy
 
 
 class Captain(Agent):
@@ -57,26 +31,19 @@ class Captain(Agent):
         move_strategy=None,
         question_strategy=None,
         seed: int = None,
-        use_cache: bool = True,
-        model_string=None,
+        llm=None,
         temperature=None,
-        round_id=None,
-        stage_dir=None,
-        prompts_dir=None,
+        json_path=None,
     ):
         super().__init__(
             seed=seed,
-            model_string=model_string,
-            use_cache=use_cache,
-            round_id=round_id,
-            stage_dir=stage_dir,
-            prompts_dir=prompts_dir,
+            llm=llm,
+            json_path=json_path,
         )
         self.temperature = temperature
         self.sampling_constraints = []
 
         # Optional strategies for modular approach
-        self.round_id = round_id
         self.decision_strategy = decision_strategy
         self.move_strategy = move_strategy
         self.question_strategy = question_strategy
@@ -89,10 +56,7 @@ class Captain(Agent):
         moves_remaining: int,
         sunk: str,
     ) -> Decision:
-        self.decision_counter.increment_counter()
-        self.questions_remaining = questions_remaining
-        self.moves_remaining = moves_remaining
-        result, decision_cache = self.decision_strategy.make_decision(
+        decision, action_data = self.decision_strategy(
             state,
             history,
             questions_remaining,
@@ -100,80 +64,96 @@ class Captain(Agent):
             sunk,
         )
 
-        if self.use_cache:
-            self.write_cache(
-                message_type="DECISION",
-                cache_data=decision_cache,
-            )
+        # Save the action data
+        self.save_action_data(action_data)
 
-        return result
+        return decision
 
-    def move(self, state: Board, history: List[Dict], sunk: str, constraints: List):
-        result, move_cache = self.move_strategy.make_move(
+    def move(
+        self,
+        state: Board,
+        history: List[Dict],
+        sunk: str,
+        questions_remaining: int,
+        moves_remaining: int,
+        constraints: List,
+    ):
+        move, action_data = self.move_strategy(
             state,
             history,
             sunk,
-            self.questions_remaining,
-            self.moves_remaining,
+            questions_remaining,
+            moves_remaining,
             constraints,
         )
 
-        if self.use_cache:
-            self.write_cache(
-                message_type="MOVE",
-                cache_data=move_cache,
-            )
+        # Save the action data
+        self.save_action_data(action_data)
 
-        return result
+        return move
 
-    def question(self, state: Board, history: List[Dict], sunk: str):
-        result, question_cache = self.question_strategy.ask_question(
-            state, history, sunk, self.questions_remaining, self.moves_remaining
+    def question(
+        self,
+        state: Board,
+        history: List[Dict],
+        sunk: str,
+        questions_remaining: int,
+        moves_remaining: int,
+    ):
+        question, action_data = self.question_strategy(
+            state, history, sunk, questions_remaining, moves_remaining
         )
 
-        if self.use_cache:
-            self.write_cache(
-                message_type="QUESTION",
-                cache_data=question_cache,
-            )
+        # Save the action data
+        self.save_action_data(action_data)
 
-        return result
+        return question
 
 
 # Example decision strategies
 class AlwaysMoveDecisionStrategy(DecisionStrategy):
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
-        return Decision.MOVE, CacheData(
-            message_text=Decision.MOVE, occ_tiles=state.board
+    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
+        action_data = ActionData(
+            action="decision",
+            decision=Decision.MOVE,
         )
+        return Decision.MOVE, action_data
 
 
 class ProbabilisticDecisionStrategy(DecisionStrategy):
     def __init__(self, q_prob=0.5):
+        super().__init__()
         self.q_prob = q_prob
 
-    def make_decision(self, state, history, questions_remaining, moves_remaining, sunk):
-        decision = None
+    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
         if random() < self.q_prob and questions_remaining > 0:
             decision = Decision.QUESTION
         else:
             decision = Decision.MOVE
-        return decision, CacheData(message_text=decision, occ_tiles=state.board)
+
+        action_data = ActionData(
+            action="decision",
+            decision=decision,
+        )
+        return decision, action_data
 
 
 class LLMDecisionStrategy(DecisionStrategy):
-    def __init__(self, model_string, temperature=None, use_cot=False):
-        self.model_string = model_string
+    def __init__(
+        self,
+        llm,
+        temperature=None,
+        use_cot=False,
+    ):
+        super().__init__()
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.client = get_openai_client()
 
-    def make_decision(
+    def __call__(
         self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
     ):
-        decision = None
-        prompts = []
-
         if questions_remaining > 0:
             decision_prompt = DecisionPrompt(
                 target_occ_tiles=state,
@@ -186,9 +166,10 @@ class LLMDecisionStrategy(DecisionStrategy):
             )
 
             candidate_decision = None
+            completion = None
             for _ in range(n_attempts):
                 completion = self.client.chat.completions.create(
-                    model=self.model_string,
+                    model=self.llm,
                     messages=decision_prompt.to_chat_format(),
                     temperature=self.temperature,
                 )
@@ -196,54 +177,56 @@ class LLMDecisionStrategy(DecisionStrategy):
 
                 if match is not None:
                     candidate_decision = match.group(1)
-
-                prompts.append(
-                    Prompt(
-                        prompt=decision_prompt.to_chat_format(),
-                        full_completion=completion.choices[0].message.content,
-                        extracted_completion=candidate_decision,
-                        occ_tiles=state.board,
-                    )
-                )
-
-                if candidate_decision:
                     break
 
             decision = (
                 Decision.MOVE if candidate_decision == "Move" else Decision.QUESTION
             )
+
         else:
+            completion = None
+            decision_prompt = None
             decision = Decision.MOVE
 
-        return decision, CacheData(
-            message_text=decision, occ_tiles=state.board, prompts=prompts
+        # Create an ActionData object to store the interaction
+        action_data = ActionData(
+            action="decision",
+            prompt=str(decision_prompt) if decision_prompt else None,
+            completion=completion.model_dump() if completion else None,
+            decision=decision,
         )
+        return decision, action_data
 
 
 # Example move strategies
 class RandomMoveStrategy(MoveStrategy):
     def __init__(self, rng):
+        super().__init__()
         self.rng = rng
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
             raise ValueError("No hidden tiles left.")
-        coords = self.rng.choice(hidden_tiles)
-        return tuple(coords), CacheData(
-            message_text=coords_to_tile(coords), occ_tiles=state.board
+        coords = tuple(self.rng.choice(hidden_tiles))
+
+        action_data = ActionData(
+            action="move",
+            move=coords,
         )
+        return coords, action_data
 
 
 class MAPMoveStrategy(MoveStrategy):
-    def __init__(self, rng, n_samples=1000, board_id=None):
+    def __init__(self, rng, board_id, n_samples=1000):
+        super().__init__()
         self.rng = rng
-        self.n_samples = n_samples
         self.board_id = board_id
+        self.n_samples = n_samples
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         sampler = FastSampler(
@@ -257,7 +240,7 @@ class MAPMoveStrategy(MoveStrategy):
             true_board = Board.from_trial_id(trial_id=self.board_id).to_numpy()
 
             posterior = sampler.constrained_posterior(
-                ground_truth=true_board,
+                true_board=true_board,
                 n_samples=self.n_samples,
                 normalize=False,
                 constraints=constraints,
@@ -278,30 +261,32 @@ class MAPMoveStrategy(MoveStrategy):
 
         # Map the flat index back to 2D coordinates
         move_coords = np.unravel_index(flat_idx, state.board.shape)
-        return tuple(move_coords), CacheData(
-            message_text=coords_to_tile(move_coords),
-            map_prob=posterior[move_coords[0]][move_coords[1]],
-            occ_tiles=state.board,
+        move = tuple(move_coords)
+
+        action_data = ActionData(
+            action="move",
+            move=move,
+            map_prob=float(posterior.max()),
         )
+        return move, action_data
 
 
 class LLMMoveStrategy(MoveStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         temperature=None,
         use_cot=False,
-        moves_remaining=None,
         n_attempts=3,
     ):
-        self.model_string = model_string
+        super().__init__()
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
-        self.moves_remaining = moves_remaining
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def make_move(
+    def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
     ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
@@ -316,12 +301,10 @@ class LLMMoveStrategy(MoveStrategy):
             sunk=sunk,
         )
 
-        candidate_move = None
-        prompts = []
+        completion = None
         for _ in range(self.n_attempts):
-            # while candidate_move is None or candidate_move in visible_tiles:
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -331,61 +314,55 @@ class LLMMoveStrategy(MoveStrategy):
             )
             if candidate_move is not None:
                 candidate_move = tile_to_coords(candidate_move.group(1))
+                if candidate_move not in visible_tiles:
+                    # Create an ActionData object to store the interaction
+                    action_data = ActionData(
+                        action="move",
+                        prompt=str(move_prompt),
+                        completion=completion.model_dump(),
+                        move=candidate_move,
+                    )
 
-            prompts.append(
-                Prompt(
-                    prompt=move_prompt.to_chat_format(),
-                    full_completion=completion.choices[0].message.content,
-                    extracted_completion=coords_to_tile(candidate_move)
-                    if candidate_move
-                    else None,
-                    occ_tiles=state.board,
-                )
-            )
+                    return candidate_move, action_data
 
-            if candidate_move is not None and candidate_move not in visible_tiles:
-                return candidate_move, CacheData(
-                    message_text=coords_to_tile(candidate_move),
-                    occ_tiles=state.board,
-                    prompts=prompts,
-                )
-
-        return None, CacheData(
-            message_text=None,
-            occ_tiles=state.board,
-            prompts=prompts,
+        # If no valid move found, return None with ActionData
+        action_data = ActionData(
+            action="move",
+            prompt=str(move_prompt),
+            completion=completion.model_dump() if completion else None,
+            move=None,
         )
+        return None, action_data
 
 
 # Example question strategies
 class EIGQuestionStrategy(QuestionStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         spotter,
         rng,
         samples=100,
         k=3,
         use_cot=False,
-        questions_remaining=None,
         n_attempts=3,
     ):
-        self.model_string = model_string
+        super().__init__()
+        self.llm = llm
         self.spotter = spotter
         self.rng = rng
         self.samples = samples
         self.k = k
         self.use_cot = use_cot
-        self.questions_remaining = questions_remaining
-        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.eig_calculator = EIGCalculator(seed=self.rng, samples=self.samples)
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
+        best_action_data = None
 
-        prompts = []
         for _ in range(self.k):
             question_prompt = QuestionPrompt(
                 target_occ_tiles=state,
@@ -398,9 +375,10 @@ class EIGQuestionStrategy(QuestionStrategy):
             )
 
             candidate_question_text = None
+            completion = None
             for _ in range(self.n_attempts):
                 completion = self.client.chat.completions.create(
-                    model=self.model_string,
+                    model=self.llm,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
                 )
@@ -409,61 +387,62 @@ class EIGQuestionStrategy(QuestionStrategy):
                 )
                 if match:
                     candidate_question_text = match.group(1)
-
-                if candidate_question_text is not None:
                     break
+
+            if candidate_question_text is None:
+                continue
+
             candidate_question = Question(text=candidate_question_text)
 
-            # Calculate EIG for this question
-            eig = self.eig_calculator.calculate_eig(
-                candidate_question, state, samples=self.samples
+            # First translate the question
+            code_question = self.spotter.translate(
+                question=candidate_question,
+                occ_tiles=state.board,
+                history=history,
+            )
+
+            # Then calculate EIG
+            eig = self.eig_calculator(code_question, state)
+
+            # Create an ActionData object to store the interaction
+            action_data = ActionData(
+                action="question",
+                prompt=str(question_prompt),
+                completion=completion.model_dump(),
+                question=code_question,
+                eig=eig,
             )
 
             # Update best question if this one has higher EIG
             if eig > best_eig:
                 best_eig = eig
                 best_question = candidate_question
+                best_action_data = action_data
 
-            prompts.append(
-                Prompt(
-                    prompt=question_prompt.to_chat_format(),
-                    full_completion=completion.choices[0].message.content,
-                    extracted_completion=candidate_question,
-                    occ_tiles=state.board,
-                    eig=eig,
-                )
-            )
-
-        return best_question, CacheData(
-            message_text=best_question.text,
-            eig=best_eig,
-            occ_tiles=state.board,
-            prompts=prompts,
-        )
+        return best_question, best_action_data
 
 
 class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         temperature=None,
         use_cot=False,
         spotter=None,
         rng=None,
-        questions_remaining=None,
         n_attempts=3,
     ):
-        self.model_string = model_string
+        super().__init__()
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
-        self.questions_remaining = questions_remaining
         self.n_attempts = n_attempts
         self.spotter = spotter
         self.rng = rng
-        self.eig_calculator = EIGCalculator(seed=self.rng, spotter=self.spotter)
+        self.eig_calculator = EIGCalculator(seed=self.rng)
         self.client = get_openai_client()
 
-    def ask_question(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
             target_occ_tiles=state,
             board_format="grid",
@@ -474,10 +453,10 @@ class LLMQuestionStrategy(QuestionStrategy):
             sunk=sunk,
         )
 
-        prompts = []
+        completion = None
         for _ in range(self.n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=question_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -488,54 +467,54 @@ class LLMQuestionStrategy(QuestionStrategy):
 
             if candidate_question:
                 candidate_question = candidate_question.group(1)
-            else:
-                candidate_question = None
+                question = Question(text=candidate_question)
 
-            prompts.append(
-                Prompt(
-                    prompt=question_prompt.to_chat_format(),
-                    full_completion=completion.choices[0].message.content,
+                # Create an ActionData object to store the interaction
+                action_data = ActionData(
+                    action="question",
+                    prompt=str(question_prompt),
+                    completion=completion.model_dump(),
                     extracted_completion=candidate_question,
-                    occ_tiles=state.board,
+                    question=question,
                 )
-            )
 
-            if candidate_question is not None:
-                break
+                return question, action_data
 
-        eig = self.eig_calculator.calculate_eig(
-            Question(text=candidate_question), state, samples=1000
+        # If no valid question found, return None with ActionData
+        action_data = ActionData(
+            action="question",
+            prompt=str(question_prompt),
+            completion=completion.model_dump() if completion else None,
+            extracted_completion=None,
+            question=None,
         )
-
-        return Question(text=candidate_question), CacheData(
-            message_text=candidate_question,
-            occ_tiles=state.board,
-            prompts=prompts,
-            eig=eig,
-        )
+        return None, action_data
 
 
 def create_captain(
     captain_type,
     seed,
-    model,
-    use_cache,
+    llm,
+    board_id,
     map_samples=None,
     prob_q_prob=None,
     eig_samples=None,
     eig_k=None,
+    json_path=None,
+    completions_dir=None,
 ):
     """
     Factory function to create Captain instances with properly configured strategies.
     """
-    from battleship.spotters import CodeSpotterModel
+    from battleship.spotters import create_spotter
 
     # Initialize spotter for EIG captains
     def _get_spotter():
-        return CodeSpotterModel(
-            board_id="B01",
+        return create_spotter(
+            spotter_type="CodeSpotterModel",
+            board_id=board_id,
             board_experiment="collaborative",
-            model_string=model,
+            llm=llm,
             temperature=None,
             use_cot=True,
         )
@@ -546,31 +525,36 @@ def create_captain(
             move_strategy=RandomMoveStrategy(rng=np.random.default_rng(seed)),
             question_strategy=None,
             seed=seed,
-            use_cache=use_cache,
-            round_id=None,
+            json_path=json_path,
         )
 
     elif captain_type == "MAPCaptain":
         return Captain(
             decision_strategy=AlwaysMoveDecisionStrategy(),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=map_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=map_samples,
             ),
             question_strategy=None,
             seed=seed,
-            use_cache=use_cache,
-            round_id=None,
+            json_path=json_path,
         )
 
     elif captain_type == "ProbabilisticCaptain":
         captain = Captain(
             decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
-            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
-            question_strategy=LLMQuestionStrategy(model_string=model, use_cot=False),
+            move_strategy=LLMMoveStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
+            question_strategy=LLMQuestionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
@@ -578,61 +562,75 @@ def create_captain(
         captain = Captain(
             decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
             move_strategy=LLMMoveStrategy(
-                model_string=model, use_cot=True, client=None
+                llm=llm,
+                use_cot=True,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model, use_cot=True, client=None
+                llm=llm,
+                use_cot=True,
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "LLMDecisionCaptain":
         captain = Captain(
-            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "LLMDecisionCaptain_cot":
         captain = Captain(
-            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
-            move_strategy=LLMMoveStrategy(model_string=model, use_cot=True),
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=True,
+            ),
+            move_strategy=LLMMoveStrategy(
+                llm=llm,
+                use_cot=True,
+            ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "EIGCaptain":
         captain = Captain(
-            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
-            move_strategy=LLMMoveStrategy(model_string=model, use_cot=False),
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
+            move_strategy=LLMMoveStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -640,22 +638,23 @@ def create_captain(
                 use_cot=False,
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "EIGCaptain_cot":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model, use_cot=True, client=None
+                llm=llm,
+                use_cot=True,
             ),
             move_strategy=LLMMoveStrategy(
-                model_string=model, use_cot=True, client=None
+                llm=llm,
+                use_cot=True,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -663,20 +662,24 @@ def create_captain(
                 use_cot=True,
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "MAPEIGCaptain":
         captain = Captain(
-            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=False),
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -684,20 +687,24 @@ def create_captain(
                 use_cot=False,
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
     elif captain_type == "MAPEIGCaptain_cot":
         captain = Captain(
-            decision_strategy=LLMDecisionStrategy(model_string=model, use_cot=True),
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=True,
+            ),
             move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed), n_samples=eig_samples
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -705,9 +712,8 @@ def create_captain(
                 use_cot=True,
             ),
             seed=seed,
-            model_string=model,
-            use_cache=use_cache,
-            round_id=None,
+            llm=llm,
+            json_path=json_path,
         )
         return captain
 
