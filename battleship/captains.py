@@ -240,7 +240,7 @@ class MAPMoveStrategy(MoveStrategy):
             true_board = Board.from_trial_id(trial_id=self.board_id).to_numpy()
 
             posterior = sampler.constrained_posterior(
-                ground_truth=true_board,
+                true_board=true_board,
                 n_samples=self.n_samples,
                 normalize=False,
                 constraints=constraints,
