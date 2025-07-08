@@ -42,7 +42,7 @@ class SpotterBenchmarkConfig:
     """Configuration for spotter benchmark experiments."""
 
     spotter_type: str
-    model_string: str
+    llm: str
     temperature: Optional[float]
     use_history: bool
     use_cot: bool
@@ -54,7 +54,7 @@ class SpotterBenchmarkConfig:
 
     def __post_init__(self):
         if self.experiment_name is None:
-            safe_model = self.model_string.replace("/", "-")
+            safe_model = self.llm.replace("/", "-")
             self.experiment_name = (
                 f"{safe_model}_{self.spotter_type}{'_cot' if self.use_cot else ''}"
             )
@@ -290,7 +290,7 @@ def run_single_question(
         spotter_type=config.spotter_type,
         board_id=context.board_id,
         board_experiment="collaborative",
-        model_string=config.model_string,
+        llm=config.llm,
         temperature=config.temperature,
         use_cot=config.use_cot,
         json_path=json_path,
@@ -317,7 +317,7 @@ def run_single_question(
 
     # Create result summary with parsed values
     result_summary = {
-        "model": config.model_string,
+        "llm": config.llm,
         "use_cot": bool(config.use_cot),
         "spotter_type": config.spotter_type,
         "round_id": str(context.round_id),
@@ -383,7 +383,7 @@ def run_single_experiment(
             tqdm(
                 executor.map(process_wrapper, all_contexts),
                 total=len(all_contexts),
-                desc=f"Processing {config.spotter_type} with {config.model_string}",
+                desc=f"Processing {config.spotter_type} with {config.llm}",
             )
         )
 
@@ -414,7 +414,7 @@ def run_all_experiments(
             for cot_option in cot_options:
                 config = SpotterBenchmarkConfig(
                     spotter_type=spotter,
-                    model_string=llm,
+                    llm=llm,
                     temperature=temperature,
                     use_history=use_history,
                     use_cot=cot_option,
@@ -472,7 +472,7 @@ def main():
     all_results = run_all_experiments(
         df=df,
         rounds_questions_dict=rounds_questions_dict,
-        language_models=args.models,
+        language_models=args.llms,
         spotter_models=args.spotter_models,
         cot_options=args.cot_options,
         max_rounds=args.max_rounds,
@@ -494,7 +494,7 @@ def main():
         "experiment_dir": str(experiment_dir),
         "total_results": len(all_results),
         "experiment_args": vars(args),
-        "experiments_run": len(args.models)
+        "experiments_run": len(args.llms)
         * len(args.spotter_models)
         * len(args.cot_options),
     }
@@ -534,7 +534,7 @@ def parse_arguments():
         help="Path to the rounds CSV file containing round data.",
     )
     parser.add_argument(
-        "--models",
+        "--llms",
         type=str,
         nargs="+",
         default=["gpt-4o-mini"],

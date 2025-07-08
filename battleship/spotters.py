@@ -28,7 +28,7 @@ class Spotter(Agent):
         board_id,
         board_experiment,
         answer_strategy=None,
-        model_string="gpt-4o",
+        llm="gpt-4o-mini",
         temperature=None,
         use_cot=False,
         json_path=None,
@@ -41,7 +41,7 @@ class Spotter(Agent):
 
         super().__init__(
             seed=None,
-            model_string=model_string,
+            llm=llm,
             use_cot=use_cot,
             json_path=json_path,
         )
@@ -84,14 +84,14 @@ class DirectAnswerStrategy(AnswerStrategy):
         self,
         board_id,
         board_experiment,
-        model_string="gpt-4o",
+        llm="gpt-4o-mini",
         temperature=None,
         use_cot=False,
     ):
         super().__init__()
         self.board_id = board_id
         self.board_experiment = board_experiment
-        self.model_string = model_string
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.client = get_openai_client()
@@ -119,7 +119,7 @@ class DirectAnswerStrategy(AnswerStrategy):
         completion = None
         for attempt in range(n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -160,14 +160,14 @@ class CodeAnswerStrategy(AnswerStrategy):
         self,
         board_id,
         board_experiment,
-        model_string="gpt-4o",
+        llm="gpt-4o-mini",
         temperature=None,
         use_cot=False,
     ):
         super().__init__()
         self.board_id = board_id
         self.board_experiment = board_experiment
-        self.model_string = model_string
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.client = get_openai_client()
@@ -194,7 +194,7 @@ class CodeAnswerStrategy(AnswerStrategy):
         # Generate code using the translation prompt
         for attempt in range(n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=translation_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -283,7 +283,7 @@ class DirectSpotterModel(Spotter):
             "board_experiment": args[1]
             if len(args) > 1
             else kwargs.get("board_experiment"),
-            "model_string": kwargs.get("model_string", "gpt-4o"),
+            "llm": kwargs.get("llm", "gpt-4o-mini"),
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
         }
@@ -302,7 +302,7 @@ class CodeSpotterModel(Spotter):
             "board_experiment": args[1]
             if len(args) > 1
             else kwargs.get("board_experiment"),
-            "model_string": kwargs.get("model_string", "gpt-4o"),
+            "llm": kwargs.get("llm", "gpt-4o-mini"),
             "temperature": kwargs.get("temperature"),
             "use_cot": kwargs.get("use_cot", False),
         }
@@ -315,7 +315,7 @@ def create_spotter(
     spotter_type,
     board_id,
     board_experiment,
-    model_string="gpt-4o",
+    llm="gpt-4o-mini",
     temperature=None,
     use_cot=False,
     json_path=None,
@@ -328,7 +328,7 @@ def create_spotter(
         answer_strategy = DirectAnswerStrategy(
             board_id=board_id,
             board_experiment=board_experiment,
-            model_string=model_string,
+            llm=llm,
             temperature=temperature,
             use_cot=use_cot,
         )
@@ -336,7 +336,7 @@ def create_spotter(
         answer_strategy = CodeAnswerStrategy(
             board_id=board_id,
             board_experiment=board_experiment,
-            model_string=model_string,
+            llm=llm,
             temperature=temperature,
             use_cot=use_cot,
         )
@@ -347,7 +347,7 @@ def create_spotter(
         board_id=board_id,
         board_experiment=board_experiment,
         answer_strategy=answer_strategy,
-        model_string=model_string,
+        llm=llm,
         temperature=temperature,
         use_cot=use_cot,
         json_path=json_path,

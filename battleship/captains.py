@@ -31,13 +31,13 @@ class Captain(Agent):
         move_strategy=None,
         question_strategy=None,
         seed: int = None,
-        model_string=None,
+        llm=None,
         temperature=None,
         json_path=None,
     ):
         super().__init__(
             seed=seed,
-            model_string=model_string,
+            llm=llm,
             json_path=json_path,
         )
         self.temperature = temperature
@@ -141,12 +141,12 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
 class LLMDecisionStrategy(DecisionStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         temperature=None,
         use_cot=False,
     ):
         super().__init__()
-        self.model_string = model_string
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.client = get_openai_client()
@@ -169,7 +169,7 @@ class LLMDecisionStrategy(DecisionStrategy):
             completion = None
             for _ in range(n_attempts):
                 completion = self.client.chat.completions.create(
-                    model=self.model_string,
+                    model=self.llm,
                     messages=decision_prompt.to_chat_format(),
                     temperature=self.temperature,
                 )
@@ -274,13 +274,13 @@ class MAPMoveStrategy(MoveStrategy):
 class LLMMoveStrategy(MoveStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         temperature=None,
         use_cot=False,
         n_attempts=3,
     ):
         super().__init__()
-        self.model_string = model_string
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.n_attempts = n_attempts
@@ -304,7 +304,7 @@ class LLMMoveStrategy(MoveStrategy):
         completion = None
         for _ in range(self.n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=move_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -339,7 +339,7 @@ class LLMMoveStrategy(MoveStrategy):
 class EIGQuestionStrategy(QuestionStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         spotter,
         rng,
         samples=100,
@@ -348,7 +348,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         n_attempts=3,
     ):
         super().__init__()
-        self.model_string = model_string
+        self.llm = llm
         self.spotter = spotter
         self.rng = rng
         self.samples = samples
@@ -378,7 +378,7 @@ class EIGQuestionStrategy(QuestionStrategy):
             completion = None
             for _ in range(self.n_attempts):
                 completion = self.client.chat.completions.create(
-                    model=self.model_string,
+                    model=self.llm,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
                 )
@@ -425,7 +425,7 @@ class EIGQuestionStrategy(QuestionStrategy):
 class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
         self,
-        model_string,
+        llm,
         temperature=None,
         use_cot=False,
         spotter=None,
@@ -433,7 +433,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         n_attempts=3,
     ):
         super().__init__()
-        self.model_string = model_string
+        self.llm = llm
         self.temperature = temperature
         self.use_cot = use_cot
         self.n_attempts = n_attempts
@@ -456,7 +456,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         completion = None
         for _ in range(self.n_attempts):
             completion = self.client.chat.completions.create(
-                model=self.model_string,
+                model=self.llm,
                 messages=question_prompt.to_chat_format(),
                 temperature=self.temperature,
             )
@@ -494,7 +494,7 @@ class LLMQuestionStrategy(QuestionStrategy):
 def create_captain(
     captain_type,
     seed,
-    model,
+    llm,
     board_id,
     map_samples=None,
     prob_q_prob=None,
@@ -514,7 +514,7 @@ def create_captain(
             spotter_type="CodeSpotterModel",
             board_id=board_id,
             board_experiment="collaborative",
-            model_string=model,
+            llm=llm,
             temperature=None,
             use_cot=True,
         )
@@ -545,15 +545,15 @@ def create_captain(
         captain = Captain(
             decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -562,15 +562,15 @@ def create_captain(
         captain = Captain(
             decision_strategy=ProbabilisticDecisionStrategy(q_prob=prob_q_prob),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -578,21 +578,21 @@ def create_captain(
     elif captain_type == "LLMDecisionCaptain":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -600,21 +600,21 @@ def create_captain(
     elif captain_type == "LLMDecisionCaptain_cot":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             question_strategy=LLMQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -622,15 +622,15 @@ def create_captain(
     elif captain_type == "EIGCaptain":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -638,7 +638,7 @@ def create_captain(
                 use_cot=False,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -646,15 +646,15 @@ def create_captain(
     elif captain_type == "EIGCaptain_cot":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             move_strategy=LLMMoveStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -662,7 +662,7 @@ def create_captain(
                 use_cot=True,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -670,7 +670,7 @@ def create_captain(
     elif captain_type == "MAPEIGCaptain":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=False,
             ),
             move_strategy=MAPMoveStrategy(
@@ -679,7 +679,7 @@ def create_captain(
                 n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -687,7 +687,7 @@ def create_captain(
                 use_cot=False,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain
@@ -695,7 +695,7 @@ def create_captain(
     elif captain_type == "MAPEIGCaptain_cot":
         captain = Captain(
             decision_strategy=LLMDecisionStrategy(
-                model_string=model,
+                llm=llm,
                 use_cot=True,
             ),
             move_strategy=MAPMoveStrategy(
@@ -704,7 +704,7 @@ def create_captain(
                 n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
-                model_string=model,
+                llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
@@ -712,7 +712,7 @@ def create_captain(
                 use_cot=True,
             ),
             seed=seed,
-            model_string=model,
+            llm=llm,
             json_path=json_path,
         )
         return captain

@@ -251,6 +251,7 @@ class FastSampler:
 
         # Check constraints and update counts
         for new_board in candidate_boards:
+            # TODO: constraint return type is now Answer, not bool
             board_satisfactions = [
                 constraint(ground_truth, self.board.board)
                 == constraint(new_board, self.board.board)

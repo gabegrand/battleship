@@ -281,13 +281,13 @@ class Agent(ABC):
     def __init__(
         self,
         seed: int = None,
-        model_string: str = None,
+        llm: str = None,
         use_cot: bool = False,
         json_path: str = None,
     ):
         self.use_cot = use_cot
         self.rng = np.random.default_rng(seed)
-        self.model_string = model_string
+        self.llm = llm
         self.json_path = json_path
         self.stage_index = 0
 
@@ -344,9 +344,7 @@ class EIGCalculator:
 
             if answer is None or answer.value is None:
                 # We assume that further answers will also be None
-                logger.warning(
-                    f"CodeQuestion returned None - skipping EIG calculation"
-                )
+                logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
                 break
             elif answer.value is True:
                 results[True] += 1

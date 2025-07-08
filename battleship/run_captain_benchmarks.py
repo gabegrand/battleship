@@ -101,7 +101,8 @@ def run_single_agent_game(args):
         board_id,
         max_questions,
         max_moves,
-        model,
+        captain_llm,
+        spotter_llm,
         experiment_dir,
         map_samples,
         prob_q_prob,
@@ -124,7 +125,7 @@ def run_single_agent_game(args):
     captain = create_captain(
         captain_type=captain_type,
         seed=seed,
-        model=model,
+        llm=captain_llm,
         board_id=board_id,
         map_samples=map_samples,
         prob_q_prob=prob_q_prob,
@@ -137,7 +138,7 @@ def run_single_agent_game(args):
         spotter_type="CodeSpotterModel",
         board_id=board_id,
         board_experiment="collaborative",
-        model_string=model,
+        llm=spotter_llm,
         temperature=None,
         use_cot=True,
         json_path=os.path.join(spotter_dir, "spotter.json"),
@@ -217,6 +218,11 @@ def main():
 
     # Prepare a list of tasks (each tuple corresponds to one game run)
     jobs = []
+    # Determine which models to use
+    if args.captain_llm is None or args.spotter_llm is None:
+        raise ValueError("You must provide both --captain-llm and --spotter-llm flags.")
+    captain_llm = args.captain_llm
+    spotter_llm = args.spotter_llm
     for seed in args.seeds:
         for board_id in args.board_ids:
             for captain_type in args.captains:
@@ -230,7 +236,8 @@ def main():
                         board_id,
                         args.max_questions,
                         args.max_moves,
-                        args.model,
+                        captain_llm,
+                        spotter_llm,
                         experiment_dir,
                         args.map_samples,
                         args.prob_q_prob,
@@ -304,7 +311,12 @@ def parse_arguments():
     )
 
     # Model configuration
-    parser.add_argument("--model", type=str, default="gpt-4o", help="LLM model to use")
+    parser.add_argument(
+        "--captain-llm", type=str, default=None, help="LLM model to use for captain"
+    )
+    parser.add_argument(
+        "--spotter-llm", type=str, default=None, help="LLM model to use for spotter"
+    )
 
     # Experiment settings
     parser.add_argument(
