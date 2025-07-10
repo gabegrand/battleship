@@ -113,7 +113,7 @@ class DirectAnswerStrategy(AnswerStrategy):
             history=history,
             use_cot=self.use_cot,
         )
-        logging.info(str(prompt))
+        logging.debug(str(prompt))
 
         response = None
         completion = None
@@ -136,7 +136,7 @@ class DirectAnswerStrategy(AnswerStrategy):
             if response is not None:
                 break
 
-        logging.info(response)
+        logging.debug(response)
 
         if isinstance(response, str):
             response = response.lower()
@@ -189,7 +189,7 @@ class CodeAnswerStrategy(AnswerStrategy):
             history=history,
             use_cot=self.use_cot,
         )
-        logging.info(str(translation_prompt))
+        logging.debug(str(translation_prompt))
 
         # Generate code using the translation prompt
         for attempt in range(n_attempts):
@@ -200,7 +200,7 @@ class CodeAnswerStrategy(AnswerStrategy):
             )
 
             content = completion.choices[0].message.content
-            logging.info(content)
+            logging.debug(content)
 
             # Extract the code block from the response
             fn_text: str = self.extract_code(content)
@@ -260,7 +260,10 @@ class CodeAnswerStrategy(AnswerStrategy):
         # Create ActionData object
         action_data = ActionData(
             action="answer",
-            prompt="Code translation and execution",  # Could be more detailed
+            prompt=code_question.translation_prompt,
+            completion=code_question.completion.model_dump()
+            if code_question.completion
+            else None,
             question=question,
             answer=answer,
         )

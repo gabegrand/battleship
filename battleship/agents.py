@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import time
 import traceback
@@ -36,7 +37,11 @@ CODE_ANSWER_PATTERN = re.compile("```python(.*?)```", re.DOTALL)
 
 def get_openai_client():
     load_dotenv()
-    return OpenAI()
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.environ["OPENROUTER_API_KEY"],
+    )
+    return client
 
 
 @dataclass
@@ -56,7 +61,6 @@ class ActionData:
 
     prompt: str = None  # The prompt text
     completion: dict = None  # Full completion object as JSON
-    extracted_completion: str = None  # Parsed completion
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -69,7 +73,6 @@ class ActionData:
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
-            "extracted_completion": self.extracted_completion,
             "question": self.question.to_dict() if self.question else None,
             "answer": self.answer.to_dict() if self.answer else None,
             "decision": self.decision,
@@ -100,7 +103,6 @@ class ActionData:
             action=data["action"],
             prompt=data.get("prompt"),
             completion=data.get("completion"),
-            extracted_completion=data.get("extracted_completion"),
             question=(
                 Question.from_dict(data["question"]) if data.get("question") else None
             ),

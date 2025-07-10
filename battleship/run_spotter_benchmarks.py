@@ -306,7 +306,7 @@ def run_single_question(
 
     # Calculate EIG if we have a code question
     eig_value = None
-    if result.code_question:
+    if result is not None and result.code_question:
         try:
             calculator = EIGCalculator(seed=0, samples=config.eig_samples)
             eig_value = calculator(
@@ -323,14 +323,18 @@ def run_single_question(
         "round_id": str(context.round_id),
         "question_id": int(context.question_id),
         "question": context.question_text,
-        "program": result.code_question.fn_str if result.code_question else None,
+        "program": result.code_question.fn_str
+        if result is not None and result.code_question
+        else None,
         "occ_tiles": context.occ_tiles,
-        "answer_text": result.text,
-        "answer_value": result.value,
+        "answer_text": result.text if result is not None else None,
+        "answer_value": result.value if result is not None else None,
         "eig_value": float(eig_value) if eig_value is not None else None,
         "gold_answer_text": context.gold_answer_text,
         "gold_answer_value": context.gold_answer_value,
-        "is_correct": bool(result.value == context.gold_answer_value),
+        "is_correct": bool(result.value == context.gold_answer_value)
+        if result is not None
+        else False,
         "spotter_json": os.path.relpath(json_path, PROJECT_ROOT),
     }
 
@@ -436,6 +440,7 @@ def run_all_experiments(
 
 def main():
     """Main entry point for spotter benchmarks."""
+    start_time = time.time()
     args = parse_arguments()
 
     # Create experiment directory
@@ -509,6 +514,13 @@ def main():
     logging.info(f"- summary.json: {len(all_results)} question results")
     logging.info(f"- metadata.json: experiment configuration")
     logging.info(f"- rounds/: individual spotter.json files with ActionData")
+
+    # Log overall runtime
+    end_time = time.time()
+    total_runtime = end_time - start_time
+    logging.info(
+        f"Overall runtime: {total_runtime:.2f} seconds ({total_runtime/60:.2f} minutes)"
+    )
 
 
 def parse_arguments():
