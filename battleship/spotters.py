@@ -258,10 +258,8 @@ class CodeAnswerStrategy(AnswerStrategy):
         # Create ActionData object
         action_data = ActionData(
             action="answer",
-            prompt=code_question.translation_prompt,
-            completion=code_question.completion.model_dump()
-            if code_question.completion
-            else None,
+            prompt=str(code_question.translation_prompt),
+            completion=code_question.completion,
             question=question,
             answer=answer,
         )
