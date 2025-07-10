@@ -57,7 +57,7 @@ class ActionData:
 
     eig: float = None  # For EIG calculations
     map_prob: float = None  # For MAP calculations
-    occ_tiles: np.ndarray = None  # Board state at time of action
+    board_state: np.ndarray = None  # Board state at time of action
 
     prompt: str = None  # The prompt text
     completion: dict = None  # Full completion object as JSON
@@ -88,9 +88,9 @@ class ActionData:
             "map_prob": (
                 float(self.map_prob) if self.map_prob is not None else None
             ),  # Convert numpy.float64 to Python float
-            "occ_tiles": (
-                self.occ_tiles.astype(int).tolist()
-                if self.occ_tiles is not None
+            "board_state": (
+                self.board_state.astype(int).tolist()
+                if self.board_state is not None
                 else None
             ),  # Convert numpy array to Python list
         }
@@ -112,7 +112,9 @@ class ActionData:
             timestamp=data.get("timestamp"),
             eig=data.get("eig"),
             map_prob=data.get("map_prob"),
-            occ_tiles=np.array(data["occ_tiles"]) if data.get("occ_tiles") else None,
+            board_state=np.array(data["board_state"])
+            if data.get("board_state")
+            else None,
         )
 
 

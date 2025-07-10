@@ -156,7 +156,7 @@ class LLMDecisionStrategy(DecisionStrategy):
     ):
         if questions_remaining > 0:
             decision_prompt = DecisionPrompt(
-                target_occ_tiles=state,
+                board=state,
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
@@ -292,7 +292,7 @@ class LLMMoveStrategy(MoveStrategy):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
         move_prompt = MovePrompt(
-            target_occ_tiles=state,
+            board=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
@@ -365,7 +365,7 @@ class EIGQuestionStrategy(QuestionStrategy):
 
         for _ in range(self.k):
             question_prompt = QuestionPrompt(
-                target_occ_tiles=state,
+                board=state,
                 board_format="grid",
                 history=history,
                 use_cot=self.use_cot,
@@ -397,7 +397,7 @@ class EIGQuestionStrategy(QuestionStrategy):
             # First translate the question
             code_question = self.spotter.translate(
                 question=candidate_question,
-                occ_tiles=state.board,
+                board=state,
                 history=history,
             )
 
@@ -444,7 +444,7 @@ class LLMQuestionStrategy(QuestionStrategy):
 
     def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         question_prompt = QuestionPrompt(
-            target_occ_tiles=state,
+            board=state,
             board_format="grid",
             history=history,
             use_cot=self.use_cot,
@@ -474,7 +474,6 @@ class LLMQuestionStrategy(QuestionStrategy):
                     action="question",
                     prompt=str(question_prompt),
                     completion=completion.model_dump(),
-                    extracted_completion=candidate_question,
                     question=question,
                 )
 
@@ -485,7 +484,6 @@ class LLMQuestionStrategy(QuestionStrategy):
             action="question",
             prompt=str(question_prompt),
             completion=completion.model_dump() if completion else None,
-            extracted_completion=None,
             question=None,
         )
         return None, action_data

@@ -176,13 +176,13 @@ PROMPT_COT = "Please think step-by-step about the task before returning your ans
 
 PROMPT_EXAMPLES = "Here are the past turns in the game so far:\n"
 
-PROMPT_TARGET_BOARD = "Here is the current board:\n"
+PROMPT_BOARD_CURRENT = "Here is the current board:\n"
 
-PROMPT_TARGET_BOARD_CAPTAIN = (
+PROMPT_BOARD_CAPTAIN = (
     "Here is the partial board, which is the view that is visible to the Captain:\n"
 )
 
-PROMPT_TARGET_BOARD_SPOTTER = (
+PROMPT_BOARD_SPOTTER = (
     "Here is the full board, which only you as Spotter have access to:\n"
 )
 
@@ -196,7 +196,7 @@ class SpotterPrompt(BasePrompt):
         self,
         question,
         use_code=False,
-        target_occ_tiles=None,
+        board: Board = None,
         history=None,
         use_cot=False,
         **kwargs,
@@ -206,7 +206,7 @@ class SpotterPrompt(BasePrompt):
         self.history = history
         self.use_code = use_code
         self.use_cot = use_cot
-        self.target_occ_tiles = target_occ_tiles
+        self.board = board
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -217,9 +217,9 @@ class SpotterPrompt(BasePrompt):
 
         # Captain board (partial)
         board_message = ""
-        if self.target_occ_tiles is not None:
-            board_str = str(Board.from_occ_tiles(self.target_occ_tiles).to_numpy())
-            board_message += "\n\n" + PROMPT_TARGET_BOARD_CAPTAIN + board_str
+        if self.board is not None:
+            board_str = str(self.board.to_numpy())
+            board_message += "\n\n" + PROMPT_BOARD_CAPTAIN + board_str
 
         # Spotter board (true)
         board_str = str(
@@ -227,7 +227,7 @@ class SpotterPrompt(BasePrompt):
                 self.target_trial_id, self.target_trial_experiment
             ).to_numpy()
         )
-        board_message += "\n\n" + PROMPT_TARGET_BOARD_SPOTTER + board_str
+        board_message += "\n\n" + PROMPT_BOARD_SPOTTER + board_str
 
         # Task description
         postfix = PROMPT_TASK_BASE_SPOTTER
@@ -298,7 +298,7 @@ class CaptainPrompt(BasePrompt):
 
     def __init__(
         self,
-        target_occ_tiles=None,
+        board=None,
         use_cot=False,
         history=None,
         questions_remaining=None,
@@ -310,7 +310,7 @@ class CaptainPrompt(BasePrompt):
         self.history = history
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-        self.target_occ_tiles = target_occ_tiles
+        self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
 
@@ -325,10 +325,8 @@ class CaptainPrompt(BasePrompt):
         messages_prefix = self.get_prompt_prefix()
 
         # Board state
-        board_str = (
-            str(self.target_occ_tiles.to_numpy()) if self.target_occ_tiles else ""
-        )
-        board_message = "\n\n" + PROMPT_TARGET_BOARD + board_str
+        board_str = str(self.board.to_numpy()) if self.board else ""
+        board_message = "\n\n" + PROMPT_BOARD_CURRENT + board_str
 
         # Task description
         postfix = PROMPT_SYSTEM_CAPTAIN + "\n\n" + self.task_prompt
@@ -374,7 +372,7 @@ class CaptainPrompt(BasePrompt):
 
         # # Board state
         # board_str = (
-        #     str(self.target_occ_tiles.to_numpy()) if self.target_occ_tiles else ""
+        #     str(self.board.to_numpy()) if self.board else ""
         # )
         # system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
 
@@ -394,7 +392,7 @@ class DecisionPrompt(CaptainPrompt):
 
     def __init__(
         self,
-        target_occ_tiles=None,
+        board=None,
         use_cot=False,
         history=None,
         questions_remaining=None,
@@ -406,7 +404,7 @@ class DecisionPrompt(CaptainPrompt):
         self.history = history
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-        self.target_occ_tiles = target_occ_tiles
+        self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
 
@@ -421,7 +419,7 @@ class MovePrompt(CaptainPrompt):
 
     def __init__(
         self,
-        target_occ_tiles=None,
+        board=None,
         use_cot=False,
         history=None,
         questions_remaining=None,
@@ -433,7 +431,7 @@ class MovePrompt(CaptainPrompt):
         self.history = history
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-        self.target_occ_tiles = target_occ_tiles
+        self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
 
@@ -448,7 +446,7 @@ class QuestionPrompt(CaptainPrompt):
 
     def __init__(
         self,
-        target_occ_tiles=None,
+        board=None,
         use_cot=False,
         history=None,
         questions_remaining=None,
@@ -460,7 +458,7 @@ class QuestionPrompt(CaptainPrompt):
         self.history = history
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
-        self.target_occ_tiles = target_occ_tiles
+        self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
 

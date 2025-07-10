@@ -130,9 +130,7 @@ class BattleshipGame:
                 questions_remaining=self.max_questions - self.question_count,
                 moves_remaining=self.max_moves - self.move_count,
             )
-            a = self.spotter.answer(
-                question=q, occ_tiles=self.state.board, history=self.history
-            )
+            a = self.spotter.answer(question=q, board=self.state, history=self.history)
 
             if a is not None:
                 if a.code_question is not None:
@@ -165,7 +163,9 @@ class BattleshipGame:
                 {
                     "stage": self.stage_index,
                     "decision": Decision.MOVE,
-                    "coords": tuple(int(x) for x in coords) if coords is not None else None,
+                    "coords": tuple(int(x) for x in coords)
+                    if coords is not None
+                    else None,
                     "state": self.state.board.tolist(),
                 }
             )

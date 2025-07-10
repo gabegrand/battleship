@@ -68,7 +68,7 @@ class QuestionContext:
     board_id: str
     gold_answer_text: str
     gold_answer_value: Optional[bool]
-    occ_tiles: str
+    board_state: str
     gold_annotations: Dict[str, bool]
     history: List[Dict[str, str]]
     round_id: str
@@ -260,7 +260,7 @@ def extract_question_context(
         board_id=question_board_id,
         gold_answer_text=ground_truth_answer,
         gold_answer_value=Answer.parse(ground_truth_answer),
-        occ_tiles=question_captain_board,
+        board_state=question_captain_board,
         gold_annotations=gold_annotations,
         history=history,
         round_id=round_id,
@@ -300,7 +300,7 @@ def run_single_question(
     question = Question(text=context.question_text)
     result = spotter_model.answer(
         question,
-        occ_tiles=Board.from_occ_tiles(context.occ_tiles).to_numpy(),
+        board=Board.from_occ_tiles(context.board_state),
         history=context.history if config.use_history else None,
     )
 
@@ -310,7 +310,7 @@ def run_single_question(
         try:
             calculator = EIGCalculator(seed=0, samples=config.eig_samples)
             eig_value = calculator(
-                result.code_question, Board.from_occ_tiles(context.occ_tiles)
+                result.code_question, Board.from_occ_tiles(context.board_state)
             )
         except Exception as e:
             logging.warning(f"Failed to calculate EIG: {e}")
@@ -326,7 +326,7 @@ def run_single_question(
         "program": result.code_question.fn_str
         if result is not None and result.code_question
         else None,
-        "occ_tiles": context.occ_tiles,
+        "board_state": context.board_state,
         "answer_text": result.text if result is not None else None,
         "answer_value": result.value if result is not None else None,
         "eig_value": float(eig_value) if eig_value is not None else None,

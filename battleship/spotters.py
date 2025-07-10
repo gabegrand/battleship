@@ -3,8 +3,6 @@ import traceback
 from typing import List
 from typing import Tuple
 
-import numpy as np
-
 from battleship.agents import ActionData
 from battleship.agents import Agent
 from battleship.agents import Answer
@@ -47,11 +45,11 @@ class Spotter(Agent):
         )
 
     def answer(
-        self, question: Question, occ_tiles: np.ndarray, history: List[dict] = None
+        self, question: Question, board: Board, history: List[dict] = None
     ) -> Answer:
         answer, action_data = self.answer_strategy(
             question=question,
-            occ_tiles=occ_tiles,
+            board=board,
             history=history,
         )
 
@@ -63,11 +61,11 @@ class Spotter(Agent):
     def translate(
         self,
         question: Question,
-        occ_tiles: np.ndarray,
+        board: Board,
         history: List[dict],
     ) -> CodeQuestion:
         if hasattr(self.answer_strategy, "translate"):
-            return self.answer_strategy.translate(question, occ_tiles, history)
+            return self.answer_strategy.translate(question, board, history)
         else:
             raise NotImplementedError(
                 f"Spotter {self.__class__.__name__} does not have a translate method."
@@ -99,14 +97,14 @@ class DirectAnswerStrategy(AnswerStrategy):
     def __call__(
         self,
         question: Question,
-        occ_tiles: np.ndarray,
+        board: Board,
         history: List[dict] = None,
         n_attempts=10,
     ) -> Tuple[Answer, ActionData]:
         prompt = SpotterPrompt(
             target_trial_id=self.board_id,
             target_trial_experiment=self.board_experiment,
-            target_occ_tiles=occ_tiles,
+            board=board,
             board_format="grid",
             question=question,
             use_code=False,
@@ -175,14 +173,14 @@ class CodeAnswerStrategy(AnswerStrategy):
     def translate(
         self,
         question: Question,
-        occ_tiles: np.ndarray,
+        board: Board,
         history: List[dict],
         n_attempts: int = 10,
     ) -> CodeQuestion:
         translation_prompt = SpotterPrompt(
             target_trial_id=self.board_id,
             target_trial_experiment=self.board_experiment,
-            target_occ_tiles=occ_tiles,
+            board=board,
             board_format="grid",
             question=question,
             use_code=True,
@@ -240,12 +238,12 @@ class CodeAnswerStrategy(AnswerStrategy):
     def __call__(
         self,
         question: Question,
-        occ_tiles: np.ndarray,
+        board: Board,
         history: List[dict],
     ) -> Tuple[Answer, ActionData]:
         code_question = self.translate(
             question,
-            occ_tiles=occ_tiles,
+            board=board,
             history=history,
         )
 
@@ -253,7 +251,7 @@ class CodeAnswerStrategy(AnswerStrategy):
             trial_id=self.board_id, experiment=self.board_experiment
         ).to_numpy()
 
-        partial_board = occ_tiles.copy()
+        partial_board = board.to_numpy()
 
         answer = code_question(true_board=true_board, partial_board=partial_board)
 

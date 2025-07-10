@@ -8,6 +8,7 @@ from battleship.game import Decision
 # Forward declarations to avoid circular imports
 if TYPE_CHECKING:
     from battleship.agents import ActionData, Question, Answer
+    from battleship.board import Board
 
 
 class BaseStrategy(ABC):
@@ -42,6 +43,6 @@ class QuestionStrategy(BaseStrategy):
 class AnswerStrategy(BaseStrategy):
     @abstractmethod
     def __call__(
-        self, question, occ_tiles, history=None
+        self, question, board: "Board", history=None
     ) -> Tuple["Answer", "ActionData"]:
         pass
