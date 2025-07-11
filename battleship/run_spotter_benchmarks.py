@@ -34,6 +34,12 @@ logging.basicConfig(
     ],
 )
 
+# Suppress HTTP request logs from third-party libraries
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 GOLD_ANNOTATIONS = ["discourse", "stateful", "vague", "ambiguous", "unanswerable"]
 
 

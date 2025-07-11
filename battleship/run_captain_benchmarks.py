@@ -17,6 +17,22 @@ from battleship.game import BattleshipGame
 from battleship.spotters import create_spotter
 from battleship.utils import resolve_project_path
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("captain_benchmark.log"),
+        logging.StreamHandler(),
+    ],
+)
+
+# Suppress HTTP request logs from third-party libraries
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+
 
 def create_experiment_dir(root: str = None) -> str:
     """
@@ -193,13 +209,6 @@ def main():
     # Create rounds directory
     rounds_dir = os.path.join(experiment_dir, "rounds")
     os.makedirs(rounds_dir, exist_ok=True)
-
-    # Setup logging
-    logging.basicConfig(
-        filename=os.path.join(experiment_dir, "run.log"),
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-    )
 
     # Resolve paths relative to project root
     gold_annotations_path = resolve_project_path(args.gold_annotations)
