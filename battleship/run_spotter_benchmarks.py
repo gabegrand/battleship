@@ -1,8 +1,22 @@
+"""
+# Start new experiment
+python run_spotter_benchmarks.py --llms gpt-4o-mini --spotter-models CodeSpotterModel
+
+# Resume interrupted experiment
+python run_spotter_benchmarks.py --resume --experiment-dir {EXPERIMENT_DIR}
+
+# Force restart (clear existing results)
+python run_spotter_benchmarks.py --force-restart --experiment-dir {EXPERIMENT_DIR}
+
+# Resume with additional configurations
+python run_spotter_benchmarks.py --resume --experiment-dir {EXPERIMENT_DIR} --llms gpt-4o gpt-4o-mini
+"""
 import argparse
 import concurrent.futures
 import json
 import logging
 import os
+import shutil
 import sys
 import time
 from collections import defaultdict
@@ -10,6 +24,7 @@ from dataclasses import dataclass
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 
 import numpy as np
@@ -278,10 +293,177 @@ def extract_question_context(
     )
 
 
-def run_single_question(
+# ---------------------
+# Resilience Functions
+# ---------------------
+
+
+def save_question_checkpoint(result: Dict, config: SpotterBenchmarkConfig) -> None:
+    """Save a lightweight checkpoint after each question completion."""
+    checkpoint_dir = os.path.join(
+        config.experiment_dir, "checkpoints", config.experiment_name
+    )
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    completed_file = os.path.join(checkpoint_dir, "completed_questions.json")
+
+    # Load existing completed questions
+    try:
+        with open(completed_file, "r") as f:
+            completed = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        completed = []
+
+    # Add new completion
+    completed.append(
+        {
+            "round_id": result["round_id"],
+            "question_id": result["question_id"],
+            "timestamp": time.time(),
+            "is_correct": result["is_correct"],
+        }
+    )
+
+    # Save updated list
+    with open(completed_file, "w") as f:
+        json.dump(completed, f, indent=2)
+
+
+def save_error_checkpoint(
+    context: QuestionContext, config: SpotterBenchmarkConfig, error: Exception
+) -> None:
+    """Save details of failed questions."""
+    checkpoint_dir = os.path.join(
+        config.experiment_dir, "checkpoints", config.experiment_name
+    )
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    error_file = os.path.join(checkpoint_dir, "errors.json")
+
+    try:
+        with open(error_file, "r") as f:
+            errors = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        errors = []
+
+    errors.append(
+        {
+            "round_id": context.round_id,
+            "question_id": context.question_id,
+            "error": str(error),
+            "timestamp": time.time(),
+            "question_text": context.question_text,
+        }
+    )
+
+    with open(error_file, "w") as f:
+        json.dump(errors, f, indent=2)
+
+
+def get_completed_questions(config: SpotterBenchmarkConfig) -> Set[Tuple[str, int]]:
+    """Get set of already completed (round_id, question_id) pairs."""
+    checkpoint_file = os.path.join(
+        config.experiment_dir,
+        "checkpoints",
+        config.experiment_name,
+        "completed_questions.json",
+    )
+
+    try:
+        with open(checkpoint_file, "r") as f:
+            completed = json.load(f)
+        return {(item["round_id"], item["question_id"]) for item in completed}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return set()
+
+
+def save_configuration_results(
+    results: List[Dict], config: SpotterBenchmarkConfig
+) -> None:
+    """Save complete results for a configuration."""
+    results_dir = os.path.join(config.experiment_dir, "results")
+    os.makedirs(results_dir, exist_ok=True)
+
+    results_file = os.path.join(results_dir, f"{config.experiment_name}.json")
+
+    with open(results_file, "w") as f:
+        json.dump(results, f, indent=2)
+
+    logging.info(f"Saved {len(results)} results for {config.experiment_name}")
+
+
+def load_existing_results(config: SpotterBenchmarkConfig) -> List[Dict]:
+    """Load existing results for a configuration if they exist."""
+    results_file = os.path.join(
+        config.experiment_dir, "results", f"{config.experiment_name}.json"
+    )
+
+    try:
+        with open(results_file, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def is_configuration_complete(
+    config: SpotterBenchmarkConfig, total_questions: int
+) -> bool:
+    """Check if a configuration has been fully completed."""
+    results_file = os.path.join(
+        config.experiment_dir, "results", f"{config.experiment_name}.json"
+    )
+
+    if not os.path.exists(results_file):
+        return False
+
+    try:
+        with open(results_file, "r") as f:
+            results = json.load(f)
+        return len(results) >= total_questions
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+
+
+def get_remaining_work(
+    all_contexts: List[Tuple[QuestionContext, SpotterBenchmarkConfig, pd.DataFrame]],
+    config: SpotterBenchmarkConfig,
+) -> List[Tuple[QuestionContext, SpotterBenchmarkConfig, pd.DataFrame]]:
+    """Filter out already completed questions."""
+    completed_questions = get_completed_questions(config)
+
+    remaining = []
+    for context, cfg, round_data in all_contexts:
+        if (context.round_id, context.question_id) not in completed_questions:
+            remaining.append((context, cfg, round_data))
+
+    return remaining
+
+
+def rebuild_summary_from_results(experiment_dir: str) -> List[Dict]:
+    """Rebuild summary.json from individual result files."""
+    results_dir = os.path.join(experiment_dir, "results")
+
+    if not os.path.exists(results_dir):
+        return []
+
+    all_results = []
+    for filename in os.listdir(results_dir):
+        if filename.endswith(".json"):
+            filepath = os.path.join(results_dir, filename)
+            try:
+                with open(filepath, "r") as f:
+                    results = json.load(f)
+                all_results.extend(results)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load results from {filepath}: {e}")
+
+    return all_results
+
+
+def run_single_question_original(
     context: QuestionContext, config: SpotterBenchmarkConfig, round_data: pd.DataFrame
 ) -> Dict:
-    """Process a single question and return results."""
+    """Process a single question and return results (original implementation)."""
 
     # Create round directory structure
     spotter_dir = os.path.join(
@@ -360,22 +542,72 @@ def run_single_question(
     return result_summary
 
 
+# ---------------------
+# Resilient Core Functions
+# ---------------------
+
+
+def run_single_question_wrapper(
+    context: QuestionContext, config: SpotterBenchmarkConfig, round_data: pd.DataFrame
+) -> Optional[Dict]:
+    """Process a single question with error handling and checkpointing."""
+
+    try:
+        # Check if already completed
+        completed = get_completed_questions(config)
+        if (context.round_id, context.question_id) in completed:
+            logging.debug(
+                f"Skipping already completed: round {context.round_id}, question {context.question_id}"
+            )
+            return None
+
+        # Original processing logic
+        result = run_single_question_original(context, config, round_data)
+
+        # Save checkpoint on success
+        save_question_checkpoint(result, config)
+
+        return result
+
+    except Exception as e:
+        logging.error(
+            f"Failed to process round {context.round_id}, question {context.question_id}: {e}"
+        )
+        save_error_checkpoint(context, config, e)
+        return None
+
+
 def run_single_experiment(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
     config: SpotterBenchmarkConfig,
     max_workers: int = None,
 ) -> List[Dict]:
-    """Run benchmark for a single spotter configuration."""
+    """Run benchmark for a single spotter configuration with resume capability."""
 
-    logging.info(f"Running benchmark: {config.experiment_name}")
-
-    # Prepare all questions for processing
-    all_contexts = []
+    # Calculate total questions for this configuration
     round_list = list(rounds_questions_dict.keys())
     if config.max_rounds is not None:
         round_list = round_list[: config.max_rounds]
 
+    total_questions = 0
+    for round_id in round_list:
+        question_ids = sorted(rounds_questions_dict[round_id])
+        if config.max_questions is not None:
+            question_ids = question_ids[: config.max_questions]
+        total_questions += len(question_ids)
+
+    # Check if configuration is already complete
+    if is_configuration_complete(config, total_questions):
+        logging.info(
+            f"Configuration {config.experiment_name} already complete, loading existing results"
+        )
+        return load_existing_results(config)
+
+    logging.info(f"Running/resuming benchmark: {config.experiment_name}")
+
+    # Prepare all questions for processing
+    all_contexts = []
     for round_id in round_list:
         round_data = df[df["roundID"] == round_id]
         question_ids = sorted(rounds_questions_dict[round_id])
@@ -387,23 +619,48 @@ def run_single_experiment(
             context = extract_question_context(question_id, round_data, round_id)
             all_contexts.append((context, config, round_data))
 
+    # Filter out completed work
+    remaining_contexts = get_remaining_work(all_contexts, config)
+
+    if not remaining_contexts:
+        logging.info(f"All work already completed for {config.experiment_name}")
+        return load_existing_results(config)
+
+    logging.info(
+        f"Processing {len(remaining_contexts)} remaining questions out of {len(all_contexts)} total"
+    )
+
     def process_wrapper(args):
         context, config, round_data = args
-        return run_single_question(context, config, round_data)
+        return run_single_question_wrapper(context, config, round_data)
 
+    # Process remaining questions
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         logging.info(f"Running with max {executor._max_workers} worker threads...")
-        # executor.map() preserves order - results will be in same order as all_contexts
-        results = list(
+        new_results = list(
             tqdm(
-                executor.map(process_wrapper, all_contexts),
-                total=len(all_contexts),
+                executor.map(process_wrapper, remaining_contexts),
+                total=len(remaining_contexts),
                 desc=f"Processing {config.spotter_type} with {config.llm}",
             )
         )
 
-    logging.info(f"Completed {len(results)} questions for {config.experiment_name}")
-    return results
+    # Filter out None results (failures/skips)
+    new_results = [r for r in new_results if r is not None]
+
+    # Combine with existing results
+    existing_results = load_existing_results(config)
+    all_results = existing_results + new_results
+
+    # Save complete configuration results
+    save_configuration_results(all_results, config)
+
+    logging.info(
+        f"Completed {len(new_results)} new questions for {config.experiment_name}"
+    )
+    logging.info(f"Total results for configuration: {len(all_results)}")
+
+    return all_results
 
 
 def run_all_experiments(
@@ -420,7 +677,7 @@ def run_all_experiments(
     eig_samples: int = 1000,
     max_workers: int = None,
 ) -> List[Dict]:
-    """Run experiments with all combinations of models and options."""
+    """Run experiments with all combinations, supporting resume from partial completion."""
 
     all_results = []
 
@@ -439,34 +696,58 @@ def run_all_experiments(
                     eig_samples=eig_samples,
                 )
 
-                results = run_single_experiment(
-                    df, rounds_questions_dict, config, max_workers
-                )
-
-                all_results.extend(results)
+                try:
+                    results = run_single_experiment(
+                        df, rounds_questions_dict, config, max_workers
+                    )
+                    all_results.extend(results)
+                except Exception as e:
+                    logging.error(
+                        f"Configuration {config.experiment_name} failed completely: {e}"
+                    )
+                    # Continue with other configurations rather than failing entirely
+                    continue
 
     return all_results
 
 
 def main():
-    """Main entry point for spotter benchmarks."""
+    """Main entry point for resilient spotter benchmarks."""
     start_time = time.time()
     args = parse_arguments()
 
-    # Create experiment directory
-    if args.experiment_dir:
+    # Handle experiment directory creation/resumption
+    if args.resume and args.experiment_dir:
+        experiment_dir = resolve_project_path(args.experiment_dir)
+        if not os.path.exists(experiment_dir):
+            raise ValueError(
+                f"Cannot resume: experiment directory {experiment_dir} does not exist"
+            )
+        logging.info(f"Resuming experiment in {experiment_dir}")
+    elif args.experiment_dir:
         experiment_dir = create_experiment_dir(
             resolve_project_path(args.experiment_dir)
         )
     else:
         experiment_dir = create_experiment_dir()
 
-    # Save the command used to run the script
-    command = " ".join(["python"] + sys.argv)
+    # Clear existing results if force restart
+    if args.force_restart:
+        checkpoints_dir = os.path.join(experiment_dir, "checkpoints")
+        results_dir = os.path.join(experiment_dir, "results")
+        if os.path.exists(checkpoints_dir):
+            shutil.rmtree(checkpoints_dir)
+        if os.path.exists(results_dir):
+            shutil.rmtree(results_dir)
+        logging.info("Cleared existing results due to --force-restart")
+
+    # Save the command used to run the script (only if not resuming or file doesn't exist)
     command_path = os.path.join(experiment_dir, "command.txt")
-    with open(command_path, "w") as f:
-        f.write(command)
-    print(f"Command saved to {command_path}")
+    if not args.resume or not os.path.exists(command_path):
+        command = " ".join(["python"] + sys.argv)
+        with open(command_path, "w") as f:
+            f.write(command)
+        print(f"Command saved to {command_path}")
 
     # Setup logging to experiment directory
     log_handler = logging.FileHandler(os.path.join(experiment_dir, "benchmark.log"))
@@ -475,7 +756,8 @@ def main():
     )
     logging.getLogger().addHandler(log_handler)
 
-    logging.info(f"Starting spotter benchmark experiment in {experiment_dir}")
+    action = "Resuming" if args.resume else "Starting"
+    logging.info(f"{action} spotter benchmark experiment in {experiment_dir}")
 
     # Load data
     df, rounds_questions_dict = load_benchmark_data(
@@ -500,12 +782,16 @@ def main():
         max_workers=args.max_workers,
     )
 
-    # Save results to summary.json (following captain benchmarks pattern)
+    # Rebuild and save final summary from all results
+    final_results = rebuild_summary_from_results(experiment_dir)
+    if final_results:
+        all_results = final_results  # Use rebuilt results if available
+
     summary_path = os.path.join(experiment_dir, "summary.json")
     with open(summary_path, "w") as f:
         json.dump(all_results, f, indent=2)
 
-    # Create metadata file for experiment info
+    # Create/update metadata file for experiment info
     metadata = {
         "experiment_dir": str(experiment_dir),
         "total_results": len(all_results),
@@ -513,6 +799,8 @@ def main():
         "experiments_run": len(args.llms)
         * len(args.spotter_models)
         * len(args.cot_options),
+        "resumed": args.resume,
+        "force_restarted": args.force_restart,
     }
 
     metadata_path = os.path.join(experiment_dir, "metadata.json")
@@ -523,7 +811,8 @@ def main():
     logging.info(f"Results saved to: {experiment_dir}")
     logging.info(f"- summary.json: {len(all_results)} question results")
     logging.info(f"- metadata.json: experiment configuration")
-    logging.info(f"- rounds/: individual spotter.json files with ActionData")
+    logging.info(f"- results/: individual configuration result files")
+    logging.info(f"- checkpoints/: incremental progress checkpoints")
 
     # Log overall runtime
     end_time = time.time()
@@ -621,6 +910,16 @@ def parse_arguments():
         type=int,
         default=None,
         help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from existing experiment directory, skipping completed work",
+    )
+    parser.add_argument(
+        "--force-restart",
+        action="store_true",
+        help="Ignore existing results and restart experiment from scratch",
     )
 
     return parser.parse_args()
