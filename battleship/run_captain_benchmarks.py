@@ -152,11 +152,6 @@ def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
     return data
 
 
-# ---------------------
-# Resilience Functions
-# ---------------------
-
-
 def save_game_checkpoint(result: Dict, config: CaptainBenchmarkConfig) -> None:
     """Save a lightweight checkpoint after each game completion."""
     checkpoint_dir = os.path.join(
@@ -403,11 +398,6 @@ def run_single_agent_game(args):
     }
 
     return summary
-
-
-# ---------------------
-# Resilient Core Functions
-# ---------------------
 
 
 def run_single_agent_game_wrapper(args) -> Optional[Dict]:

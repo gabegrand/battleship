@@ -293,11 +293,6 @@ def extract_question_context(
     )
 
 
-# ---------------------
-# Resilience Functions
-# ---------------------
-
-
 def save_question_checkpoint(result: Dict, config: SpotterBenchmarkConfig) -> None:
     """Save a lightweight checkpoint after each question completion."""
     checkpoint_dir = os.path.join(
@@ -540,11 +535,6 @@ def run_single_question_original(
             result_summary[f"gold_{annotation}"] = None
 
     return result_summary
-
-
-# ---------------------
-# Resilient Core Functions
-# ---------------------
 
 
 def run_single_question_wrapper(
