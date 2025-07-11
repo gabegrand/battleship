@@ -216,10 +216,14 @@ def extract_history_entry(id_actions: pd.DataFrame) -> Optional[Dict[str, str]]:
         example["answer"] = safe_extract_value(
             id_actions, "answer", "messageText", default="Not answered"
         )
+        # Skip entries without valid question data
+        if example["question"] is None or example["answer"] is None:
+            return None
     else:
+        # Skip entries without valid move data
         example["move"] = safe_extract_value(id_actions, "move", "messageText")
         if example["move"] is None:
-            return None  # Skip entries without valid move data
+            return None
 
     return example
 
