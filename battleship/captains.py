@@ -237,7 +237,7 @@ class MAPMoveStrategy(MoveStrategy):
         )
 
         if constraints != []:
-            true_board = Board.from_trial_id(trial_id=self.board_id).to_numpy()
+            true_board = Board.from_trial_id(trial_id=self.board_id)
 
             posterior = sampler.constrained_posterior(
                 true_board=true_board,
