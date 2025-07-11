@@ -67,15 +67,8 @@ logging.basicConfig(
             show_time=True,
             show_path=False,
         ),
-        logging.FileHandler("spotter_benchmark.log", mode="a", encoding="utf-8"),
     ],
     force=True,
-)
-
-# Set a more detailed format for file logging
-file_handler = logging.getLogger().handlers[1]  # FileHandler is second
-file_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 )
 
 # Suppress HTTP request logs from third-party libraries
