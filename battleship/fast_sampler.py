@@ -2,6 +2,7 @@
 
 Author: Gabe Grand (grandg@mit.edu)
 """
+import logging
 from collections import defaultdict
 from enum import StrEnum
 from typing import List
@@ -10,6 +11,9 @@ import numpy as np
 
 from battleship.board import Board
 from battleship.board import BOARD_SYMBOL_MAPPING
+
+
+logger = logging.getLogger(__name__)
 
 
 class Orientation(StrEnum):
@@ -275,13 +279,17 @@ class FastSampler:
                 break
 
         if total_sampled < min_samples:
-            print(f"posterior warning: {total_sampled}/{min_samples} samples collected")
+            logging.warning(
+                f"FastSampler.constrained_posterior(): {total_sampled}/{min_samples} samples collected - defaulting to unconstrained posterior"
+            )
             return self.compute_posterior(n_samples, normalize=normalize)
 
         if normalize:
             return board_counts / total_sampled
 
-        print(f"sampled {n_samples}, {total_sampled}")
+        logging.debug(
+            f"FastSampler.constrained_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
+        )
         return board_counts
 
     def heatmap(self, n_samples: int, **fig_kwargs):
