@@ -68,7 +68,7 @@ class QuestionContext:
     board_id: str
     gold_answer_text: str
     gold_answer_value: Optional[bool]
-    occ_tiles: str
+    board_state: str
     gold_annotations: Dict[str, bool]
     history: List[Dict[str, str]]
     round_id: str
@@ -216,10 +216,14 @@ def extract_history_entry(id_actions: pd.DataFrame) -> Optional[Dict[str, str]]:
         example["answer"] = safe_extract_value(
             id_actions, "answer", "messageText", default="Not answered"
         )
+        # Skip entries without valid question data
+        if example["question"] is None or example["answer"] is None:
+            return None
     else:
+        # Skip entries without valid move data
         example["move"] = safe_extract_value(id_actions, "move", "messageText")
         if example["move"] is None:
-            return None  # Skip entries without valid move data
+            return None
 
     return example
 
@@ -260,7 +264,7 @@ def extract_question_context(
         board_id=question_board_id,
         gold_answer_text=ground_truth_answer,
         gold_answer_value=Answer.parse(ground_truth_answer),
-        occ_tiles=question_captain_board,
+        board_state=question_captain_board,
         gold_annotations=gold_annotations,
         history=history,
         round_id=round_id,
@@ -300,17 +304,17 @@ def run_single_question(
     question = Question(text=context.question_text)
     result = spotter_model.answer(
         question,
-        occ_tiles=Board.from_occ_tiles(context.occ_tiles).to_numpy(),
+        board=Board.from_occ_tiles(context.board_state),
         history=context.history if config.use_history else None,
     )
 
     # Calculate EIG if we have a code question
     eig_value = None
-    if result.code_question:
+    if result is not None and result.code_question:
         try:
             calculator = EIGCalculator(seed=0, samples=config.eig_samples)
             eig_value = calculator(
-                result.code_question, Board.from_occ_tiles(context.occ_tiles)
+                result.code_question, Board.from_occ_tiles(context.board_state)
             )
         except Exception as e:
             logging.warning(f"Failed to calculate EIG: {e}")
@@ -323,14 +327,18 @@ def run_single_question(
         "round_id": str(context.round_id),
         "question_id": int(context.question_id),
         "question": context.question_text,
-        "program": result.code_question.fn_str if result.code_question else None,
-        "occ_tiles": context.occ_tiles,
-        "answer_text": result.text,
-        "answer_value": result.value,
+        "program": result.code_question.fn_str
+        if result is not None and result.code_question
+        else None,
+        "board_state": context.board_state,
+        "answer_text": result.text if result is not None else None,
+        "answer_value": result.value if result is not None else None,
         "eig_value": float(eig_value) if eig_value is not None else None,
         "gold_answer_text": context.gold_answer_text,
         "gold_answer_value": context.gold_answer_value,
-        "is_correct": bool(result.value == context.gold_answer_value),
+        "is_correct": bool(result.value == context.gold_answer_value)
+        if result is not None
+        else False,
         "spotter_json": os.path.relpath(json_path, PROJECT_ROOT),
     }
 
@@ -436,6 +444,7 @@ def run_all_experiments(
 
 def main():
     """Main entry point for spotter benchmarks."""
+    start_time = time.time()
     args = parse_arguments()
 
     # Create experiment directory
@@ -509,6 +518,13 @@ def main():
     logging.info(f"- summary.json: {len(all_results)} question results")
     logging.info(f"- metadata.json: experiment configuration")
     logging.info(f"- rounds/: individual spotter.json files with ActionData")
+
+    # Log overall runtime
+    end_time = time.time()
+    total_runtime = end_time - start_time
+    logging.info(
+        f"Overall runtime: {total_runtime:.2f} seconds ({total_runtime/60:.2f} minutes)"
+    )
 
 
 def parse_arguments():

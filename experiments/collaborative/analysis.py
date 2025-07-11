@@ -13,7 +13,9 @@ from battleship.board import Board
 MODEL_DISPLAY_NAMES = {
     "claude-3-5-haiku-latest": "claude-3.5-haiku",
     "claude-3-7-sonnet-latest": "claude-3.7-sonnet",
+    "anthropic/claude-4-sonnet-20250522": "claude-4-sonnet",
     "deepseek/deepseek-chat-v3-0324": "deepseek-chat-v3",
+    "deepseek/deepseek-r1-0528": "deepseek-r1",
     "meta-llama/llama-3.1-70b-instruct": "llama-3.1-70b-instruct",
     "meta-llama/llama-3.1-405b-instruct": "llama-3.1-405b-instruct",
     "meta-llama/llama-3.3-70b-instruct": "llama-3.3-70b-instruct",
@@ -24,6 +26,8 @@ MODEL_DISPLAY_NAMES = {
     "gpt-4o-mini": "gpt-4o-mini",
     "o3": "o3",
     "o4-mini": "o4-mini",
+    "openai/o4-mini": "o4-mini",
+    "openai/gpt-4o-mini": "gpt-4o-mini",
 }
 
 GOLD_ANSWER_LABEL = "gold_answer_text"

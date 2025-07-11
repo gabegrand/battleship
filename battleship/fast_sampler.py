@@ -2,6 +2,7 @@
 
 Author: Gabe Grand (grandg@mit.edu)
 """
+import logging
 from collections import defaultdict
 from enum import StrEnum
 from typing import List
@@ -10,6 +11,9 @@ import numpy as np
 
 from battleship.board import Board
 from battleship.board import BOARD_SYMBOL_MAPPING
+
+
+logger = logging.getLogger(__name__)
 
 
 class Orientation(StrEnum):
@@ -242,7 +246,7 @@ class FastSampler:
         total_sampled = 0
         active_constraints = constraints.copy()
         true_answers = [
-            code_question(true_board, self.board.board)
+            code_question(true_board.to_numpy(), self.board.board)
             for code_question in active_constraints
         ]
 
@@ -254,28 +258,38 @@ class FastSampler:
 
         # Check constraints and update counts
         for new_board in candidate_boards:
-            # TODO: constraint return type is now Answer, not bool
+            satisfies_constraints = True
+
             for code_question, true_answer in zip(active_constraints, true_answers):
                 # Skip if the true answer or its value is None
                 if true_answer is None or true_answer.value is None:
                     continue
 
                 # Evaluate the new answer and skip if it is None or its value is different from the true answer
-                new_answer = code_question(new_board, self.board.board)
+                new_answer = code_question(new_board.to_numpy(), self.board.board)
                 if new_answer is None or new_answer.value != true_answer.value:
-                    continue
-
-                # Count the board if it satisfies all constraints and break if we have enough samples
-                board_counts += (new_board.board > 0).astype(int)
-                total_sampled += 1
-                if total_sampled >= n_samples:
+                    satisfies_constraints = False
                     break
 
+            if satisfies_constraints:
+                board_counts += (new_board.board > 0).astype(int)
+                total_sampled += 1
+
+            if total_sampled >= n_samples:
+                break
+
         if total_sampled < min_samples:
+            logging.warning(
+                f"FastSampler.constrained_posterior(): {total_sampled}/{min_samples} samples collected - defaulting to unconstrained posterior"
+            )
             return self.compute_posterior(n_samples, normalize=normalize)
 
         if normalize:
             return board_counts / total_sampled
+
+        logging.debug(
+            f"FastSampler.constrained_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
+        )
         return board_counts
 
     def heatmap(self, n_samples: int, **fig_kwargs):
