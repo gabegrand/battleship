@@ -116,6 +116,7 @@ class AlwaysMoveDecisionStrategy(DecisionStrategy):
         action_data = ActionData(
             action="decision",
             decision=Decision.MOVE,
+            board_state=state.to_numpy(),
         )
         return Decision.MOVE, action_data
 
@@ -134,6 +135,7 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
         action_data = ActionData(
             action="decision",
             decision=decision,
+            board_state=state.to_numpy(),
         )
         return decision, action_data
 
@@ -194,6 +196,7 @@ class LLMDecisionStrategy(DecisionStrategy):
             prompt=str(decision_prompt) if decision_prompt else None,
             completion=completion.model_dump() if completion else None,
             decision=decision,
+            board_state=state.to_numpy(),
         )
         return decision, action_data
 
@@ -215,6 +218,7 @@ class RandomMoveStrategy(MoveStrategy):
         action_data = ActionData(
             action="move",
             move=coords,
+            board_state=state.to_numpy(),
         )
         return coords, action_data
 
@@ -267,6 +271,7 @@ class MAPMoveStrategy(MoveStrategy):
             action="move",
             move=move,
             map_prob=float(posterior.max()),
+            board_state=state.to_numpy(),
         )
         return move, action_data
 
@@ -321,6 +326,7 @@ class LLMMoveStrategy(MoveStrategy):
                         prompt=str(move_prompt),
                         completion=completion.model_dump(),
                         move=candidate_move,
+                        board_state=state.to_numpy(),
                     )
 
                     return candidate_move, action_data
@@ -331,6 +337,7 @@ class LLMMoveStrategy(MoveStrategy):
             prompt=str(move_prompt),
             completion=completion.model_dump() if completion else None,
             move=None,
+            board_state=state.to_numpy(),
         )
         return None, action_data
 
@@ -411,6 +418,7 @@ class EIGQuestionStrategy(QuestionStrategy):
                 completion=completion.model_dump(),
                 question=code_question,
                 eig=eig,
+                board_state=state.to_numpy(),
             )
 
             # Update best question if this one has higher EIG
@@ -475,6 +483,7 @@ class LLMQuestionStrategy(QuestionStrategy):
                     prompt=str(question_prompt),
                     completion=completion.model_dump(),
                     question=question,
+                    board_state=state.to_numpy(),
                 )
 
                 return question, action_data
@@ -485,6 +494,7 @@ class LLMQuestionStrategy(QuestionStrategy):
             prompt=str(question_prompt),
             completion=completion.model_dump() if completion else None,
             question=None,
+            board_state=state.to_numpy(),
         )
         return None, action_data
 

@@ -148,6 +148,7 @@ class DirectAnswerStrategy(AnswerStrategy):
             completion=completion.model_dump() if completion else None,
             question=question,
             answer=answer,
+            board_state=board.to_numpy(),
         )
 
         return answer, action_data
@@ -262,6 +263,7 @@ class CodeAnswerStrategy(AnswerStrategy):
             completion=code_question.completion,
             question=question,
             answer=answer,
+            board_state=board.to_numpy(),
         )
 
         return answer, action_data
