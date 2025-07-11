@@ -666,37 +666,85 @@ def run_all_experiments(
     experiment_dir: str = None,
     eig_samples: int = 1000,
     max_workers: int = None,
+    max_config_workers: int = None,
 ) -> List[Dict]:
-    """Run experiments with all combinations, supporting resume from partial completion."""
+    """Run all (LLM, spotter, CoT) configurations.
 
-    all_results = []
+    Two-level parallelism:
+    1. **Configuration level** – controlled by ``max_config_workers`` (NEW).
+    2. **Question level** – existing, controlled by ``max_workers``.
 
+    If ``max_config_workers`` is ``None`` or ``1`` we fall back to the original
+    sequential behaviour so existing scripts continue to work unchanged.
+    """
+
+    # ---------------------------------------------------------------------
+    # 1. Generate all configuration objects up-front
+    # ---------------------------------------------------------------------
+    all_configs: List[SpotterBenchmarkConfig] = []
     for llm in language_models:
         for spotter in spotter_models:
             for cot_option in cot_options:
-                config = SpotterBenchmarkConfig(
-                    spotter_type=spotter,
-                    llm=llm,
-                    temperature=temperature,
-                    use_history=use_history,
-                    use_cot=cot_option,
-                    max_rounds=max_rounds,
-                    max_questions=max_questions,
-                    experiment_dir=experiment_dir,
-                    eig_samples=eig_samples,
+                all_configs.append(
+                    SpotterBenchmarkConfig(
+                        spotter_type=spotter,
+                        llm=llm,
+                        temperature=temperature,
+                        use_history=use_history,
+                        use_cot=cot_option,
+                        max_rounds=max_rounds,
+                        max_questions=max_questions,
+                        experiment_dir=experiment_dir,
+                        eig_samples=eig_samples,
+                    )
                 )
 
-                try:
-                    results = run_single_experiment(
-                        df, rounds_questions_dict, config, max_workers
-                    )
-                    all_results.extend(results)
-                except Exception as e:
-                    logging.error(
-                        f"Configuration {config.experiment_name} failed completely: {e}"
-                    )
-                    # Continue with other configurations rather than failing entirely
-                    continue
+    logging.info(f"Preparing {len(all_configs)} total configurations")
+
+    # ---------------------------------------------------------------------
+    # 2. Helper to run a single configuration (wraps existing logic)
+    # ---------------------------------------------------------------------
+    def _run_config(cfg: SpotterBenchmarkConfig) -> List[Dict]:
+        try:
+            return run_single_experiment(df, rounds_questions_dict, cfg, max_workers)
+        except Exception as exc:
+            logging.error(
+                f"Configuration {cfg.experiment_name} failed completely: {exc}"
+            )
+            return []  # Failure => no results but keep going
+
+    # ---------------------------------------------------------------------
+    # 3. Execute – sequential or parallel
+    # ---------------------------------------------------------------------
+    if max_config_workers is None or max_config_workers == 1:
+        # Original sequential behaviour
+        all_results: List[Dict] = []
+        for cfg in all_configs:
+            all_results.extend(_run_config(cfg))
+        return all_results
+
+    # Parallel execution across configurations
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=max_config_workers
+    ) as executor:
+        logging.info(
+            f"Running configurations in parallel with up to {executor._max_workers} workers"
+        )
+
+        results_iter = executor.map(_run_config, all_configs)
+        # Wrap with tqdm for a simple progress bar
+        results_list = list(
+            tqdm(
+                results_iter,
+                total=len(all_configs),
+                desc="Processing configurations",
+            )
+        )
+
+    # Flatten list-of-lists into a single list of dicts
+    all_results: List[Dict] = []
+    for res in results_list:
+        all_results.extend(res)
 
     return all_results
 
@@ -770,6 +818,7 @@ def main():
         experiment_dir=experiment_dir,
         eig_samples=args.eig_samples,
         max_workers=args.max_workers,
+        max_config_workers=args.max_config_workers,
     )
 
     # Rebuild and save final summary from all results
@@ -900,6 +949,12 @@ def parse_arguments():
         type=int,
         default=None,
         help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
+    )
+    parser.add_argument(
+        "--max-config-workers",
+        type=int,
+        default=None,
+        help="Number of configurations to run in parallel (default: None, run sequentially)",
     )
     parser.add_argument(
         "--resume",
