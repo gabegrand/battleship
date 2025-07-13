@@ -349,7 +349,7 @@ class EIGCalculator:
             if answer is None or answer.value is None:
                 # We assume that further answers will also be None
                 logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
-                break
+                return 0
             elif answer.value is True:
                 results[True] += 1
             elif answer.value is False:
@@ -359,14 +359,21 @@ class EIGCalculator:
                 logger.warning(
                     f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
                 )
-                break
+                return 0
 
         if any(v == 0 for v in results.values()):
             return 0
-
-        return np.log2(self.samples) - sum(
+        
+        eig = np.log2(self.samples) - sum(
             [p / self.samples * np.log2(p) for p in results.values()]
         )
+
+        if eig > 1:
+            logger.warning(
+                f"EIG is greater than 1: {eig}. This might indicate an issue with the sampling or question. {self.samples}, {sum(results.values()), results}"
+            )
+
+        return eig
 
 
 def config_move_regex(size):
