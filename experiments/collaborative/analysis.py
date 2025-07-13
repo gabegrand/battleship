@@ -11,23 +11,22 @@ from battleship.board import Board
 
 
 MODEL_DISPLAY_NAMES = {
-    "claude-3-5-haiku-latest": "claude-3.5-haiku",
-    "claude-3-7-sonnet-latest": "claude-3.7-sonnet",
-    "anthropic/claude-4-sonnet-20250522": "claude-4-sonnet",
+    "anthropic/claude-sonnet-4": "claude-sonnet-4",
+    "anthropic/claude-opus-4": "claude-opus-4",
     "deepseek/deepseek-chat-v3-0324": "deepseek-chat-v3",
     "deepseek/deepseek-r1-0528": "deepseek-r1",
+    "meta-llama/llama-3.1-8b-instruct": "llama-3.1-8b-instruct",
     "meta-llama/llama-3.1-70b-instruct": "llama-3.1-70b-instruct",
     "meta-llama/llama-3.1-405b-instruct": "llama-3.1-405b-instruct",
-    "meta-llama/llama-3.3-70b-instruct": "llama-3.3-70b-instruct",
     "meta-llama/llama-4-maverick": "llama-4-maverick",
     "meta-llama/llama-4-scout": "llama-4-scout",
-    "gpt-4.1": "gpt-4.1",
-    "gpt-4o": "gpt-4o",
-    "gpt-4o-mini": "gpt-4o-mini",
-    "o3": "o3",
-    "o4-mini": "o4-mini",
-    "openai/o4-mini": "o4-mini",
     "openai/gpt-4o-mini": "gpt-4o-mini",
+    "openai/gpt-4o": "gpt-4o",
+    "openai/gpt-4.1-nano": "gpt-4.1-nano",
+    "openai/gpt-4.1-mini": "gpt-4.1-mini",
+    "openai/gpt-4.1": "gpt-4.1",
+    "openai/o3": "o3",
+    "openai/o4-mini": "o4-mini",
 }
 
 GOLD_ANSWER_LABEL = "gold_answer_text"

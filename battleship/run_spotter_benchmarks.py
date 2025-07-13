@@ -29,7 +29,15 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import BarColumn
+from rich.progress import Progress
+from rich.progress import SpinnerColumn
+from rich.progress import TaskProgressColumn
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
+from rich.progress import TimeRemainingColumn
 
 from battleship.agents import Answer
 from battleship.agents import EIGCalculator
@@ -39,14 +47,28 @@ from battleship.spotters import create_spotter
 from battleship.utils import PROJECT_ROOT
 from battleship.utils import resolve_project_path
 
-# Set up logging
+# Rich progress for clean CLI output
+
+# ------------------------------------------------------------------
+# Logging configuration: Use Rich's RichHandler for coordinated console output
+# that works harmoniously with Rich progress displays. Also mirror to file.
+# ------------------------------------------------------------------
+# Create a shared console instance for coordination between logging and progress
+shared_console = Console()
+
+# Use Rich's logging handler to coordinate with Rich progress displays
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(message)s",
     handlers=[
-        logging.FileHandler("spotter_benchmark.log"),
-        logging.StreamHandler(),
+        RichHandler(
+            console=shared_console,
+            rich_tracebacks=True,
+            show_time=True,
+            show_path=False,
+        ),
     ],
+    force=True,
 )
 
 # Suppress HTTP request logs from third-party libraries
@@ -620,20 +642,22 @@ def run_single_experiment(
         f"Processing {len(remaining_contexts)} remaining questions out of {len(all_contexts)} total"
     )
 
+    # progress handled in outer scope; nothing here touches Rich
+
     def process_wrapper(args):
         context, config, round_data = args
         return run_single_question_wrapper(context, config, round_data)
 
-    # Process remaining questions
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        logging.info(f"Running with max {executor._max_workers} worker threads...")
-        new_results = list(
-            tqdm(
-                executor.map(process_wrapper, remaining_contexts),
-                total=len(remaining_contexts),
-                desc=f"Processing {config.spotter_type} with {config.llm}",
-            )
-        )
+    # Just process questions sequentially within each config (no nested thread pool)
+    new_results: List[Dict] = []
+    logging.info(
+        f"Processing {len(remaining_contexts)} questions for {config.experiment_name}"
+    )
+
+    for args in remaining_contexts:
+        res = process_wrapper(args)
+        if res is not None:
+            new_results.append(res)
 
     # Filter out None results (failures/skips)
     new_results = [r for r in new_results if r is not None]
@@ -666,37 +690,183 @@ def run_all_experiments(
     experiment_dir: str = None,
     eig_samples: int = 1000,
     max_workers: int = None,
+    max_config_workers: int = None,
 ) -> List[Dict]:
-    """Run experiments with all combinations, supporting resume from partial completion."""
+    """Run all (LLM, spotter, CoT) configurations.
 
-    all_results = []
+    Two-level parallelism:
+    1. **Configuration level** – controlled by ``max_config_workers`` (NEW).
+    2. **Question level** – existing, controlled by ``max_workers``.
 
+    If ``max_config_workers`` is ``None`` or ``1`` we fall back to the original
+    sequential behaviour so existing scripts continue to work unchanged.
+    """
+
+    # ---------------------------------------------------------------------
+    # 1. Generate all configuration objects up-front
+    # ---------------------------------------------------------------------
+    all_configs: List[SpotterBenchmarkConfig] = []
     for llm in language_models:
         for spotter in spotter_models:
             for cot_option in cot_options:
-                config = SpotterBenchmarkConfig(
-                    spotter_type=spotter,
-                    llm=llm,
-                    temperature=temperature,
-                    use_history=use_history,
-                    use_cot=cot_option,
-                    max_rounds=max_rounds,
-                    max_questions=max_questions,
-                    experiment_dir=experiment_dir,
-                    eig_samples=eig_samples,
+                all_configs.append(
+                    SpotterBenchmarkConfig(
+                        spotter_type=spotter,
+                        llm=llm,
+                        temperature=temperature,
+                        use_history=use_history,
+                        use_cot=cot_option,
+                        max_rounds=max_rounds,
+                        max_questions=max_questions,
+                        experiment_dir=experiment_dir,
+                        eig_samples=eig_samples,
+                    )
                 )
 
-                try:
-                    results = run_single_experiment(
-                        df, rounds_questions_dict, config, max_workers
+    logging.info(f"Preparing {len(all_configs)} total configurations")
+
+    # Build a nice multi-row progress UI: each config gets its own row.
+    progress_columns = [
+        SpinnerColumn(),
+        TextColumn("{task.description}", style="bold"),
+        BarColumn(bar_width=None),
+        TaskProgressColumn(),
+        TimeElapsedColumn(),
+        TimeRemainingColumn(),
+    ]
+
+    # ---------------------------------------------------------------------
+    # 2. Helper to run a single configuration (wraps existing logic)
+    # ---------------------------------------------------------------------
+    # Helper to compute total questions for each configuration
+    def _total_questions(cfg: SpotterBenchmarkConfig) -> int:
+        round_list = list(rounds_questions_dict.keys())
+        if cfg.max_rounds is not None:
+            round_list = round_list[: cfg.max_rounds]
+
+        total = 0
+        for r_id in round_list:
+            q_ids = sorted(rounds_questions_dict[r_id])
+            if cfg.max_questions is not None:
+                q_ids = q_ids[: cfg.max_questions]
+            total += len(q_ids)
+        return total
+
+    def _run_config_with_progress(index_cfg):
+        """Run config and update progress question-by-question."""
+        idx, cfg = index_cfg
+        task_id = task_ids[idx]
+
+        try:
+            # Replicate core logic from run_single_experiment but with progress updates
+            round_list = list(rounds_questions_dict.keys())
+            if cfg.max_rounds is not None:
+                round_list = round_list[: cfg.max_rounds]
+
+            total_questions = 0
+            for round_id in round_list:
+                question_ids = sorted(rounds_questions_dict[round_id])
+                if cfg.max_questions is not None:
+                    question_ids = question_ids[: cfg.max_questions]
+                total_questions += len(question_ids)
+
+            # Check if already complete
+            if is_configuration_complete(cfg, total_questions):
+                results = load_existing_results(cfg)
+                progress.update(task_id, completed=len(results))
+                return results
+
+            logging.info(f"Running/resuming benchmark: {cfg.experiment_name}")
+
+            # Prepare contexts
+            all_contexts = []
+            for round_id in round_list:
+                round_data = df[df["roundID"] == round_id]
+                question_ids = sorted(rounds_questions_dict[round_id])
+                if cfg.max_questions is not None:
+                    question_ids = question_ids[: cfg.max_questions]
+                for question_id in question_ids:
+                    context = extract_question_context(
+                        question_id, round_data, round_id
                     )
-                    all_results.extend(results)
-                except Exception as e:
-                    logging.error(
-                        f"Configuration {config.experiment_name} failed completely: {e}"
-                    )
-                    # Continue with other configurations rather than failing entirely
-                    continue
+                    all_contexts.append((context, cfg, round_data))
+
+            remaining_contexts = get_remaining_work(all_contexts, cfg)
+            if not remaining_contexts:
+                results = load_existing_results(cfg)
+                progress.update(task_id, completed=len(results))
+                return results
+
+            # Process questions one by one with progress updates
+            new_results = []
+            for args in remaining_contexts:
+                context, config, round_data = args
+                res = run_single_question_wrapper(context, config, round_data)
+                if res is not None:
+                    new_results.append(res)
+                # Update progress after each question
+                progress.update(task_id, advance=1)
+
+            # Combine and save results
+            existing_results = load_existing_results(cfg)
+            all_results = existing_results + new_results
+            save_configuration_results(all_results, cfg)
+
+            logging.info(
+                f"Completed {len(new_results)} new questions for {cfg.experiment_name}"
+            )
+            return all_results
+
+        except Exception as exc:
+            logging.error(
+                f"Configuration {cfg.experiment_name} failed completely: {exc}"
+            )
+            return []
+
+    # ---------------------------------------------------------------------
+    # 3. Execute – sequential or parallel
+    # ---------------------------------------------------------------------
+    if max_config_workers is None or max_config_workers == 1:
+        # Sequential behavior - still use Rich progress but no threading
+        with Progress(
+            *progress_columns, transient=False, console=shared_console
+        ) as progress:
+            task_ids: List[int] = [
+                progress.add_task(cfg.experiment_name, total=_total_questions(cfg))
+                for cfg in all_configs
+            ]
+
+            all_results: List[Dict] = []
+            for idx, cfg in enumerate(all_configs):
+                all_results.extend(_run_config_with_progress((idx, cfg)))
+            return all_results
+
+    # Parallel execution across configurations with Rich progress
+    all_results: List[Dict] = []
+
+    with Progress(
+        *progress_columns, transient=False, console=shared_console
+    ) as progress:
+        task_ids: List[int] = [
+            progress.add_task(cfg.experiment_name, total=_total_questions(cfg))
+            for cfg in all_configs
+        ]
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=max_config_workers
+        ) as executor:
+            logging.info(
+                f"Running configurations in parallel with up to {max_config_workers} workers"
+            )
+
+            results_list = list(
+                executor.map(_run_config_with_progress, enumerate(all_configs))
+            )
+
+    # Flatten list-of-lists into a single list of dicts
+    all_results: List[Dict] = []
+    for res in results_list:
+        all_results.extend(res)
 
     return all_results
 
@@ -770,6 +940,7 @@ def main():
         experiment_dir=experiment_dir,
         eig_samples=args.eig_samples,
         max_workers=args.max_workers,
+        max_config_workers=args.max_config_workers,
     )
 
     # Rebuild and save final summary from all results
@@ -900,6 +1071,12 @@ def parse_arguments():
         type=int,
         default=None,
         help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
+    )
+    parser.add_argument(
+        "--max-config-workers",
+        type=int,
+        default=None,
+        help="Number of configurations to run in parallel (default: None, run sequentially)",
     )
     parser.add_argument(
         "--resume",

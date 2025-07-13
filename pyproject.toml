@@ -22,6 +22,7 @@ nltk = "^3.8.1"
 openai = "^1.77.0"
 python-dotenv = "^1.1.0"
 scikit-learn = "^1.6.1"
+rich = "^14.0.0"
 
 [tool.poetry.group.repos.dependencies]
 # expected-information-gain = { path = "./EIG/", develop = true }
