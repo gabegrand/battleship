@@ -1,7 +1,7 @@
 from random import random
 from typing import Dict
 from typing import List
-
+from math import ceil
 import numpy as np
 
 from battleship.agents import ActionData
@@ -353,6 +353,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         k=3,
         use_cot=False,
         n_attempts=3,
+        simultaneous_questions=1,
     ):
         super().__init__()
         self.llm = llm
@@ -363,14 +364,23 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.use_cot = use_cot
         self.eig_calculator = EIGCalculator(seed=self.rng, samples=self.samples)
         self.n_attempts = n_attempts
+        self.simultaneous_questions = simultaneous_questions
         self.client = get_openai_client()
+
+        assert self.simultaneous_questions <= self.k, (
+            "Number of simultaneous questions must be less than or equal to k."
+        )
+        assert self.k % self.simultaneous_questions == 0, (
+            "Number of simultaneous questions must be a multiple of k."
+        )
 
     def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
         best_question = None
         best_eig = -1
         best_action_data = None
 
-        for _ in range(self.k):
+        batches = self.k // self.simultaneous_questions
+        for _ in range(batches):
             question_prompt = QuestionPrompt(
                 board=state,
                 board_format="grid",
@@ -379,53 +389,56 @@ class EIGQuestionStrategy(QuestionStrategy):
                 questions_remaining=questions_remaining,
                 moves_remaining=moves_remaining,
                 sunk=sunk,
+                n_questions=self.simultaneous_questions,
             )
 
             candidate_question_text = None
             completion = None
-            for _ in range(self.n_attempts):
+            for a in range(self.n_attempts):
                 completion = self.client.chat.completions.create(
                     model=self.llm,
                     messages=question_prompt.to_chat_format(),
                     temperature=None,
                 )
-                match = ANSWER_MATCH_PATTERN.search(
+                matches = [match_tuple[0] for match_tuple in ANSWER_MATCH_PATTERN.findall(
                     completion.choices[0].message.content
-                )
-                if match:
-                    candidate_question_text = match.group(1)
-                    break
+                )]
+                if len(matches) != self.simultaneous_questions:
+                    continue
 
-            if candidate_question_text is None:
-                continue
+                for candidate_question_text in matches:
+                    if candidate_question_text is None:
+                        continue
 
-            candidate_question = Question(text=candidate_question_text)
+                    candidate_question = Question(text=candidate_question_text)
 
-            # First translate the question
-            code_question = self.spotter.translate(
-                question=candidate_question,
-                board=state,
-                history=history,
-            )
+                    # First translate the question
+                    code_question = self.spotter.translate(
+                        question=candidate_question,
+                        board=state,
+                        history=history,
+                    )
 
-            # Then calculate EIG
-            eig = self.eig_calculator(code_question, state)
+                    # Then calculate EIG
+                    eig = self.eig_calculator(code_question, state)
 
-            # Create an ActionData object to store the interaction
-            action_data = ActionData(
-                action="question",
-                prompt=str(question_prompt),
-                completion=completion.model_dump(),
-                question=code_question,
-                eig=eig,
-                board_state=state.to_numpy(),
-            )
+                    # Create an ActionData object to store the interaction
+                    action_data = ActionData(
+                        action="question",
+                        prompt=str(question_prompt),
+                        completion=completion.model_dump(),
+                        question=code_question,
+                        eig=eig,
+                        board_state=state.to_numpy(),
+                    )
 
-            # Update best question if this one has higher EIG
-            if eig > best_eig:
-                best_eig = eig
-                best_question = candidate_question
-                best_action_data = action_data
+                    # Update best question if this one has higher EIG
+                    if eig > best_eig:
+                        best_eig = eig
+                        best_question = candidate_question
+                        best_action_data = action_data
+                
+                break
 
         return best_question, best_action_data
 
@@ -508,6 +521,7 @@ def create_captain(
     prob_q_prob=None,
     eig_samples=None,
     eig_k=None,
+    eig_simultaneous_questions=None,
     json_path=None,
     completions_dir=None,
 ):
@@ -643,6 +657,7 @@ def create_captain(
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
                 k=eig_k,
+                simultaneous_questions=eig_simultaneous_questions,
                 use_cot=False,
             ),
             seed=seed,
@@ -667,6 +682,7 @@ def create_captain(
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
                 k=eig_k,
+                simultaneous_questions=eig_simultaneous_questions,
                 use_cot=True,
             ),
             seed=seed,
@@ -692,6 +708,7 @@ def create_captain(
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
                 k=eig_k,
+                simultaneous_questions=eig_simultaneous_questions,
                 use_cot=False,
             ),
             seed=seed,
@@ -717,6 +734,7 @@ def create_captain(
                 rng=np.random.default_rng(seed),
                 samples=eig_samples,
                 k=eig_k,
+                simultaneous_questions=eig_simultaneous_questions,
                 use_cot=True,
             ),
             seed=seed,
