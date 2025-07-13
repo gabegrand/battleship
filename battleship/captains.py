@@ -394,7 +394,7 @@ class EIGQuestionStrategy(QuestionStrategy):
 
             candidate_question_text = None
             completion = None
-            for a in range(self.n_attempts):
+            for _ in range(self.n_attempts):
                 completion = self.client.chat.completions.create(
                     model=self.llm,
                     messages=question_prompt.to_chat_format(),
