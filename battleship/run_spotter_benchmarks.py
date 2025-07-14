@@ -310,8 +310,8 @@ def extract_question_context(
         board_state=question_captain_board,
         gold_annotations=gold_annotations,
         history=history,
-        round_id=round_id,
-        question_id=question_id,
+        round_id=str(round_id),
+        question_id=int(question_id),
     )
 
 
@@ -589,94 +589,6 @@ def run_single_question_wrapper(
         return None
 
 
-def run_single_experiment(
-    df: pd.DataFrame,
-    rounds_questions_dict: Dict[str, List[int]],
-    config: SpotterBenchmarkConfig,
-    max_workers: int = None,
-) -> List[Dict]:
-    """Run benchmark for a single spotter configuration with resume capability."""
-
-    # Calculate total questions for this configuration
-    round_list = list(rounds_questions_dict.keys())
-    if config.max_rounds is not None:
-        round_list = round_list[: config.max_rounds]
-
-    total_questions = 0
-    for round_id in round_list:
-        question_ids = sorted(rounds_questions_dict[round_id])
-        if config.max_questions is not None:
-            question_ids = question_ids[: config.max_questions]
-        total_questions += len(question_ids)
-
-    # Check if configuration is already complete
-    if is_configuration_complete(config, total_questions):
-        logging.info(
-            f"Configuration {config.experiment_name} already complete, loading existing results"
-        )
-        return load_existing_results(config)
-
-    logging.info(f"Running/resuming benchmark: {config.experiment_name}")
-
-    # Prepare all questions for processing
-    all_contexts = []
-    for round_id in round_list:
-        round_data = df[df["roundID"] == round_id]
-        question_ids = sorted(rounds_questions_dict[round_id])
-
-        if config.max_questions is not None:
-            question_ids = question_ids[: config.max_questions]
-
-        for question_id in question_ids:
-            context = extract_question_context(question_id, round_data, round_id)
-            all_contexts.append((context, config, round_data))
-
-    # Filter out completed work
-    remaining_contexts = get_remaining_work(all_contexts, config)
-
-    if not remaining_contexts:
-        logging.info(f"All work already completed for {config.experiment_name}")
-        return load_existing_results(config)
-
-    logging.info(
-        f"Processing {len(remaining_contexts)} remaining questions out of {len(all_contexts)} total"
-    )
-
-    # progress handled in outer scope; nothing here touches Rich
-
-    def process_wrapper(args):
-        context, config, round_data = args
-        return run_single_question_wrapper(context, config, round_data)
-
-    # Just process questions sequentially within each config (no nested thread pool)
-    new_results: List[Dict] = []
-    logging.info(
-        f"Processing {len(remaining_contexts)} questions for {config.experiment_name}"
-    )
-
-    for args in remaining_contexts:
-        res = process_wrapper(args)
-        if res is not None:
-            new_results.append(res)
-
-    # Filter out None results (failures/skips)
-    new_results = [r for r in new_results if r is not None]
-
-    # Combine with existing results
-    existing_results = load_existing_results(config)
-    all_results = existing_results + new_results
-
-    # Save complete configuration results
-    save_configuration_results(all_results, config)
-
-    logging.info(
-        f"Completed {len(new_results)} new questions for {config.experiment_name}"
-    )
-    logging.info(f"Total results for configuration: {len(all_results)}")
-
-    return all_results
-
-
 def run_all_experiments(
     df: pd.DataFrame,
     rounds_questions_dict: Dict[str, List[int]],
@@ -757,71 +669,62 @@ def run_all_experiments(
         idx, cfg = index_cfg
         task_id = task_ids[idx]
 
-        try:
-            # Replicate core logic from run_single_experiment but with progress updates
-            round_list = list(rounds_questions_dict.keys())
-            if cfg.max_rounds is not None:
-                round_list = round_list[: cfg.max_rounds]
+        # Replicate core logic from run_single_experiment but with progress updates
+        round_list = list(rounds_questions_dict.keys())
+        if cfg.max_rounds is not None:
+            round_list = round_list[: cfg.max_rounds]
 
-            total_questions = 0
-            for round_id in round_list:
-                question_ids = sorted(rounds_questions_dict[round_id])
-                if cfg.max_questions is not None:
-                    question_ids = question_ids[: cfg.max_questions]
-                total_questions += len(question_ids)
+        total_questions = 0
+        for round_id in round_list:
+            question_ids = sorted(rounds_questions_dict[round_id])
+            if cfg.max_questions is not None:
+                question_ids = question_ids[: cfg.max_questions]
+            total_questions += len(question_ids)
 
-            # Check if already complete
-            if is_configuration_complete(cfg, total_questions):
-                results = load_existing_results(cfg)
-                progress.update(task_id, completed=len(results))
-                return results
+        # Check if already complete
+        if is_configuration_complete(cfg, total_questions):
+            results = load_existing_results(cfg)
+            progress.update(task_id, completed=len(results))
+            return results
 
-            logging.info(f"Running/resuming benchmark: {cfg.experiment_name}")
+        logging.info(f"Running/resuming benchmark: {cfg.experiment_name}")
 
-            # Prepare contexts
-            all_contexts = []
-            for round_id in round_list:
-                round_data = df[df["roundID"] == round_id]
-                question_ids = sorted(rounds_questions_dict[round_id])
-                if cfg.max_questions is not None:
-                    question_ids = question_ids[: cfg.max_questions]
-                for question_id in question_ids:
-                    context = extract_question_context(
-                        question_id, round_data, round_id
-                    )
-                    all_contexts.append((context, cfg, round_data))
+        # Prepare contexts
+        all_contexts = []
+        for round_id in round_list:
+            round_data = df[df["roundID"] == round_id]
+            question_ids = sorted(rounds_questions_dict[round_id])
+            if cfg.max_questions is not None:
+                question_ids = question_ids[: cfg.max_questions]
+            for question_id in question_ids:
+                context = extract_question_context(question_id, round_data, round_id)
+                all_contexts.append((context, cfg, round_data))
 
-            remaining_contexts = get_remaining_work(all_contexts, cfg)
-            if not remaining_contexts:
-                results = load_existing_results(cfg)
-                progress.update(task_id, completed=len(results))
-                return results
+        remaining_contexts = get_remaining_work(all_contexts, cfg)
+        if not remaining_contexts:
+            results = load_existing_results(cfg)
+            progress.update(task_id, completed=len(results))
+            return results
 
-            # Process questions one by one with progress updates
-            new_results = []
-            for args in remaining_contexts:
-                context, config, round_data = args
-                res = run_single_question_wrapper(context, config, round_data)
-                if res is not None:
-                    new_results.append(res)
-                # Update progress after each question
-                progress.update(task_id, advance=1)
+        # Process questions one by one with progress updates
+        new_results = []
+        for args in remaining_contexts:
+            context, config, round_data = args
+            res = run_single_question_wrapper(context, config, round_data)
+            if res is not None:
+                new_results.append(res)
+            # Update progress after each question
+            progress.update(task_id, advance=1)
 
-            # Combine and save results
-            existing_results = load_existing_results(cfg)
-            all_results = existing_results + new_results
-            save_configuration_results(all_results, cfg)
+        # Combine and save results
+        existing_results = load_existing_results(cfg)
+        all_results = existing_results + new_results
+        save_configuration_results(all_results, cfg)
 
-            logging.info(
-                f"Completed {len(new_results)} new questions for {cfg.experiment_name}"
-            )
-            return all_results
-
-        except Exception as exc:
-            logging.error(
-                f"Configuration {cfg.experiment_name} failed completely: {exc}"
-            )
-            return []
+        logging.info(
+            f"Completed {len(new_results)} new questions for {cfg.experiment_name}"
+        )
+        return all_results
 
     # ---------------------------------------------------------------------
     # 3. Execute – sequential or parallel
