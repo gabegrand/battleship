@@ -27,8 +27,6 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
-import numpy as np
-import pandas as pd
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import BarColumn
@@ -111,68 +109,6 @@ def create_experiment_dir(root: str = None) -> str:
     os.makedirs(experiment_dir)
 
     return experiment_dir
-
-
-def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
-    stage_df = pd.read_csv(gold_annotations_path)
-    round_df = pd.read_csv(round_data_path)
-
-    board_ids = round_df[["id", "board_id", "questionsRemaining"]]
-    filtered_stage_df = stage_df[
-        [
-            "roundID",
-            "index",
-            "questionID",
-            "messageText",
-            "messageType",
-            "occTiles",
-            "gold_answer",
-        ]
-    ]
-    df = filtered_stage_df.merge(
-        board_ids, left_on="roundID", right_on="id", how="left"
-    )
-
-    question_counts_df = (
-        df[df["messageType"] == "question"].groupby("roundID").size().reset_index()
-    )
-
-    df = df.merge(question_counts_df, on="roundID", how="left")
-    result = df.loc[df.groupby("roundID")["index"].idxmax()][
-        ["roundID", "occTiles", "board_id", "questionID", "questionsRemaining"]
-    ]
-    # GG: Why is this needed?
-    result = result[
-        result["occTiles"] != str(np.full((8, 8), -1).tolist()).replace(" ", "")
-    ]
-
-    data = []
-    for roundID, occTiles, board_id in zip(
-        result["roundID"], result["occTiles"], result["board_id"]
-    ):
-        board_true = Board.from_trial_id(board_id)
-        board_partial = Board.from_occ_tiles(occTiles)
-        scores = board_true.score(board_partial)
-
-        questions_asked = max_questions - int(
-            result[result["roundID"] == roundID]["questionsRemaining"].values[0]
-        )
-
-        result_row = {
-            "roundId": roundID,
-            "captainType": "human",
-            "boardId": board_id,
-            "hits": int(scores["hits"]),
-            "misses": int(scores["misses"]),
-            "precision": float(scores["precision"]),
-            "recall": float(scores["recall"]),
-            "f1_score": float(scores["f1_score"]),
-            "is_won": bool(scores["is_won"]),
-            "question_count": questions_asked,
-        }
-        data.append(result_row)
-
-    return data
 
 
 def get_completed_games(experiment_dir: str) -> Set[Tuple[str, int, str]]:
@@ -445,7 +381,9 @@ def run_all_captain_experiments(
         SpinnerColumn(),
         TextColumn("{task.description}", style="bold"),
         BarColumn(bar_width=None),
-        TaskProgressColumn(),
+        TaskProgressColumn(
+            text_format="[progress.completed]{task.completed}/[progress.total]{task.total} games"
+        ),
         TimeElapsedColumn(),
         TimeRemainingColumn(),
     ]
@@ -525,14 +463,9 @@ def run_all_captain_experiments(
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=max_workers
             ) as executor:
-                if max_workers:
-                    logging.info(
-                        f"Running {len(remaining_jobs)} games in parallel with up to {max_workers} workers"
-                    )
-                else:
-                    logging.info(
-                        f"Running {len(remaining_jobs)} games in parallel with default worker count"
-                    )
+                logging.info(
+                    f"Running {len(remaining_jobs)} games in parallel with up to {executor._max_workers} workers"
+                )
 
                 new_results = list(
                     filter(
@@ -568,7 +501,6 @@ def main():
             raise ValueError(
                 f"Cannot resume: experiment directory {experiment_dir} does not exist"
             )
-        logging.info(f"Resuming experiment in {experiment_dir}")
     elif args.experiment_dir:
         experiment_dir = create_experiment_dir(
             resolve_project_path(args.experiment_dir)
@@ -598,21 +530,9 @@ def main():
     action = "Resuming" if args.resume else "Starting"
     logging.info(f"{action} captain benchmark experiment in {experiment_dir}")
 
-    # Resolve paths relative to project root
-    gold_annotations_path = resolve_project_path(args.gold_annotations)
-    round_data_path = resolve_project_path(args.round_data)
-
     # Setup board IDs if not specified
     if args.board_ids is None:
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
-
-    # Get human results
-    human_results = []
-    if args.include_human:
-        human_results = get_human_results(
-            str(gold_annotations_path), str(round_data_path)
-        )
-        print(f"Processed human results for {len(human_results)} games")
 
     # Determine which models to use
     if args.captain_llm is None or args.spotter_llm is None:
@@ -650,8 +570,7 @@ def main():
         results = final_results  # Use rebuilt results if available
 
     # Prepare data structures
-    summaries_data = human_results.copy() if human_results else []
-    summaries_data.extend(results)
+    summaries_data = results
 
     # Write summary file
     summary_path = os.path.join(experiment_dir, "summary.json")
@@ -691,20 +610,6 @@ def main():
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run Battleship Captain benchmarks")
-
-    # Data paths
-    parser.add_argument(
-        "--gold-annotations",
-        type=str,
-        default="experiments/collaborative/data/battleship-final-data/gold-v2/gold-v2.csv",
-        help="Path to gold annotations CSV",
-    )
-    parser.add_argument(
-        "--round-data",
-        type=str,
-        default="experiments/collaborative/data/battleship-final-data/round.csv",
-        help="Path to round data CSV",
-    )
 
     # Experiment configuration
     parser.add_argument(
@@ -768,9 +673,6 @@ def parse_arguments():
         default=None,
         help="Number of worker threads to use for parallelism (defaults to Python's ThreadPoolExecutor default)",
     )
-    parser.add_argument(
-        "--include-human", action="store_true", help="Include human results in output"
-    )
 
     # Captain-specific parameters
     parser.add_argument(
@@ -795,7 +697,6 @@ def parse_arguments():
         action="store_true",
         help="Resume from existing experiment directory, skipping completed work",
     )
-
     parser.add_argument(
         "--force-restart",
         action="store_true",
