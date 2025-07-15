@@ -213,9 +213,10 @@ def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
         )
 
         result_row = {
-            "roundId": roundID,
-            "captainType": "human",
-            "boardId": board_id,
+            "captain_type": "human",
+            "spotter_type": "human",
+            "round_id": roundID,
+            "board_id": board_id,
             "hits": int(scores["hits"]),
             "misses": int(scores["misses"]),
             "precision": float(scores["precision"]),

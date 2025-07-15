@@ -263,9 +263,11 @@ def run_single_agent_game(args):
 
     # Ensure consistent column names in the result data
     summary = {
-        "roundId": round_id,
-        "captainType": captain_type,
-        "boardId": board_id,
+        "captain_type": captain_type,
+        "spotter_type": spotter.__class__.__name__,
+        "round_id": round_id,
+        "board_id": board_id,
+        "seed": seed,
         "hits": int(game.hits),
         "misses": int(game.misses),
         "is_won": bool(game.is_won()),
@@ -273,8 +275,6 @@ def run_single_agent_game(args):
         "precision": float(scores["precision"]),
         "recall": float(scores["recall"]),
         "f1_score": float(scores["f1_score"]),
-        "seed": seed,
-        "spotterModel": spotter.__class__.__name__,
     }
 
     return summary
