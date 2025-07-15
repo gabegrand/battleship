@@ -1,4 +1,5 @@
-"""
+"""Benchmark spotter models on human-generated questions.
+
 # Start new experiment
 python run_spotter_benchmarks.py --llms gpt-4o-mini --spotter-models CodeSpotterModel
 
@@ -10,6 +11,8 @@ python run_spotter_benchmarks.py --force-restart --experiment-dir {EXPERIMENT_DI
 
 # Resume with additional configurations
 python run_spotter_benchmarks.py --resume --experiment-dir {EXPERIMENT_DIR} --llms gpt-4o gpt-4o-mini
+
+NOTE: Resuming an experiment is currently affected by a bug where the checkpoints can become out of sync with the results. A future fix should ensure that the results files are updated after each question is completed -- this will remove the need to rely on the checkpoint files at all.
 """
 import argparse
 import concurrent.futures

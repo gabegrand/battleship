@@ -15,6 +15,8 @@ MODEL_DISPLAY_NAMES = {
     "anthropic/claude-opus-4": "claude-opus-4",
     "deepseek/deepseek-chat-v3-0324": "deepseek-chat-v3",
     "deepseek/deepseek-r1-0528": "deepseek-r1",
+    "google/gemini-2.5-flash": "gemini-2.5-flash",
+    "google/gemini-2.5-pro": "gemini-2.5-pro",
     "meta-llama/llama-3.1-8b-instruct": "llama-3.1-8b-instruct",
     "meta-llama/llama-3.1-70b-instruct": "llama-3.1-70b-instruct",
     "meta-llama/llama-3.1-405b-instruct": "llama-3.1-405b-instruct",
