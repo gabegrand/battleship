@@ -534,10 +534,6 @@ def main():
     if args.board_ids is None:
         args.board_ids = [f"B{str(i).zfill(2)}" for i in range(1, 19)]
 
-    # Determine which models to use
-    if args.captain_llm is None or args.spotter_llm is None:
-        raise ValueError("You must provide both --captain-llm and --spotter-llm flags.")
-
     # Setup logging to experiment directory
     log_handler = logging.FileHandler(
         os.path.join(experiment_dir, "captain_benchmark.log")
@@ -641,10 +637,18 @@ def parse_arguments():
 
     # Model configuration
     parser.add_argument(
-        "--captain-llm", type=str, default=None, help="LLM model to use for captain"
+        "--captain-llm",
+        type=str,
+        required=True,
+        default=None,
+        help="LLM model to use for captain",
     )
     parser.add_argument(
-        "--spotter-llm", type=str, default=None, help="LLM model to use for spotter"
+        "--spotter-llm",
+        type=str,
+        required=True,
+        default=None,
+        help="LLM model to use for spotter",
     )
 
     # Experiment settings
