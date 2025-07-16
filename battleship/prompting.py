@@ -283,12 +283,14 @@ PROMPT_TASK_MOVE = (
 
 PROMPT_TASK_QUESTION = (
     "You will be given a partially-revealed game board. "
-    "Your task is to ask a single question that will help you gain the most information possible about the position of the remaining hidden ships on the board. "
-    "You can ask any question, but it must be answerable with a Boolean answer (Yes/No). "
-    "Make sure to enclose your question in <answer></answer> tags, e.g. <answer>Is the sky blue?</answer>."
+    "Your task is to ask {num_questions} question(s) that will help you gain the most information possible about the position of the remaining hidden ships on the board. "
+    "You can ask any question(s), but they must be answerable with a Boolean answer (Yes/No). "
+    "Make sure to enclose your question(s) in <answer></answer> tags with separate <answer></answer> tags for each question, e.g. <answer>Is the ship in A1 vertical?</answer>, <answer>Is the ship in B2 horizontal?</answer>."
 )
 
 PROMPT_QUESTIONS_AND_MOVES_REMAINING = "You can ask {q_remaining} more questions over the course of the game, and can fire {moves_remaining} more times."
+
+PROMPT_QUESTIONS_AND_MOVES_REMAINING_BATCHED = "You can ask {q_remaining} more batch(es) of questions over the course of the game, and can fire {moves_remaining} more times."
 
 PROMPT_SHIP_STATUS = "Ship Status: {sunk}"
 
@@ -329,12 +331,20 @@ class CaptainPrompt(BasePrompt):
         board_message = "\n\n" + PROMPT_BOARD_CURRENT + board_str
 
         # Task description
+        if hasattr(self, 'n_questions'):
+            self.task_prompt = self.task_prompt.format(num_questions=self.n_questions)
+
         postfix = PROMPT_SYSTEM_CAPTAIN + "\n\n" + self.task_prompt
 
         # Qs and moves remaining, ship tracker
-        postfix += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
-            q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
-        )
+        if hasattr(self, 'n_questions'):
+            postfix += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING_BATCHED.format(
+                q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
+            )
+        else:
+            postfix += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
+                q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
+            )
 
         postfix += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
 
@@ -349,42 +359,6 @@ class CaptainPrompt(BasePrompt):
         messages.append({"role": "system", "content": postfix})
 
         return messages
-
-        # System prompt
-        # system_prompt = (
-        #     PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
-        # )
-
-        # system_prompt += self.task_prompt
-
-        # # Game history
-        # if self.history is not None:
-        #     system_prompt += "\n\n" + PROMPT_EXAMPLES
-        #     system_prompt += self.format_history()
-
-        # # Current game state
-        # system_prompt += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
-        #     q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
-        # )
-
-        # if self.sunk is not None:
-        #     system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
-
-        # # Board state
-        # board_str = (
-        #     str(self.board.to_numpy()) if self.board else ""
-        # )
-        # system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
-
-        # # Add CoT instruction if needed
-        # if self.use_cot:
-        #     system_prompt += "\n" + PROMPT_COT
-        # else:
-        #     system_prompt += "\n" + PROMPT_DIRECT
-
-        # messages.append({"role": "system", "content": system_prompt})
-
-        # return messages
 
 
 class DecisionPrompt(CaptainPrompt):
@@ -452,6 +426,7 @@ class QuestionPrompt(CaptainPrompt):
         questions_remaining=None,
         moves_remaining=None,
         sunk=None,
+        n_questions=1,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -461,6 +436,7 @@ class QuestionPrompt(CaptainPrompt):
         self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
+        self.n_questions = n_questions
 
         self.task_prompt = PROMPT_TASK_QUESTION
 

@@ -68,6 +68,7 @@ class CaptainBenchmarkConfig:
     map_samples: int = 1000
     prob_q_prob: float = 0.7
     eig_samples: int = 1000
+    eig_simultaneous_questions: int = 1
     eig_k: int = 10
     experiment_name: str = None
 
@@ -330,6 +331,7 @@ def run_single_agent_game(args):
         map_samples,
         prob_q_prob,
         eig_samples,
+        eig_simultaneous_questions,
         eig_k,
     ) = args
 
@@ -353,6 +355,7 @@ def run_single_agent_game(args):
         map_samples=map_samples,
         prob_q_prob=prob_q_prob,
         eig_samples=eig_samples,
+        eig_simultaneous_questions=eig_simultaneous_questions,
         eig_k=eig_k,
         json_path=os.path.join(captain_dir, "captain.json"),
     )
@@ -417,6 +420,7 @@ def run_single_agent_game_wrapper(args) -> Optional[Dict]:
         map_samples,
         prob_q_prob,
         eig_samples,
+        eig_simultaneous_questions,
         eig_k,
     ) = args
 
@@ -432,6 +436,7 @@ def run_single_agent_game_wrapper(args) -> Optional[Dict]:
         map_samples=map_samples,
         prob_q_prob=prob_q_prob,
         eig_samples=eig_samples,
+        eig_simultaneous_questions=eig_simultaneous_questions,
         eig_k=eig_k,
     )
 
@@ -526,6 +531,7 @@ def run_all_captain_experiments(
     map_samples: int,
     prob_q_prob: float,
     eig_samples: int,
+    eig_simultaneous_questions: int,
     eig_k: int,
     max_workers: int = None,
 ) -> List[Dict]:
@@ -548,6 +554,7 @@ def run_all_captain_experiments(
                 map_samples=map_samples,
                 prob_q_prob=prob_q_prob,
                 eig_samples=eig_samples,
+                eig_simultaneous_questions=eig_simultaneous_questions,
                 eig_k=eig_k,
             )
 
@@ -569,6 +576,7 @@ def run_all_captain_experiments(
                         map_samples,
                         prob_q_prob,
                         eig_samples,
+                        eig_simultaneous_questions,
                         eig_k,
                     )
                 )
@@ -666,6 +674,7 @@ def main():
         map_samples=args.map_samples,
         prob_q_prob=args.prob_q_prob,
         eig_samples=args.eig_samples,
+        eig_simultaneous_questions=args.eig_simultaneous_questions,
         eig_k=args.eig_k,
         max_workers=args.max_workers,
     )
@@ -814,6 +823,12 @@ def parse_arguments():
         type=int,
         default=1000,
         help="Number of samples for EIGCaptain",
+    )
+    parser.add_argument(
+        "--eig-simultaneous-questions",
+        type=int,
+        default=1,
+        help="Number of simultaneous questions for EIGCaptain",
     )
     parser.add_argument("--eig-k", type=int, default=10, help="K value for EIGCaptain")
 
