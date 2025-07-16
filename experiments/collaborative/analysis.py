@@ -165,3 +165,66 @@ def get_spotter_type_short(spotter_type: str, cot: bool) -> str:
         return "+ CoT + Code"
     else:
         raise ValueError(f"Unknown spotter type combination: {spotter_type}, {cot}")
+
+
+def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
+    stage_df = pd.read_csv(gold_annotations_path)
+    round_df = pd.read_csv(round_data_path)
+
+    board_ids = round_df[["id", "board_id", "questionsRemaining"]]
+    filtered_stage_df = stage_df[
+        [
+            "roundID",
+            "index",
+            "questionID",
+            "messageText",
+            "messageType",
+            "occTiles",
+            "gold_answer",
+        ]
+    ]
+    df = filtered_stage_df.merge(
+        board_ids, left_on="roundID", right_on="id", how="left"
+    )
+
+    question_counts_df = (
+        df[df["messageType"] == "question"].groupby("roundID").size().reset_index()
+    )
+
+    df = df.merge(question_counts_df, on="roundID", how="left")
+    result = df.loc[df.groupby("roundID")["index"].idxmax()][
+        ["roundID", "occTiles", "board_id", "questionID", "questionsRemaining"]
+    ]
+    # GG: Why is this needed?
+    result = result[
+        result["occTiles"] != str(np.full((8, 8), -1).tolist()).replace(" ", "")
+    ]
+
+    data = []
+    for roundID, occTiles, board_id in zip(
+        result["roundID"], result["occTiles"], result["board_id"]
+    ):
+        board_true = Board.from_trial_id(board_id)
+        board_partial = Board.from_occ_tiles(occTiles)
+        scores = board_true.score(board_partial)
+
+        questions_asked = max_questions - int(
+            result[result["roundID"] == roundID]["questionsRemaining"].values[0]
+        )
+
+        result_row = {
+            "captain_type": "human",
+            "spotter_type": "human",
+            "round_id": roundID,
+            "board_id": board_id,
+            "hits": int(scores["hits"]),
+            "misses": int(scores["misses"]),
+            "precision": float(scores["precision"]),
+            "recall": float(scores["recall"]),
+            "f1_score": float(scores["f1_score"]),
+            "is_won": bool(scores["is_won"]),
+            "question_count": questions_asked,
+        }
+        data.append(result_row)
+
+    return data
