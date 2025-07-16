@@ -349,7 +349,7 @@ class EIGCalculator:
             if answer is None or answer.value is None:
                 # We assume that further answers will also be None
                 logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
-                return 0
+                return float("nan")
             elif answer.value is True:
                 results[True] += 1
             elif answer.value is False:
