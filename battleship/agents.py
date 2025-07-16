@@ -359,7 +359,7 @@ class EIGCalculator:
                 logger.warning(
                     f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
                 )
-                return 0
+                return float("nan")
 
         if any(v == 0 for v in results.values()):
             return 0
