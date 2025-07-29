@@ -304,7 +304,6 @@ def run_single_agent_game_wrapper(args) -> Optional[Dict]:
         # Run the game
         result = run_single_agent_game(args)
         return result
-
     except Exception as e:
         logging.error(
             f"Failed to process game: {captain_type} seed{seed} {board_id}: {e}"

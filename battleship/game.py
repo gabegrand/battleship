@@ -141,8 +141,8 @@ class BattleshipGame:
                 {
                     "stage": self.stage_index,
                     "decision": Decision.QUESTION,
-                    "question": q.to_dict(),
-                    "answer": a.to_dict(),
+                    "question": q.to_dict() if q else None,
+                    "answer": a.to_dict() if a else None,
                     "state": self.state.board.tolist(),
                 }
             )
