@@ -62,6 +62,8 @@ class ActionData:
     prompt: str = None  # The prompt text
     completion: dict = None  # Full completion object as JSON
 
+    eig_questions: list["ActionData"] = None
+
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = time.time()
@@ -69,7 +71,7 @@ class ActionData:
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "stage_index": int(self.stage_index),  # Convert numpy.int64 to Python int
+            "stage_index": int(self.stage_index) if self.stage_index else None,  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -93,6 +95,7 @@ class ActionData:
                 if self.board_state is not None
                 else None
             ),  # Convert numpy array to Python list
+            "eig_questions": (self.eig_questions),  # List of ActionData objects
         }
 
     @classmethod
@@ -349,7 +352,7 @@ class EIGCalculator:
             if answer is None or answer.value is None:
                 # We assume that further answers will also be None
                 logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
-                break
+                return float("nan")
             elif answer.value is True:
                 results[True] += 1
             elif answer.value is False:
@@ -359,7 +362,7 @@ class EIGCalculator:
                 logger.warning(
                     f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
                 )
-                break
+                return float("nan")
 
         if any(v == 0 for v in results.values()):
             return 0

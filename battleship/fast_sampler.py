@@ -235,15 +235,17 @@ class FastSampler:
     def constrained_posterior(
         self,
         true_board: Board,
-        n_samples: int = 1000,
-        min_samples: int = 50,
+        n_samples: int = 10000,
+        min_samples: int = 10,
         constraints: list = [],
         normalize: bool = True,
     ):
         """Computes an approximate posterior distribution over ship locations with constraints."""
+        EPSILON = 0.1
 
-        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
+        board_counts = np.zeros((self.board.size, self.board.size), dtype=float)
         total_sampled = 0
+        total_consistent = 0
         active_constraints = constraints.copy()
         true_answers = [
             code_question(true_board.to_numpy(), self.board.board)
@@ -258,7 +260,7 @@ class FastSampler:
 
         # Check constraints and update counts
         for new_board in candidate_boards:
-            satisfies_constraints = True
+            board_probability = 1
 
             for code_question, true_answer in zip(active_constraints, true_answers):
                 # Skip if the true answer or its value is None
@@ -268,24 +270,20 @@ class FastSampler:
                 # Evaluate the new answer and skip if it is None or its value is different from the true answer
                 new_answer = code_question(new_board.to_numpy(), self.board.board)
                 if new_answer is None or new_answer.value != true_answer.value:
-                    satisfies_constraints = False
-                    break
+                    board_probability *= EPSILON
+                else:
+                    board_probability *= (1 - EPSILON)
 
-            if satisfies_constraints:
-                board_counts += (new_board.board > 0).astype(int)
-                total_sampled += 1
+            board_counts += board_probability * (new_board.board > 0).astype(float)
+            total_sampled += 1
 
             if total_sampled >= n_samples:
                 break
 
-        if total_sampled < min_samples:
-            logging.warning(
-                f"FastSampler.constrained_posterior(): {total_sampled}/{min_samples} samples collected - defaulting to unconstrained posterior"
-            )
-            return self.compute_posterior(n_samples, normalize=normalize)
+        logging.warning(f"FastSampler.constrained_posterior(): {total_consistent}/{min_samples} samples collected")
 
         if normalize:
-            return board_counts / total_sampled
+            return board_counts / board_counts.sum()
 
         logging.debug(
             f"FastSampler.constrained_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
