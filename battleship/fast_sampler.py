@@ -239,9 +239,9 @@ class FastSampler:
         min_samples: int = 10,
         constraints: list = [],
         normalize: bool = True,
+        epsilon: float = 0.1,
     ):
         """Computes an approximate posterior distribution over ship locations with constraints."""
-        EPSILON = 0.1
 
         board_counts = np.zeros((self.board.size, self.board.size), dtype=float)
         total_sampled = 0
@@ -270,9 +270,9 @@ class FastSampler:
                 # Evaluate the new answer and skip if it is None or its value is different from the true answer
                 new_answer = code_question(new_board.to_numpy(), self.board.board)
                 if new_answer is None or new_answer.value != true_answer.value:
-                    board_probability *= EPSILON
+                    board_probability *= epsilon
                 else:
-                    board_probability *= (1 - EPSILON)
+                    board_probability *= (1 - epsilon)
 
             board_counts += board_probability * (new_board.board > 0).astype(float)
             total_sampled += 1
