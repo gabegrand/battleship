@@ -283,6 +283,7 @@ class LLMMoveStrategy(MoveStrategy):
         temperature=None,
         use_cot=False,
         n_attempts=3,
+        rng=np.random.default_rng()
     ):
         super().__init__()
         self.llm = llm
@@ -290,6 +291,7 @@ class LLMMoveStrategy(MoveStrategy):
         self.use_cot = use_cot
         self.n_attempts = n_attempts
         self.client = get_openai_client()
+        self.rng = rng
 
     def __call__(
         self, state, history, sunk, questions_remaining, moves_remaining, constraints
@@ -305,6 +307,18 @@ class LLMMoveStrategy(MoveStrategy):
             moves_remaining=moves_remaining,
             sunk=sunk,
         )
+
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        posterior = sampler.compute_posterior(
+                n_samples=1000,
+                normalize=False,
+            )
 
         completion = None
         for _ in range(self.n_attempts):
@@ -326,6 +340,7 @@ class LLMMoveStrategy(MoveStrategy):
                         prompt=str(move_prompt),
                         completion=completion.model_dump(),
                         move=candidate_move,
+                        map_prob=float(posterior[candidate_move]),
                         board_state=state.to_numpy(),
                     )
 
@@ -370,6 +385,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         best_eig = -1
         best_action_data = None
 
+        candidate_question_list = []
         for _ in range(self.k):
             question_prompt = QuestionPrompt(
                 board=state,
@@ -419,7 +435,10 @@ class EIGQuestionStrategy(QuestionStrategy):
                 question=code_question,
                 eig=eig,
                 board_state=state.to_numpy(),
+                eig_questions=None
             )
+
+            candidate_question_list.append(action_data.to_dict())
 
             # Update best question if this one has higher EIG
             if eig > best_eig:
@@ -427,6 +446,7 @@ class EIGQuestionStrategy(QuestionStrategy):
                 best_question = candidate_question
                 best_action_data = action_data
 
+        best_action_data.eig_questions = candidate_question_list
         return best_question, best_action_data
 
 
@@ -477,13 +497,21 @@ class LLMQuestionStrategy(QuestionStrategy):
                 candidate_question = candidate_question.group(1)
                 question = Question(text=candidate_question)
 
-                # Create an ActionData object to store the interaction
-                action_data = ActionData(
-                    action="question",
-                    prompt=str(question_prompt),
-                    completion=completion.model_dump(),
+                code_question = self.spotter.translate(
                     question=question,
-                    board_state=state.to_numpy(),
+                    board=state,
+                    history=history,
+                )
+
+                eig = self.eig_calculator(code_question, state)
+
+                action_data = ActionData(
+                action="question",
+                prompt=str(question_prompt),
+                completion=completion.model_dump(),
+                question=code_question,
+                eig=eig,
+                board_state=state.to_numpy(),
                 )
 
                 return question, action_data
@@ -555,6 +583,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=False,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=LLMQuestionStrategy(
                 llm=llm,
@@ -572,6 +601,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=True,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=LLMQuestionStrategy(
                 llm=llm,
@@ -592,6 +622,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=False,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=LLMQuestionStrategy(
                 llm=llm,
@@ -614,6 +645,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=True,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=LLMQuestionStrategy(
                 llm=llm,
@@ -636,6 +668,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=False,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=EIGQuestionStrategy(
                 llm=llm,
@@ -660,6 +693,7 @@ def create_captain(
             move_strategy=LLMMoveStrategy(
                 llm=llm,
                 use_cot=True,
+                rng=np.random.default_rng(seed),
             ),
             question_strategy=EIGQuestionStrategy(
                 llm=llm,
