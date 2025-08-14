@@ -158,11 +158,11 @@ def get_spotter_type_short(spotter_type: str, cot: bool) -> str:
     if spotter_type == "DirectSpotterModel" and not cot:
         return "Base"
     elif spotter_type == "DirectSpotterModel" and cot:
-        return "+ CoT"
+        return "CoT"
     elif spotter_type == "CodeSpotterModel" and not cot:
-        return "+ Code"
+        return "Code"
     elif spotter_type == "CodeSpotterModel" and cot:
-        return "+ CoT + Code"
+        return "CoT + Code"
     else:
         raise ValueError(f"Unknown spotter type combination: {spotter_type}, {cot}")
 
