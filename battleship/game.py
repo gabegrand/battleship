@@ -129,6 +129,7 @@ class BattleshipGame:
                 sunk_string,
                 questions_remaining=self.max_questions - self.question_count,
                 moves_remaining=self.max_moves - self.move_count,
+                constraints=self.captain.sampling_constraints,
             )
             a = self.spotter.answer(question=q, board=self.state, history=self.history)
 

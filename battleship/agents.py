@@ -371,6 +371,82 @@ class EIGCalculator:
             [p / self.samples * np.log2(p) for p in results.values()]
         )
 
+class ConditionalEIGCalculator(EIGCalculator):
+    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000, epsilon: float = 0.1):
+        super().__init__(seed, timeout, samples)
+        self.epsilon = epsilon
+
+    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = []):
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+
+        # Generate s boards first
+        candidate_boards = []
+        curr_time = time.time()
+        while len(candidate_boards) < self.samples:
+            if time.time() - curr_time > self.timeout:
+                return float("nan")
+
+            board = None
+            while not board:
+                board = sampler.populate_board()
+            
+            candidate_boards.append(board)
+
+        # Weight boards by constraint satisfaction and collect results
+        weighted_results = {True: 0.0, False: 0.0}
+        
+        for board in candidate_boards:
+            # Calculate weight based on constraint satisfaction
+            weight = 1.0
+            for constraint in constraints:
+                # Evaluate constraint on this board
+                constraint_answer = constraint(
+                    true_board=board.board, partial_board=state.board
+                )
+                
+                # Skip if constraint returns None
+                if constraint_answer is None or constraint_answer.value is None:
+                    continue
+                    
+                # Weight based on constraint satisfaction
+                # Assume we want constraints to be True for higher weight
+                if constraint_answer.value is True:
+                    weight *= (1 - self.epsilon)
+                else:
+                    weight *= self.epsilon
+
+            # Evaluate main question on weighted board
+            answer: Answer = code_question(
+                true_board=board.board, partial_board=state.board
+            )
+
+            if answer is None or answer.value is None:
+                logger.warning(f"CodeQuestion returned None - skipping Conditional EIG calculation")
+                return float("nan")
+            elif answer.value is True:
+                weighted_results[True] += weight
+            elif answer.value is False:
+                weighted_results[False] += weight
+            else:
+                logger.warning(
+                    f"CodeQuestion returned None - skipping Conditional EIG calculation: {answer.text}"
+                )
+                return float("nan")
+
+        # Check if we have valid results
+        total_weight = sum(weighted_results.values())
+        if total_weight == 0 or any(v == 0 for v in weighted_results.values()):
+            return 0
+
+        # Calculate EIG using weighted probabilities
+        return np.log2(total_weight) - sum(
+            [p * np.log2(p) / total_weight for p in weighted_results.values() if p > 0]
+        )
 
 def config_move_regex(size):
     """Generate a regex pattern for move validation based on board size."""

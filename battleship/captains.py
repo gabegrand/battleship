@@ -9,6 +9,7 @@ from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
+from battleship.agents import ConditionalEIGCalculator
 from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Question
@@ -99,9 +100,10 @@ class Captain(Agent):
         sunk: str,
         questions_remaining: int,
         moves_remaining: int,
+        constraints: List,
     ):
         question, action_data = self.question_strategy(
-            state, history, sunk, questions_remaining, moves_remaining
+            state, history, sunk, questions_remaining, moves_remaining, constraints
         )
 
         # Save the action data
@@ -380,7 +382,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
         best_question = None
         best_eig = -1
         best_action_data = None
@@ -450,6 +452,101 @@ class EIGQuestionStrategy(QuestionStrategy):
         return best_question, best_action_data
 
 
+class ConditionalEIGQuestionStrategy(QuestionStrategy):
+    def __init__(
+        self,
+        llm,
+        spotter,
+        rng,
+        samples=100,
+        k=3,
+        use_cot=False,
+        n_attempts=3,
+        epsilon=0.1,
+    ):
+        super().__init__()
+        self.llm = llm
+        self.spotter = spotter
+        self.rng = rng
+        self.samples = samples
+        self.k = k
+        self.use_cot = use_cot
+        self.conditional_eig_calculator = ConditionalEIGCalculator(seed=self.rng, samples=self.samples, epsilon=epsilon)
+        self.n_attempts = n_attempts
+        self.client = get_openai_client()
+
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
+        best_question = None
+        best_eig = -1
+        best_action_data = None
+
+        # Use the passed constraints instead of extracting from history
+
+        candidate_question_list = []
+        for _ in range(self.k):
+            question_prompt = QuestionPrompt(
+                board=state,
+                board_format="grid",
+                history=history,
+                use_cot=self.use_cot,
+                questions_remaining=questions_remaining,
+                moves_remaining=moves_remaining,
+                sunk=sunk,
+            )
+
+            candidate_question_text = None
+            completion = None
+            for _ in range(self.n_attempts):
+                completion = self.client.chat.completions.create(
+                    model=self.llm,
+                    messages=question_prompt.to_chat_format(),
+                    temperature=None,
+                )
+                match = ANSWER_MATCH_PATTERN.search(
+                    completion.choices[0].message.content
+                )
+                if match:
+                    candidate_question_text = match.group(1)
+                    break
+
+            if candidate_question_text is None:
+                continue
+
+            candidate_question = Question(text=candidate_question_text)
+
+            # First translate the question
+            code_question = self.spotter.translate(
+                question=candidate_question,
+                board=state,
+                history=history,
+            )
+
+            # Then calculate conditional EIG with constraints
+            eig = self.conditional_eig_calculator(code_question, state, constraints)
+
+            # Create an ActionData object to store the interaction
+            action_data = ActionData(
+                action="question",
+                prompt=str(question_prompt),
+                completion=completion.model_dump(),
+                question=code_question,
+                eig=eig,
+                board_state=state.to_numpy(),
+                eig_questions=None
+            )
+
+            candidate_question_list.append(action_data.to_dict())
+
+            # Update best question if this one has higher EIG
+            if eig > best_eig:
+                best_eig = eig
+                best_question = candidate_question
+                best_action_data = action_data
+
+        best_action_data.eig_questions = candidate_question_list
+        return best_question, best_action_data
+
+
 class LLMQuestionStrategy(QuestionStrategy):
     def __init__(
         self,
@@ -470,7 +567,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.eig_calculator = EIGCalculator(seed=self.rng)
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
         question_prompt = QuestionPrompt(
             board=state,
             board_format="grid",
@@ -746,6 +843,56 @@ def create_captain(
                 n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
+                llm=llm,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            llm=llm,
+            json_path=json_path,
+        )
+        return captain
+
+    elif captain_type == "ConditionalEIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
+            move_strategy=LLMMoveStrategy(
+                llm=llm,
+                use_cot=False,
+                rng=np.random.default_rng(seed),
+            ),
+            question_strategy=ConditionalEIGQuestionStrategy(
+                llm=llm,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            llm=llm,
+            json_path=json_path,
+        )
+        return captain
+
+    elif captain_type == "ConditionalEIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=True,
+            ),
+            move_strategy=LLMMoveStrategy(
+                llm=llm,
+                use_cot=True,
+                rng=np.random.default_rng(seed),
+            ),
+            question_strategy=ConditionalEIGQuestionStrategy(
                 llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),
