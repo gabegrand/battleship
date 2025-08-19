@@ -376,7 +376,7 @@ class ConditionalEIGCalculator(EIGCalculator):
         super().__init__(seed, timeout, samples)
         self.epsilon = epsilon
 
-    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = []):
+    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = [], true_board: Board = None):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -386,16 +386,15 @@ class ConditionalEIGCalculator(EIGCalculator):
 
         # Generate s boards first
         candidate_boards = []
-        curr_time = time.time()
-        while len(candidate_boards) < self.samples:
-            if time.time() - curr_time > self.timeout:
-                return float("nan")
+        for _ in range(self.samples):
+            new_board = sampler.populate_board()
+            if new_board is not None:
+                candidate_boards.append(new_board)
 
-            board = None
-            while not board:
-                board = sampler.populate_board()
-            
-            candidate_boards.append(board)
+        true_answers = [
+            code_question(true_board.to_numpy(), state.board)
+            for code_question in constraints
+        ]
 
         # Weight boards by constraint satisfaction and collect results
         weighted_results = {True: 0.0, False: 0.0}
@@ -403,7 +402,7 @@ class ConditionalEIGCalculator(EIGCalculator):
         for board in candidate_boards:
             # Calculate weight based on constraint satisfaction
             weight = 1.0
-            for constraint in constraints:
+            for constraint, true_answer in zip(constraints, true_answers):
                 # Evaluate constraint on this board
                 constraint_answer = constraint(
                     true_board=board.board, partial_board=state.board
@@ -415,7 +414,7 @@ class ConditionalEIGCalculator(EIGCalculator):
                     
                 # Weight based on constraint satisfaction
                 # Assume we want constraints to be True for higher weight
-                if constraint_answer.value is True:
+                if constraint_answer.value == true_answer.value:
                     weight *= (1 - self.epsilon)
                 else:
                     weight *= self.epsilon

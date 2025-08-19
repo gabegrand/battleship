@@ -101,9 +101,10 @@ class Captain(Agent):
         questions_remaining: int,
         moves_remaining: int,
         constraints: List,
+        true_board: Board = None,
     ):
         question, action_data = self.question_strategy(
-            state, history, sunk, questions_remaining, moves_remaining, constraints
+            state, history, sunk, questions_remaining, moves_remaining, constraints, true_board
         )
 
         # Save the action data
@@ -382,7 +383,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
         best_question = None
         best_eig = -1
         best_action_data = None
@@ -475,7 +476,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
         best_question = None
         best_eig = -1
         best_action_data = None
@@ -522,7 +523,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
             )
 
             # Then calculate conditional EIG with constraints
-            eig = self.conditional_eig_calculator(code_question, state, constraints)
+            eig = self.conditional_eig_calculator(code_question, state, constraints, true_board)
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
@@ -567,7 +568,7 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.eig_calculator = EIGCalculator(seed=self.rng)
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints):
+    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
         question_prompt = QuestionPrompt(
             board=state,
             board_format="grid",
