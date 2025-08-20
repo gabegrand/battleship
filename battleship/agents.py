@@ -318,62 +318,24 @@ class Agent(ABC):
         with open(self.json_path, "w") as f:
             json.dump(data, f, indent=2)
 
+def binary_entropy(p: float) -> float:
+    """
+    Calculate the binary channel entropy given a probability p.
+    Returns NaN if p is not in [0, 1].
+    """
+    if p < 0 or p > 1:
+        return float("nan")
+    elif p == 0 or p == 1:
+        return 0.0
+    else:
+        return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
 
 class EIGCalculator:
-    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000):
+    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000, epsilon: float = 0.1):
         self.seed = seed
         self.rng = np.random.default_rng(seed)
         self.timeout = timeout
         self.samples = samples
-
-    def __call__(self, code_question: CodeQuestion, state: Board):
-        sampler = FastSampler(
-            board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
-            seed=self.rng,
-        )
-
-        results = {True: 0, False: 0}
-        curr_time = time.time()
-        while sum(results.values()) < self.samples:
-            if time.time() - curr_time > self.timeout:
-                return float("nan")
-
-            # This could result in an infinite loop if the sampler is unable to populate a board
-            board = None
-            while not board:
-                board = sampler.populate_board()
-
-            answer: Answer = code_question(
-                true_board=board.board, partial_board=state.board
-            )
-
-            if answer is None or answer.value is None:
-                # We assume that further answers will also be None
-                logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
-                return float("nan")
-            elif answer.value is True:
-                results[True] += 1
-            elif answer.value is False:
-                results[False] += 1
-            else:
-                # We assume that further answers will also be None
-                logger.warning(
-                    f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
-                )
-                return float("nan")
-
-        if any(v == 0 for v in results.values()):
-            return 0
-
-        return np.log2(self.samples) - sum(
-            [p / self.samples * np.log2(p) for p in results.values()]
-        )
-
-class ConditionalEIGCalculator(EIGCalculator):
-    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000, epsilon: float = 0.1):
-        super().__init__(seed, timeout, samples)
         self.epsilon = epsilon
 
     def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = [], true_board: Board = None):
@@ -384,48 +346,26 @@ class ConditionalEIGCalculator(EIGCalculator):
             seed=self.rng,
         )
 
-        # Generate s boards first
-        candidate_boards = []
-        for _ in range(self.samples):
-            new_board = sampler.populate_board()
-            if new_board is not None:
-                candidate_boards.append(new_board)
+        # Use shared weighted sampling method for both conditional and unconditional cases
+        # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
+        weighted_boards = sampler.get_weighted_samples(
+            n_boards=self.samples,
+            constraints=constraints,
+            true_board=true_board,
+            epsilon=self.epsilon
+        )
 
-        true_answers = [
-            code_question(true_board.to_numpy(), state.board)
-            for code_question in constraints
-        ]
-
-        # Weight boards by constraint satisfaction and collect results
+        # Collect weighted results for EIG calculation
         weighted_results = {True: 0.0, False: 0.0}
         
-        for board in candidate_boards:
-            # Calculate weight based on constraint satisfaction
-            weight = 1.0
-            for constraint, true_answer in zip(constraints, true_answers):
-                # Evaluate constraint on this board
-                constraint_answer = constraint(
-                    true_board=board.board, partial_board=state.board
-                )
-                
-                # Skip if constraint returns None
-                if constraint_answer is None or constraint_answer.value is None:
-                    continue
-                    
-                # Weight based on constraint satisfaction
-                # Assume we want constraints to be True for higher weight
-                if constraint_answer.value == true_answer.value:
-                    weight *= (1 - self.epsilon)
-                else:
-                    weight *= self.epsilon
-
+        for board, weight in weighted_boards:
             # Evaluate main question on weighted board
             answer: Answer = code_question(
                 true_board=board.board, partial_board=state.board
             )
 
             if answer is None or answer.value is None:
-                logger.warning(f"CodeQuestion returned None - skipping Conditional EIG calculation")
+                logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
                 return float("nan")
             elif answer.value is True:
                 weighted_results[True] += weight
@@ -433,19 +373,21 @@ class ConditionalEIGCalculator(EIGCalculator):
                 weighted_results[False] += weight
             else:
                 logger.warning(
-                    f"CodeQuestion returned None - skipping Conditional EIG calculation: {answer.text}"
+                    f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
                 )
                 return float("nan")
 
         # Check if we have valid results
-        total_weight = sum(weighted_results.values())
-        if total_weight == 0 or any(v == 0 for v in weighted_results.values()):
+        if any(v == 0 for v in weighted_results.values()):
             return 0
 
         # Calculate EIG using weighted probabilities
-        return np.log2(total_weight) - sum(
-            [p * np.log2(p) / total_weight for p in weighted_results.values() if p > 0]
-        )
+        total_weight = sum(weighted_results.values())
+        p_true = weighted_results[True] / total_weight
+        #p_false = weighted_results[False] / total_weight
+        
+        return binary_entropy(self.epsilon + ((1 - 2*self.epsilon) * p_true)) - binary_entropy(self.epsilon)
+
 
 def config_move_regex(size):
     """Generate a regex pattern for move validation based on board size."""

@@ -9,7 +9,6 @@ from battleship.agents import Agent
 from battleship.agents import ANSWER_MATCH_PATTERN
 from battleship.agents import DECISION_PATTERN
 from battleship.agents import EIGCalculator
-from battleship.agents import ConditionalEIGCalculator
 from battleship.agents import get_openai_client
 from battleship.agents import MOVE_PATTERN
 from battleship.agents import Question
@@ -472,7 +471,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
         self.samples = samples
         self.k = k
         self.use_cot = use_cot
-        self.conditional_eig_calculator = ConditionalEIGCalculator(seed=self.rng, samples=self.samples, epsilon=epsilon)
+        self.eig_calculator = EIGCalculator(seed=self.rng, samples=self.samples, epsilon=epsilon)
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
@@ -523,7 +522,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
             )
 
             # Then calculate conditional EIG with constraints
-            eig = self.conditional_eig_calculator(code_question, state, constraints, true_board)
+            eig = self.eig_calculator(code_question, state, constraints, true_board)
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
@@ -892,6 +891,56 @@ def create_captain(
                 llm=llm,
                 use_cot=True,
                 rng=np.random.default_rng(seed),
+            ),
+            question_strategy=ConditionalEIGQuestionStrategy(
+                llm=llm,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=True,
+            ),
+            seed=seed,
+            llm=llm,
+            json_path=json_path,
+        )
+        return captain
+
+    elif captain_type == "MAPConditionalEIGCaptain":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=False,
+            ),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
+            ),
+            question_strategy=ConditionalEIGQuestionStrategy(
+                llm=llm,
+                spotter=_get_spotter(),
+                rng=np.random.default_rng(seed),
+                samples=eig_samples,
+                k=eig_k,
+                use_cot=False,
+            ),
+            seed=seed,
+            llm=llm,
+            json_path=json_path,
+        )
+        return captain
+
+    elif captain_type == "MAPConditionalEIGCaptain_cot":
+        captain = Captain(
+            decision_strategy=LLMDecisionStrategy(
+                llm=llm,
+                use_cot=True,
+            ),
+            move_strategy=MAPMoveStrategy(
+                rng=np.random.default_rng(seed),
+                board_id=board_id,
+                n_samples=eig_samples,
             ),
             question_strategy=ConditionalEIGQuestionStrategy(
                 llm=llm,

@@ -217,80 +217,125 @@ class FastSampler:
 
         return Board(new_board)
 
-    def compute_posterior(self, n_samples: int, normalize: bool = True):
-        """Computes an approximate posterior distribution over ship locations."""
-        # Initialize the count of each board
-        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
-
-        for _ in range(n_samples):
-            new_board = self.populate_board()
-            if new_board is not None:
-                board_counts += (new_board.board > 0).astype(int)
-
-        if normalize:
-            return board_counts / board_counts.sum()
-        else:
-            return board_counts
-
-    def constrained_posterior(
-        self,
-        true_board: Board,
-        n_samples: int = 10000,
-        min_samples: int = 10,
-        constraints: list = [],
+    def compute_posterior(
+        self, 
+        n_samples: int, 
         normalize: bool = True,
+        constraints: list = [],
+        true_board: Board = None,
         epsilon: float = 0.1,
+        min_samples: int = 10,
     ):
-        """Computes an approximate posterior distribution over ship locations with constraints."""
+        """Computes an approximate posterior distribution over ship locations.
+        
+        Args:
+            n_samples: Number of samples to generate
+            normalize: Whether to normalize the resulting distribution
+            constraints: List of code questions to use as constraints (optional)
+            true_board: True board for evaluating constraints (optional)
+            epsilon: Weight for constraint violations (used only with constraints)
+            min_samples: Minimum samples for logging (used only with constraints)
+        """
+        # If no constraints, use original unconditional logic
+        if not constraints or true_board is None:
+            # Initialize the count of each board
+            board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
 
+            for _ in range(n_samples):
+                new_board = self.populate_board()
+                if new_board is not None:
+                    board_counts += (new_board.board > 0).astype(int)
+
+            if normalize:
+                return board_counts / board_counts.sum()
+            else:
+                return board_counts
+        
+        # Otherwise use conditional logic with weighted sampling
+        weighted_boards = self.get_weighted_samples(
+            n_boards=n_samples,
+            constraints=constraints,
+            true_board=true_board,
+            epsilon=epsilon
+        )
+
+        # Accumulate weighted board counts
         board_counts = np.zeros((self.board.size, self.board.size), dtype=float)
-        total_sampled = 0
-        total_consistent = 0
-        active_constraints = constraints.copy()
-        true_answers = [
-            code_question(true_board.to_numpy(), self.board.board)
-            for code_question in active_constraints
-        ]
+        total_sampled = len(weighted_boards)
+        
+        for board, weight in weighted_boards:
+            board_counts += weight * (board.board > 0).astype(float)
 
-        candidate_boards = []
-        for _ in range(n_samples):
-            new_board = self.populate_board()
-            if new_board is not None:
-                candidate_boards.append(new_board)
+        logging.warning(f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected")
 
-        # Check constraints and update counts
-        for new_board in candidate_boards:
-            board_probability = 1
-
-            for code_question, true_answer in zip(active_constraints, true_answers):
-                # Skip if the true answer or its value is None
-                if true_answer is None or true_answer.value is None:
-                    continue
-
-                # Evaluate the new answer and skip if it is None or its value is different from the true answer
-                new_answer = code_question(new_board.to_numpy(), self.board.board)
-                if new_answer is None or new_answer.value != true_answer.value:
-                    board_probability *= epsilon
-                else:
-                    board_probability *= (1 - epsilon)
-
-            board_counts += board_probability * (new_board.board > 0).astype(float)
-            total_sampled += 1
-
-            if total_sampled >= n_samples:
-                break
-
-        logging.warning(f"FastSampler.constrained_posterior(): {total_consistent}/{min_samples} samples collected")
-
-        if normalize:
+        if normalize and board_counts.sum() > 0:
             return board_counts / board_counts.sum()
 
         logging.debug(
-            f"FastSampler.constrained_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
+            f"FastSampler.compute_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
         )
         return board_counts
 
-    def heatmap(self, n_samples: int, **fig_kwargs):
-        """Computes a heatmap of the approximate posterior distribution over ship locations."""
-        posterior = self.compute_posterior(n_samples)
-        return Board._to_figure(posterior, mode="heatmap", **fig_kwargs)
+    
+    def get_weighted_samples(
+        self,
+        n_boards: int,
+        constraints: list = [],
+        true_board: Board = None,
+        epsilon: float = 0.1,
+    ):
+        """
+        Generate weighted board samples based on constraints.
+        
+        Args:
+            n_boards: Number of boards to generate
+            constraints: List of code questions to use as constraints
+            true_board: True board for evaluating constraints
+            epsilon: Weight for constraint violations
+            
+        Returns:
+            List of (Board, weight) tuples
+        """
+        # Generate candidate boards
+        candidate_boards = []
+        for _ in range(n_boards):
+            new_board = self.populate_board()
+            if new_board is not None:
+                candidate_boards.append(new_board)
+        
+        # If no constraints, return uniform weights
+        if len(constraints) == 0 or true_board is None:
+            return [(board, 1.0) for board in candidate_boards]
+        
+        # Evaluate constraints on true board to get expected answers
+        true_answers = [
+            code_question(true_board.to_numpy(), self.board.board)
+            for code_question in constraints
+        ]
+        
+        # Calculate weights for each board based on constraint satisfaction
+        weighted_boards = []
+        for board in candidate_boards:
+            weight = 1.0
+            
+            for constraint, true_answer in zip(constraints, true_answers):
+                # Skip if true answer is None
+                if true_answer is None or true_answer.value is None:
+                    continue
+                
+                # Evaluate constraint on this board
+                constraint_answer = constraint(board.to_numpy(), self.board.board)
+                
+                # Skip if constraint returns None
+                if constraint_answer is None or constraint_answer.value is None:
+                    continue
+                
+                # Weight based on constraint satisfaction
+                if constraint_answer.value == true_answer.value:
+                    weight *= (1 - epsilon)
+                else:
+                    weight *= epsilon
+            
+            weighted_boards.append((board, weight))
+        
+        return weighted_boards
