@@ -338,7 +338,7 @@ class EIGCalculator:
         self.samples = samples
         self.epsilon = epsilon
 
-    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = [], true_board: Board = None):
+    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = [], weighted_boards: list = None):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -348,12 +348,12 @@ class EIGCalculator:
 
         # Use shared weighted sampling method for both conditional and unconditional cases
         # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
-        weighted_boards = sampler.get_weighted_samples(
-            n_boards=self.samples,
-            constraints=constraints,
-            true_board=true_board,
-            epsilon=self.epsilon
-        )
+        if weighted_boards is None:
+            weighted_boards = sampler.get_weighted_samples(
+                n_boards=self.samples,
+                constraints=constraints,
+                epsilon=self.epsilon
+            )
 
         # Collect weighted results for EIG calculation
         weighted_results = {True: 0.0, False: 0.0}

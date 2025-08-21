@@ -242,21 +242,12 @@ class MAPMoveStrategy(MoveStrategy):
             seed=self.rng,
         )
 
-        if constraints != []:
-            true_board = Board.from_trial_id(trial_id=self.board_id)
-
-            posterior = sampler.constrained_posterior(
-                true_board=true_board,
-                n_samples=self.n_samples,
-                normalize=False,
-                constraints=constraints,
-            )
-        else:
-            # Compute the raw posterior counts over board positions
-            posterior = sampler.compute_posterior(
-                n_samples=self.n_samples,
-                normalize=False,
-            )
+        # Compute the posterior counts over board positions (handles constraints internally)
+        posterior = sampler.compute_posterior(
+            n_samples=self.n_samples,
+            normalize=False,
+            constraints=constraints,
+        )
 
         # For tiles that have already been revealed, force their probability to -infinity
         posterior = posterior.astype(float)
@@ -387,6 +378,20 @@ class EIGQuestionStrategy(QuestionStrategy):
         best_eig = -1
         best_action_data = None
 
+        # Generate shared weighted boards once for all candidate questions
+        from battleship.fast_sampler import FastSampler
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+        shared_weighted_boards = sampler.get_weighted_samples(
+            n_boards=self.samples,
+            constraints=[],  # No constraints for basic EIG
+            epsilon=self.eig_calculator.epsilon
+        )
+
         candidate_question_list = []
         for _ in range(self.k):
             question_prompt = QuestionPrompt(
@@ -426,8 +431,8 @@ class EIGQuestionStrategy(QuestionStrategy):
                 history=history,
             )
 
-            # Then calculate EIG
-            eig = self.eig_calculator(code_question, state)
+            # Then calculate EIG using shared weighted boards
+            eig = self.eig_calculator(code_question, state, [], shared_weighted_boards)
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
@@ -480,7 +485,19 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
         best_eig = -1
         best_action_data = None
 
-        # Use the passed constraints instead of extracting from history
+        # Generate shared weighted boards once for all candidate questions
+        from battleship.fast_sampler import FastSampler
+        sampler = FastSampler(
+            board=state,
+            ship_lengths=Board.SHIP_LENGTHS,
+            ship_labels=Board.SHIP_LABELS,
+            seed=self.rng,
+        )
+        shared_weighted_boards = sampler.get_weighted_samples(
+            n_boards=self.samples,
+            constraints=constraints,  # Use passed constraints for conditional EIG
+            epsilon=self.eig_calculator.epsilon
+        )
 
         candidate_question_list = []
         for _ in range(self.k):
@@ -521,8 +538,8 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
                 history=history,
             )
 
-            # Then calculate conditional EIG with constraints
-            eig = self.eig_calculator(code_question, state, constraints, true_board)
+            # Then calculate conditional EIG using shared weighted boards
+            eig = self.eig_calculator(code_question, state, constraints, shared_weighted_boards)
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(

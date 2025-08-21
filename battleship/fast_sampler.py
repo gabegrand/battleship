@@ -222,7 +222,6 @@ class FastSampler:
         n_samples: int, 
         normalize: bool = True,
         constraints: list = [],
-        true_board: Board = None,
         epsilon: float = 0.1,
         min_samples: int = 10,
     ):
@@ -231,13 +230,12 @@ class FastSampler:
         Args:
             n_samples: Number of samples to generate
             normalize: Whether to normalize the resulting distribution
-            constraints: List of code questions to use as constraints (optional)
-            true_board: True board for evaluating constraints (optional)
+            constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs (optional)
             epsilon: Weight for constraint violations (used only with constraints)
             min_samples: Minimum samples for logging (used only with constraints)
         """
         # If no constraints, use original unconditional logic
-        if not constraints or true_board is None:
+        if not constraints:
             # Initialize the count of each board
             board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
 
@@ -255,7 +253,6 @@ class FastSampler:
         weighted_boards = self.get_weighted_samples(
             n_boards=n_samples,
             constraints=constraints,
-            true_board=true_board,
             epsilon=epsilon
         )
 
@@ -281,7 +278,6 @@ class FastSampler:
         self,
         n_boards: int,
         constraints: list = [],
-        true_board: Board = None,
         epsilon: float = 0.1,
     ):
         """
@@ -289,8 +285,7 @@ class FastSampler:
         
         Args:
             n_boards: Number of boards to generate
-            constraints: List of code questions to use as constraints
-            true_board: True board for evaluating constraints
+            constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs
             epsilon: Weight for constraint violations
             
         Returns:
@@ -304,34 +299,24 @@ class FastSampler:
                 candidate_boards.append(new_board)
         
         # If no constraints, return uniform weights
-        if len(constraints) == 0 or true_board is None:
+        if not constraints:
             return [(board, 1.0) for board in candidate_boards]
-        
-        # Evaluate constraints on true board to get expected answers
-        true_answers = [
-            code_question(true_board.to_numpy(), self.board.board)
-            for code_question in constraints
-        ]
         
         # Calculate weights for each board based on constraint satisfaction
         weighted_boards = []
         for board in candidate_boards:
             weight = 1.0
             
-            for constraint, true_answer in zip(constraints, true_answers):
-                # Skip if true answer is None
-                if true_answer is None or true_answer.value is None:
-                    continue
-                
+            for code_question, expected_answer in constraints:
                 # Evaluate constraint on this board
-                constraint_answer = constraint(board.to_numpy(), self.board.board)
+                constraint_answer = code_question(board.to_numpy(), self.board.board)
                 
                 # Skip if constraint returns None
                 if constraint_answer is None or constraint_answer.value is None:
                     continue
                 
                 # Weight based on constraint satisfaction
-                if constraint_answer.value == true_answer.value:
+                if constraint_answer.value == expected_answer:
                     weight *= (1 - epsilon)
                 else:
                     weight *= epsilon
