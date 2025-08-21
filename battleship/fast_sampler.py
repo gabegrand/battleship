@@ -218,15 +218,15 @@ class FastSampler:
         return Board(new_board)
 
     def compute_posterior(
-        self, 
-        n_samples: int, 
+        self,
+        n_samples: int,
         normalize: bool = True,
         constraints: list = [],
         epsilon: float = 0.1,
         min_samples: int = 10,
     ):
         """Computes an approximate posterior distribution over ship locations.
-        
+
         Args:
             n_samples: Number of samples to generate
             normalize: Whether to normalize the resulting distribution
@@ -248,22 +248,22 @@ class FastSampler:
                 return board_counts / board_counts.sum()
             else:
                 return board_counts
-        
+
         # Otherwise use conditional logic with weighted sampling
         weighted_boards = self.get_weighted_samples(
-            n_boards=n_samples,
-            constraints=constraints,
-            epsilon=epsilon
+            n_boards=n_samples, constraints=constraints, epsilon=epsilon
         )
 
         # Accumulate weighted board counts
         board_counts = np.zeros((self.board.size, self.board.size), dtype=float)
         total_sampled = len(weighted_boards)
-        
+
         for board, weight in weighted_boards:
             board_counts += weight * (board.board > 0).astype(float)
 
-        logging.warning(f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected")
+        logging.warning(
+            f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected"
+        )
 
         if normalize and board_counts.sum() > 0:
             return board_counts / board_counts.sum()
@@ -273,7 +273,6 @@ class FastSampler:
         )
         return board_counts
 
-    
     def get_weighted_samples(
         self,
         n_boards: int,
@@ -282,12 +281,12 @@ class FastSampler:
     ):
         """
         Generate weighted board samples based on constraints.
-        
+
         Args:
             n_boards: Number of boards to generate
             constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs
             epsilon: Weight for constraint violations
-            
+
         Returns:
             List of (Board, weight) tuples
         """
@@ -297,30 +296,60 @@ class FastSampler:
             new_board = self.populate_board()
             if new_board is not None:
                 candidate_boards.append(new_board)
-        
-        # If no constraints, return uniform weights
+
+        # If no constraints, return uniform normalized weights
         if not constraints:
-            return [(board, 1.0) for board in candidate_boards]
-        
+            if len(candidate_boards) == 0:
+                return []
+            uniform_weight = 1.0 / len(candidate_boards)
+            return [(board, uniform_weight) for board in candidate_boards]
+
         # Calculate weights for each board based on constraint satisfaction
-        weighted_boards = []
-        for board in candidate_boards:
-            weight = 1.0
-            
-            for code_question, expected_answer in constraints:
-                # Evaluate constraint on this board
+        # Handle None answers by applying the average multiplier for that constraint
+        weights = [1.0 for _ in candidate_boards]
+
+        for code_question, expected_answer in constraints:
+            per_board_multiplier = []
+            has_any_answer = False
+
+            # First pass: compute multipliers where answers exist
+            for board in candidate_boards:
                 constraint_answer = code_question(board.to_numpy(), self.board.board)
-                
-                # Skip if constraint returns None
+
                 if constraint_answer is None or constraint_answer.value is None:
+                    per_board_multiplier.append(None)
                     continue
-                
-                # Weight based on constraint satisfaction
+
+                has_any_answer = True
                 if constraint_answer.value == expected_answer:
-                    weight *= (1 - epsilon)
+                    per_board_multiplier.append(1 - epsilon)
                 else:
-                    weight *= epsilon
-            
-            weighted_boards.append((board, weight))
-        
-        return weighted_boards
+                    per_board_multiplier.append(epsilon)
+
+            # Determine default multiplier for boards with None
+            if has_any_answer:
+                observed = [m for m in per_board_multiplier if m is not None]
+                default_multiplier = sum(observed) / len(observed)
+            else:
+                # If no board yielded an answer for this constraint, it provides no information
+                default_multiplier = 1.0
+
+            # Second pass: apply multipliers (use average for None)
+            for i, m in enumerate(per_board_multiplier):
+                weights[i] *= m if m is not None else default_multiplier
+
+        weighted_boards = list(zip(candidate_boards, weights))
+
+        # Normalize weights so they sum to 1 (if possible)
+        total_weight = sum(weight for _, weight in weighted_boards)
+        if total_weight > 0:
+            return [(board, weight / total_weight) for board, weight in weighted_boards]
+
+        # Fallback: if all weights are zero but we have candidates, use uniform distribution
+        # This can occur when epsilon is 0 and all of the candidate boards are invalid
+        if len(candidate_boards) > 0:
+            uniform_weight = 1.0 / len(candidate_boards)
+            return [(board, uniform_weight) for board in candidate_boards]
+
+        # No candidates
+        return []

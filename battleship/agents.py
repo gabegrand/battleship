@@ -71,7 +71,9 @@ class ActionData:
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "stage_index": int(self.stage_index) if self.stage_index else None,  # Convert numpy.int64 to Python int
+            "stage_index": int(self.stage_index)
+            if self.stage_index
+            else None,  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -318,6 +320,7 @@ class Agent(ABC):
         with open(self.json_path, "w") as f:
             json.dump(data, f, indent=2)
 
+
 def binary_entropy(p: float) -> float:
     """
     Calculate the binary channel entropy given a probability p.
@@ -330,15 +333,28 @@ def binary_entropy(p: float) -> float:
     else:
         return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
 
+
 class EIGCalculator:
-    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000, epsilon: float = 0.1):
+    def __init__(
+        self,
+        seed: int = None,
+        timeout: int = 15,
+        samples: int = 1000,
+        epsilon: float = 0.1,
+    ):
         self.seed = seed
         self.rng = np.random.default_rng(seed)
         self.timeout = timeout
         self.samples = samples
         self.epsilon = epsilon
 
-    def __call__(self, code_question: CodeQuestion, state: Board, constraints: list = [], weighted_boards: list = None):
+    def __call__(
+        self,
+        code_question: CodeQuestion,
+        state: Board,
+        constraints: list = [],
+        weighted_boards: list = None,
+    ):
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -350,14 +366,12 @@ class EIGCalculator:
         # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
         if weighted_boards is None:
             weighted_boards = sampler.get_weighted_samples(
-                n_boards=self.samples,
-                constraints=constraints,
-                epsilon=self.epsilon
+                n_boards=self.samples, constraints=constraints, epsilon=self.epsilon
             )
 
         # Collect weighted results for EIG calculation
         weighted_results = {True: 0.0, False: 0.0}
-        
+
         for board, weight in weighted_boards:
             # Evaluate main question on weighted board
             answer: Answer = code_question(
@@ -373,7 +387,7 @@ class EIGCalculator:
                 weighted_results[False] += weight
             else:
                 logger.warning(
-                    f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
+                    f"CodeQuestion returned unknown value `{answer.value}` - skipping EIG calculation"
                 )
                 return float("nan")
 
@@ -384,9 +398,11 @@ class EIGCalculator:
         # Calculate EIG using weighted probabilities
         total_weight = sum(weighted_results.values())
         p_true = weighted_results[True] / total_weight
-        #p_false = weighted_results[False] / total_weight
-        
-        return binary_entropy(self.epsilon + ((1 - 2*self.epsilon) * p_true)) - binary_entropy(self.epsilon)
+        # p_false = weighted_results[False] / total_weight
+
+        return binary_entropy(
+            self.epsilon + ((1 - 2 * self.epsilon) * p_true)
+        ) - binary_entropy(self.epsilon)
 
 
 def config_move_regex(size):
