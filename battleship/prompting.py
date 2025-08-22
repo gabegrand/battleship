@@ -290,8 +290,9 @@ PROMPT_TASK_QUESTION = (
 
 PROMPT_QUESTIONS_AND_MOVES_REMAINING = "You can ask {q_remaining} more questions over the course of the game, and can fire {moves_remaining} more times."
 
-PROMPT_SHIP_STATUS = "Ship Status: {sunk}"
+PROMPT_SHIP_LENGTHS = "The ships on the board are of the following lengths: {lengths}."
 
+PROMPT_SHIP_STATUS = "A ship of length {length} {sunk_status}."
 
 class CaptainPrompt(BasePrompt):
     """Prompt for generating decisions during a game of Battleship."""
@@ -336,7 +337,13 @@ class CaptainPrompt(BasePrompt):
             q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
         )
 
-        postfix += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
+        ship_lengths = [sunk[0] for sunk in self.sunk]
+        postfix += "\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
+
+        postfix += "\n"
+        for ship_length, ship_color_or_none in self.sunk:
+            sunk_string = "has been sunk. It was the {ship_color_or_none} ship." if ship_color_or_none else "has not yet been sunk."
+            postfix += PROMPT_SHIP_STATUS.format(length=ship_length, sunk_status=sunk_string)
 
         # Add CoT instruction if needed
         if self.use_cot:

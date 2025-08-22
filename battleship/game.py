@@ -107,26 +107,21 @@ class BattleshipGame:
 
     def next_stage(self):
         # TODO: Move string formatting logic into the Agent classes
-        sunk_string = ", ".join(
-            [
-                f"{ship}: {'sunk' if status else 'not sunk'}"
-                for ship, status in self.target.ship_tracker(self.state).items()
-            ]
-        )
+        sunk = self.target.ship_tracker(self.state)
 
         decision = self.captain.decision(
             state=self.state,
             history=self.history,
             questions_remaining=self.max_questions - self.question_count,
             moves_remaining=self.max_moves - self.move_count,
-            sunk=sunk_string,
+            sunk=sunk,
         )
 
         if decision == Decision.QUESTION:
             q = self.captain.question(
                 self.state,
                 self.history,
-                sunk_string,
+                sunk,
                 questions_remaining=self.max_questions - self.question_count,
                 moves_remaining=self.max_moves - self.move_count,
                 constraints=self.captain.sampling_constraints,
@@ -152,7 +147,7 @@ class BattleshipGame:
             coords = self.captain.move(
                 self.state,
                 self.history,
-                sunk_string,
+                sunk,
                 questions_remaining=self.max_questions - self.question_count,
                 moves_remaining=self.max_moves - self.move_count,
                 constraints=self.captain.sampling_constraints,

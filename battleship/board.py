@@ -258,11 +258,11 @@ class Board(object):
 
     def ship_tracker(self, partial_board: "Board"):
         """
-        Return a string describing the sinking status of each ship.
+        Return an array describing the sinking status of each ship.
 
-        Example: "Green ship sunk, Red ship sunk, Purple ship not yet sunk, Orange ship not yet sunk"
+        Example: [(4, None), (3, "red"), (2, "green")] implies there is a ship of length 4 that has not been sunk, a ship of length 3 that is red and has been sunk, and a ship of length 2 that is green and has been sunk.
         """
-        tracker = {}
+        tracker = []
 
         # Create reverse mapping from ship number to name
         reverse_mapping = {}
@@ -282,9 +282,9 @@ class Board(object):
                 # Determine if ship is sunk
                 if target_count > 0:
                     if target_count == state_count:
-                        tracker[ship_name] = True
+                        tracker.append((target_count, ship_name))
                     else:
-                        tracker[ship_name] = False
+                        tracker.append((target_count, None))
 
         return tracker
 
