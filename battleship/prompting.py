@@ -158,7 +158,7 @@ PROMPT_TASK_CODE_SPOTTER = (
     "Your function should return a Boolean value, which will be interpreted as 'Yes' or 'No'. "
     "\n\nYour function should be defined generically to work with *any* true and partial board, not just the ones you are given. This means that your function must perform some operations on `true_board`, `partial_board`, or both boards in order to compute the answer to the Captain's question. Avoid hardcoding the answer. "
     "In some situations, the correct answer may depend on the current state of the game. For instance, if the Captain asks, 'Are there any ships in Row A?', the answer depends on what ships have already been revealed. If there are any unrevealed ship tiles in Row A, then the answer is 'Yes'. However, if all ships in Row A have already been revealed, then the correct answer is 'No'. Comparing the `partial_board` with the `true_board` will allow you to determine which ship tiles remain unrevealed. Remember: Your goal is to help the Captain find the location of the ships on the board, so your function should be designed to provide them useful information in context. "
-    "\n\nYour function should be defined inside a Python code blockas follows:"
+    "\n\nYour function should be defined inside a Python code block as follows:"
     "\n```python"
     "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:"
     "\n    # Your code here"
