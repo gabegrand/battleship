@@ -630,6 +630,8 @@ def parse_arguments():
             "EIGCaptain_cot",
             "MAPEIGCaptain",
             "MAPEIGCaptain_cot",
+            "ConditionalEIGCaptain",
+            "ConditionalEIGCaptain_cot",
         ],
         help="Captain types to benchmark",
     )

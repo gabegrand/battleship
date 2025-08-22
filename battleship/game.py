@@ -129,12 +129,14 @@ class BattleshipGame:
                 sunk_string,
                 questions_remaining=self.max_questions - self.question_count,
                 moves_remaining=self.max_moves - self.move_count,
+                constraints=self.captain.sampling_constraints,
+                true_board=self.target,
             )
             a = self.spotter.answer(question=q, board=self.state, history=self.history)
 
             if a is not None:
-                if a.code_question is not None:
-                    self.captain.sampling_constraints.append(a.code_question)
+                if a.code_question is not None and a.value is not None:
+                    self.captain.sampling_constraints.append((a.code_question, a.value))
 
             self.question_count += 1
             self.history.append(
