@@ -1,9 +1,11 @@
 """Core game logic for Battleship."""
+import hashlib
 import json
 import logging
 import os
 from copy import deepcopy
 from enum import StrEnum
+from typing import List
 from typing import Tuple
 from typing import Type
 
@@ -60,6 +62,9 @@ class BattleshipGame:
         else:
             self.save_path = None
 
+        # Precompute a deterministic ship order mapping based on the target board
+        self._ship_order_index = self._compute_ship_order_index(self.target)
+
     def __len__(self):
         return self.stage_index
 
@@ -106,8 +111,7 @@ class BattleshipGame:
             self.next_stage()
 
     def next_stage(self):
-        # TODO: Move string formatting logic into the Agent classes
-        ship_tracker = self.target.ship_tracker(self.state)
+        ship_tracker = self.get_reordered_ship_tracker(self.state)
 
         decision = self.captain.decision(
             state=self.state,
@@ -204,3 +208,34 @@ class BattleshipGame:
 
         with open(self.save_path, "w") as f:
             json.dump(self.history, f, indent=2)
+
+    def _compute_ship_order_index(self, board_target: Board):
+        """Create a deterministic random ordering for ship lengths present on the target board.
+
+        The ordering is derived from a hash of the target board, so it is stable for a given
+        board and requires no external RNG/seed configuration.
+        """
+        # Hash the target board bytes to get a stable seed
+        board_bytes = board_target.to_numpy().tobytes()
+        seed = int.from_bytes(hashlib.sha256(board_bytes).digest()[:8], "big")
+
+        rng = np.random.default_rng(seed)
+
+        # Determine which ship lengths are present on the target
+        hidden = Board.hidden_board(board_target.size)
+        lengths_present: List[int] = [
+            length for length, _ in board_target.ship_tracker(hidden)
+        ]
+
+        # Create a randomized permutation of lengths
+        permuted_lengths = list(rng.permutation(lengths_present))
+
+        # Map each length to its position for fast reordering
+        return {length: idx for idx, length in enumerate(permuted_lengths)}
+
+    def get_reordered_ship_tracker(self, state: Board):
+        """Get the reordered ship tracker for the given state."""
+        raw_ship_tracker = self.target.ship_tracker(state)
+        return sorted(
+            raw_ship_tracker, key=lambda item: self._ship_order_index.get(item[0], 0)
+        )
