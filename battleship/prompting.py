@@ -314,7 +314,10 @@ PROMPT_QUESTIONS_AND_MOVES_REMAINING = "You can ask {q_remaining} more questions
 
 PROMPT_SHIP_LENGTHS = "The ships on the board are of the following lengths: {lengths}."
 
-PROMPT_SHIP_STATUS = "A ship of length {length} {sunk_status}."
+PROMPT_SHIP_STATUS_UNSUNK = "A ship of length {length} is not yet sunk."
+PROMPT_SHIP_STATUS_SUNK = (
+    "A ship of length {length} has been sunk. It was the {ship_color_or_none}."
+)
 
 
 class CaptainPrompt(BasePrompt):
@@ -359,6 +362,22 @@ class CaptainPrompt(BasePrompt):
         board_str = str(self.board.to_numpy()) if self.board else ""
         board_message = "\n\n" + PROMPT_BOARD_CURRENT + board_str
 
+        # Ship tracker
+        ship_lengths = [sunk[0] for sunk in self.ship_tracker]
+        board_message += "\n\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
+
+        for ship_length, ship_color_or_none in self.ship_tracker:
+            if ship_color_or_none:
+                board_message += "\n- " + PROMPT_SHIP_STATUS_SUNK.format(
+                    length=ship_length, ship_color_or_none=ship_color_or_none
+                )
+            else:
+                board_message += "\n- " + PROMPT_SHIP_STATUS_UNSUNK.format(
+                    length=ship_length
+                )
+
+        board_message += "\n"
+
         # Task description
         postfix = PROMPT_SYSTEM_CAPTAIN + "\n\n" + self.task_prompt
 
@@ -366,20 +385,6 @@ class CaptainPrompt(BasePrompt):
         postfix += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
             q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
         )
-
-        ship_lengths = [sunk[0] for sunk in self.ship_tracker]
-        postfix += "\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
-
-        postfix += "\n"
-        for ship_length, ship_color_or_none in self.ship_tracker:
-            sunk_string = (
-                "has been sunk. It was the {ship_color_or_none} ship."
-                if ship_color_or_none
-                else "has not yet been sunk."
-            )
-            postfix += PROMPT_SHIP_STATUS.format(
-                length=ship_length, sunk_status=sunk_string
-            )
 
         # Add CoT instruction if needed
         if self.use_cot:
