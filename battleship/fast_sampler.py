@@ -6,6 +6,8 @@ import logging
 from collections import defaultdict
 from enum import StrEnum
 from typing import List
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 
@@ -72,6 +74,7 @@ class FastSampler:
 
     Args:
         board (Board): The board on which the ships will be placed.
+        ship_tracker (List[Tuple[int, Optional[str]]]): The tracker of the ships to be placed; e.g., [(4, None), (3, "red ship"), (2, "green ship")].
         ship_lengths (List[int]): The lengths of the ships to be placed; e.g., [2, 3, 4, 5].
         ship_labels (List[str]): The labels of the ships to be placed; e.g., ["R", "G", "P", "0"].
         seed (int, optional): The seed for the random number generator. Defaults to 0.
@@ -84,11 +87,13 @@ class FastSampler:
     def __init__(
         self,
         board: Board,
-        ship_lengths: List[int],
-        ship_labels: List[str],
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
+        ship_lengths: List[int] = Board.SHIP_LENGTHS,
+        ship_labels: List[str] = Board.SHIP_LABELS,
         seed: int = 0,
     ):
         self.board = board
+        self.ship_tracker = ship_tracker
         self.ship_lengths = ship_lengths
         self.ship_labels = ship_labels
 
