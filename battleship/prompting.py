@@ -316,7 +316,7 @@ PROMPT_SHIP_LENGTHS = "The ships on the board are of the following lengths: {len
 
 PROMPT_SHIP_STATUS_UNSUNK = "A ship of length {length} is not yet sunk."
 PROMPT_SHIP_STATUS_SUNK = (
-    "A ship of length {length} has been sunk. It was the {ship_color_or_none}."
+    "A ship of length {length} has been sunk. It was the {ship_color_name}."
 )
 
 
@@ -366,10 +366,10 @@ class CaptainPrompt(BasePrompt):
         ship_lengths = [sunk[0] for sunk in self.ship_tracker]
         board_message += "\n\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
 
-        for ship_length, ship_color_or_none in self.ship_tracker:
-            if ship_color_or_none:
+        for ship_length, ship_color_name in self.ship_tracker:
+            if ship_color_name:
                 board_message += "\n- " + PROMPT_SHIP_STATUS_SUNK.format(
-                    length=ship_length, ship_color_or_none=ship_color_or_none
+                    length=ship_length, ship_color_name=ship_color_name
                 )
             else:
                 board_message += "\n- " + PROMPT_SHIP_STATUS_UNSUNK.format(
