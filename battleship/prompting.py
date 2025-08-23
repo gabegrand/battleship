@@ -1,5 +1,7 @@
 from typing import Dict
 from typing import List
+from typing import Optional
+from typing import Tuple
 
 from battleship.board import Board
 from battleship.board import BoardFormat
@@ -52,10 +54,10 @@ class BasePrompt(object):
 
     def __init__(
         self,
-        target_trial_id: int = None,
-        target_trial_experiment: str = None,
+        target_trial_id: Optional[int] = None,
+        target_trial_experiment: Optional[str] = None,
         board_format: BoardFormat = BoardFormat.GRID,
-        history: List[Dict] = None,
+        history: Optional[List[Dict]] = None,
     ):
         self.target_trial_experiment = target_trial_experiment
         self.target_trial_id = target_trial_id
@@ -70,7 +72,7 @@ class BasePrompt(object):
             ]
         )
 
-    def to_chat_format(self):
+    def to_chat_format(self) -> List[dict]:
         """Returns a list of messages in OpenAI chat format.
 
         {
@@ -201,11 +203,11 @@ class SpotterPrompt(BasePrompt):
 
     def __init__(
         self,
-        question,
-        use_code=False,
-        board: Board = None,
-        history=None,
-        use_cot=False,
+        question: "Question",
+        use_code: bool = False,
+        board: Optional[Board] = None,
+        history: Optional[List[Dict]] = None,
+        use_cot: bool = False,
         target_trial_id: int = None,
         target_trial_experiment: str = None,
         **kwargs,
@@ -320,13 +322,13 @@ class CaptainPrompt(BasePrompt):
 
     def __init__(
         self,
-        board=None,
-        use_cot=False,
-        history=None,
-        questions_remaining=None,
-        moves_remaining=None,
-        ship_tracker=None,
-        task_prompt=None,
+        board: Optional[Board] = None,
+        use_cot: bool = False,
+        history: Optional[List[Dict]] = None,
+        questions_remaining: int = None,
+        moves_remaining: int = None,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
+        task_prompt: str = None,
         **kwargs,
     ):
         if task_prompt is None:
@@ -348,7 +350,7 @@ class CaptainPrompt(BasePrompt):
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
-    def to_chat_format(self):
+    def to_chat_format(self) -> List[dict]:
         messages = []
 
         messages_prefix = self.get_prompt_prefix()
@@ -397,12 +399,12 @@ class DecisionPrompt(CaptainPrompt):
 
     def __init__(
         self,
-        board=None,
-        use_cot=False,
-        history=None,
-        questions_remaining=None,
-        moves_remaining=None,
-        ship_tracker=None,
+        board: Optional[Board] = None,
+        use_cot: bool = False,
+        history: Optional[List[Dict]] = None,
+        questions_remaining: int = None,
+        moves_remaining: int = None,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
         **kwargs,
     ):
         super().__init__(
@@ -424,12 +426,12 @@ class MovePrompt(CaptainPrompt):
 
     def __init__(
         self,
-        board=None,
-        use_cot=False,
-        history=None,
-        questions_remaining=None,
-        moves_remaining=None,
-        ship_tracker=None,
+        board: Optional[Board] = None,
+        use_cot: bool = False,
+        history: Optional[List[Dict]] = None,
+        questions_remaining: int = None,
+        moves_remaining: int = None,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
         **kwargs,
     ):
         super().__init__(
@@ -451,12 +453,12 @@ class QuestionPrompt(CaptainPrompt):
 
     def __init__(
         self,
-        board=None,
-        use_cot=False,
-        history=None,
-        questions_remaining=None,
-        moves_remaining=None,
-        ship_tracker=None,
+        board: Optional[Board] = None,
+        use_cot: bool = False,
+        history: Optional[List[Dict]] = None,
+        questions_remaining: int = None,
+        moves_remaining: int = None,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
         **kwargs,
     ):
         super().__init__(
