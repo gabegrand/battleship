@@ -3,6 +3,9 @@ import base64
 import io
 import os
 from enum import StrEnum
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -256,13 +259,13 @@ class Board(object):
             "f1_score": f1_score,
         }
 
-    def ship_tracker(self, partial_board: "Board"):
+    def ship_tracker(self, partial_board: "Board") -> List[Tuple[int, Optional[str]]]:
         """
-        Return a string describing the sinking status of each ship.
+        Return an array describing the sinking status of each ship.
 
-        Example: "Green ship sunk, Red ship sunk, Purple ship not yet sunk, Orange ship not yet sunk"
+        Example: [(4, None), (3, "red ship"), (2, "green ship")] implies there is a ship of length 4 that has not been sunk, a ship of length 3 that is red and has been sunk, and a ship of length 2 that is green and has been sunk.
         """
-        tracker = {}
+        tracker = []
 
         # Create reverse mapping from ship number to name
         reverse_mapping = {}
@@ -282,9 +285,9 @@ class Board(object):
                 # Determine if ship is sunk
                 if target_count > 0:
                     if target_count == state_count:
-                        tracker[ship_name] = True
+                        tracker.append((target_count, ship_name))
                     else:
-                        tracker[ship_name] = False
+                        tracker.append((target_count, None))
 
         return tracker
 

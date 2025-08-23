@@ -1,6 +1,8 @@
 from random import random
 from typing import Dict
 from typing import List
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 
@@ -54,14 +56,14 @@ class Captain(Agent):
         history: List[Dict],
         questions_remaining: int,
         moves_remaining: int,
-        sunk: str,
+        ship_tracker: List[Tuple[int, Optional[str]]],
     ) -> Decision:
         decision, action_data = self.decision_strategy(
             state,
             history,
             questions_remaining,
             moves_remaining,
-            sunk,
+            ship_tracker,
         )
 
         # Save the action data
@@ -73,7 +75,7 @@ class Captain(Agent):
         self,
         state: Board,
         history: List[Dict],
-        sunk: str,
+        ship_tracker: List[Tuple[int, Optional[str]]],
         questions_remaining: int,
         moves_remaining: int,
         constraints: List,
@@ -81,7 +83,7 @@ class Captain(Agent):
         move, action_data = self.move_strategy(
             state,
             history,
-            sunk,
+            ship_tracker,
             questions_remaining,
             moves_remaining,
             constraints,
@@ -96,14 +98,20 @@ class Captain(Agent):
         self,
         state: Board,
         history: List[Dict],
-        sunk: str,
+        ship_tracker: List[Tuple[int, Optional[str]]],
         questions_remaining: int,
         moves_remaining: int,
         constraints: List,
         true_board: Board = None,
     ):
         question, action_data = self.question_strategy(
-            state, history, sunk, questions_remaining, moves_remaining, constraints, true_board
+            state,
+            history,
+            ship_tracker,
+            questions_remaining,
+            moves_remaining,
+            constraints,
+            true_board,
         )
 
         # Save the action data
@@ -114,7 +122,9 @@ class Captain(Agent):
 
 # Example decision strategies
 class AlwaysMoveDecisionStrategy(DecisionStrategy):
-    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
+    def __call__(
+        self, state, history, questions_remaining, moves_remaining, ship_tracker
+    ):
         action_data = ActionData(
             action="decision",
             decision=Decision.MOVE,
@@ -128,7 +138,9 @@ class ProbabilisticDecisionStrategy(DecisionStrategy):
         super().__init__()
         self.q_prob = q_prob
 
-    def __call__(self, state, history, questions_remaining, moves_remaining, sunk):
+    def __call__(
+        self, state, history, questions_remaining, moves_remaining, ship_tracker
+    ):
         if random() < self.q_prob and questions_remaining > 0:
             decision = Decision.QUESTION
         else:
@@ -156,7 +168,13 @@ class LLMDecisionStrategy(DecisionStrategy):
         self.client = get_openai_client()
 
     def __call__(
-        self, state, history, questions_remaining, moves_remaining, sunk, n_attempts=3
+        self,
+        state,
+        history,
+        questions_remaining,
+        moves_remaining,
+        ship_tracker,
+        n_attempts=3,
     ):
         if questions_remaining > 0:
             decision_prompt = DecisionPrompt(
@@ -166,7 +184,7 @@ class LLMDecisionStrategy(DecisionStrategy):
                 use_cot=self.use_cot,
                 questions_remaining=questions_remaining,
                 moves_remaining=moves_remaining,
-                sunk=sunk,
+                ship_tracker=ship_tracker,
             )
 
             candidate_decision = None
@@ -210,7 +228,13 @@ class RandomMoveStrategy(MoveStrategy):
         self.rng = rng
 
     def __call__(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
     ):
         hidden_tiles = np.argwhere(state.board == Board.hidden)
         if len(hidden_tiles) == 0:
@@ -233,7 +257,13 @@ class MAPMoveStrategy(MoveStrategy):
         self.n_samples = n_samples
 
     def __call__(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
     ):
         sampler = FastSampler(
             board=state,
@@ -276,7 +306,7 @@ class LLMMoveStrategy(MoveStrategy):
         temperature=None,
         use_cot=False,
         n_attempts=3,
-        rng=np.random.default_rng()
+        rng=np.random.default_rng(),
     ):
         super().__init__()
         self.llm = llm
@@ -287,7 +317,13 @@ class LLMMoveStrategy(MoveStrategy):
         self.rng = rng
 
     def __call__(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
     ):
         visible_tiles = list(zip(*np.where(state.board != Board.hidden)))
 
@@ -298,7 +334,7 @@ class LLMMoveStrategy(MoveStrategy):
             use_cot=self.use_cot,
             questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
-            sunk=sunk,
+            ship_tracker=ship_tracker,
         )
 
         sampler = FastSampler(
@@ -309,9 +345,9 @@ class LLMMoveStrategy(MoveStrategy):
         )
 
         posterior = sampler.compute_posterior(
-                n_samples=1000,
-                normalize=False,
-            )
+            n_samples=1000,
+            normalize=False,
+        )
 
         completion = None
         for _ in range(self.n_attempts):
@@ -373,13 +409,23 @@ class EIGQuestionStrategy(QuestionStrategy):
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
+    def __call__(
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
+        true_board=None,
+    ):
         best_question = None
         best_eig = -1
         best_action_data = None
 
         # Generate shared weighted boards once for all candidate questions
         from battleship.fast_sampler import FastSampler
+
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -389,7 +435,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         shared_weighted_boards = sampler.get_weighted_samples(
             n_boards=self.samples,
             constraints=[],  # No constraints for basic EIG
-            epsilon=self.eig_calculator.epsilon
+            epsilon=self.eig_calculator.epsilon,
         )
 
         candidate_question_list = []
@@ -401,7 +447,7 @@ class EIGQuestionStrategy(QuestionStrategy):
                 use_cot=self.use_cot,
                 questions_remaining=questions_remaining,
                 moves_remaining=moves_remaining,
-                sunk=sunk,
+                ship_tracker=ship_tracker,
             )
 
             candidate_question_text = None
@@ -442,7 +488,7 @@ class EIGQuestionStrategy(QuestionStrategy):
                 question=code_question,
                 eig=eig,
                 board_state=state.to_numpy(),
-                eig_questions=None
+                eig_questions=None,
             )
 
             candidate_question_list.append(action_data.to_dict())
@@ -476,17 +522,29 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
         self.samples = samples
         self.k = k
         self.use_cot = use_cot
-        self.eig_calculator = EIGCalculator(seed=self.rng, samples=self.samples, epsilon=epsilon)
+        self.eig_calculator = EIGCalculator(
+            seed=self.rng, samples=self.samples, epsilon=epsilon
+        )
         self.n_attempts = n_attempts
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
+    def __call__(
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
+        true_board=None,
+    ):
         best_question = None
         best_eig = -1
         best_action_data = None
 
         # Generate shared weighted boards once for all candidate questions
         from battleship.fast_sampler import FastSampler
+
         sampler = FastSampler(
             board=state,
             ship_lengths=Board.SHIP_LENGTHS,
@@ -496,7 +554,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
         shared_weighted_boards = sampler.get_weighted_samples(
             n_boards=self.samples,
             constraints=constraints,  # Use passed constraints for conditional EIG
-            epsilon=self.eig_calculator.epsilon
+            epsilon=self.eig_calculator.epsilon,
         )
 
         candidate_question_list = []
@@ -508,7 +566,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
                 use_cot=self.use_cot,
                 questions_remaining=questions_remaining,
                 moves_remaining=moves_remaining,
-                sunk=sunk,
+                ship_tracker=ship_tracker,
             )
 
             candidate_question_text = None
@@ -539,7 +597,9 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
             )
 
             # Then calculate conditional EIG using shared weighted boards
-            eig = self.eig_calculator(code_question, state, constraints, shared_weighted_boards)
+            eig = self.eig_calculator(
+                code_question, state, constraints, shared_weighted_boards
+            )
 
             # Create an ActionData object to store the interaction
             action_data = ActionData(
@@ -549,7 +609,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
                 question=code_question,
                 eig=eig,
                 board_state=state.to_numpy(),
-                eig_questions=None
+                eig_questions=None,
             )
 
             candidate_question_list.append(action_data.to_dict())
@@ -584,7 +644,16 @@ class LLMQuestionStrategy(QuestionStrategy):
         self.eig_calculator = EIGCalculator(seed=self.rng)
         self.client = get_openai_client()
 
-    def __call__(self, state, history, sunk, questions_remaining, moves_remaining, constraints, true_board=None):
+    def __call__(
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
+        true_board=None,
+    ):
         question_prompt = QuestionPrompt(
             board=state,
             board_format="grid",
@@ -592,7 +661,7 @@ class LLMQuestionStrategy(QuestionStrategy):
             use_cot=self.use_cot,
             questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
-            sunk=sunk,
+            ship_tracker=ship_tracker,
         )
 
         completion = None
@@ -620,12 +689,12 @@ class LLMQuestionStrategy(QuestionStrategy):
                 eig = self.eig_calculator(code_question, state)
 
                 action_data = ActionData(
-                action="question",
-                prompt=str(question_prompt),
-                completion=completion.model_dump(),
-                question=code_question,
-                eig=eig,
-                board_state=state.to_numpy(),
+                    action="question",
+                    prompt=str(question_prompt),
+                    completion=completion.model_dump(),
+                    question=code_question,
+                    eig=eig,
+                    board_state=state.to_numpy(),
                 )
 
                 return question, action_data
