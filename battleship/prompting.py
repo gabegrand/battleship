@@ -113,6 +113,9 @@ class BasePrompt(object):
                     if type(example["answer"]) != str
                     else example["answer"]
                 )
+                # Skip malformed entries that would print "None"
+                if not (question_text) or not (answer_text):
+                    continue
 
                 question = f"{self.CAPTAIN} (question): {question_text}\n"
                 answer = f"{self.SPOTTER} (answer): {answer_text}\n"
@@ -130,6 +133,10 @@ class BasePrompt(object):
                         move_text = str(coords_to_tile(example["coords"]))
                     else:
                         move_text = None
+
+                # Skip entries lacking a valid move
+                if not (move_text):
+                    continue
 
                 move = f"{self.CAPTAIN} (move): {move_text}\n"
 
@@ -199,11 +206,24 @@ class SpotterPrompt(BasePrompt):
         board: Board = None,
         history=None,
         use_cot=False,
+        target_trial_id: int = None,
+        target_trial_experiment: str = None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        # Require trial identifiers for Spotter to load true board
+        if target_trial_id is None or target_trial_experiment is None:
+            raise ValueError(
+                "SpotterPrompt requires target_trial_id and target_trial_experiment."
+            )
+        if question is None:
+            raise ValueError("SpotterPrompt requires a non-empty question.")
+        super().__init__(
+            target_trial_id=target_trial_id,
+            target_trial_experiment=target_trial_experiment,
+            history=history,
+            **kwargs,
+        )
         self.question = question
-        self.history = history
         self.use_code = use_code
         self.use_cot = use_cot
         self.board = board
@@ -309,6 +329,16 @@ class CaptainPrompt(BasePrompt):
         task_prompt=None,
         **kwargs,
     ):
+        if task_prompt is None:
+            raise ValueError("CaptainPrompt requires a non-empty task_prompt.")
+        if sunk is None:
+            raise ValueError(
+                "CaptainPrompt requires a non-empty sunk ship tracker list."
+            )
+        if questions_remaining is None or moves_remaining is None:
+            raise ValueError(
+                "CaptainPrompt requires questions_remaining and moves_remaining."
+            )
         super().__init__(history=history, **kwargs)
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
