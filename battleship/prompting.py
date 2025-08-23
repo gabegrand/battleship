@@ -325,16 +325,14 @@ class CaptainPrompt(BasePrompt):
         history=None,
         questions_remaining=None,
         moves_remaining=None,
-        sunk=None,
+        ship_tracker=None,
         task_prompt=None,
         **kwargs,
     ):
         if task_prompt is None:
             raise ValueError("CaptainPrompt requires a non-empty task_prompt.")
-        if sunk is None:
-            raise ValueError(
-                "CaptainPrompt requires a non-empty sunk ship tracker list."
-            )
+        if ship_tracker is None:
+            raise ValueError("CaptainPrompt requires a non-empty ship tracker list.")
         if questions_remaining is None or moves_remaining is None:
             raise ValueError(
                 "CaptainPrompt requires questions_remaining and moves_remaining."
@@ -344,7 +342,7 @@ class CaptainPrompt(BasePrompt):
         self.moves_remaining = moves_remaining
         self.board = board
         self.use_cot = use_cot
-        self.sunk = sunk
+        self.ship_tracker = ship_tracker
         self.task_prompt = task_prompt
 
         if self.board_format is None:
@@ -367,11 +365,11 @@ class CaptainPrompt(BasePrompt):
             q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
         )
 
-        ship_lengths = [sunk[0] for sunk in self.sunk]
+        ship_lengths = [sunk[0] for sunk in self.ship_tracker]
         postfix += "\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
 
         postfix += "\n"
-        for ship_length, ship_color_or_none in self.sunk:
+        for ship_length, ship_color_or_none in self.ship_tracker:
             sunk_string = (
                 "has been sunk. It was the {ship_color_or_none} ship."
                 if ship_color_or_none
@@ -404,7 +402,7 @@ class DecisionPrompt(CaptainPrompt):
         history=None,
         questions_remaining=None,
         moves_remaining=None,
-        sunk=None,
+        ship_tracker=None,
         **kwargs,
     ):
         super().__init__(
@@ -413,7 +411,7 @@ class DecisionPrompt(CaptainPrompt):
             history=history,
             questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
-            sunk=sunk,
+            ship_tracker=ship_tracker,
             task_prompt=PROMPT_TASK_DECISION,
             **kwargs,
         )
@@ -431,7 +429,7 @@ class MovePrompt(CaptainPrompt):
         history=None,
         questions_remaining=None,
         moves_remaining=None,
-        sunk=None,
+        ship_tracker=None,
         **kwargs,
     ):
         super().__init__(
@@ -440,7 +438,7 @@ class MovePrompt(CaptainPrompt):
             history=history,
             questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
-            sunk=sunk,
+            ship_tracker=ship_tracker,
             task_prompt=PROMPT_TASK_MOVE,
             **kwargs,
         )
@@ -458,7 +456,7 @@ class QuestionPrompt(CaptainPrompt):
         history=None,
         questions_remaining=None,
         moves_remaining=None,
-        sunk=None,
+        ship_tracker=None,
         **kwargs,
     ):
         super().__init__(
@@ -467,7 +465,7 @@ class QuestionPrompt(CaptainPrompt):
             history=history,
             questions_remaining=questions_remaining,
             moves_remaining=moves_remaining,
-            sunk=sunk,
+            ship_tracker=ship_tracker,
             task_prompt=PROMPT_TASK_QUESTION,
             **kwargs,
         )
