@@ -54,7 +54,7 @@ class BasePrompt(object):
         self,
         target_trial_id: int = None,
         target_trial_experiment: str = None,
-        board_format: BoardFormat = None,
+        board_format: BoardFormat = BoardFormat.GRID,
         history: List[Dict] = None,
     ):
         self.target_trial_experiment = target_trial_experiment
@@ -87,9 +87,9 @@ class BasePrompt(object):
         system_prompt = PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC
 
         history_messages = []
-        if self.history is not None:
+        if self.history:
             formatted_history = self.format_history()
-            if formatted_history != []:
+            if formatted_history:
                 history_messages.append({"role": "system", "content": PROMPT_EXAMPLES})
                 history_messages.extend(formatted_history)
 
@@ -294,6 +294,7 @@ PROMPT_SHIP_LENGTHS = "The ships on the board are of the following lengths: {len
 
 PROMPT_SHIP_STATUS = "A ship of length {length} {sunk_status}."
 
+
 class CaptainPrompt(BasePrompt):
     """Prompt for generating decisions during a game of Battleship."""
 
@@ -305,17 +306,16 @@ class CaptainPrompt(BasePrompt):
         questions_remaining=None,
         moves_remaining=None,
         sunk=None,
+        task_prompt=None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-        self.history = history
+        super().__init__(history=history, **kwargs)
         self.questions_remaining = questions_remaining
         self.moves_remaining = moves_remaining
         self.board = board
         self.use_cot = use_cot
         self.sunk = sunk
-
-        self.task_prompt = None
+        self.task_prompt = task_prompt
 
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
@@ -342,8 +342,14 @@ class CaptainPrompt(BasePrompt):
 
         postfix += "\n"
         for ship_length, ship_color_or_none in self.sunk:
-            sunk_string = "has been sunk. It was the {ship_color_or_none} ship." if ship_color_or_none else "has not yet been sunk."
-            postfix += PROMPT_SHIP_STATUS.format(length=ship_length, sunk_status=sunk_string)
+            sunk_string = (
+                "has been sunk. It was the {ship_color_or_none} ship."
+                if ship_color_or_none
+                else "has not yet been sunk."
+            )
+            postfix += PROMPT_SHIP_STATUS.format(
+                length=ship_length, sunk_status=sunk_string
+            )
 
         # Add CoT instruction if needed
         if self.use_cot:
@@ -356,42 +362,6 @@ class CaptainPrompt(BasePrompt):
         messages.append({"role": "system", "content": postfix})
 
         return messages
-
-        # System prompt
-        # system_prompt = (
-        #     PROMPT_GAME + PROMPT_VARIANT_GRID_NUMERIC + PROMPT_SYSTEM_CAPTAIN
-        # )
-
-        # system_prompt += self.task_prompt
-
-        # # Game history
-        # if self.history is not None:
-        #     system_prompt += "\n\n" + PROMPT_EXAMPLES
-        #     system_prompt += self.format_history()
-
-        # # Current game state
-        # system_prompt += "\n\n" + PROMPT_QUESTIONS_AND_MOVES_REMAINING.format(
-        #     q_remaining=self.questions_remaining, moves_remaining=self.moves_remaining
-        # )
-
-        # if self.sunk is not None:
-        #     system_prompt += "\n" + PROMPT_SHIP_STATUS.format(sunk=self.sunk)
-
-        # # Board state
-        # board_str = (
-        #     str(self.board.to_numpy()) if self.board else ""
-        # )
-        # system_prompt += "\n\n" + PROMPT_CURRENT_BOARD + board_str
-
-        # # Add CoT instruction if needed
-        # if self.use_cot:
-        #     system_prompt += "\n" + PROMPT_COT
-        # else:
-        #     system_prompt += "\n" + PROMPT_DIRECT
-
-        # messages.append({"role": "system", "content": system_prompt})
-
-        # return messages
 
 
 class DecisionPrompt(CaptainPrompt):
@@ -407,16 +377,16 @@ class DecisionPrompt(CaptainPrompt):
         sunk=None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-        self.history = history
-        self.questions_remaining = questions_remaining
-        self.moves_remaining = moves_remaining
-        self.board = board
-        self.use_cot = use_cot
-        self.sunk = sunk
-
-        self.task_prompt = PROMPT_TASK_DECISION
-
+        super().__init__(
+            board=board,
+            use_cot=use_cot,
+            history=history,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
+            sunk=sunk,
+            task_prompt=PROMPT_TASK_DECISION,
+            **kwargs,
+        )
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -434,16 +404,16 @@ class MovePrompt(CaptainPrompt):
         sunk=None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-        self.history = history
-        self.questions_remaining = questions_remaining
-        self.moves_remaining = moves_remaining
-        self.board = board
-        self.use_cot = use_cot
-        self.sunk = sunk
-
-        self.task_prompt = PROMPT_TASK_MOVE
-
+        super().__init__(
+            board=board,
+            use_cot=use_cot,
+            history=history,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
+            sunk=sunk,
+            task_prompt=PROMPT_TASK_MOVE,
+            **kwargs,
+        )
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
 
@@ -461,15 +431,15 @@ class QuestionPrompt(CaptainPrompt):
         sunk=None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-        self.history = history
-        self.questions_remaining = questions_remaining
-        self.moves_remaining = moves_remaining
-        self.board = board
-        self.use_cot = use_cot
-        self.sunk = sunk
-
-        self.task_prompt = PROMPT_TASK_QUESTION
-
+        super().__init__(
+            board=board,
+            use_cot=use_cot,
+            history=history,
+            questions_remaining=questions_remaining,
+            moves_remaining=moves_remaining,
+            sunk=sunk,
+            task_prompt=PROMPT_TASK_QUESTION,
+            **kwargs,
+        )
         if self.board_format is None:
             raise ValueError("Board format must be specified.")
