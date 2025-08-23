@@ -263,7 +263,7 @@ class Board(object):
         """
         Return an array describing the sinking status of each ship.
 
-        Example: [(4, None), (3, "red ship"), (2, "green ship")] implies there is a ship of length 4 that has not been sunk, a ship of length 3 that is red and has been sunk, and a ship of length 2 that is green and has been sunk.
+        Example: [(4, None), (3, "R"), (2, "G")] implies there is a ship of length 4 that has not been sunk, a ship of length 3 that is "R" and has been sunk, and a ship of length 2 that is "G" and has been sunk.
         """
         tracker = []
 
@@ -271,12 +271,12 @@ class Board(object):
         reverse_mapping = {}
         for symbol, number in BOARD_SYMBOL_MAPPING.items():
             if number > 0:  # Skip hidden and water
-                reverse_mapping[number] = SYMBOL_MEANING_MAPPING[symbol]
+                reverse_mapping[number] = symbol
 
         # Skip water (0) and hidden (-1) tiles
         for ship_type in range(1, int(np.max(self.board)) + 1):
             if ship_type in reverse_mapping:
-                ship_name = reverse_mapping[ship_type]
+                ship_symbol = reverse_mapping[ship_type]
 
                 # Count tiles of this ship type in target and state
                 target_count = np.sum(self.board == ship_type)
@@ -285,7 +285,7 @@ class Board(object):
                 # Determine if ship is sunk
                 if target_count > 0:
                     if target_count == state_count:
-                        tracker.append((target_count, ship_name))
+                        tracker.append((target_count, ship_symbol))
                     else:
                         tracker.append((target_count, None))
 
