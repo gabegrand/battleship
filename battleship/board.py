@@ -3,6 +3,9 @@ import base64
 import io
 import os
 from enum import StrEnum
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -256,7 +259,7 @@ class Board(object):
             "f1_score": f1_score,
         }
 
-    def ship_tracker(self, partial_board: "Board"):
+    def ship_tracker(self, partial_board: "Board") -> List[Tuple[int, Optional[str]]]:
         """
         Return an array describing the sinking status of each ship.
 
