@@ -329,12 +329,11 @@ class FastSampler:
             if new_board is not None:
                 candidate_boards.append(new_board)
 
-        # If no constraints, return uniform normalized weights
-        if not constraints:
-            if len(candidate_boards) == 0:
-                return []
-            uniform_weight = 1.0 / len(candidate_boards)
-            return [(board, uniform_weight) for board in candidate_boards]
+        if len(candidate_boards) == 0:
+            logger.warning(
+                "FastSampler.get_weighted_samples(): Unable to generate any candidate boards - returning empty list"
+            )
+            return []
 
         # Calculate weights for each board based on constraint satisfaction
         # Handle None answers by applying the average multiplier for that constraint
@@ -376,15 +375,14 @@ class FastSampler:
         total_weight = sum(weight for _, weight in weighted_boards)
         if total_weight > 0:
             return [(board, weight / total_weight) for board, weight in weighted_boards]
-
-        # Fallback: if all weights are zero but we have candidates, use uniform distribution
-        # This can occur when epsilon is 0 and all of the candidate boards are invalid
-        if len(candidate_boards) > 0:
+        else:
+            logger.warning(
+                "FastSampler.get_weighted_samples(): All weights are zero - returning uniform weights"
+            )
+            # Fallback: if all weights are zero but we have candidates, use uniform distribution
+            # This can occur when epsilon is 0 and all of the candidate boards are invalid
             uniform_weight = 1.0 / len(candidate_boards)
             return [(board, uniform_weight) for board in candidate_boards]
-
-        # No candidates
-        return []
 
     def compute_posterior(
         self,
@@ -430,16 +428,18 @@ class FastSampler:
         for board, weight in weighted_boards:
             board_counts += weight * (board.board > 0).astype(float)
 
-        logging.warning(
-            f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected"
-        )
-
         if normalize and board_counts.sum() > 0:
             return board_counts / board_counts.sum()
 
-        logging.debug(
-            f"FastSampler.compute_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
-        )
+        if total_sampled < min_samples:
+            logger.warning(
+                f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected"
+            )
+        else:
+            logger.debug(
+                f"FastSampler.compute_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
+            )
+
         return board_counts
 
     def heatmap(
