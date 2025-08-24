@@ -433,7 +433,7 @@ class EIGQuestionStrategy(QuestionStrategy):
             seed=self.rng,
         )
         shared_weighted_boards = sampler.get_weighted_samples(
-            n_boards=self.samples,
+            n_samples=self.samples,
             constraints=[],  # No constraints for basic EIG
             epsilon=self.eig_calculator.epsilon,
         )
@@ -552,7 +552,7 @@ class ConditionalEIGQuestionStrategy(QuestionStrategy):
             seed=self.rng,
         )
         shared_weighted_boards = sampler.get_weighted_samples(
-            n_boards=self.samples,
+            n_samples=self.samples,
             constraints=constraints,  # Use passed constraints for conditional EIG
             epsilon=self.eig_calculator.epsilon,
         )
