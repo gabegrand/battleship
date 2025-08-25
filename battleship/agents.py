@@ -366,7 +366,7 @@ class EIGCalculator:
         # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
         if weighted_boards is None:
             weighted_boards = sampler.get_weighted_samples(
-                n_boards=self.samples, constraints=constraints, epsilon=self.epsilon
+                n_samples=self.samples, constraints=constraints, epsilon=self.epsilon
             )
 
         # Collect weighted results for EIG calculation

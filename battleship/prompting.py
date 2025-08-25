@@ -6,6 +6,7 @@ from typing import Tuple
 from battleship.board import Board
 from battleship.board import BoardFormat
 from battleship.board import coords_to_tile
+from battleship.board import SYMBOL_MEANING_MAPPING
 from battleship.game import Decision
 
 PROMPT_GAME = (
@@ -366,10 +367,11 @@ class CaptainPrompt(BasePrompt):
         ship_lengths = [sunk[0] for sunk in self.ship_tracker]
         board_message += "\n\n" + PROMPT_SHIP_LENGTHS.format(lengths=ship_lengths)
 
-        for ship_length, ship_color_name in self.ship_tracker:
-            if ship_color_name:
+        for ship_length, ship_symbol in self.ship_tracker:
+            if ship_symbol:
                 board_message += "\n- " + PROMPT_SHIP_STATUS_SUNK.format(
-                    length=ship_length, ship_color_name=ship_color_name
+                    length=ship_length,
+                    ship_color_name=SYMBOL_MEANING_MAPPING[ship_symbol],
                 )
             else:
                 board_message += "\n- " + PROMPT_SHIP_STATUS_UNSUNK.format(
