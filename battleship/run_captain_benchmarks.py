@@ -304,7 +304,6 @@ def run_single_agent_game_wrapper(args) -> Optional[Dict]:
         # Run the game
         result = run_single_agent_game(args)
         return result
-
     except Exception as e:
         logging.error(
             f"Failed to process game: {captain_type} seed{seed} {board_id}: {e}"
@@ -631,6 +630,8 @@ def parse_arguments():
             "EIGCaptain_cot",
             "MAPEIGCaptain",
             "MAPEIGCaptain_cot",
+            "ConditionalEIGCaptain",
+            "ConditionalEIGCaptain_cot",
         ],
         help="Captain types to benchmark",
     )

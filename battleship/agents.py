@@ -7,6 +7,7 @@ import traceback
 import warnings
 from abc import ABC
 from dataclasses import dataclass
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -62,6 +63,8 @@ class ActionData:
     prompt: str = None  # The prompt text
     completion: dict = None  # Full completion object as JSON
 
+    eig_questions: list["ActionData"] = None
+
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = time.time()
@@ -69,7 +72,9 @@ class ActionData:
     def to_dict(self) -> dict:
         """Convert action data to dictionary format for JSON serialization."""
         return {
-            "stage_index": int(self.stage_index),  # Convert numpy.int64 to Python int
+            "stage_index": int(self.stage_index)
+            if self.stage_index
+            else None,  # Convert numpy.int64 to Python int
             "action": self.action,
             "prompt": self.prompt,
             "completion": self.completion,
@@ -93,6 +98,7 @@ class ActionData:
                 if self.board_state is not None
                 else None
             ),  # Convert numpy array to Python list
+            "eig_questions": (self.eig_questions),  # List of ActionData objects
         }
 
     @classmethod
@@ -316,62 +322,91 @@ class Agent(ABC):
             json.dump(data, f, indent=2)
 
 
+def binary_entropy(p: float) -> float:
+    """
+    Calculate the binary channel entropy given a probability p.
+    Returns NaN if p is not in [0, 1].
+    """
+    if p < 0 or p > 1:
+        return float("nan")
+    elif p == 0 or p == 1:
+        return 0.0
+    else:
+        return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
+
+
 class EIGCalculator:
-    def __init__(self, seed: int = None, timeout: int = 15, samples: int = 1000):
+    def __init__(
+        self,
+        seed: int = None,
+        timeout: int = 15,
+        samples: int = 1000,
+        epsilon: float = 0.1,
+    ):
         self.seed = seed
         self.rng = np.random.default_rng(seed)
         self.timeout = timeout
         self.samples = samples
+        self.epsilon = epsilon
 
-    def __call__(self, code_question: CodeQuestion, state: Board):
+    def __call__(
+        self,
+        code_question: CodeQuestion,
+        state: Board,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
+        constraints: list = [],
+        weighted_boards: list = None,
+    ):
         sampler = FastSampler(
             board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
+            ship_tracker=ship_tracker,
             seed=self.rng,
         )
 
-        results = {True: 0, False: 0}
-        curr_time = time.time()
-        while sum(results.values()) < self.samples:
-            if time.time() - curr_time > self.timeout:
-                return float("nan")
+        # Use shared weighted sampling method for both conditional and unconditional cases
+        # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
+        if not weighted_boards:
+            weighted_boards = sampler.get_weighted_samples(
+                n_samples=self.samples, constraints=constraints, epsilon=self.epsilon
+            )
 
-            # This could result in an infinite loop if the sampler is unable to populate a board
-            board = None
-            while not board:
-                board = sampler.populate_board()
+        # Collect weighted results for EIG calculation
+        weighted_results = {True: 0.0, False: 0.0}
 
+        for board, weight in weighted_boards:
+            # Evaluate main question on weighted board
             answer: Answer = code_question(
                 true_board=board.board, partial_board=state.board
             )
 
             if answer is None or answer.value is None:
-                # We assume that further answers will also be None
                 logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
-                break
+                return float("nan")
             elif answer.value is True:
-                results[True] += 1
+                weighted_results[True] += weight
             elif answer.value is False:
-                results[False] += 1
+                weighted_results[False] += weight
             else:
-                # We assume that further answers will also be None
                 logger.warning(
-                    f"CodeQuestion returned None - skipping EIG calculation: {answer.text}"
+                    f"CodeQuestion returned unknown value `{answer.value}` - skipping EIG calculation"
                 )
-                break
+                return float("nan")
 
-        if any(v == 0 for v in results.values()):
+        # Check if we have valid results
+        if any(v == 0 for v in weighted_results.values()):
             return 0
 
-        return np.log2(self.samples) - sum(
-            [p / self.samples * np.log2(p) for p in results.values()]
-        )
+        # Calculate EIG using weighted probabilities
+        total_weight = sum(weighted_results.values())
+        p_true = weighted_results[True] / total_weight
+
+        return binary_entropy(
+            self.epsilon + ((1 - 2 * self.epsilon) * p_true)
+        ) - binary_entropy(self.epsilon)
 
 
 def config_move_regex(size):
     """Generate a regex pattern for move validation based on board size."""
-    # max_letter/number are required so black can format the return statement properly
     max_letter = chr(ord("A") + size - 1)
     max_number = str(size)
     return f"[A-{max_letter}]{{1}}[1-{max_number}]{{1}}"

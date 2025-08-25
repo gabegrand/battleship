@@ -19,7 +19,7 @@ class BaseStrategy(ABC):
 class DecisionStrategy(BaseStrategy):
     @abstractmethod
     def __call__(
-        self, state, history, questions_remaining, moves_remaining, sunk
+        self, state, history, questions_remaining, moves_remaining, ship_tracker
     ) -> Tuple[Decision, "ActionData"]:
         pass
 
@@ -27,7 +27,13 @@ class DecisionStrategy(BaseStrategy):
 class MoveStrategy(BaseStrategy):
     @abstractmethod
     def __call__(
-        self, state, history, sunk, questions_remaining, moves_remaining, constraints
+        self,
+        state,
+        history,
+        ship_tracker,
+        questions_remaining,
+        moves_remaining,
+        constraints,
     ) -> Tuple[Tuple[int, int], "ActionData"]:
         pass
 
@@ -35,7 +41,7 @@ class MoveStrategy(BaseStrategy):
 class QuestionStrategy(BaseStrategy):
     @abstractmethod
     def __call__(
-        self, state, history, sunk, questions_remaining, moves_remaining
+        self, state, history, ship_tracker, questions_remaining, moves_remaining
     ) -> Tuple["Question", "ActionData"]:
         pass
 
