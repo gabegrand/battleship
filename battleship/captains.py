@@ -102,7 +102,6 @@ class Captain(Agent):
         questions_remaining: int,
         moves_remaining: int,
         constraints: List,
-        true_board: Board = None,
     ):
         question, action_data = self.question_strategy(
             state,
@@ -111,7 +110,6 @@ class Captain(Agent):
             questions_remaining,
             moves_remaining,
             constraints,
-            true_board,
         )
 
         # Save the action data
@@ -267,8 +265,7 @@ class MAPMoveStrategy(MoveStrategy):
     ):
         sampler = FastSampler(
             board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
+            ship_tracker=ship_tracker,
             seed=self.rng,
         )
 
@@ -339,8 +336,7 @@ class LLMMoveStrategy(MoveStrategy):
 
         sampler = FastSampler(
             board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
+            ship_tracker=ship_tracker,
             seed=self.rng,
         )
 
@@ -417,14 +413,10 @@ class EIGQuestionStrategy(QuestionStrategy):
         questions_remaining,
         moves_remaining,
         constraints,
-        true_board=None,
     ):
         best_question = None
         best_eig = -1
         best_action_data = None
-
-        # Generate shared weighted boards once for all candidate questions
-        from battleship.fast_sampler import FastSampler
 
         sampler = FastSampler(
             board=state,
@@ -434,7 +426,7 @@ class EIGQuestionStrategy(QuestionStrategy):
         )
         shared_weighted_boards = sampler.get_weighted_samples(
             n_samples=self.samples,
-            constraints=[],  # No constraints for basic EIG
+            constraints=constraints,
             epsilon=self.eig_calculator.epsilon,
         )
 
@@ -478,127 +470,12 @@ class EIGQuestionStrategy(QuestionStrategy):
             )
 
             # Then calculate EIG using shared weighted boards
-            eig = self.eig_calculator(code_question, state, [], shared_weighted_boards)
-
-            # Create an ActionData object to store the interaction
-            action_data = ActionData(
-                action="question",
-                prompt=str(question_prompt),
-                completion=completion.model_dump(),
-                question=code_question,
-                eig=eig,
-                board_state=state.to_numpy(),
-                eig_questions=None,
-            )
-
-            candidate_question_list.append(action_data.to_dict())
-
-            # Update best question if this one has higher EIG
-            if eig > best_eig:
-                best_eig = eig
-                best_question = candidate_question
-                best_action_data = action_data
-
-        best_action_data.eig_questions = candidate_question_list
-        return best_question, best_action_data
-
-
-class ConditionalEIGQuestionStrategy(QuestionStrategy):
-    def __init__(
-        self,
-        llm,
-        spotter,
-        rng,
-        samples=100,
-        k=3,
-        use_cot=False,
-        n_attempts=3,
-        epsilon=0.1,
-    ):
-        super().__init__()
-        self.llm = llm
-        self.spotter = spotter
-        self.rng = rng
-        self.samples = samples
-        self.k = k
-        self.use_cot = use_cot
-        self.eig_calculator = EIGCalculator(
-            seed=self.rng, samples=self.samples, epsilon=epsilon
-        )
-        self.n_attempts = n_attempts
-        self.client = get_openai_client()
-
-    def __call__(
-        self,
-        state,
-        history,
-        ship_tracker,
-        questions_remaining,
-        moves_remaining,
-        constraints,
-        true_board=None,
-    ):
-        best_question = None
-        best_eig = -1
-        best_action_data = None
-
-        # Generate shared weighted boards once for all candidate questions
-        from battleship.fast_sampler import FastSampler
-
-        sampler = FastSampler(
-            board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
-            seed=self.rng,
-        )
-        shared_weighted_boards = sampler.get_weighted_samples(
-            n_samples=self.samples,
-            constraints=constraints,  # Use passed constraints for conditional EIG
-            epsilon=self.eig_calculator.epsilon,
-        )
-
-        candidate_question_list = []
-        for _ in range(self.k):
-            question_prompt = QuestionPrompt(
-                board=state,
-                board_format="grid",
-                history=history,
-                use_cot=self.use_cot,
-                questions_remaining=questions_remaining,
-                moves_remaining=moves_remaining,
-                ship_tracker=ship_tracker,
-            )
-
-            candidate_question_text = None
-            completion = None
-            for _ in range(self.n_attempts):
-                completion = self.client.chat.completions.create(
-                    model=self.llm,
-                    messages=question_prompt.to_chat_format(),
-                    temperature=None,
-                )
-                match = ANSWER_MATCH_PATTERN.search(
-                    completion.choices[0].message.content
-                )
-                if match:
-                    candidate_question_text = match.group(1)
-                    break
-
-            if candidate_question_text is None:
-                continue
-
-            candidate_question = Question(text=candidate_question_text)
-
-            # First translate the question
-            code_question = self.spotter.translate(
-                question=candidate_question,
-                board=state,
-                history=history,
-            )
-
-            # Then calculate conditional EIG using shared weighted boards
             eig = self.eig_calculator(
-                code_question, state, constraints, shared_weighted_boards
+                code_question=code_question,
+                state=state,
+                ship_tracker=ship_tracker,
+                constraints=constraints,
+                weighted_boards=shared_weighted_boards,
             )
 
             # Create an ActionData object to store the interaction
@@ -652,7 +529,6 @@ class LLMQuestionStrategy(QuestionStrategy):
         questions_remaining,
         moves_remaining,
         constraints,
-        true_board=None,
     ):
         question_prompt = QuestionPrompt(
             board=state,
@@ -686,7 +562,12 @@ class LLMQuestionStrategy(QuestionStrategy):
                     history=history,
                 )
 
-                eig = self.eig_calculator(code_question, state)
+                eig = self.eig_calculator(
+                    code_question=code_question,
+                    state=state,
+                    ship_tracker=ship_tracker,
+                    constraints=constraints,
+                )
 
                 action_data = ActionData(
                     action="question",
@@ -929,106 +810,6 @@ def create_captain(
                 n_samples=eig_samples,
             ),
             question_strategy=EIGQuestionStrategy(
-                llm=llm,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
-                samples=eig_samples,
-                k=eig_k,
-                use_cot=True,
-            ),
-            seed=seed,
-            llm=llm,
-            json_path=json_path,
-        )
-        return captain
-
-    elif captain_type == "ConditionalEIGCaptain":
-        captain = Captain(
-            decision_strategy=LLMDecisionStrategy(
-                llm=llm,
-                use_cot=False,
-            ),
-            move_strategy=LLMMoveStrategy(
-                llm=llm,
-                use_cot=False,
-                rng=np.random.default_rng(seed),
-            ),
-            question_strategy=ConditionalEIGQuestionStrategy(
-                llm=llm,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
-                samples=eig_samples,
-                k=eig_k,
-                use_cot=False,
-            ),
-            seed=seed,
-            llm=llm,
-            json_path=json_path,
-        )
-        return captain
-
-    elif captain_type == "ConditionalEIGCaptain_cot":
-        captain = Captain(
-            decision_strategy=LLMDecisionStrategy(
-                llm=llm,
-                use_cot=True,
-            ),
-            move_strategy=LLMMoveStrategy(
-                llm=llm,
-                use_cot=True,
-                rng=np.random.default_rng(seed),
-            ),
-            question_strategy=ConditionalEIGQuestionStrategy(
-                llm=llm,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
-                samples=eig_samples,
-                k=eig_k,
-                use_cot=True,
-            ),
-            seed=seed,
-            llm=llm,
-            json_path=json_path,
-        )
-        return captain
-
-    elif captain_type == "MAPConditionalEIGCaptain":
-        captain = Captain(
-            decision_strategy=LLMDecisionStrategy(
-                llm=llm,
-                use_cot=False,
-            ),
-            move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed),
-                board_id=board_id,
-                n_samples=eig_samples,
-            ),
-            question_strategy=ConditionalEIGQuestionStrategy(
-                llm=llm,
-                spotter=_get_spotter(),
-                rng=np.random.default_rng(seed),
-                samples=eig_samples,
-                k=eig_k,
-                use_cot=False,
-            ),
-            seed=seed,
-            llm=llm,
-            json_path=json_path,
-        )
-        return captain
-
-    elif captain_type == "MAPConditionalEIGCaptain_cot":
-        captain = Captain(
-            decision_strategy=LLMDecisionStrategy(
-                llm=llm,
-                use_cot=True,
-            ),
-            move_strategy=MAPMoveStrategy(
-                rng=np.random.default_rng(seed),
-                board_id=board_id,
-                n_samples=eig_samples,
-            ),
-            question_strategy=ConditionalEIGQuestionStrategy(
                 llm=llm,
                 spotter=_get_spotter(),
                 rng=np.random.default_rng(seed),

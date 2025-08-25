@@ -7,6 +7,7 @@ import traceback
 import warnings
 from abc import ABC
 from dataclasses import dataclass
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -352,19 +353,19 @@ class EIGCalculator:
         self,
         code_question: CodeQuestion,
         state: Board,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
         constraints: list = [],
         weighted_boards: list = None,
     ):
         sampler = FastSampler(
             board=state,
-            ship_lengths=Board.SHIP_LENGTHS,
-            ship_labels=Board.SHIP_LABELS,
+            ship_tracker=ship_tracker,
             seed=self.rng,
         )
 
         # Use shared weighted sampling method for both conditional and unconditional cases
         # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
-        if weighted_boards is None:
+        if not weighted_boards:
             weighted_boards = sampler.get_weighted_samples(
                 n_samples=self.samples, constraints=constraints, epsilon=self.epsilon
             )
@@ -398,7 +399,6 @@ class EIGCalculator:
         # Calculate EIG using weighted probabilities
         total_weight = sum(weighted_results.values())
         p_true = weighted_results[True] / total_weight
-        # p_false = weighted_results[False] / total_weight
 
         return binary_entropy(
             self.epsilon + ((1 - 2 * self.epsilon) * p_true)
@@ -407,7 +407,6 @@ class EIGCalculator:
 
 def config_move_regex(size):
     """Generate a regex pattern for move validation based on board size."""
-    # max_letter/number are required so black can format the return statement properly
     max_letter = chr(ord("A") + size - 1)
     max_number = str(size)
     return f"[A-{max_letter}]{{1}}[1-{max_number}]{{1}}"

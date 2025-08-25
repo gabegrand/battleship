@@ -519,10 +519,16 @@ def run_single_question_original(
     # Calculate EIG if we have a code question
     eig_value = None
     if result is not None and result.code_question:
+        true_board = Board.from_trial_id(context.board_id)
+        partial_board = Board.from_occ_tiles(context.board_state)
+        ship_tracker = true_board.ship_tracker(partial_board)
+        calculator = EIGCalculator(seed=0, samples=config.eig_samples)
         try:
-            calculator = EIGCalculator(seed=0, samples=config.eig_samples)
             eig_value = calculator(
-                result.code_question, Board.from_occ_tiles(context.board_state)
+                code_question=result.code_question,
+                state=partial_board,
+                ship_tracker=ship_tracker,
+                constraints=[],  # TODO: Propagate constraints from previous questions
             )
         except Exception as e:
             logging.warning(f"Failed to calculate EIG: {e}")
