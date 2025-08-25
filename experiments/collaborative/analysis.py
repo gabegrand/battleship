@@ -31,7 +31,7 @@ MODEL_DISPLAY_NAMES = {
     "openai/o4-mini": "o4-mini",
 }
 
-GOLD_ANSWER_LABEL = "gold_answer_text"
+GOLD_ANSWER_LABEL = "gold_answer"
 
 GOLD_CATEGORY_LABELS = {
     "gold_discourse": "Discourse",
@@ -120,6 +120,8 @@ def load_dataset(
     # Apply the calculation to each row and merge the results
     scores_df = df.apply(calculate_metrics, axis=1)
     df = pd.concat([df, scores_df], axis=1)
+
+    df["hits_pct"] = df["hits"] / df["total_ship_tiles"]
 
     return df
 

@@ -42,7 +42,8 @@ def parse_answer_to_bool(answer: str) -> bool:
     """
     Parse the answer string to a boolean value.
     """
-    answer = answer.lower()
+    if isinstance(answer, str):
+        answer = answer.lower()
     return _parse_answer(answer, ANSWER_STRING_BOOL_MAP)
 
 
