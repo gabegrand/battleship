@@ -6,6 +6,8 @@ import logging
 from collections import defaultdict
 from enum import StrEnum
 from typing import List
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 
@@ -72,8 +74,9 @@ class FastSampler:
 
     Args:
         board (Board): The board on which the ships will be placed.
-        ship_lengths (List[int]): The lengths of the ships to be placed; e.g., [2, 3, 4, 5].
-        ship_labels (List[str]): The labels of the ships to be placed; e.g., ["R", "G", "P", "0"].
+        ship_tracker (List[Tuple[int, Optional[str]]]): The tracker of the ships to be placed; e.g., [(4, None), (3, "R"), (2, "G"), (3, None)]. If no tracker is provided, all ships are assumed to be unsunk and all lengths are available.
+        ship_lengths (List[int]): The possible lengths of the ships to be placed; e.g., [2, 3, 4, 5]. Note that there *can* be multiple ships of the same length.
+        ship_labels (List[str]): The labels of the ships to be placed; e.g., ["R", "G", "P", "O"]. Note that each label is unique; there *cannot* be multiple ships with the same label.
         seed (int, optional): The seed for the random number generator. Defaults to 0.
     Attributes:
         rng (numpy.random.Generator): The random number generator. Setting the state of this object can be used to reproduce the same board.
@@ -84,16 +87,32 @@ class FastSampler:
     def __init__(
         self,
         board: Board,
-        ship_lengths: List[int],
-        ship_labels: List[str],
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
+        ship_lengths: List[int] = Board.SHIP_LENGTHS,
+        ship_labels: List[str] = Board.SHIP_LABELS,
         seed: int = 0,
     ):
         self.board = board
+
         self.ship_lengths = ship_lengths
         self.ship_labels = ship_labels
 
+        if ship_tracker is None:
+            ship_tracker = []
+
+        self.ship_tracker = ship_tracker
+        self.sunk_ships = {
+            label: length for length, label in ship_tracker if label is not None
+        }
+        self.available_ship_lengths_unsunk = [
+            length for length, label in ship_tracker if label is None
+        ]
+
         assert len(ship_lengths) == len(ship_labels)
         assert len(set(ship_labels)) == len(ship_labels)
+        assert set(self.available_ship_lengths_unsunk).issubset(set(ship_lengths))
+        assert set(self.sunk_ships.values()).issubset(set(ship_lengths))
+        assert set(self.sunk_ships.keys()).issubset(set(ship_labels))
 
         self.rng = np.random.default_rng(seed)
 
@@ -155,21 +174,72 @@ class FastSampler:
             # Start with all spans available
             available_span_ids = self.available_span_ids_global.copy()
 
-            # If the ship is already (partially) placed on the board, discard all spans that do not contain the ship
-            if ship_id in board:
-                # Find all spans that contain all of the ship's visible tiles
+            # If the ship is sunk, there is only one possible span
+            if ship_label in self.sunk_ships:
+                length = self.sunk_ships[ship_label]
+                # Find the span that contains the ship
                 ship_tiles = list(zip(*np.where(board == ship_id)))
-                ship_span_ids = set.intersection(
+                if len(ship_tiles) != length:
+                    raise ValueError(
+                        f"Ship `{ship_label}` is marked sunk in tracker, but has {len(ship_tiles)} tiles on the board; expected {length}."
+                    )
+
+                # Spans that contain all tiles of this ship
+                candidate_span_ids = set.intersection(
                     *[self._spans_by_tile[tile] for tile in ship_tiles]
                 )
 
-                # Restrict the set of possible spans for the ship
-                available_span_ids.intersection_update(ship_span_ids)
+                # Keep only spans of the correct length and currently available
+                candidate_span_ids = {
+                    s_id
+                    for s_id in candidate_span_ids.intersection(available_span_ids)
+                    if self._spans_by_id[s_id].length == length
+                }
+
+                if len(candidate_span_ids) != 1:
+                    raise ValueError(
+                        f"Ship `{ship_label}` has {len(candidate_span_ids)} possible spans; expected exactly 1."
+                    )
+
+                # Restrict available spans to this unique span
+                available_span_ids = candidate_span_ids
+
+            # The ship is not sunk
+            else:
+                # If the ship is already partially placed on the board, discard all spans that do not contain the ship
+                if ship_id in board:
+                    # Find all spans that contain all of the ship's visible tiles
+                    ship_tiles = list(zip(*np.where(board == ship_id)))
+                    ship_span_ids = set.intersection(
+                        *[self._spans_by_tile[tile] for tile in ship_tiles]
+                    )
+
+                    # Restrict available spans to the spans that contain the ship's visible tiles
+                    available_span_ids.intersection_update(ship_span_ids)
+
+                    if len(available_span_ids) == 0:
+                        raise ValueError(
+                            f"Ship `{ship_label}` has no possible placement locations on the given board: It is partially placed, but there are no  spans that contain all of its visible tiles."
+                        )
+
+                # Restrict the set of possible spans to the lengths that are still available in the ship tracker
+                if self.ship_tracker:
+                    available_span_ids = {
+                        s_id
+                        for s_id in available_span_ids
+                        if self._spans_by_id[s_id].length
+                        in self.available_ship_lengths_unsunk
+                    }
+
+                    if len(available_span_ids) == 0:
+                        raise ValueError(
+                            f"Ship `{ship_label}` has no possible placement locations on the given board: There are no spans consistent with the available ship lengths specified in the ship tracker."
+                        )
 
             # If there is nowhere to place the ship, raise an error
             if len(available_span_ids) == 0:
                 raise ValueError(
-                    f"Ship `{ship_label}` has no possible placement locations on the given board."
+                    f"Ship `{ship_label}` has no possible placement locations on the given board: There are no available spans, but the reason is unknown. This suggests there is a bug in the ship tracker."
                 )
 
             self.available_span_ids_by_ship_id[ship_id] = available_span_ids
@@ -181,7 +251,10 @@ class FastSampler:
         new_board = self.board.board.copy()
 
         # Copy the set of available spans - this will be modified as ships are placed
-        available_span_ids_local = self.available_span_ids_global.copy()
+        remaining_span_ids = self.available_span_ids_global.copy()
+
+        # Copy the set of all available ship lengths (including sunk ships) - this will be modified as ships are placed
+        remaining_ship_lengths = [length for length, _ in self.ship_tracker]
 
         # Place each ship on the board in order from most-to-least constrained
         for ship_label in sorted(
@@ -194,7 +267,11 @@ class FastSampler:
 
             available_span_ids = self.available_span_ids_by_ship_id[
                 ship_id
-            ].intersection(available_span_ids_local)
+            ].intersection(remaining_span_ids)
+
+            logger.debug(
+                f"Placing ship `{ship_label}`:\n- {remaining_ship_lengths} remaining ship lengths\n- {len(self.available_span_ids_by_ship_id[BOARD_SYMBOL_MAPPING[ship_label]])} globally-available spans\n- {len(remaining_span_ids)} remaining spans"
+            )
 
             # If there is nowhere to place the ship, return None
             if len(available_span_ids) == 0:
@@ -210,89 +287,164 @@ class FastSampler:
 
                 # Discard all spans that contain this tile
                 for span_id in self._spans_by_tile[tile]:
-                    available_span_ids_local.discard(span_id)
+                    remaining_span_ids.discard(span_id)
+
+            # Remove the length of the ship from the remaining ship lengths
+            if self.ship_tracker:
+                remaining_ship_lengths.remove(span.length)
+
+                # Discard all spans that are not consistent with the remaining ship lengths
+                remaining_span_ids = {
+                    s_id
+                    for s_id in remaining_span_ids
+                    if self._spans_by_id[s_id].length in remaining_ship_lengths
+                }
 
         # Set all remaining hidden tiles to water
         new_board[new_board == BOARD_SYMBOL_MAPPING["H"]] = BOARD_SYMBOL_MAPPING["W"]
 
         return Board(new_board)
 
-    def compute_posterior(self, n_samples: int, normalize: bool = True):
-        """Computes an approximate posterior distribution over ship locations."""
-        # Initialize the count of each board
-        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
-
-        for _ in range(n_samples):
-            new_board = self.populate_board()
-            if new_board is not None:
-                board_counts += (new_board.board > 0).astype(int)
-
-        if normalize:
-            return board_counts / board_counts.sum()
-        else:
-            return board_counts
-
-    def constrained_posterior(
+    def get_weighted_samples(
         self,
-        true_board: Board,
-        n_samples: int = 1000,
-        min_samples: int = 50,
-        constraints: list = [],
-        normalize: bool = True,
+        n_samples: int,
+        constraints: List[Tuple["CodeQuestion", bool]] = [],
+        epsilon: float = 0.1,
     ):
-        """Computes an approximate posterior distribution over ship locations with constraints."""
+        """
+        Generate weighted board samples based on constraints.
 
-        board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
-        total_sampled = 0
-        active_constraints = constraints.copy()
-        true_answers = [
-            code_question(true_board.to_numpy(), self.board.board)
-            for code_question in active_constraints
-        ]
+        Args:
+            n_samples: Number of samples to generate
+            constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs
+            epsilon: Weight for constraint violations
 
+        Returns:
+            List of (Board, weight) tuples
+        """
+        # Generate candidate boards
         candidate_boards = []
         for _ in range(n_samples):
             new_board = self.populate_board()
             if new_board is not None:
                 candidate_boards.append(new_board)
 
-        # Check constraints and update counts
-        for new_board in candidate_boards:
-            satisfies_constraints = True
+        if len(candidate_boards) == 0:
+            logger.warning(
+                "FastSampler.get_weighted_samples(): Unable to generate any candidate boards - returning empty list"
+            )
+            return []
 
-            for code_question, true_answer in zip(active_constraints, true_answers):
-                # Skip if the true answer or its value is None
-                if true_answer is None or true_answer.value is None:
+        # Calculate weights for each board based on constraint satisfaction
+        # Handle None answers by applying the average multiplier for that constraint
+        weights = [1.0 for _ in candidate_boards]
+
+        for code_question, expected_answer in constraints:
+            per_board_multiplier = []
+            has_any_answer = False
+
+            # First pass: compute multipliers where answers exist
+            for board in candidate_boards:
+                constraint_answer = code_question(board.to_numpy(), self.board.board)
+
+                if constraint_answer is None or constraint_answer.value is None:
+                    per_board_multiplier.append(None)
                     continue
 
-                # Evaluate the new answer and skip if it is None or its value is different from the true answer
-                new_answer = code_question(new_board.to_numpy(), self.board.board)
-                if new_answer is None or new_answer.value != true_answer.value:
-                    satisfies_constraints = False
-                    break
+                has_any_answer = True
+                if constraint_answer.value == expected_answer:
+                    per_board_multiplier.append(1 - epsilon)
+                else:
+                    per_board_multiplier.append(epsilon)
 
-            if satisfies_constraints:
-                board_counts += (new_board.board > 0).astype(int)
-                total_sampled += 1
+            # Determine default multiplier for boards with None
+            if has_any_answer:
+                observed = [m for m in per_board_multiplier if m is not None]
+                default_multiplier = sum(observed) / len(observed)
+            else:
+                # If no board yielded an answer for this constraint, it provides no information
+                default_multiplier = 1.0
 
-            if total_sampled >= n_samples:
-                break
+            # Second pass: apply multipliers (use average for None)
+            for i, m in enumerate(per_board_multiplier):
+                weights[i] *= m if m is not None else default_multiplier
+
+        weighted_boards = list(zip(candidate_boards, weights))
+
+        # Normalize weights so they sum to 1 (if possible)
+        total_weight = sum(weight for _, weight in weighted_boards)
+        if total_weight > 0:
+            return [(board, weight / total_weight) for board, weight in weighted_boards]
+        else:
+            logger.warning(
+                "FastSampler.get_weighted_samples(): All weights are zero - returning uniform weights"
+            )
+            # Fallback: if all weights are zero but we have candidates, use uniform distribution
+            # This can occur when epsilon is 0 and all of the candidate boards are invalid
+            uniform_weight = 1.0 / len(candidate_boards)
+            return [(board, uniform_weight) for board in candidate_boards]
+
+    def compute_posterior(
+        self,
+        n_samples: int,
+        normalize: bool = True,
+        constraints: list = [],
+        epsilon: float = 0.1,
+        min_samples: int = 10,
+    ):
+        """Computes an approximate posterior distribution over ship locations.
+
+        Args:
+            n_samples: Number of samples to generate
+            normalize: Whether to normalize the resulting distribution
+            constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs (optional)
+            epsilon: Weight for constraint violations (used only with constraints)
+            min_samples: Minimum samples for logging (used only with constraints)
+        """
+        # If no constraints, use original unconditional logic
+        if not constraints:
+            # Initialize the count of each board
+            board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
+
+            for _ in range(n_samples):
+                new_board = self.populate_board()
+                if new_board is not None:
+                    board_counts += (new_board.board > 0).astype(int)
+
+            if normalize:
+                return board_counts / board_counts.sum()
+            else:
+                return board_counts
+
+        # Otherwise use conditional logic with weighted sampling
+        weighted_boards = self.get_weighted_samples(
+            n_samples=n_samples, constraints=constraints, epsilon=epsilon
+        )
+
+        # Accumulate weighted board counts
+        board_counts = np.zeros((self.board.size, self.board.size), dtype=float)
+        total_sampled = len(weighted_boards)
+
+        for board, weight in weighted_boards:
+            board_counts += weight * (board.board > 0).astype(float)
+
+        if normalize and board_counts.sum() > 0:
+            return board_counts / board_counts.sum()
 
         if total_sampled < min_samples:
-            logging.warning(
-                f"FastSampler.constrained_posterior(): {total_sampled}/{min_samples} samples collected - defaulting to unconstrained posterior"
+            logger.warning(
+                f"FastSampler.compute_posterior(): {total_sampled}/{min_samples} samples collected"
             )
-            return self.compute_posterior(n_samples, normalize=normalize)
+        else:
+            logger.debug(
+                f"FastSampler.compute_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
+            )
 
-        if normalize:
-            return board_counts / total_sampled
-
-        logging.debug(
-            f"FastSampler.constrained_posterior(): Successfully sampled {total_sampled}/{n_samples} samples (minimum {min_samples})"
-        )
         return board_counts
 
-    def heatmap(self, n_samples: int, **fig_kwargs):
-        """Computes a heatmap of the approximate posterior distribution over ship locations."""
-        posterior = self.compute_posterior(n_samples)
-        return Board._to_figure(posterior, mode="heatmap", **fig_kwargs)
+    def heatmap(
+        self,
+        **kwargs,
+    ):
+        posterior = self.compute_posterior(normalize=False, **kwargs)
+        return Board._to_figure(posterior, mode="heatmap")

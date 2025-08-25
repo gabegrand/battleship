@@ -3,6 +3,9 @@ import base64
 import io
 import os
 from enum import StrEnum
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -256,24 +259,24 @@ class Board(object):
             "f1_score": f1_score,
         }
 
-    def ship_tracker(self, partial_board: "Board"):
+    def ship_tracker(self, partial_board: "Board") -> List[Tuple[int, Optional[str]]]:
         """
-        Return a string describing the sinking status of each ship.
+        Return an array describing the sinking status of each ship.
 
-        Example: "Green ship sunk, Red ship sunk, Purple ship not yet sunk, Orange ship not yet sunk"
+        Example: [(4, None), (3, "R"), (2, "G")] implies there is a ship of length 4 that has not been sunk, a ship of length 3 that is "R" and has been sunk, and a ship of length 2 that is "G" and has been sunk.
         """
-        tracker = {}
+        tracker = []
 
         # Create reverse mapping from ship number to name
         reverse_mapping = {}
         for symbol, number in BOARD_SYMBOL_MAPPING.items():
             if number > 0:  # Skip hidden and water
-                reverse_mapping[number] = SYMBOL_MEANING_MAPPING[symbol]
+                reverse_mapping[number] = symbol
 
         # Skip water (0) and hidden (-1) tiles
         for ship_type in range(1, int(np.max(self.board)) + 1):
             if ship_type in reverse_mapping:
-                ship_name = reverse_mapping[ship_type]
+                ship_symbol = reverse_mapping[ship_type]
 
                 # Count tiles of this ship type in target and state
                 target_count = np.sum(self.board == ship_type)
@@ -282,9 +285,9 @@ class Board(object):
                 # Determine if ship is sunk
                 if target_count > 0:
                     if target_count == state_count:
-                        tracker[ship_name] = True
+                        tracker.append((target_count, ship_symbol))
                     else:
-                        tracker[ship_name] = False
+                        tracker.append((target_count, None))
 
         return tracker
 
