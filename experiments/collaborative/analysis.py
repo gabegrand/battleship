@@ -29,6 +29,7 @@ MODEL_DISPLAY_NAMES = {
     "openai/gpt-4.1": "gpt-4.1",
     "openai/o3": "o3",
     "openai/o4-mini": "o4-mini",
+    "openai/gpt-5": "gpt-5",
 }
 
 GOLD_ANSWER_LABEL = "gold_answer"
