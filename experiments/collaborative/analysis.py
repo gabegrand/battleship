@@ -8,6 +8,7 @@ import pandas as pd
 
 from battleship.agents import Answer
 from battleship.board import Board
+from battleship.game import BattleshipGame
 
 
 MODEL_DISPLAY_NAMES = {
@@ -42,10 +43,64 @@ GOLD_CATEGORY_LABELS = {
     "gold_unanswerable": "Unanswerable",
 }
 
+CAPTAIN_TYPE_LABELS = {
+    "RandomCaptain": "Random",
+    "MAPCaptain": "MAP",
+    "LLMDecisionCaptain": "LLM",
+    "LLMDecisionCaptain_cot": "LLM (CoT)",
+    "EIGCaptain": "EIG",
+    "EIGCaptain_cot": "EIG (CoT)",
+    "MAPEIGCaptain": "MAP + EIG",
+    "MAPEIGCaptain_cot": "MAP + EIG (CoT)",
+    "human": "Human",
+}
+
 
 def load_dataset(
-    experiment_path: str, use_gold: bool = False, drop_incomplete: bool = False
+    experiment_path: str,
+    use_gold: bool = False,
+    drop_incomplete: bool = False,
+    filter_exceeded_max_moves: bool = True,
 ) -> pd.DataFrame:
+    """Load and normalize collaborative Battleship experiment data at the event level.
+
+    This function is the single source of truth for assembling the analysis
+    dataset. It:
+    - Reads `stage.csv` (or `gold-v2/gold-v2.csv` when `use_gold=True`),
+      `round.csv`, and `player.csv` from `experiment_path`.
+    - Renames identifiers, drops timestamp churn columns, and joins tables.
+    - Optionally drops games that did not complete (`drop_incomplete`).
+    - Keeps only messages of interest: "move", "question", "answer", "decision".
+    - Parses JSON fields like `occTiles` and `trueTiles` into Python lists.
+    - Computes per-row metrics by scoring each partial board against the true board
+      via `Board.score` (hits, misses, precision, recall, f1_score, is_won, etc.).
+    - Adds convenience columns such as `pairID` and `hits_pct`.
+    - Optionally filters rows where hits + misses exceed `BattleshipGame.MAX_MOVES`.
+
+    Parameters
+    ----------
+    experiment_path : str
+        Path to a single experiment directory containing `stage.csv` (or
+        `gold-v2/gold-v2.csv`), `round.csv`, and `player.csv`.
+    use_gold : bool, optional
+        If True, uses `gold-v2/gold-v2.csv` instead of `stage.csv` for stage data.
+    drop_incomplete : bool, optional
+        If True, removes games that did not end normally (e.g., timed out).
+    filter_exceeded_max_moves : bool, optional
+        If True, drops rows where hits + misses exceed `BattleshipGame.MAX_MOVES`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Event-level dataframe sorted by `pairID` and `roundID`, including
+        per-row board metrics and `questionsRemaining` from `round.csv`.
+
+    Notes
+    -----
+    - This function is intentionally generic and model-agnostic. Higher-level
+      result builders (e.g., human summaries) should build on this to avoid
+      duplicating IO, parsing, or scoring logic.
+    """
     PATH_PLAYER = os.path.join(experiment_path, "player.csv")
     PATH_ROUND = os.path.join(experiment_path, "round.csv")
     PATH_STAGE = os.path.join(
@@ -78,7 +133,7 @@ def load_dataset(
             print("These will be kept in the dataset.")
 
     # Merge stage, round, and player dataframes
-    ROUND_COLUMNS = ["roundID"] + ["board_id", "trueTiles"]
+    ROUND_COLUMNS = ["roundID"] + ["board_id", "trueTiles", "questionsRemaining"]
     df = df_stage.merge(df_round[ROUND_COLUMNS], on="roundID")
 
     # drop all rows where game was not completed
@@ -124,7 +179,107 @@ def load_dataset(
 
     df["hits_pct"] = df["hits"] / df["total_ship_tiles"]
 
+    # Filter out rows where hits + misses exceed the maximum allowed moves (optional)
+    exceeded_max_moves = df["hits"] + df["misses"] > BattleshipGame.MAX_MOVES
+    if exceeded_max_moves.any():
+        if filter_exceeded_max_moves:
+            print(
+                f"Warning: Dropped {exceeded_max_moves.sum()} rows where hits + misses exceeded {BattleshipGame.MAX_MOVES}."
+            )
+            df = df[~exceeded_max_moves]
+        else:
+            print(
+                f"Warning: Found {exceeded_max_moves.sum()} rows where hits + misses exceeded {BattleshipGame.MAX_MOVES} (not dropped)."
+            )
+
     return df
+
+
+def human_round_summaries(
+    experiment_path: str,
+    use_gold: bool = True,
+    drop_incomplete: bool = False,
+    filter_exceeded_max_moves: bool = True,
+    max_questions: int = BattleshipGame.MAX_QUESTIONS,
+):
+    """Summarize human performance per round using the normalized dataset.
+
+    This function builds on `load_dataset` and produces one record per round
+    representing the final observed state for human play. It selects the last
+    stage entry per `roundID` (by `index`), filters rounds where the board is
+    still completely unknown, derives `question_count` from
+    `max_questions - questionsRemaining`, and returns a compact list of
+    dictionaries suitable for plotting or tabular reporting.
+
+    Parameters
+    ----------
+    experiment_path : str
+        Path to the experiment directory containing CSVs.
+    use_gold : bool, optional
+        Passed through to `load_dataset` to choose gold annotations.
+    drop_incomplete : bool, optional
+        Passed through to `load_dataset` to drop incomplete games.
+    filter_exceeded_max_moves : bool, optional
+        Passed through to `load_dataset` to drop rows exceeding max moves.
+    max_questions : int, optional
+        Total question budget per round used to compute `question_count`.
+
+    Returns
+    -------
+    list[dict]
+        One dict per round with keys: `captain_type`, `spotter_type`,
+        `round_id`, `board_id`, `hits`, `misses`, `precision`, `recall`,
+        `f1_score`, `is_won`, and `question_count`.
+
+    Notes
+    -----
+    - Use this when you need human per-round summaries. For lower-level or
+      mixed analyses, prefer calling `load_dataset` directly.
+    """
+    # Center around load_dataset to unify parsing, merging and scoring
+    df = load_dataset(
+        experiment_path=experiment_path,
+        use_gold=use_gold,
+        drop_incomplete=drop_incomplete,
+        filter_exceeded_max_moves=filter_exceeded_max_moves,
+    )
+
+    # Select the final stage entry per round (max index)
+    last_indices = df.groupby("roundID")["index"].idxmax()
+    result = df.loc[last_indices].copy()
+
+    # Filter out rows where occTiles are entirely unknown (-1 everywhere)
+    def is_all_unknown(tiles):
+        arr = np.asarray(tiles)
+        return arr.size > 0 and (arr == -1).all()
+
+    result = result[~result["occTiles"].apply(is_all_unknown)]
+
+    data = []
+    for _, row in result.iterrows():
+        questions_remaining = (
+            int(row["questionsRemaining"])
+            if not pd.isnull(row["questionsRemaining"])
+            else 0
+        )
+        questions_asked = max_questions - questions_remaining
+
+        result_row = {
+            "captain_type": "human",
+            "spotter_type": "human",
+            "round_id": row["roundID"],
+            "board_id": row["board_id"],
+            "hits": int(row["hits"]),
+            "misses": int(row["misses"]),
+            "precision": float(row["precision"]),
+            "recall": float(row["recall"]),
+            "f1_score": float(row["f1_score"]),
+            "is_won": bool(row["is_won"]),
+            "question_count": questions_asked,
+        }
+        data.append(result_row)
+
+    return data
 
 
 def get_gold_answer_dataset(df_gold) -> Tuple[List[bool], List[bool]]:
@@ -168,66 +323,3 @@ def get_spotter_type_short(spotter_type: str, cot: bool) -> str:
         return "CoT + Code"
     else:
         raise ValueError(f"Unknown spotter type combination: {spotter_type}, {cot}")
-
-
-def get_human_results(gold_annotations_path, round_data_path, max_questions=15):
-    stage_df = pd.read_csv(gold_annotations_path)
-    round_df = pd.read_csv(round_data_path)
-
-    board_ids = round_df[["id", "board_id", "questionsRemaining"]]
-    filtered_stage_df = stage_df[
-        [
-            "roundID",
-            "index",
-            "questionID",
-            "messageText",
-            "messageType",
-            "occTiles",
-            "gold_answer",
-        ]
-    ]
-    df = filtered_stage_df.merge(
-        board_ids, left_on="roundID", right_on="id", how="left"
-    )
-
-    question_counts_df = (
-        df[df["messageType"] == "question"].groupby("roundID").size().reset_index()
-    )
-
-    df = df.merge(question_counts_df, on="roundID", how="left")
-    result = df.loc[df.groupby("roundID")["index"].idxmax()][
-        ["roundID", "occTiles", "board_id", "questionID", "questionsRemaining"]
-    ]
-    # GG: Why is this needed?
-    result = result[
-        result["occTiles"] != str(np.full((8, 8), -1).tolist()).replace(" ", "")
-    ]
-
-    data = []
-    for roundID, occTiles, board_id in zip(
-        result["roundID"], result["occTiles"], result["board_id"]
-    ):
-        board_true = Board.from_trial_id(board_id)
-        board_partial = Board.from_occ_tiles(occTiles)
-        scores = board_true.score(board_partial)
-
-        questions_asked = max_questions - int(
-            result[result["roundID"] == roundID]["questionsRemaining"].values[0]
-        )
-
-        result_row = {
-            "captain_type": "human",
-            "spotter_type": "human",
-            "round_id": roundID,
-            "board_id": board_id,
-            "hits": int(scores["hits"]),
-            "misses": int(scores["misses"]),
-            "precision": float(scores["precision"]),
-            "recall": float(scores["recall"]),
-            "f1_score": float(scores["f1_score"]),
-            "is_won": bool(scores["is_won"]),
-            "question_count": questions_asked,
-        }
-        data.append(result_row)
-
-    return data

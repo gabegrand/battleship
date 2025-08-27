@@ -24,14 +24,17 @@ class Decision(StrEnum):
 
 
 class BattleshipGame:
+    MAX_QUESTIONS = 15
+    MAX_MOVES = 40
+
     def __init__(
         self,
         board_target: Board,
         captain: Type["Captain"],
         spotter: Type["Spotter"],
         board_start=None,
-        max_questions: int = 15,
-        max_moves: int = 40,
+        max_questions: int = MAX_QUESTIONS,
+        max_moves: int = MAX_MOVES,
         save_dir: str = None,
     ):
         self.captain = captain
