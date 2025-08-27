@@ -43,16 +43,17 @@ GOLD_CATEGORY_LABELS = {
     "gold_unanswerable": "Unanswerable",
 }
 
+# NOTE: This maps both CoT and non-CoT captain types to the same label
 CAPTAIN_TYPE_LABELS = {
+    "human": "Human",
     "RandomCaptain": "Random",
     "MAPCaptain": "MAP",
     "LLMDecisionCaptain": "LLM",
-    "LLMDecisionCaptain_cot": "LLM (CoT)",
+    "LLMDecisionCaptain_cot": "LLM",
     "EIGCaptain": "EIG",
-    "EIGCaptain_cot": "EIG (CoT)",
+    "EIGCaptain_cot": "EIG",
     "MAPEIGCaptain": "MAP + EIG",
-    "MAPEIGCaptain_cot": "MAP + EIG (CoT)",
-    "human": "Human",
+    "MAPEIGCaptain_cot": "MAP + EIG",
 }
 
 
