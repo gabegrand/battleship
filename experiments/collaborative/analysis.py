@@ -65,7 +65,7 @@ CAPTAIN_TYPE_LABELS = {
 
 def load_dataset(
     experiment_path: str,
-    use_gold: bool = False,
+    use_gold: bool = True,
     drop_incomplete: bool = False,
     filter_exceeded_max_moves: bool = True,
 ) -> pd.DataFrame:
@@ -185,6 +185,30 @@ def load_dataset(
     df = pd.concat([df, scores_df], axis=1)
 
     df["hits_pct"] = df["hits"] / df["total_ship_tiles"]
+
+    # Compute per-round contiguous turn_index based on questionID.
+    # Note: questionID values are non-unique across rows within a round (multiple
+    # actions can share the same questionID) and may be non-contiguous (e.g., 1,3,5,...)
+    # We map the ORDER OF FIRST APPEARANCE of each distinct questionID within a round
+    # to 0,1,2,... so that all rows sharing a questionID share the same turn_index.
+    def _factorize_within_round(s: pd.Series) -> np.ndarray:
+        # Factorize preserves first-seen order; missing values => code -1.
+        codes, _ = pd.factorize(s, sort=False)
+        # Convert to float so we can set missing codes to NaN.
+        codes = codes.astype(float)
+        codes[codes < 0] = np.nan  # optional: keep NaN for missing questionID
+        return codes
+
+    # Use transform so the returned array aligns exactly with the original index.
+    df["turn_index"] = df.groupby("roundID")["questionID"].transform(
+        _factorize_within_round
+    )
+
+    # stage_completion: proportion of the turn sequence completed (0 at first turn, 1 at last turn)
+    turn_max = df.groupby("roundID")["turn_index"].transform("max")
+    df["stage_completion"] = np.where(
+        turn_max.isna() | (turn_max == 0), 0.0, df["turn_index"] / turn_max
+    )
 
     # Filter out rows where hits + misses exceed the maximum allowed moves (optional)
     exceeded_max_moves = df["hits"] + df["misses"] > BattleshipGame.MAX_MOVES
