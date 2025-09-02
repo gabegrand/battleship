@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.patches import Patch
 from matplotlib.patches import Rectangle
 
 from battleship.agents import Answer
@@ -777,4 +778,270 @@ def plot_grouped_winrate_heatmap(
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         plt.savefig(output_path, dpi=dpi, bbox_inches="tight")
+    return fig, ax
+
+
+# ---------------------------------------------------------------------------
+# Question timing violin plot (extracted & generalized from notebook)
+# ---------------------------------------------------------------------------
+def plot_question_timing(
+    stage_df: pd.DataFrame,
+    llm_palette: dict,
+    llm_order: list[str] | None = None,
+    captain_types: list[str] | None = None,
+    common_norm: bool = True,
+    output_path: str | None = None,
+    figsize_scale: float = 1.15,
+    fig_width: float = 7.8,
+    fig_height: float | None = None,
+    annotate: bool = True,
+    annotation_fmt: str = "{mean_q:.1f} Questions",
+    title: str = None,
+    legend: bool = True,
+    dpi: int = 300,
+) -> tuple:
+    """Plot horizontal violins of question timing (stage_completion) per captain / LLM.
+
+    Parameters
+    ----------
+    stage_df : pd.DataFrame
+        DataFrame containing at least columns:
+          - 'captain_type_display'
+          - 'llm_display'
+          - 'stage_completion' (float in [0,1])
+          - 'round_id' (round identifier; used for mean questions / round)
+        Rows should already be filtered to *question events* only.
+    llm_palette : dict
+        Mapping from llm_display to a hex color.
+        llm_order : list[str], optional
+                Explicit ordering of LLM display names. If not provided, order resolution is:
+                    1) If `stage_df.llm_display` is categorical, use its categories (filtered to present levels)
+                    2) Else, use the insertion order of keys in `llm_palette` (filtered to present)
+                    3) Else, use first appearance order in the DataFrame (`pd.unique`)
+    captain_types : list[str], optional
+        Which captain_type_display levels to include (order preserved). Default ["Human", "LLM"].
+    common_norm : bool, default True
+        If True, all violin widths share a global density scale (absolute frequency);
+        if False, each violin is scaled independently (shape comparison only).
+    output_path : str, optional
+        If provided, saves figure to this path (directories auto-created). If a directory
+        is supplied, file 'question_timing.pdf' will be created inside it.
+    figsize_scale : float, default 1.15
+        Vertical scale factor per captain type row.
+    fig_width : float, default 7.8
+        Figure width in inches. Ignored if `fig_height` is a tuple (not used here) but
+        applied directly when constructing the figure.
+    fig_height : float, optional
+        Explicit figure height in inches. If not provided, height is computed as
+        2 + figsize_scale * len(captain_types) (backwards compatible with previous behavior).
+    annotate : bool, default True
+        Whether to annotate mean number of questions per round next to each violin.
+    annotation_fmt : str, default "{mean_q:.1f} questions"
+        Format string for annotation; receives mean_q.
+    dpi : int, default 300
+        Figure save DPI.
+
+    Returns
+    -------
+    (fig, ax)
+        Matplotlib Figure and Axes objects.
+    """
+    required_cols = {
+        "captain_type_display",
+        "llm_display",
+        "stage_completion",
+        "round_id",
+    }
+    missing = required_cols - set(stage_df.columns)
+    if missing:
+        raise KeyError(f"stage_df missing required columns: {missing}")
+
+    df = stage_df.copy()
+    # Drop rows without timing info
+    df = df.dropna(subset=["stage_completion"])  # safe guard
+    if captain_types is None:
+        captain_types = ["Human", "LLM"]
+    # Keep only requested captain levels actually present
+    captain_types = [
+        c for c in captain_types if c in df["captain_type_display"].unique()
+    ]
+    if not captain_types:
+        raise ValueError("No requested captain_types present in the DataFrame.")
+
+    # Determine llm ordering with robust fallback logic
+    if llm_order is not None:
+        # keep only those actually present
+        llm_order = [l for l in llm_order if l in set(df["llm_display"].unique())]
+    else:
+        if pd.api.types.is_categorical_dtype(df["llm_display"]):
+            llm_order = [
+                c
+                for c in df["llm_display"].cat.categories
+                if c in df["llm_display"].unique()
+            ]
+        else:
+            # Try palette insertion order
+            palette_llms = [
+                k for k in llm_palette.keys() if k in set(df["llm_display"].unique())
+            ]
+            if palette_llms:
+                llm_order = palette_llms
+            else:
+                # Fallback: order of first appearance
+                llm_order = list(pd.unique(df["llm_display"].dropna()))
+
+    # Number of LLM levels per captain (for vertical packing)
+    llm_counts = df.groupby("captain_type_display")["llm_display"].nunique()
+    max_llms = int(llm_counts.max()) if not llm_counts.empty else 1
+    group_height = 0.9
+    slot_height = group_height / max_llms
+
+    # KDE helper (Scott's rule)
+    def _kde(values: np.ndarray, grid: np.ndarray) -> np.ndarray:
+        n = len(values)
+        if n < 2:
+            return np.full_like(grid, 1e-3, dtype=float)
+        std = np.std(values, ddof=1)
+        if std == 0:
+            return np.full_like(grid, 1e-3, dtype=float)
+        bw = 1.06 * std * n ** (-1 / 5)
+        bw = max(bw, 1e-3)
+        diffs = (grid[None, :] - values[:, None]) / bw
+        kern = np.exp(-0.5 * diffs**2) / (np.sqrt(2 * np.pi) * bw)
+        return kern.sum(axis=0) / n
+
+    grid = np.linspace(0, 1, 200)
+
+    # Build density entries
+    entries: list[
+        tuple
+    ] = []  # (captain, llm, values, density, total_q, mean_q, local_max)
+    for captain in captain_types:
+        c_df = df[df["captain_type_display"] == captain]
+        present_llms = [l for l in llm_order if l in c_df["llm_display"].unique()]
+        for llm_name in present_llms:
+            sub = c_df[c_df["llm_display"] == llm_name]
+            vals = sub["stage_completion"].dropna().to_numpy()
+            if len(vals) == 0:
+                continue
+            dens = _kde(vals, grid)
+            rounds = sub["round_id"].nunique()
+            total_q = len(sub)
+            mean_q = total_q / rounds if rounds and rounds > 0 else np.nan
+            local_max = float(dens.max()) if dens.size else 1.0
+            entries.append((captain, llm_name, vals, dens, total_q, mean_q, local_max))
+
+    if not entries:
+        raise ValueError("No density entries could be computed (empty input?).")
+
+    global_max = max(e[3].max() for e in entries)
+    if global_max <= 0:
+        global_max = 1.0
+
+    y_positions = np.arange(len(captain_types))
+    # Figure sizing
+    if fig_height is None:
+        computed_height = 2 + figsize_scale * len(captain_types)
+    else:
+        computed_height = fig_height
+    fig, ax = plt.subplots(figsize=(fig_width, computed_height))
+    ax.set_axisbelow(True)
+    ax.xaxis.grid(True, alpha=0.3)
+    ax.yaxis.grid(False)
+
+    legend_handles: dict[str, Patch] = {}
+
+    for i, captain in enumerate(captain_types):
+        cat_llms = [
+            l for l in llm_order if any(e[0] == captain and e[1] == l for e in entries)
+        ]
+        m = len(cat_llms)
+        if m == 0:
+            continue
+        offsets = (np.arange(m) - (m - 1) / 2.0) * slot_height
+        for j, llm_name in enumerate(cat_llms):
+            match = [e for e in entries if e[0] == captain and e[1] == llm_name]
+            if not match:
+                continue
+            _, _, vals, dens, total_q, mean_q, local_max = match[0]
+            pos_center = y_positions[i] + offsets[j]
+            denom = global_max if common_norm else (local_max or 1.0)
+            scale = (slot_height * 0.95) / denom
+            half_width = dens * scale / 2.0
+            y_lower = pos_center - half_width
+            y_upper = pos_center + half_width
+            x_poly = np.concatenate([grid, grid[::-1]])
+            y_poly = np.concatenate([y_lower, y_upper[::-1]])
+            color = llm_palette.get(llm_name, "#808080")
+            ax.fill(
+                x_poly,
+                y_poly,
+                facecolor=color,
+                edgecolor=color,
+                alpha=0.55,
+                linewidth=0.6,
+            )
+            # Median line
+            median_val = np.median(vals)
+            ax.plot(
+                [median_val, median_val],
+                [pos_center - slot_height * 0.45, pos_center + slot_height * 0.45],
+                color=color,
+                linewidth=1.5,
+                alpha=0.95,
+            )
+            if llm_name not in legend_handles:
+                legend_handles[llm_name] = Patch(
+                    facecolor=color, edgecolor="none", label=llm_name, alpha=0.6
+                )
+            if annotate and not np.isnan(mean_q):
+                ax.text(
+                    1.015,
+                    pos_center,
+                    annotation_fmt.format(mean_q=mean_q),
+                    va="center",
+                    ha="left",
+                    fontsize=8,
+                    bbox=dict(
+                        boxstyle="round,pad=0.18",
+                        facecolor="white",
+                        alpha=0.65,
+                        linewidth=0,
+                    ),
+                )
+
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(captain_types, rotation=90, va="center")
+    ax.set_xlabel("Game Completion")
+    ax.set_ylabel("Captain Type")
+    ax.set_xlim(0, 1.14)
+
+    if title:
+        ax.set_title("Question Timing")
+
+    plotted_llms = [l for l in llm_order if l in legend_handles]
+    if legend:
+        ax.legend(
+            [legend_handles[l] for l in plotted_llms],
+            plotted_llms,
+            title="LLM",
+            loc="upper left",
+            bbox_to_anchor=(1, 1),
+        )
+    sns.despine(ax=ax, left=False, bottom=False)
+    plt.tight_layout()
+
+    if output_path:
+        # If output_path is directory, append filename
+        if os.path.isdir(output_path):
+            output_file = os.path.join(output_path, "question_timing.pdf")
+        else:
+            # Ensure .pdf extension
+            if os.path.splitext(output_path)[1].lower() == "":
+                output_file = output_path + ".pdf"
+            else:
+                output_file = output_path
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+
     return fig, ax
