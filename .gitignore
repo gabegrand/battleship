@@ -177,5 +177,6 @@ experiments/collaborative/spotter_benchmarks/
 experiments/collaborative/data/
 experiments/prolific/battleship/.empirica/empirica.toml
 experiments/prolific/battleship/package-lock.json
+experiments/collaborative/question_embeddings_cache.pkl
 
 cache/
