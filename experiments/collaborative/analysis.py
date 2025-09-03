@@ -930,6 +930,7 @@ def plot_question_timing(
             mean_q = total_q / rounds if rounds and rounds > 0 else np.nan
             local_max = float(dens.max()) if dens.size else 1.0
             entries.append((captain, llm_name, vals, dens, total_q, mean_q, local_max))
+            print((captain, llm_name, total_q, rounds, mean_q, local_max))
 
     if not entries:
         raise ValueError("No density entries could be computed (empty input?).")
