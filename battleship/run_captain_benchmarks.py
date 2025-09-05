@@ -127,7 +127,7 @@ def get_completed_games(experiment_dir: str) -> Set[Tuple[str, int, str]]:
                     results = json.load(f)
                 for result in results:
                     completed.add(
-                        (result["captainType"], result["seed"], result["boardId"])
+                        (result["captain_type"], result["seed"], result["board_id"])
                     )
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 logging.warning(f"Could not load results from {filepath}: {e}")
@@ -280,7 +280,7 @@ def run_single_agent_game(args):
     return summary
 
 
-def run_single_agent_game_wrapper(args) -> Optional[Dict]:
+def run_single_agent_game_wrapper(args, retry_count=0) -> Optional[Dict]:
     """Run a single agent game with error handling."""
 
     # Extract parameters from args tuple
@@ -305,8 +305,9 @@ def run_single_agent_game_wrapper(args) -> Optional[Dict]:
         result = run_single_agent_game(args)
         return result
     except Exception as e:
+        retry_msg = f" (retry {retry_count})" if retry_count > 0 else ""
         logging.error(
-            f"Failed to process game: {captain_type} seed{seed} {board_id}: {e}"
+            f"Failed to process game: {captain_type} seed{seed} {board_id}{retry_msg}: {e}"
         )
         return None
 
@@ -325,6 +326,7 @@ def run_all_captain_experiments(
     eig_samples: int,
     eig_k: int,
     max_workers: int = None,
+    resume_mode: bool = False,
 ) -> List[Dict]:
     """Run experiments for all captain configurations with Rich progress display."""
 
@@ -457,18 +459,56 @@ def run_all_captain_experiments(
                 progress.update(task_ids[captain_idx], advance=1)
             return result
 
+        def process_job_with_retry(job, max_retries=10):
+            """Process a job with retry logic for failed games."""
+            for retry_count in range(max_retries + 1):
+                result = run_single_agent_game_wrapper(job, retry_count)
+                if result is not None:
+                    captain_type, seed, board_id = job[1], job[2], job[3]
+
+                    # Find the config for this specific job and save result
+                    for config in all_configs:
+                        if (
+                            config.captain_type == captain_type
+                            and config.seed == seed
+                            and config.board_id == board_id
+                        ):
+                            save_captain_configuration_results([result], config)
+                            break
+
+                    # Update progress for this captain type
+                    captain_idx = job_to_captain_idx[id(job)]
+                    progress.update(task_ids[captain_idx], advance=1)
+                    return result
+                
+                # If failed and we have more retries available, wait before retrying
+                if retry_count < max_retries:
+                    wait_time = min(2 ** retry_count, 60)  # Exponential backoff capped at 60s
+                    captain_type, seed, board_id = job[1], job[2], job[3]
+                    logging.info(f"Retrying {captain_type} seed{seed} {board_id} in {wait_time} seconds (attempt {retry_count + 2}/{max_retries + 1})")
+                    time.sleep(wait_time)
+                else:
+                    # Final failure after all retries
+                    captain_type, seed, board_id = job[1], job[2], job[3]
+                    logging.error(f"Failed {captain_type} seed{seed} {board_id} after {max_retries + 1} attempts")
+            
+            return None
+
         # Process remaining jobs in parallel
         if remaining_jobs:
+            process_function = process_job_with_retry if resume_mode else process_job_with_progress
+            
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=max_workers
             ) as executor:
+                retry_info = " with automatic retry" if resume_mode else ""
                 logging.info(
-                    f"Running {len(remaining_jobs)} games in parallel with up to {executor._max_workers} workers"
+                    f"Running {len(remaining_jobs)} games{retry_info} in parallel with up to {executor._max_workers} workers"
                 )
 
                 new_results = list(
                     filter(
-                        None, executor.map(process_job_with_progress, remaining_jobs)
+                        None, executor.map(process_function, remaining_jobs)
                     )
                 )
         else:
@@ -557,6 +597,7 @@ def main():
         eig_samples=args.eig_samples,
         eig_k=args.eig_k,
         max_workers=args.max_workers,
+        resume_mode=args.resume,
     )
 
     # Rebuild and save final summary from all results
