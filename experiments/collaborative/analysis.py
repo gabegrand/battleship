@@ -785,6 +785,7 @@ def plot_grouped_winrate_heatmap(
 # Question timing violin plot (extracted & generalized from notebook)
 # ---------------------------------------------------------------------------
 def plot_question_timing(
+    summary_df: pd.DataFrame,
     stage_df: pd.DataFrame,
     llm_palette: dict,
     llm_order: list[str] | None = None,
@@ -804,6 +805,12 @@ def plot_question_timing(
 
     Parameters
     ----------
+    summary_df : pd.DataFrame
+        Per-round summary DataFrame containing (at minimum) columns:
+            - 'captain_type_display'
+            - 'llm_display'
+            - 'round_id'
+            - 'question_count' (used to compute mean questions asked per round).
     stage_df : pd.DataFrame
         DataFrame containing at least columns:
           - 'captain_type_display'
@@ -837,7 +844,7 @@ def plot_question_timing(
     annotate : bool, default True
         Whether to annotate mean number of questions per round next to each violin.
     annotation_fmt : str, default "{mean_q:.1f} questions"
-        Format string for annotation; receives mean_q.
+        Format string for annotation; receives mean_q (derived from summary_df.question_count).
     dpi : int, default 300
         Figure save DPI.
 
@@ -846,15 +853,26 @@ def plot_question_timing(
     (fig, ax)
         Matplotlib Figure and Axes objects.
     """
-    required_cols = {
+    # Validate required columns in stage_df (timing densities) and summary_df (question counts)
+    stage_required = {
         "captain_type_display",
         "llm_display",
         "stage_completion",
         "round_id",
     }
-    missing = required_cols - set(stage_df.columns)
-    if missing:
-        raise KeyError(f"stage_df missing required columns: {missing}")
+    stage_missing = stage_required - set(stage_df.columns)
+    if stage_missing:
+        raise KeyError(f"stage_df missing required columns: {stage_missing}")
+
+    summary_required = {
+        "captain_type_display",
+        "llm_display",
+        "round_id",
+        "question_count",
+    }
+    summary_missing = summary_required - set(summary_df.columns)
+    if summary_missing:
+        raise KeyError(f"summary_df missing required columns: {summary_missing}")
 
     df = stage_df.copy()
     # Drop rows without timing info
@@ -913,9 +931,7 @@ def plot_question_timing(
     grid = np.linspace(0, 1, 200)
 
     # Build density entries
-    entries: list[
-        tuple
-    ] = []  # (captain, llm, values, density, total_q, mean_q, local_max)
+    entries: list[tuple] = []  # (captain, llm, values, density, mean_q, local_max)
     for captain in captain_types:
         c_df = df[df["captain_type_display"] == captain]
         present_llms = [l for l in llm_order if l in c_df["llm_display"].unique()]
@@ -925,12 +941,17 @@ def plot_question_timing(
             if len(vals) == 0:
                 continue
             dens = _kde(vals, grid)
-            rounds = sub["round_id"].nunique()
-            total_q = len(sub)
-            mean_q = total_q / rounds if rounds and rounds > 0 else np.nan
+            # Derive mean_q from summary_df.question_count for this captain/LLM
+            summary_subset = summary_df[
+                (summary_df["captain_type_display"] == captain)
+                & (summary_df["llm_display"] == llm_name)
+            ]
+            if not summary_subset.empty and "question_count" in summary_subset.columns:
+                mean_q = summary_subset["question_count"].mean()
+            else:
+                mean_q = np.nan
             local_max = float(dens.max()) if dens.size else 1.0
-            entries.append((captain, llm_name, vals, dens, total_q, mean_q, local_max))
-            print((captain, llm_name, total_q, rounds, mean_q, local_max))
+            entries.append((captain, llm_name, vals, dens, mean_q, local_max))
 
     if not entries:
         raise ValueError("No density entries could be computed (empty input?).")
@@ -964,7 +985,7 @@ def plot_question_timing(
             match = [e for e in entries if e[0] == captain and e[1] == llm_name]
             if not match:
                 continue
-            _, _, vals, dens, total_q, mean_q, local_max = match[0]
+            _, _, vals, dens, mean_q, local_max = match[0]
             pos_center = y_positions[i] + offsets[j]
             denom = global_max if common_norm else (local_max or 1.0)
             scale = (slot_height * 0.95) / denom
