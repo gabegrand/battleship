@@ -170,6 +170,9 @@ def load_dataset(
     # Sort by pairID and roundID
     df = df.sort_values(by=["pairID", "roundID"])
 
+    # Fix question_id indexing (a bug caused it to double-increment)
+    df["stage_index"] = df["questionID"] // 2
+
     # Use Board.score to calculate metrics for each row
     def calculate_metrics(row):
         true_board = Board(np.array(row["trueTiles"]))
