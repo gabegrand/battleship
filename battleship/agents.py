@@ -356,29 +356,15 @@ class EIGCalculator:
         ship_tracker: List[Tuple[int, Optional[str]]] = None,
         constraints: list = [],
         weighted_boards: list = None,
-    ):
-        sampler = FastSampler(
-            board=state,
-            ship_tracker=ship_tracker,
-            seed=self.rng,
+    ) -> float:
+        weighted_board_answers = self._evaluate_code_question(
+            code_question, state, ship_tracker, constraints, weighted_boards
         )
-
-        # Use shared weighted sampling method for both conditional and unconditional cases
-        # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
-        if not weighted_boards:
-            weighted_boards = sampler.get_weighted_samples(
-                n_samples=self.samples, constraints=constraints, epsilon=self.epsilon
-            )
 
         # Collect weighted results for EIG calculation
         weighted_results = {True: 0.0, False: 0.0}
 
-        for board, weight in weighted_boards:
-            # Evaluate main question on weighted board
-            answer: Answer = code_question(
-                true_board=board.board, partial_board=state.board
-            )
-
+        for board, weight, answer in weighted_board_answers:
             if answer is None or answer.value is None:
                 logger.warning(f"CodeQuestion returned None - skipping EIG calculation")
                 return float("nan")
@@ -403,6 +389,37 @@ class EIGCalculator:
         return binary_entropy(
             self.epsilon + ((1 - 2 * self.epsilon) * p_true)
         ) - binary_entropy(self.epsilon)
+
+    def _evaluate_code_question(
+        self,
+        code_question: CodeQuestion,
+        state: Board,
+        ship_tracker: List[Tuple[int, Optional[str]]] = None,
+        constraints: list = [],
+        weighted_boards: list = None,
+    ) -> List[Tuple[Board, float, bool]]:
+        sampler = FastSampler(
+            board=state,
+            ship_tracker=ship_tracker,
+            seed=self.rng,
+        )
+
+        # Use shared weighted sampling method for both conditional and unconditional cases
+        # When no constraints, get_weighted_samples returns uniform weights (1.0 for each board)
+        if not weighted_boards:
+            weighted_boards = sampler.get_weighted_samples(
+                n_samples=self.samples, constraints=constraints, epsilon=self.epsilon
+            )
+
+        weighted_board_answers = []
+        for board, weight in weighted_boards:
+            # Evaluate main question on weighted board
+            answer: Answer = code_question(
+                true_board=board.board, partial_board=state.board
+            )
+            weighted_board_answers.append((board, weight, answer))
+
+        return weighted_board_answers
 
 
 def config_move_regex(size):
