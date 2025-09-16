@@ -396,27 +396,11 @@ class FastSampler:
 
         Args:
             n_samples: Number of samples to generate
-            normalize: Whether to normalize the resulting distribution
+            normalize: Normalizes each tile to [0, 1]. If False, returns unnormalized counts.
             constraints: List of (CodeQuestion, bool) tuples representing Q/A pairs (optional)
             epsilon: Weight for constraint violations (used only with constraints)
             min_samples: Minimum samples for logging (used only with constraints)
         """
-        # If no constraints, use original unconditional logic
-        if not constraints:
-            # Initialize the count of each board
-            board_counts = np.zeros((self.board.size, self.board.size), dtype=int)
-
-            for _ in range(n_samples):
-                new_board = self.populate_board()
-                if new_board is not None:
-                    board_counts += (new_board.board > 0).astype(int)
-
-            if normalize:
-                return board_counts / board_counts.sum()
-            else:
-                return board_counts
-
-        # Otherwise use conditional logic with weighted sampling
         weighted_boards = self.get_weighted_samples(
             n_samples=n_samples, constraints=constraints, epsilon=epsilon
         )
@@ -428,8 +412,10 @@ class FastSampler:
         for board, weight in weighted_boards:
             board_counts += weight * (board.board > 0).astype(float)
 
-        if normalize and board_counts.sum() > 0:
-            return board_counts / board_counts.sum()
+        # Independently normalize each tile to [0, 1]
+        if normalize:
+            weights = np.array([weight for _, weight in weighted_boards])
+            board_counts /= weights.sum()
 
         if total_sampled < min_samples:
             logger.warning(
