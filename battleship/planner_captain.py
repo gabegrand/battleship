@@ -286,6 +286,35 @@ class StrategyPlanner:
     def invalidate(self) -> None:
         self._plan = None
 
+    def plan_summary(self) -> Optional[Dict[str, Any]]:
+        """Return a compact, JSON-serializable snapshot of the current plan."""
+        p = self._plan
+        if p is None:
+            return None
+        return {
+            "p_hit_before": float(p.p_hit_before)
+            if p.p_hit_before is not None
+            else None,
+            "p_hit_after": float(p.p_hit_after) if p.p_hit_after is not None else None,
+            "best_move": tuple(int(x) for x in p.best_move) if p.best_move else None,
+            "best_eig": float(p.best_eig) if p.best_eig is not None else None,
+            "best_question": p.best_question.to_dict() if p.best_question else None,
+            "true_partition": {
+                "move": p.true_partition.get("move"),
+                "prob": p.true_partition.get("prob"),
+                "weight": p.true_partition.get("weight"),
+            }
+            if p.true_partition
+            else None,
+            "false_partition": {
+                "move": p.false_partition.get("move"),
+                "prob": p.false_partition.get("prob"),
+                "weight": p.false_partition.get("weight"),
+            }
+            if p.false_partition
+            else None,
+        }
+
     def expected_post_question_hit_prob(
         self,
         *,
@@ -351,6 +380,7 @@ class PlannedDecision(DecisionStrategy):
             action="decision",
             decision=decision,
             board_state=state.to_numpy(),
+            plan=self.planner.plan_summary(),
         )
         return decision, action_data
 
@@ -384,6 +414,7 @@ class PlannedQuestion(QuestionStrategy):
             eig=plan.best_eig,
             board_state=state.to_numpy(),
             eig_questions=plan.eig_candidates,
+            plan=self.planner.plan_summary(),
         )
 
         self.planner.invalidate()
@@ -418,6 +449,7 @@ class PlannedMove(MoveStrategy):
             move=plan.best_move,
             map_prob=plan.p_hit_before,
             board_state=state.to_numpy(),
+            plan=self.planner.plan_summary(),
         )
         self.planner.invalidate()
         return plan.best_move, action_data
