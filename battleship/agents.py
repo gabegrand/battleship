@@ -64,6 +64,7 @@ class ActionData:
     completion: dict = None  # Full completion object as JSON
 
     eig_questions: list["ActionData"] = None
+    plan: dict = None  # Optional compact plan summary for logging
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -99,6 +100,7 @@ class ActionData:
                 else None
             ),  # Convert numpy array to Python list
             "eig_questions": (self.eig_questions),  # List of ActionData objects
+            "plan": self.plan,
         }
 
     @classmethod
@@ -121,6 +123,7 @@ class ActionData:
             board_state=np.array(data["board_state"])
             if data.get("board_state")
             else None,
+            plan=data.get("plan"),
         )
 
 
