@@ -480,24 +480,32 @@ def run_all_captain_experiments(
                     captain_idx = job_to_captain_idx[id(job)]
                     progress.update(task_ids[captain_idx], advance=1)
                     return result
-                
+
                 # If failed and we have more retries available, wait before retrying
                 if retry_count < max_retries:
-                    wait_time = min(2 ** retry_count, 60)  # Exponential backoff capped at 60s
+                    wait_time = min(
+                        2**retry_count, 60
+                    )  # Exponential backoff capped at 60s
                     captain_type, seed, board_id = job[1], job[2], job[3]
-                    logging.info(f"Retrying {captain_type} seed{seed} {board_id} in {wait_time} seconds (attempt {retry_count + 2}/{max_retries + 1})")
+                    logging.info(
+                        f"Retrying {captain_type} seed{seed} {board_id} in {wait_time} seconds (attempt {retry_count + 2}/{max_retries + 1})"
+                    )
                     time.sleep(wait_time)
                 else:
                     # Final failure after all retries
                     captain_type, seed, board_id = job[1], job[2], job[3]
-                    logging.error(f"Failed {captain_type} seed{seed} {board_id} after {max_retries + 1} attempts")
-            
+                    logging.error(
+                        f"Failed {captain_type} seed{seed} {board_id} after {max_retries + 1} attempts"
+                    )
+
             return None
 
         # Process remaining jobs in parallel
         if remaining_jobs:
-            process_function = process_job_with_retry if resume_mode else process_job_with_progress
-            
+            process_function = (
+                process_job_with_retry if resume_mode else process_job_with_progress
+            )
+
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=max_workers
             ) as executor:
@@ -507,9 +515,7 @@ def run_all_captain_experiments(
                 )
 
                 new_results = list(
-                    filter(
-                        None, executor.map(process_function, remaining_jobs)
-                    )
+                    filter(None, executor.map(process_function, remaining_jobs))
                 )
         else:
             logging.info("No remaining games to process")
@@ -673,6 +679,8 @@ def parse_arguments():
             "MAPEIGCaptain_cot",
             "ConditionalEIGCaptain",
             "ConditionalEIGCaptain_cot",
+            "PlannerCaptain",
+            "PlannerCaptain_cot",
         ],
         help="Captain types to benchmark",
     )
