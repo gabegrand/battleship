@@ -291,28 +291,41 @@ class StrategyPlanner:
         p = self._plan
         if p is None:
             return None
+
+        # Local helpers to coerce numpy scalars to Python types
+        def _coerce_float(x):
+            if x is None:
+                return None
+            try:
+                return float(x)
+            except Exception:
+                return x
+
+        def _coerce_move(m):
+            if not m:
+                return None
+            try:
+                return tuple(int(v) for v in m)
+            except Exception:
+                return m
+
+        def _part_summary(part: Dict[str, Any]):
+            if not part:
+                return None
+            return {
+                "move": _coerce_move(part.get("move")),
+                "prob": _coerce_float(part.get("prob")),
+                "weight": _coerce_float(part.get("weight")),
+            }
+
         return {
-            "p_hit_before": float(p.p_hit_before)
-            if p.p_hit_before is not None
-            else None,
-            "p_hit_after": float(p.p_hit_after) if p.p_hit_after is not None else None,
-            "best_move": tuple(int(x) for x in p.best_move) if p.best_move else None,
-            "best_eig": float(p.best_eig) if p.best_eig is not None else None,
+            "p_hit_before": _coerce_float(p.p_hit_before),
+            "p_hit_after": _coerce_float(p.p_hit_after),
+            "best_move": _coerce_move(p.best_move),
+            "best_eig": _coerce_float(p.best_eig),
             "best_question": p.best_question.to_dict() if p.best_question else None,
-            "true_partition": {
-                "move": p.true_partition.get("move"),
-                "prob": p.true_partition.get("prob"),
-                "weight": p.true_partition.get("weight"),
-            }
-            if p.true_partition
-            else None,
-            "false_partition": {
-                "move": p.false_partition.get("move"),
-                "prob": p.false_partition.get("prob"),
-                "weight": p.false_partition.get("weight"),
-            }
-            if p.false_partition
-            else None,
+            "true_partition": _part_summary(p.true_partition),
+            "false_partition": _part_summary(p.false_partition),
         }
 
     def expected_post_question_hit_prob(
