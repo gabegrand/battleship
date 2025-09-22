@@ -66,11 +66,12 @@ class Board(object):
     purple = BOARD_SYMBOL_MAPPING["P"]
     orange = BOARD_SYMBOL_MAPPING["O"]
 
-    def __init__(self, board: np.ndarray):
+    def __init__(self, board: np.ndarray, transparent: bool = None):
         assert board.dtype == np.dtype(int)
         assert board.shape[0] == board.shape[1]
 
         self._board = board
+        self.transparent = transparent
 
     @property
     def board(self):
@@ -98,7 +99,7 @@ class Board(object):
         return Board(self._board.copy())
 
     def _ipython_display_(self):
-        display(self.to_figure())
+        display(self.to_figure(transparent=self.transparent or False))
 
     @staticmethod
     def symbol_to_int(symbol: str):
@@ -291,12 +292,21 @@ class Board(object):
 
         return tracker
 
-    def to_figure(self, inches: int = 6, dpi: int = 128):
-        return Board._to_figure(board_array=self.board, inches=inches, dpi=dpi)
+    def to_figure(self, inches: int = 6, dpi: int = 128, transparent: bool = False):
+        return Board._to_figure(
+            board_array=self.board,
+            inches=inches,
+            dpi=dpi,
+            transparent=transparent or self.transparent,
+        )
 
     @staticmethod
     def _to_figure(
-        board_array: np.ndarray, inches: int = 6, dpi: int = 128, mode: str = "default"
+        board_array: np.ndarray,
+        inches: int = 6,
+        dpi: int = 128,
+        mode: str = "default",
+        transparent: bool = False,
     ):
         """Convert a Board object to a matplotlib figure."""
 
@@ -314,6 +324,13 @@ class Board(object):
             raise ValueError(f"Unknown mode: {mode}")
 
         fig, ax = plt.subplots(figsize=(inches, inches), dpi=dpi)
+        # If transparent, make the figure and axes backgrounds transparent so that
+        # saved images (or in-notebook renders) have no opaque background.
+        if transparent:
+            # Make figure patch fully transparent
+            fig.patch.set_alpha(0.0)
+            # Make axes background transparent
+            ax.set_facecolor("none")
         ax.matshow(board_array, cmap=cmap, norm=norm)
 
         # Add gridlines
