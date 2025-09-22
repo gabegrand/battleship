@@ -307,7 +307,8 @@ def run_single_agent_game_wrapper(args, retry_count=0) -> Optional[Dict]:
     except Exception as e:
         retry_msg = f" (retry {retry_count})" if retry_count > 0 else ""
         logging.error(
-            f"Failed to process game: {captain_type} seed{seed} {board_id}{retry_msg}: {e}"
+            f"Failed to process game: {captain_type} seed{seed} {board_id}{retry_msg}: {e}",
+            exc_info=True,
         )
         return None
 
