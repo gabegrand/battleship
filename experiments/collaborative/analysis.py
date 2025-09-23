@@ -54,13 +54,15 @@ GOLD_CATEGORY_LABELS = {
 CAPTAIN_TYPE_LABELS = {
     "human": "Human",
     "RandomCaptain": "Random",
-    "MAPCaptain": "MAP",
-    "LLMDecisionCaptain": "LLM",
-    "LLMDecisionCaptain_cot": "LLM",
-    "EIGCaptain": "EIG",
-    "EIGCaptain_cot": "EIG",
-    "MAPEIGCaptain": "MAP + EIG",
-    "MAPEIGCaptain_cot": "MAP + EIG",
+    "MAPCaptain": "Greedy",
+    "LLMDecisionCaptain": "LM",
+    "LLMDecisionCaptain_cot": "LM",
+    "EIGCaptain": "+QBayes",
+    "EIGCaptain_cot": "+QBayes",
+    "MAPEIGCaptain": "+QMBayes",
+    "MAPEIGCaptain_cot": "+QMBayes",
+    "PlannerCaptain": "+QMDBayes",
+    "PlannerCaptain_cot": "+QMDBayes",
 }
 
 
