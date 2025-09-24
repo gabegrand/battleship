@@ -19,25 +19,25 @@ from battleship.game import BattleshipGame
 
 
 MODEL_DISPLAY_NAMES = {
-    "anthropic/claude-sonnet-4": "claude-sonnet-4",
-    "anthropic/claude-opus-4": "claude-opus-4",
-    "deepseek/deepseek-chat-v3-0324": "deepseek-chat-v3",
-    "deepseek/deepseek-r1-0528": "deepseek-r1",
-    "google/gemini-2.5-flash": "gemini-2.5-flash",
-    "google/gemini-2.5-pro": "gemini-2.5-pro",
-    "meta-llama/llama-3.1-8b-instruct": "llama-3.1-8b-instruct",
-    "meta-llama/llama-3.1-70b-instruct": "llama-3.1-70b-instruct",
-    "meta-llama/llama-3.1-405b-instruct": "llama-3.1-405b-instruct",
-    "meta-llama/llama-4-maverick": "llama-4-maverick",
-    "meta-llama/llama-4-scout": "llama-4-scout",
-    "openai/gpt-4o-mini": "gpt-4o-mini",
-    "openai/gpt-4o": "gpt-4o",
-    "openai/gpt-4.1-nano": "gpt-4.1-nano",
-    "openai/gpt-4.1-mini": "gpt-4.1-mini",
-    "openai/gpt-4.1": "gpt-4.1",
+    "anthropic/claude-sonnet-4": "Claude-Sonnet-4",
+    "anthropic/claude-opus-4": "Claude-Opus-4",
+    "deepseek/deepseek-chat-v3-0324": "DeepSeek-Chat-v3",
+    "deepseek/deepseek-r1-0528": "DeepSeek-R1",
+    "google/gemini-2.5-flash": "Gemini-2.5-Flash",
+    "google/gemini-2.5-pro": "Gemini-2.5-Pro",
+    "meta-llama/llama-3.1-8b-instruct": "Llama-3.1-8B-Instruct",
+    "meta-llama/llama-3.1-70b-instruct": "Llama-3.1-70B-Instruct",
+    "meta-llama/llama-3.1-405b-instruct": "Llama-3.1-405B-Instruct",
+    "meta-llama/llama-4-maverick": "Llama-4-Maverick",
+    "meta-llama/llama-4-scout": "Llama-4-Scout",
+    "openai/gpt-4o-mini": "GPT-4o-mini",
+    "openai/gpt-4o": "GPT-4o",
+    "openai/gpt-4.1-nano": "GPT-4.1-nano",
+    "openai/gpt-4.1-mini": "GPT-4.1-mini",
+    "openai/gpt-4.1": "GPT-4.1",
     "openai/o3": "o3",
     "openai/o4-mini": "o4-mini",
-    "openai/gpt-5": "gpt-5",
+    "openai/gpt-5": "GPT-5",
 }
 
 GOLD_ANSWER_LABEL = "gold_answer"
@@ -57,12 +57,14 @@ CAPTAIN_TYPE_LABELS = {
     "MAPCaptain": "Greedy",
     "LLMDecisionCaptain": "LM",
     "LLMDecisionCaptain_cot": "LM",
-    "EIGCaptain": "+QBayes",
-    "EIGCaptain_cot": "+QBayes",
-    "MAPEIGCaptain": "+QMBayes",
-    "MAPEIGCaptain_cot": "+QMBayes",
-    "PlannerCaptain": "+QMDBayes",
-    "PlannerCaptain_cot": "+QMDBayes",
+    "EIGCaptain": "+Bayes-Q",
+    "EIGCaptain_cot": "+Bayes-Q",
+    "LLMMapCaptain": "+Bayes-M",
+    "LLMMapCaptain_cot": "+Bayes-M",
+    "MAPEIGCaptain": "+Bayes-QM",
+    "MAPEIGCaptain_cot": "+Bayes-QM",
+    "PlannerCaptain": "+Bayes-QMD",
+    "PlannerCaptain_cot": "+Bayes-QMD",
 }
 
 
@@ -795,6 +797,7 @@ def plot_question_timing(
     llm_palette: dict,
     llm_order: list[str] | None = None,
     captain_types: list[str] | None = None,
+    reverse_captain_order=True,
     common_norm: bool = True,
     output_path: str | None = None,
     figsize_scale: float = 1.15,
@@ -883,7 +886,7 @@ def plot_question_timing(
     # Drop rows without timing info
     df = df.dropna(subset=["stage_completion"])  # safe guard
     if captain_types is None:
-        captain_types = ["Human", "LLM"]
+        captain_types = ["Human", "LM"]
     # Keep only requested captain levels actually present
     captain_types = [
         c for c in captain_types if c in df["captain_type_display"].unique()
@@ -933,7 +936,9 @@ def plot_question_timing(
         kern = np.exp(-0.5 * diffs**2) / (np.sqrt(2 * np.pi) * bw)
         return kern.sum(axis=0) / n
 
+    # Grid over completion in [0,1]; we'll plot on a 0-100% x-axis
     grid = np.linspace(0, 1, 200)
+    grid_pct = grid * 100.0
 
     # Build density entries
     entries: list[tuple] = []  # (captain, llm, values, density, mean_q, local_max)
@@ -978,6 +983,9 @@ def plot_question_timing(
 
     legend_handles: dict[str, Patch] = {}
 
+    if reverse_captain_order:
+        captain_types = list(reversed(captain_types))
+
     for i, captain in enumerate(captain_types):
         cat_llms = [
             l for l in llm_order if any(e[0] == captain and e[1] == l for e in entries)
@@ -997,7 +1005,8 @@ def plot_question_timing(
             half_width = dens * scale / 2.0
             y_lower = pos_center - half_width
             y_upper = pos_center + half_width
-            x_poly = np.concatenate([grid, grid[::-1]])
+            # Plot polygons on a 0-100% scale along x
+            x_poly = np.concatenate([grid_pct, grid_pct[::-1]])
             y_poly = np.concatenate([y_lower, y_upper[::-1]])
             color = llm_palette.get(llm_name, "#808080")
             ax.fill(
@@ -1011,7 +1020,7 @@ def plot_question_timing(
             # Median line
             median_val = np.median(vals)
             ax.plot(
-                [median_val, median_val],
+                [median_val * 100.0, median_val * 100.0],
                 [pos_center - slot_height * 0.45, pos_center + slot_height * 0.45],
                 color=color,
                 linewidth=1.5,
@@ -1023,7 +1032,7 @@ def plot_question_timing(
                 )
             if annotate and not np.isnan(mean_q):
                 ax.text(
-                    1.015,
+                    101.5,
                     pos_center,
                     annotation_fmt.format(mean_q=mean_q),
                     va="center",
@@ -1038,10 +1047,11 @@ def plot_question_timing(
                 )
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(captain_types, rotation=90, va="center")
-    ax.set_xlabel("Game Completion")
-    ax.set_ylabel("Captain Type")
-    ax.set_xlim(0, 1.14)
+    ax.set_yticklabels(captain_types, rotation=90, va="center", fontsize=14)
+    ax.set_xlabel("Game Completion (%)")
+    ax.set_ylabel("Question Density")
+    # Extend a bit beyond 100 to leave room for annotations
+    ax.set_xlim(0, 114)
 
     if title:
         ax.set_title("Question Timing")
