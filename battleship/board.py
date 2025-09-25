@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
+from matplotlib.patches import Rectangle
 
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "R": 1, "G": 2, "P": 3, "O": 4}
 BOARD_COLOR_MAPPING = {
@@ -299,6 +300,77 @@ class Board(object):
             dpi=dpi,
             transparent=transparent or self.transparent,
         )
+
+    def spotter_view(
+        self,
+        partial_board: "Board",
+        inches: int = 6,
+        dpi: int = 128,
+        transparent: bool = False,
+        hatch: str = "///",
+        hatch_color: str = "#ffffff",
+        overlay_color: Optional[str] = None,
+        tile_alpha: float = 0.5,
+    ):
+        """Render the spotter view.
+
+            This renders the true board (``self``) while overlaying a diagonal
+            cross-hatching pattern on tiles that are hidden to the Captain in
+            ``partial_board``. Tiles that are visible to the Captain are rendered
+            normally.
+
+            Parameters
+            - partial_board: Board - the Captain's current (partial) view. Must be
+              the same size as ``self``.
+            - inches, dpi, transparent: forwarded to the underlying figure
+              creation similar to ``to_figure``.
+        - hatch: matplotlib hatch pattern used for hidden tiles.
+        - hatch_color: color used for the hatch lines.
+        - overlay_color: fill color for hidden tiles (defaults to hatch_color).
+        - tile_alpha: transparency (0-1) applied to the hidden tile fill only.
+
+            Returns
+            - matplotlib.figure.Figure: the rendered figure.
+        """
+        if not isinstance(partial_board, Board):
+            raise ValueError("partial_board must be a Board object")
+        if partial_board.size != self.size:
+            raise ValueError("partial_board must be the same size as the board")
+
+        # First, render the true board using the existing helper to avoid code duplication.
+        fig = Board._to_figure(
+            board_array=self.board,
+            inches=inches,
+            dpi=dpi,
+            transparent=transparent or self.transparent,
+        )
+
+        # Overlay hatch on cells hidden in the Captain's view.
+        ax = fig.axes[0] if fig.axes else fig.gca()
+        hidden_mask = partial_board.board == Board.hidden
+
+        n = self.size
+        # Choose overlay fill color (with alpha applied to face only)
+        if overlay_color is None:
+            overlay_color = hatch_color
+        face_rgba = matplotlib.colors.to_rgba(overlay_color, alpha=tile_alpha)
+        for i in range(n):
+            for j in range(n):
+                if hidden_mask[i, j]:
+                    # Place a 1x1 rectangle centered on the (i,j) cell in data coords.
+                    rect = Rectangle(
+                        (j - 0.5, i - 0.5),
+                        1,
+                        1,
+                        facecolor=face_rgba,
+                        edgecolor=hatch_color,
+                        hatch=hatch,
+                        linewidth=0.0,
+                        zorder=3,
+                    )
+                    ax.add_patch(rect)
+
+        return fig
 
     @staticmethod
     def _to_figure(
