@@ -501,6 +501,71 @@ class Board(object):
         plt.close(fig)
         return fig
 
+    def combined_view(
+        self,
+        partial_board: "Board",
+        inches: float = 14.0,
+        dpi: int = 128,
+        transparent: bool = False,
+        width_ratios=(1.0, 1.6, 1.6),
+    ):
+        """Create a composite figure with (left-to-right):
+        1) Ship Tracker, 2) Captain View (partial board), 3) Spotter View.
+
+        Returns a matplotlib.figure.Figure that can be saved to PDF.
+        """
+        if not isinstance(partial_board, Board):
+            raise ValueError("partial_board must be a Board object")
+        if partial_board.size != self.size:
+            raise ValueError("partial_board must be the same size as the board")
+
+        def _fig_to_rgb_array(fig):
+            fig.canvas.draw()
+            w, h = fig.canvas.get_width_height()
+            buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            return buf.reshape(h, w, 3)
+
+        # Render the three panels as standalone figures to avoid code duplication
+        st_fig = self.ship_tracker_figure(
+            partial_board, inches=3.0, dpi=dpi, transparent=transparent
+        )
+        cap_fig = Board._to_figure(
+            board_array=partial_board.board,
+            inches=4.0,
+            dpi=dpi,
+            transparent=transparent,
+        )
+        spot_fig = self.spotter_view(
+            partial_board, inches=4.0, dpi=dpi, transparent=transparent
+        )
+
+        st_img = _fig_to_rgb_array(st_fig)
+        cap_img = _fig_to_rgb_array(cap_fig)
+        spot_img = _fig_to_rgb_array(spot_fig)
+
+        # Create the composite figure
+        fig = plt.figure(
+            figsize=(inches, inches * 0.38), dpi=dpi, constrained_layout=True
+        )
+        if transparent:
+            fig.patch.set_alpha(0.0)
+        gs = fig.add_gridspec(1, 3, width_ratios=width_ratios)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax2 = fig.add_subplot(gs[0, 1])
+        ax3 = fig.add_subplot(gs[0, 2])
+
+        for ax, img in ((ax1, st_img), (ax2, cap_img), (ax3, spot_img)):
+            ax.imshow(img)
+            ax.axis("off")
+            ax.set_aspect("equal")
+
+        # Clean up child figs
+        plt.close(st_fig)
+        plt.close(cap_fig)
+        plt.close(spot_fig)
+
+        return fig
+
     @staticmethod
     def _to_figure(
         board_array: np.ndarray,
