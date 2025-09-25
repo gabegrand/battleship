@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
+from matplotlib.patches import FancyBboxPatch
 from matplotlib.patches import Rectangle
 
 BOARD_SYMBOL_MAPPING = {"H": -1, "W": 0, "R": 1, "G": 2, "P": 3, "O": 4}
@@ -508,6 +509,10 @@ class Board(object):
         dpi: int = 128,
         transparent: bool = False,
         width_ratios=(1.0, 1.6, 1.6),
+        show_titles: bool = True,
+        title_fontsize: int = 18,
+        moves_remaining: Optional[int] = None,
+        questions_remaining: Optional[int] = None,
     ):
         """Create a composite figure with (left-to-right):
         1) Ship Tracker, 2) Captain View (partial board), 3) Spotter View.
@@ -525,7 +530,7 @@ class Board(object):
             buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             return buf.reshape(h, w, 3)
 
-        # Render the three panels as standalone figures to avoid code duplication
+        # Render the panels as standalone figures to avoid code duplication
         st_fig = self.ship_tracker_figure(
             partial_board, inches=3.0, dpi=dpi, transparent=transparent
         )
@@ -539,9 +544,21 @@ class Board(object):
             partial_board, inches=4.0, dpi=dpi, transparent=transparent
         )
 
+        # Optional counters panel
+        ct_fig = None
+        if moves_remaining is not None or questions_remaining is not None:
+            ct_fig = self.counters_figure(
+                moves_remaining=moves_remaining,
+                questions_remaining=questions_remaining,
+                inches=3.0,
+                dpi=dpi,
+                transparent=transparent,
+            )
+
         st_img = _fig_to_rgb_array(st_fig)
         cap_img = _fig_to_rgb_array(cap_fig)
         spot_img = _fig_to_rgb_array(spot_fig)
+        ct_img = _fig_to_rgb_array(ct_fig) if ct_fig is not None else None
 
         # Create the composite figure
         fig = plt.figure(
@@ -550,20 +567,113 @@ class Board(object):
         if transparent:
             fig.patch.set_alpha(0.0)
         gs = fig.add_gridspec(1, 3, width_ratios=width_ratios)
-        ax1 = fig.add_subplot(gs[0, 0])
+        # Left column can be a subgrid when counters are present
+        if ct_img is not None:
+            left_sub = gs[0, 0].subgridspec(2, 1, height_ratios=(1.2, 2.2))
+            ax1_top = fig.add_subplot(left_sub[0, 0])
+            ax1_bot = fig.add_subplot(left_sub[1, 0])
+        else:
+            ax1_bot = fig.add_subplot(gs[0, 0])
+            ax1_top = None
         ax2 = fig.add_subplot(gs[0, 1])
         ax3 = fig.add_subplot(gs[0, 2])
 
-        for ax, img in ((ax1, st_img), (ax2, cap_img), (ax3, spot_img)):
+        # Place left counters (if any)
+        if ax1_top is not None and ct_img is not None:
+            ax1_top.imshow(ct_img)
+            ax1_top.axis("off")
+            ax1_top.set_aspect("equal")
+
+        for ax, img in ((ax1_bot, st_img), (ax2, cap_img), (ax3, spot_img)):
             ax.imshow(img)
             ax.axis("off")
             ax.set_aspect("equal")
+
+        if show_titles:
+            title_style = dict(
+                fontsize=title_fontsize, fontweight="bold", color="#1f2937"
+            )
+            ax2.set_title("Captain", **title_style)
+            ax3.set_title("Spotter", **title_style)
 
         # Clean up child figs
         plt.close(st_fig)
         plt.close(cap_fig)
         plt.close(spot_fig)
+        if ct_fig is not None:
+            plt.close(ct_fig)
 
+        return fig
+
+    def counters_figure(
+        self,
+        moves_remaining: Optional[int] = None,
+        questions_remaining: Optional[int] = None,
+        inches: float = 3.0,
+        dpi: int = 128,
+        transparent: bool = False,
+    ):
+        """Render a small counters panel with Moves Left and Questions Left.
+
+        Returns a matplotlib.figure.Figure.
+        """
+        fig_h_scale = 0.75
+        fig, ax = plt.subplots(figsize=(inches, inches * fig_h_scale), dpi=dpi)
+        if transparent:
+            fig.patch.set_alpha(0.0)
+            ax.set_facecolor("none")
+
+        ax.axis("off")
+        ax.set_xlim(0, 10)
+        ax.set_ylim(10, 0)
+
+        # Draw one rounded "pill" box
+        def pill(x, y, w, h, label, value):
+            bg = "#f3f4f6"  # light gray
+            txt = "#1f2937"  # slate-800
+            ax.add_patch(
+                FancyBboxPatch(
+                    (x, y),
+                    w,
+                    h,
+                    boxstyle="round,pad=0.2,rounding_size=0.3",
+                    linewidth=0.8,
+                    edgecolor="white",
+                    facecolor=bg,
+                )
+            )
+            ax.text(
+                x + 0.4,
+                y + h * 0.5,
+                label,
+                fontsize=14,
+                color="#6b7280",
+                va="center",
+                ha="left",
+            )
+            ax.text(
+                x + w - 0.4,
+                y + h * 0.5,
+                "—" if value is None else str(value),
+                fontsize=14,
+                fontweight="bold",
+                color=txt,
+                va="center",
+                ha="right",
+            )
+
+        # Vertical layout (avoid right-edge clipping)
+        margin_x = 0.7
+        margin_y = 0.8
+        box_w = 10 - 2 * margin_x
+        box_h = 2.0
+        vgap = 0.9
+        y_top = margin_y
+        y_bottom = y_top + box_h + vgap
+        pill(margin_x, y_top, box_w, box_h, "Moves Left", moves_remaining)
+        pill(margin_x, y_bottom, box_w, box_h, "Questions Left", questions_remaining)
+
+        plt.close(fig)
         return fig
 
     @staticmethod
