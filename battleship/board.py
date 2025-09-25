@@ -372,6 +372,135 @@ class Board(object):
 
         return fig
 
+    def ship_tracker_figure(
+        self,
+        partial_board: "Board",
+        inches: float = 2.5,
+        dpi: int = 128,
+        transparent: bool = False,
+        legend: bool = True,
+    ):
+        """Render a compact ship tracker panel as a matplotlib Figure.
+
+        - Shows a title "Ship Tracker"
+        - Optional legend of the ship colors in a static order (R, G, P, O)
+        - Renders one horizontal row of unit squares per ship; gray until sunk,
+          then filled with the ship's color.
+
+        Returns a matplotlib.figure.Figure.
+        """
+        if not isinstance(partial_board, Board):
+            raise ValueError("partial_board must be a Board object")
+        if partial_board.size != self.size:
+            raise ValueError("partial_board must be the same size as the board")
+
+        tracker = self.ship_tracker(partial_board)  # [(length, symbol_or_None)]
+        if not tracker:
+            # Fallback: infer by color ids on board
+            lengths = [int(np.sum(self.board == k)) for k in range(1, 5)]
+            tracker = [(l, None) for l in lengths if l > 0]
+
+        # Sort rows by ship length descending for a consistent look
+        tracker = sorted(tracker, key=lambda x: x[0], reverse=True)
+        num_rows = len(tracker)
+        max_len = max(l for l, _ in tracker) if tracker else 5
+
+        # Layout in axis units
+        pad = 0.5
+        legend_h = 1.5 if legend else 1.0
+        row_h = 1.2
+        # Precompute legend width so the last color box doesn't get clipped
+        legend_label_offset = 3.2  # space to the right of the text label before boxes
+        box_size = 0.5
+        box_gap = 0.2
+        boxes_total_width = 4 * box_size + 3 * box_gap
+        legend_required_width = pad + legend_label_offset + boxes_total_width + pad
+        width_units = max(max_len + 2 * pad, legend_required_width)
+        height_units = legend_h + num_rows * row_h + pad
+
+        # Keep squares square by adjusting the figure aspect
+        aspect = height_units / width_units
+        fig_w = inches
+        fig_h = inches * aspect
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
+        if transparent:
+            fig.patch.set_alpha(0.0)
+            ax.set_facecolor("none")
+
+        # Axis setup
+        ax.set_xlim(0, width_units)
+        ax.set_ylim(height_units, 0)
+        ax.set_aspect("equal")
+        ax.axis("off")
+
+        # Title (should appear above the ship colors)
+        title_y = legend_h * 0.25
+        ax.text(
+            pad,
+            title_y,
+            "Ship Tracker",
+            fontsize=14,
+            fontweight="bold",
+            ha="left",
+            va="center",
+            color="#1f2937",
+        )
+
+        # Legend of ship colors in a static order: R, G, P, O
+        if legend:
+            # Place legend below the title
+            legend_label_y = legend_h * 0.65
+            ax.text(
+                pad,
+                legend_label_y,
+                "Ship Colors:",
+                fontsize=9,
+                ha="left",
+                va="center",
+                color="#6b7280",
+            )
+            color_order = ["R", "G", "P", "O"]
+            x = pad + legend_label_offset  # some space after the label
+            for sym in color_order:
+                col = BOARD_COLOR_MAPPING[BOARD_SYMBOL_MAPPING[sym]]
+                ax.add_patch(
+                    Rectangle(
+                        (x, legend_label_y - box_size / 2),
+                        box_size,
+                        box_size,
+                        facecolor=col,
+                        edgecolor="white",
+                        linewidth=0.8,
+                    )
+                )
+                x += box_size + box_gap
+
+        # Rows: one per ship
+        start_y = legend_h + pad
+        water_gray = BOARD_COLOR_MAPPING[0]
+        for r, (length, sunk_symbol) in enumerate(tracker):
+            y = start_y + r * row_h
+            x0 = pad
+            fill_color = (
+                water_gray
+                if sunk_symbol is None
+                else BOARD_COLOR_MAPPING[BOARD_SYMBOL_MAPPING[sunk_symbol]]
+            )
+            for k in range(length):
+                ax.add_patch(
+                    Rectangle(
+                        (x0 + k, y),
+                        1.0,
+                        1.0,
+                        facecolor=fill_color,
+                        edgecolor="white",
+                        linewidth=1.0,
+                    )
+                )
+
+        plt.close(fig)
+        return fig
+
     @staticmethod
     def _to_figure(
         board_array: np.ndarray,
