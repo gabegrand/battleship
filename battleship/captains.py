@@ -18,6 +18,10 @@ from battleship.board import Board
 from battleship.board import tile_to_coords
 from battleship.fast_sampler import FastSampler
 from battleship.game import Decision
+from battleship.planner_captain import PlannedDecision
+from battleship.planner_captain import PlannedMove
+from battleship.planner_captain import PlannedQuestion
+from battleship.planner_captain import StrategyPlanner
 from battleship.prompting import DecisionPrompt
 from battleship.prompting import MovePrompt
 from battleship.prompting import QuestionPrompt
@@ -600,8 +604,8 @@ def create_captain(
     prob_q_prob=None,
     eig_samples=None,
     eig_k=None,
+    gamma: float = 0.95,
     json_path=None,
-    completions_dir=None,
 ):
     """
     Factory function to create Captain instances with properly configured strategies.
@@ -821,6 +825,33 @@ def create_captain(
             llm=llm,
             json_path=json_path,
         )
+        return captain
+
+    elif captain_type in ("PlannerCaptain", "PlannerCaptain_cot"):
+        use_cot = captain_type.endswith("_cot")
+
+        # Build a shared planner and wire adapters
+        planner = StrategyPlanner(
+            llm=llm,
+            spotter=_get_spotter(),
+            rng=np.random.default_rng(seed),
+            samples=eig_samples,
+            k=eig_k,
+            use_cot=use_cot,
+            temperature=None,
+            n_attempts=3,
+        )
+
+        captain = Captain(
+            decision_strategy=PlannedDecision(planner, gamma=gamma),
+            move_strategy=PlannedMove(planner),
+            question_strategy=PlannedQuestion(planner),
+            seed=seed,
+            llm=llm,
+            json_path=json_path,
+        )
+        # Connect planner to captain's live constraints list for per-stage planning
+        planner.set_constraints_ref(captain.sampling_constraints)
         return captain
 
     else:
