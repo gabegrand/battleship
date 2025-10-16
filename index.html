@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="BattleshipQA project website placeholder." />
+  <meta name="keywords" content="BattleshipQA, information seeking, language models" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BattleshipQA: Shoot First, Ask Questions Later?</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/css/bulma-carousel.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/css/bulma-slider.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1/css/academicons.min.css" />
+  <link rel="stylesheet" href="./static/css/index.css" />
+  <link rel="icon" href="./static/images/placeholder-figure.svg" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/js/bulma-carousel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/js/bulma-slider.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<section class="hero hero-main" id="top">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Shoot First, Ask Questions Later?</h1>
+            <h2 class="subtitle is-4">Building Rational Agents That Explore and Act Like People</h2>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><a href="https://gabegrand.com" target="_blank" rel="noopener">Gabriel Grand</a><sup>1,2*</sup>,</span>
+            <span class="author-block"><a href="#" rel="noopener">Valerio Pepe</a><sup>3*</sup>,</span>
+            <span class="author-block"><a href="#" rel="noopener">Joshua B. Tenenbaum</a><sup>1,2</sup>,</span>
+            <span class="author-block"><a href="#" rel="noopener">Jacob Andreas</a><sup>1</sup></span>
+          </div>
+          <div class="is-size-6 publication-authors">
+            <span class="author-block"><sup>1</sup>MIT CSAIL</span>
+            <span class="author-block"><sup>2</sup>MIT Brain and Cognitive Sciences</span>
+            <span class="author-block"><sup>3</sup>Harvard SEAS</span>
+          </div>
+          <div class="publication-links">
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="#" aria-disabled="true">
+                <span class="icon"><i class="ai ai-arxiv"></i></span>
+                <span>arXiv</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="https://github.com/gabegrand/battleship" target="_blank" rel="noopener">
+                <span class="icon"><i class="fab fa-github"></i></span>
+                <span>Code</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="#" aria-disabled="true">
+                <span class="icon">🤗</span>
+                <span>Dataset (coming soon)</span>
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <figure class="image" style="max-width: 800px; margin: 0 auto;">
+        <img src="./static/images/battleship-splash-2.png" alt="BattleshipQA splash figure" style="width: 100%; height: auto; object-fit: contain;">
+      </figure>
+      <h2 class="subtitle has-text-centered mt-5">
+        Collaborative Battleship: Rational agents balance exploration and action in a decision-oriented dialogue game.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-multiline is-centered">
+        <div class="column is-one-third">
+          <div class="placeholder-media">
+            <span>Highlight 1</span>
+          </div>
+        </div>
+        <div class="column is-one-third">
+          <div class="placeholder-media">
+            <span>Highlight 2</span>
+          </div>
+        </div>
+        <div class="column is-one-third">
+          <div class="placeholder-media">
+            <span>Highlight 3</span>
+          </div>
+        </div>
+      </div>
+      <p class="has-text-centered mt-4">Carousel slots reserved for benchmark visuals and gameplay captures.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="abstract">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+Many high-stakes applications of agentic AI—e.g., scientific discovery and medical diagnosis—require forming hypotheses
+and running targeted experiments. Given limited resources, to what extent do agents act rationally, and can insights
+from human behavior make them more efficient information-seekers? We introduce a decision-oriented dialogue task that
+provides a lightweight evaluation harness for Bayesian Experimental Design (BED).</p><p>In our cognitively-inspired
+*Collaborative Battleship* game, a partially-informed *Captain* must balance exploration (asking questions) and action
+(taking shots), while a fully-informed *Spotter* must provide grounded answers under an information bottleneck.
+Experiments with human players (N=42) and language model (LM) agents reveal gaps in reasoning about answer context,
+generating informative questions, and selecting high-value actions. We propose Bayes-rational strategies that translate
+questions into Python for Monte Carlo inference.</p><p>
+For Spotter agents, this approach boosts accuracy by up to 14.7%
+absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits
+(94.2% of the achievable noise ceiling). Combined with a maximum a posteriori action policy, these components yield
+sharper targeting (+0.303–0.374 F1) and enable weaker LMs to attain strong Captain performance against humans (78–81%
+win rate) and frontier models (59–62% vs. GPT-5). Finally, we generalize our approach to an open-domain setting based on
+Twenty Questions. Overall, our work contributes a novel dataset and benchmark for BED and multiple inference-time
+strategies for building rational agents in discovery settings.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Video</h2>
+        <div class="publication-video">
+          <iframe src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="mt-2">Replace VIDEO_ID with the final presentation or gameplay walkthrough.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="components">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column">
+        <div class="placeholder-card">
+          <h2 class="title is-4">Agent Toolkit</h2>
+          <p>Summary of Captain planning, Spotter answering, and Bayesian inference modules will appear here.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="placeholder-card">
+          <h2 class="title is-4">Evaluation Benchmarks</h2>
+          <p>Placeholder for benchmark description: human study, LM baselines, and inference-time strategies.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered mt-5">
+      <div class="column">
+        <h2 class="title is-3">Interactive Explorer</h2>
+        <div class="interpolation-panel">
+          <div class="interpolation-placeholder">Belief visualization placeholder</div>
+          <input class="slider is-fullwidth is-info" id="interpolation-slider" type="range" min="0" max="100" value="0">
+          <p class="has-text-centered mt-3" id="interpolation-label">Frame 0</p>
+        </div>
+        <p class="mt-3">This area will host our belief update animation or question library once assets are ready.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="dataset">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-half">
+        <figure class="image is-4by3">
+          <img src="./static/images/placeholder-figure.svg" alt="Dataset visualization placeholder">
+        </figure>
+      </div>
+      <div class="column">
+        <h2 class="title is-3">BattleshipQA Dataset</h2>
+        <p>Placeholder text summarizing dataset scale, annotations, and modalities. Bullet points below will be replaced with highlights.</p>
+        <ul>
+          <li>Placeholder: Number of trajectories and QA pairs.</li>
+          <li>Placeholder: Annotation schema and pragmatic labels.</li>
+          <li>Placeholder: Release plan and licensing.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="related">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Related &amp; Concurrent Work</h2>
+    <div class="content has-text-justified">
+      <p>Links to related research projects will be curated here. For now, this section marks where we will highlight complementary efforts in rational agents and information-seeking benchmarks.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{grand2026battleshipqa,
+  author    = {Grand, Gabriel and Pepe, Valerio and Tenenbaum, Joshua B. and Andreas, Jacob},
+  title     = {Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People},
+  journal   = {ICLR},
+  year      = {2026},
+  note      = {Placeholder entry}
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="#" aria-disabled="true">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/gabegrand/battleship" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content cc-license">
+          <p>
+            Website template adapted from the <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener">Nerfies project site</a> licensed under CC BY-SA 4.0.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+</body>
+</html>

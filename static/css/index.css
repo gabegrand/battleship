@@ -1,0 +1,144 @@
+body {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.hero-main {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
+  color: #172642;
+}
+
+.hero-main .title,
+.hero-main .subtitle {
+  color: #172642;
+}
+
+.hero-body .publication-title {
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 700;
+}
+
+.publication-authors {
+  font-family: 'Google Sans', sans-serif;
+}
+
+.publication-authors a {
+  color: #00c4a7 !important;
+}
+
+.publication-authors a:hover {
+  text-decoration: underline;
+}
+
+.link-block a {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.placeholder-card {
+  border: 1px dashed rgba(15, 31, 60, 0.25);
+  border-radius: 12px;
+  padding: 1.75rem;
+  background: rgba(15, 31, 60, 0.04);
+  min-height: 180px;
+}
+
+.placeholder-card p {
+  margin-bottom: 0;
+  color: #4a5770;
+}
+
+.hero.teaser {
+  font-family: 'Google Sans', sans-serif;
+  background: #f3f5ff;
+}
+
+.hero.teaser .hero-body {
+  padding-top: 2.5rem;
+  padding-bottom: 3.5rem;
+}
+
+.placeholder-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 20% 20%, rgba(58, 224, 175, 0.2), transparent 70%),
+    #0f1a33;
+  border-radius: 16px;
+  border: 1px solid rgba(58, 224, 175, 0.2);
+  min-height: 260px;
+  color: #9fb8ff;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.placeholder-media::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 2px dashed rgba(63, 214, 203, 0.4);
+  border-radius: 12px;
+}
+
+.placeholder-media span {
+  position: relative;
+  z-index: 2;
+}
+
+.results-carousel .placeholder-media {
+  min-height: 220px;
+}
+
+.publication-video {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(10, 20, 40, 0.18);
+}
+
+.publication-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.interpolation-panel {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 2rem;
+}
+
+.interpolation-panel .slider {
+  margin-top: 1.25rem !important;
+}
+
+.interpolation-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbe4ff;
+  color: #304060;
+  border-radius: 8px;
+  height: 200px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.footer .icon-link {
+  font-size: 25px;
+  color: #000;
+}
+
+.footer p {
+  color: #4a4a4a;
+}
+
+.cc-license {
+  font-size: 0.85rem;
+}
