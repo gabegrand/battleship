@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import random
 import re
 from collections import defaultdict
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from battleship.utils import resolve_project_path
 
 
 DEFAULT_RUN_DIR = "experiments/collaborative/captain_benchmarks/run_2025_08_25_22_02_29"
+DEFAULT_RUN_DIRS: list[str] = [DEFAULT_RUN_DIR]
 DEFAULT_CONTEXTS_DIR = "experiments/collaborative/contexts"
 DEFAULT_OUTPUT_PATH = "battleship.github.io/static/data/_tmp_trajectory_samples.json"
 
@@ -26,6 +28,7 @@ DEFAULT_OUTPUT_PATH = "battleship.github.io/static/data/_tmp_trajectory_samples.
 class ExportEntry:
     round_id: str
     captain_type: str
+    run_dir: Path
     data: dict
 
 
@@ -36,8 +39,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--run-dir",
         type=str,
-        default=DEFAULT_RUN_DIR,
-        help="Path to the benchmark run directory (default: %(default)s)",
+        default=None,
+        help=("Path to a benchmark run directory (default: " f"{DEFAULT_RUN_DIR})."),
+    )
+    parser.add_argument(
+        "--run-dirs",
+        type=str,
+        nargs="+",
+        default=None,
+        help="One or more benchmark run directories to include in the export.",
     )
     parser.add_argument(
         "--contexts-dir",
@@ -64,9 +74,18 @@ def parse_args() -> argparse.Namespace:
         help="Destination JSON path for the exported trajectories (default: %(default)s)",
     )
     parser.add_argument(
-        "--include-ties",
-        action="store_true",
-        help="Keep multiple rounds when F1 scores tie for extremes (default: drop duplicates).",
+        "--games-per-captain",
+        type=int,
+        default=3,
+        help=(
+            "Number of games to sample per captain type for each run (default: %(default)s)."
+        ),
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed used to sample games (default: %(default)s).",
     )
     parser.add_argument(
         "--log-level",
@@ -74,7 +93,12 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
         help="Logging level (default: %(default)s)",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.run_dir and args.run_dirs:
+        parser.error("Use either --run-dir or --run-dirs, not both.")
+
+    return args
 
 
 def configure_logging(level: str) -> None:
@@ -128,55 +152,43 @@ def coords_to_tile(coords: Sequence[int] | None) -> str | None:
     return f"{chr(ord('A') + row)}{col + 1}"
 
 
-def select_extreme_entries(
-    summary: Iterable[dict], include_ties: bool = False
+def select_random_entries(
+    summaries_by_run: dict[Path, Iterable[dict]],
+    games_per_captain: int,
+    rng: random.Random,
 ) -> list[ExportEntry]:
-    by_captain: dict[str, list[dict]] = defaultdict(list)
-    for record in summary:
-        by_captain[record["captain_type"]].append(record)
+    if games_per_captain <= 0:
+        return []
 
-    selected: list[ExportEntry] = []
-    for captain_type, entries in sorted(by_captain.items()):
-        if not entries:
-            continue
-        sorted_entries = sorted(entries, key=lambda e: e["f1_score"])
-        lowest = sorted_entries[0]
-        highest = sorted_entries[-1]
+    deduped: dict[tuple[str, str], ExportEntry] = {}
 
-        selected.append(
-            ExportEntry(
-                round_id=str(lowest["round_id"]),
-                captain_type=captain_type,
-                data={"extreme": "lowest", **lowest},
-            )
-        )
+    for run_dir, summary in summaries_by_run.items():
+        by_captain: dict[str, list[dict]] = defaultdict(list)
+        for record in summary:
+            by_captain[record["captain_type"]].append(record)
 
-        if include_ties:
-            tied_high = [
-                entry
-                for entry in sorted_entries[::-1]
-                if entry["f1_score"] == highest["f1_score"]
-            ]
-        else:
-            tied_high = [highest]
-
-        for entry in tied_high:
-            if str(entry["round_id"]) == str(lowest["round_id"]):
+        for captain_type, records in sorted(by_captain.items()):
+            if not records:
                 continue
-            selected.append(
-                ExportEntry(
-                    round_id=str(entry["round_id"]),
-                    captain_type=captain_type,
-                    data={"extreme": "highest", **entry},
-                )
+
+            sample_size = min(games_per_captain, len(records))
+            chosen = (
+                rng.sample(records, k=sample_size)
+                if len(records) >= sample_size
+                else records
             )
 
-    unique_rounds: dict[str, ExportEntry] = {}
-    for entry in selected:
-        if entry.round_id not in unique_rounds:
-            unique_rounds[entry.round_id] = entry
+            for entry in chosen:
+                key = (run_dir.as_posix(), str(entry["round_id"]))
+                if key not in deduped:
+                    deduped[key] = ExportEntry(
+                        round_id=str(entry["round_id"]),
+                        captain_type=captain_type,
+                        run_dir=run_dir,
+                        data=dict(entry),
+                    )
 
-    return list(unique_rounds.values())
+    return list(deduped.values())
 
 
 def infer_experiment_from_contexts(contexts_dir: Path) -> str:
@@ -213,13 +225,27 @@ def load_true_board(trial_id: int, experiment: str) -> list[list[int]]:
     return board.to_numpy().astype(int).tolist()
 
 
+def load_metadata(run_dir: Path) -> dict:
+    metadata_path = run_dir / "metadata.json"
+    if not metadata_path.exists():
+        logging.warning("Missing metadata.json in %s", run_dir)
+        return {}
+
+    try:
+        return json.loads(metadata_path.read_text())
+    except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+        logging.warning("Failed to parse metadata for %s: %s", run_dir, exc)
+        return {}
+
+
 def build_games(
     entries: Iterable[ExportEntry],
-    run_dir: Path,
     experiment: str,
+    metadata_by_run: dict[Path, dict],
 ) -> list[dict]:
     games: list[dict] = []
     for entry in entries:
+        run_dir = entry.run_dir
         round_dir = run_dir / "rounds" / f"round_{entry.round_id}"
         game_path = round_dir / "game.json"
         if not game_path.exists():
@@ -243,9 +269,15 @@ def build_games(
             )
             continue
 
+        metadata = metadata_by_run.get(run_dir, {})
+        captain_llm = (
+            metadata.get("experiment_args", {}).get("captain_llm") if metadata else None
+        )
+
         games.append(
             {
                 "round_id": entry.round_id,
+                "captain_llm": captain_llm,
                 "captain_type": entry.captain_type,
                 "spotter_type": entry.data.get("spotter_type"),
                 "board_id": entry.data.get("board_id"),
@@ -260,23 +292,26 @@ def build_games(
                 "recall": entry.data.get("recall"),
                 "true_board": true_board,
                 "events": events,
-                "extreme": entry.data.get("extreme"),
             }
         )
 
     return games
 
 
-def export_data(games: list[dict], run_dir: Path, output_path: Path) -> None:
+def export_data(games: list[dict], run_dirs: Sequence[Path], output_path: Path) -> None:
     payload = {
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "source_run": run_dir.name,
+        "source_runs": [run_dir.name for run_dir in run_dirs],
         "game_count": len(games),
         "games": games,
     }
 
+    if len(run_dirs) == 1:
+        payload["source_run"] = run_dirs[0].name
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2))
+
     logging.info("Wrote %s games to %s", len(games), output_path)
 
 
@@ -284,7 +319,16 @@ def main() -> None:
     args = parse_args()
     configure_logging(args.log_level)
 
-    run_dir = resolve_project_path(args.run_dir)
+    run_dir_inputs = (
+        args.run_dirs
+        if args.run_dirs is not None
+        else ([args.run_dir] if args.run_dir else None)
+    )
+
+    if run_dir_inputs is None:
+        run_dir_inputs = DEFAULT_RUN_DIRS
+
+    run_dirs = [resolve_project_path(run_dir) for run_dir in run_dir_inputs]
     contexts_dir = resolve_project_path(args.contexts_dir)
     output_path = resolve_project_path(args.output_path)
 
@@ -293,16 +337,26 @@ def main() -> None:
         "Resolved experiment '%s' from contexts dir %s", experiment, contexts_dir
     )
 
-    summary = load_summary(run_dir)
-    logging.info("Loaded %s summary entries", len(summary))
+    summaries_by_run: dict[Path, list[dict]] = {}
+    metadata_by_run: dict[Path, dict] = {}
+    for run_dir in run_dirs:
+        summary = load_summary(run_dir)
+        summaries_by_run[run_dir] = summary
+        metadata_by_run[run_dir] = load_metadata(run_dir)
+        logging.info("Loaded %s summary entries from %s", len(summary), run_dir)
 
-    entries = select_extreme_entries(summary, include_ties=args.include_ties)
+    rng = random.Random(args.seed)
+    entries = select_random_entries(
+        summaries_by_run,
+        games_per_captain=args.games_per_captain,
+        rng=rng,
+    )
     logging.info("Selected %s unique rounds for export", len(entries))
 
-    games = build_games(entries, run_dir, experiment)
+    games = build_games(entries, experiment, metadata_by_run)
     logging.info("Constructed %s games with trajectories", len(games))
 
-    export_data(games, run_dir, output_path)
+    export_data(games, run_dirs, output_path)
 
 
 if __name__ == "__main__":
