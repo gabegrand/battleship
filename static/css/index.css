@@ -304,11 +304,20 @@ body {
   cursor: pointer;
   margin: 0;
   padding: 1rem 0;
+  --slider-track-bg: #d6dbea;
+  --slider-track-fill: #304ed8;
+  --slider-progress: 0%;
 }
 
 #trajectory-slider::-webkit-slider-runnable-track {
   height: 12px;
-  background: #d6dbea;
+  background: linear-gradient(
+    to right,
+    var(--slider-track-fill) 0%,
+    var(--slider-track-fill) var(--slider-progress),
+    var(--slider-track-bg) var(--slider-progress),
+    var(--slider-track-bg) 100%
+  );
   border-radius: 999px;
 }
 
@@ -334,6 +343,28 @@ body {
 
 #trajectory-slider:active::-webkit-slider-thumb {
   transform: scale(1.1);
+}
+
+#trajectory-slider::-moz-range-track {
+  height: 12px;
+  background: var(--slider-track-bg);
+  border-radius: 999px;
+}
+
+#trajectory-slider::-moz-range-progress {
+  height: 12px;
+  background: var(--slider-track-fill);
+  border-radius: 999px;
+}
+
+#trajectory-slider::-ms-fill-lower {
+  background: var(--slider-track-fill);
+  border-radius: 999px;
+}
+
+#trajectory-slider::-ms-fill-upper {
+  background: var(--slider-track-bg);
+  border-radius: 999px;
 }
 
 .metric-card {

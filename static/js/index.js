@@ -107,6 +107,35 @@ document.addEventListener('DOMContentLoaded', () => {
     isStepless: false,
   };
 
+  function getSliderMaxValue() {
+    if (!elements.slider) return 0;
+    const maxAttr = Number(elements.slider.max);
+    if (Number.isFinite(maxAttr)) {
+      return maxAttr;
+    }
+    const ariaMax = Number(elements.slider.getAttribute('aria-valuemax'));
+    return Number.isFinite(ariaMax) ? ariaMax : 0;
+  }
+
+  function updateSliderProgress(value) {
+    if (!elements.slider) return;
+    const max = getSliderMaxValue();
+    const numericValue = Number(value);
+    let percent = 0;
+    if (Number.isFinite(numericValue) && max > 0) {
+      percent = Math.min(Math.max(numericValue / max, 0), 1) * 100;
+    }
+    elements.slider.style.setProperty('--slider-progress', `${percent}%`);
+  }
+
+  function setSliderValue(value) {
+    if (!elements.slider) return;
+    const numericValue = Number(value);
+    const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+    elements.slider.value = String(safeValue);
+    updateSliderProgress(safeValue);
+  }
+
   function enableSliderStepless() {
     const slider = elements.slider;
     if (!slider || sliderStepControl.isStepless) return;
@@ -235,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sliderAnimation.onComplete = typeof onComplete === 'function' ? onComplete : null;
 
     if (effectiveDuration <= 0 || startValue === targetValue) {
-      slider.value = String(targetValue);
+      setSliderValue(targetValue);
       sliderAnimation.frameId = null;
       if (sliderAnimation.onComplete) {
         sliderAnimation.onComplete();
@@ -244,19 +273,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    slider.value = String(startValue);
+    setSliderValue(startValue);
 
     const step = (now) => {
       const elapsed = now - sliderAnimation.startTime;
   const progress = Math.min(elapsed / sliderAnimation.duration, 1);
   const eased = easeOutCubic(progress);
       const value = sliderAnimation.startValue + (sliderAnimation.targetValue - sliderAnimation.startValue) * eased;
-      slider.value = String(value);
+      setSliderValue(value);
       if (progress < 1) {
         sliderAnimation.frameId = window.requestAnimationFrame(step);
       } else {
         sliderAnimation.frameId = null;
-        slider.value = String(targetValue);
+        setSliderValue(targetValue);
         if (sliderAnimation.onComplete) {
           sliderAnimation.onComplete();
           sliderAnimation.onComplete = null;
@@ -372,9 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const game = getCurrentGame();
       if (game && Array.isArray(game.events) && game.events.length > 0 && state.currentStage >= game.events.length - 1) {
         state.currentStage = 0;
-        if (elements.slider) {
-          elements.slider.value = '0';
-        }
+        setSliderValue(0);
         timelineScrollRequested = false;
         renderStageDependent();
       }
@@ -663,8 +690,9 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.eventLabel.textContent = '';
     }
     if (elements.slider) {
-      elements.slider.value = '0';
+      setSliderValue(0);
       elements.slider.disabled = true;
+      elements.slider.max = '0';
       elements.slider.setAttribute('aria-valuemax', '0');
       elements.slider.setAttribute('aria-valuenow', '0');
     }
@@ -764,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxStage = Math.max(totalEvents - 1, 0);
     elements.slider.max = String(maxStage);
     elements.slider.setAttribute('aria-valuemax', String(maxStage));
-    elements.slider.value = String(state.currentStage);
+    setSliderValue(state.currentStage);
     elements.slider.setAttribute('aria-valuenow', String(state.currentStage));
     elements.slider.disabled = maxStage === 0;
   }
@@ -1178,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       } else {
         cancelSliderAnimation();
-        elements.slider.value = String(clampedStage);
+        setSliderValue(clampedStage);
         if (!playback.isPlaying) {
           disableSliderStepless();
         }
