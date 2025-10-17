@@ -179,6 +179,10 @@ strategies for building rational agents in discovery settings.
             </div>
 
             <div class="trajectory-timeline">
+              <div class="timeline-slider">
+                <input class="slider is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1"
+                  aria-live="polite" aria-label="Timeline position">
+              </div>
               <div class="timeline-header">
                 <div class="timeline-primary-controls" role="group" aria-label="Playback controls">
                   <button type="button" class="timeline-control-button" id="timeline-reset" aria-label="Reset to beginning">
@@ -207,8 +211,6 @@ strategies for building rational agents in discovery settings.
                   </div>
                 </div>
               </div>
-              <input class="slider is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1"
-                aria-live="polite" aria-label="Timeline position">
               <div class="timeline-meta">
                 <span id="frame-label" class="timeline-frame"></span>
                 <span id="event-label" class="timeline-event"></span>
