@@ -154,21 +154,27 @@ strategies for building rational agents in discovery settings.
                   <div class="board-card-header">
                     <h3 class="title is-5 mb-1">Board State</h3>
                     <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
-                      <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">Captain View</button>
-                      <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">Spotter View</button>
+                      <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                        <span class="label">Captain View</span>
+                      </button>
+                      <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                        <span class="label">Spotter View</span>
+                      </button>
                     </div>
                   </div>
                   <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
                 </div>
 
                 <div class="side-panel">
+                  <div class="side-card event-card">
+                    <h4 class="title is-6 mb-2">Current Event</h4>
+                    <div id="event-details" class="event-details" role="log" aria-live="polite" aria-atomic="false"></div>
+                  </div>
                   <div class="side-card">
                     <h4 class="title is-6 mb-2">Ship Tracker</h4>
                     <div id="ship-tracker" class="ship-tracker"></div>
-                  </div>
-                  <div class="side-card">
-                    <h4 class="title is-6 mb-2">Current Event</h4>
-                    <div id="event-details" class="event-details"></div>
                   </div>
                   <div class="side-card">
                     <h4 class="title is-6 mb-2">Progress</h4>

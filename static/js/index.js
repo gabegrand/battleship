@@ -107,6 +107,253 @@ document.addEventListener('DOMContentLoaded', () => {
     isStepless: false,
   };
 
+  const TYPEWRITER_CHAR_DELAY_MS = 26;
+  const TYPEWRITER_PUNCTUATION_DELAY_MS = 140;
+  const TYPEWRITER_SPACE_DELAY_MS = 35;
+  const QUESTION_TO_MOVE_TIME_RATIO = 1;
+  const MOVE_EVENT_TIME_SCALE = 1;
+  const QUESTION_EVENT_TIME_SCALE = QUESTION_TO_MOVE_TIME_RATIO;
+  const OTHER_EVENT_TIME_SCALE = 1.15;
+  const THINKING_BASE_DELAY_MS = 520;
+  const RESULT_REVEAL_DELAY_MS = 220;
+  let activeEventAnimationId = 0;
+
+  const ICON_CLASSES = {
+    captain: 'fas fa-anchor',
+    spotter: 'fas fa-binoculars',
+    miss: 'fas fa-times',
+    hit: 'fas fa-bullseye',
+  };
+
+  function prefersReducedMotion() {
+    return Boolean(window.matchMedia) && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function setTypingCaretVisibility(caret, isVisible) {
+    if (!caret) return;
+    caret.classList.toggle('is-visible', Boolean(isVisible));
+  }
+
+  function getAvatarIconClass(role) {
+    if (role === 'captain') return ICON_CLASSES.captain;
+    if (role === 'spotter') return ICON_CLASSES.spotter;
+    return '';
+  }
+
+  function getEventTimeScale(event) {
+    if (!event || !event.decision) return OTHER_EVENT_TIME_SCALE;
+    if (event.decision === 'question') return QUESTION_EVENT_TIME_SCALE;
+    if (event.decision === 'move') return MOVE_EVENT_TIME_SCALE;
+    return OTHER_EVENT_TIME_SCALE;
+  }
+
+  function getEventTimeScaleByDecision(decision) {
+    if (decision === 'question') return QUESTION_EVENT_TIME_SCALE;
+    if (decision === 'move') return MOVE_EVENT_TIME_SCALE;
+    return OTHER_EVENT_TIME_SCALE;
+  }
+
+  function delayWithCancel(durationMs, animationId, scale = 1) {
+    const duration = prefersReducedMotion() ? 0 : Math.max(0, durationMs * scale);
+    if (duration === 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      const timeoutId = window.setTimeout(resolve, duration);
+      if (animationId !== activeEventAnimationId) {
+        window.clearTimeout(timeoutId);
+        resolve();
+      }
+    });
+  }
+
+  function formatAnswerText(answer) {
+    if (!answer) return 'Awaiting response…';
+    if (typeof answer.text === 'string' && answer.text.trim().length) {
+      return answer.text.trim();
+    }
+    if (typeof answer.value === 'boolean') {
+      return answer.value ? 'Yes.' : 'No.';
+    }
+    if (answer.value !== undefined && answer.value !== null) {
+      return String(answer.value);
+    }
+    return 'Awaiting response…';
+  }
+
+  function createThinkingElement() {
+    const thinker = document.createElement('span');
+    thinker.className = 'event-thinking';
+    thinker.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 3; i += 1) {
+      const dot = document.createElement('span');
+      dot.className = 'event-thinking-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      thinker.appendChild(dot);
+    }
+    return thinker;
+  }
+
+  function buildResultElement({ isHit, text }) {
+    const result = document.createElement('div');
+    result.className = 'event-result';
+    result.classList.add(isHit ? 'is-hit' : 'is-miss');
+    const icon = document.createElement('i');
+    icon.className = `result-icon ${isHit ? ICON_CLASSES.hit : ICON_CLASSES.miss}`;
+    icon.setAttribute('aria-hidden', 'true');
+    const copy = document.createElement('span');
+    copy.textContent = text;
+    result.appendChild(icon);
+    result.appendChild(copy);
+    return result;
+  }
+
+  function getEventByStage(game, stageIndex) {
+    if (!game || !Array.isArray(game.events)) return null;
+    return game.events[stageIndex] ?? null;
+  }
+
+  async function displayTypewrittenMessage({
+    logEl,
+    role,
+    label,
+    text,
+    animationId,
+    timeScale = 1,
+  }) {
+    if (!logEl) return null;
+    const message = createChatMessage({ role, label });
+    logEl.appendChild(message.wrapper);
+    logEl.scrollTop = logEl.scrollHeight;
+    await typeText({
+      textEl: message.textEl,
+      caret: message.caret,
+      text,
+      animationId,
+      logEl,
+      timeScale,
+    });
+    return message;
+  }
+
+  function createChatMessage({ role, label }) {
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'event-message';
+
+    if (role === 'captain') {
+      messageWrapper.classList.add('is-captain');
+    } else if (role === 'spotter') {
+      messageWrapper.classList.add('is-spotter');
+    } else {
+      messageWrapper.classList.add('is-system');
+    }
+
+    let avatarEl = null;
+    if (role !== 'system') {
+      avatarEl = document.createElement('div');
+      avatarEl.className = 'event-avatar';
+      avatarEl.setAttribute('aria-hidden', 'true');
+      const iconClass = getAvatarIconClass(role);
+      if (iconClass) {
+        const iconEl = document.createElement('i');
+        iconEl.className = iconClass;
+        iconEl.setAttribute('aria-hidden', 'true');
+        avatarEl.appendChild(iconEl);
+      } else {
+        avatarEl.textContent = (label || role || '?').trim().charAt(0).toUpperCase() || '•';
+      }
+      messageWrapper.appendChild(avatarEl);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = 'event-bubble';
+
+    const speaker = document.createElement('span');
+    speaker.className = 'event-speaker';
+    speaker.textContent = label || 'Update';
+    bubble.appendChild(speaker);
+
+    const textEl = document.createElement('span');
+    textEl.className = 'event-message-text';
+    bubble.appendChild(textEl);
+
+    const caret = document.createElement('span');
+    caret.className = 'event-typing-caret';
+    bubble.appendChild(caret);
+
+    messageWrapper.appendChild(bubble);
+
+    return {
+      wrapper: messageWrapper,
+      avatar: avatarEl,
+      textEl,
+      caret,
+      bubble,
+    };
+  }
+
+  function typeText({ textEl, caret, text, animationId, logEl, timeScale = 1 }) {
+    return new Promise((resolve) => {
+      const messageText = typeof text === 'string' ? text : '';
+      if (!textEl) {
+        resolve();
+        return;
+      }
+
+      if (prefersReducedMotion() || animationId !== activeEventAnimationId || messageText.length === 0) {
+        textEl.textContent = messageText;
+        setTypingCaretVisibility(caret, false);
+        if (logEl) {
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        resolve();
+        return;
+      }
+
+      textEl.textContent = '';
+      setTypingCaretVisibility(caret, true);
+      let index = 0;
+
+      const step = () => {
+        if (animationId !== activeEventAnimationId) {
+          textEl.textContent = messageText;
+          setTypingCaretVisibility(caret, false);
+          if (logEl) {
+            logEl.scrollTop = logEl.scrollHeight;
+          }
+          resolve();
+          return;
+        }
+
+        textEl.textContent += messageText.charAt(index);
+        index += 1;
+
+        if (logEl) {
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        if (index >= messageText.length) {
+          setTypingCaretVisibility(caret, false);
+          resolve();
+          return;
+        }
+
+        const previousChar = messageText.charAt(index - 1);
+        const scale = Number.isFinite(timeScale) && timeScale > 0 ? timeScale : 1;
+        let delay = TYPEWRITER_CHAR_DELAY_MS;
+        if (/[,.;!?]/.test(previousChar)) {
+          delay = TYPEWRITER_PUNCTUATION_DELAY_MS;
+        } else if (previousChar === ' ') {
+          delay = TYPEWRITER_SPACE_DELAY_MS;
+        }
+
+        window.setTimeout(step, delay * scale);
+      };
+
+      step();
+    });
+  }
+
   function getSliderMaxValue() {
     if (!elements.slider) return 0;
     const maxAttr = Number(elements.slider.max);
@@ -313,14 +560,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return;
     }
+    const nextEvent = game.events[state.currentStage + 1];
+    const nextScale = getEventTimeScale(nextEvent);
+    const intervalDuration = playback.intervalMs * nextScale;
+
     playback.timerId = window.setTimeout(() => {
       playback.timerId = null;
       setStage(state.currentStage + 1, {
         scrollTimeline: false,
         animateSlider: true,
-        animationDuration: playback.intervalMs * SLIDER_ANIMATION_DURATION_RATIO,
+        animationDuration: intervalDuration * SLIDER_ANIMATION_DURATION_RATIO,
+        eventTimeScale: nextScale,
       });
-    }, playback.intervalMs);
+    }, intervalDuration);
   }
 
   function computeIntervalForSpeed(speed) {
@@ -1012,48 +1264,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderEventDetails(game, event) {
     if (!elements.eventDetails) return;
-    elements.eventDetails.innerHTML = '';
 
-    const typeLabel = document.createElement('div');
-    typeLabel.className = 'event-type';
-    const typeText = event.decision === 'move' ? 'Move' : event.decision === 'question' ? 'Question' : 'Event';
-    typeLabel.textContent = typeText;
-    elements.eventDetails.appendChild(typeLabel);
+    const container = elements.eventDetails;
+    container.innerHTML = '';
+    const decision = event?.decision ?? 'event';
+    container.dataset.eventDecision = decision;
 
-    if (event.decision === 'move') {
-      const move = document.createElement('div');
-      move.className = 'event-shot';
-      const coords = event.move?.coords;
-      const tile = event.move?.tile || coordsToTile(coords);
-      const shipValue = Array.isArray(coords) ? game.true_board?.[coords[0]]?.[coords[1]] : null;
-      const hit = typeof shipValue === 'number' && shipValue > 0 && event.board?.[coords[0]]?.[coords[1]] === shipValue;
-      const result = hit ? `Hit ${getShipName(shipValue)}` : 'Missed water';
-      move.textContent = `Shot at ${tile} — ${result}`;
-      elements.eventDetails.appendChild(move);
-    } else if (event.decision === 'question') {
-      if (event.question?.text) {
-        const question = document.createElement('div');
-        question.className = 'event-question';
-        question.textContent = event.question.text;
-        elements.eventDetails.appendChild(question);
-      }
-      if (event.answer) {
-        const answer = document.createElement('div');
-        answer.className = 'event-answer';
-        const answerText = typeof event.answer.text === 'string'
-          ? event.answer.text
-          : typeof event.answer.value === 'boolean'
-            ? event.answer.value ? 'yes' : 'no'
-            : String(event.answer.value ?? '');
-        answer.textContent = `Answer: ${answerText}`;
-        elements.eventDetails.appendChild(answer);
-      }
-    } else {
-      const note = document.createElement('div');
-      note.className = 'event-shot';
-      note.textContent = 'No additional details for this event.';
-      elements.eventDetails.appendChild(note);
+    activeEventAnimationId += 1;
+    const animationId = activeEventAnimationId;
+
+    const log = document.createElement('div');
+    log.className = 'event-chat-log';
+    container.appendChild(log);
+
+    if (!event) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'No event details for this turn.';
+      log.appendChild(empty);
+      return;
     }
+
+    const runAnimation = async () => {
+      if (decision === 'question') {
+        const questionText = event.question?.text?.trim() || 'The captain posed a question.';
+        await displayTypewrittenMessage({
+          logEl: log,
+          role: 'captain',
+          label: 'Captain',
+          text: questionText,
+          animationId,
+          timeScale: QUESTION_EVENT_TIME_SCALE,
+        });
+        if (animationId !== activeEventAnimationId) return;
+
+        const spotterMessage = createChatMessage({ role: 'spotter', label: 'Spotter' });
+        log.appendChild(spotterMessage.wrapper);
+        log.scrollTop = log.scrollHeight;
+        spotterMessage.textEl.textContent = '';
+        spotterMessage.textEl.style.display = 'none';
+        setTypingCaretVisibility(spotterMessage.caret, false);
+        const thinkingEl = createThinkingElement();
+        spotterMessage.bubble.insertBefore(thinkingEl, spotterMessage.textEl);
+
+        await delayWithCancel(THINKING_BASE_DELAY_MS, animationId, QUESTION_EVENT_TIME_SCALE);
+        if (animationId !== activeEventAnimationId) return;
+
+        if (spotterMessage.bubble.contains(thinkingEl)) {
+          spotterMessage.bubble.removeChild(thinkingEl);
+        }
+        spotterMessage.textEl.style.display = '';
+        await typeText({
+          textEl: spotterMessage.textEl,
+          caret: spotterMessage.caret,
+          text: formatAnswerText(event.answer),
+          animationId,
+          logEl: log,
+          timeScale: QUESTION_EVENT_TIME_SCALE,
+        });
+        return;
+      }
+
+      if (decision === 'move') {
+        const coords = event.move?.coords;
+        const tile = event.move?.tile || coordsToTile(coords) || 'target';
+        await displayTypewrittenMessage({
+          logEl: log,
+          role: 'captain',
+          label: 'Captain',
+          text: `Fire at ${tile}`,
+          animationId,
+          timeScale: MOVE_EVENT_TIME_SCALE,
+        });
+        if (animationId !== activeEventAnimationId) return;
+
+        await delayWithCancel(RESULT_REVEAL_DELAY_MS, animationId, MOVE_EVENT_TIME_SCALE);
+        if (animationId !== activeEventAnimationId) return;
+
+        const shipValue = Array.isArray(coords) ? game.true_board?.[coords[0]]?.[coords[1]] : null;
+        const hit = typeof shipValue === 'number' && shipValue > 0 && event.board?.[coords[0]]?.[coords[1]] === shipValue;
+        const resultText = hit ? `Hit ${getShipName(shipValue)}` : 'Missed';
+        const resultEl = buildResultElement({ isHit: hit, text: resultText });
+        log.appendChild(resultEl);
+        log.scrollTop = log.scrollHeight;
+        return;
+      }
+
+      const fallbackMessage = createChatMessage({ role: 'system', label: 'Update' });
+      log.appendChild(fallbackMessage.wrapper);
+      fallbackMessage.textEl.textContent = 'No additional details for this event.';
+      setTypingCaretVisibility(fallbackMessage.caret, false);
+    };
+
+    runAnimation().catch((error) => {
+      console.error('Failed to animate event details', error);
+    });
   }
 
   function renderProgress(game, partialBoard) {
@@ -1114,9 +1419,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const shipValue = Array.isArray(coords) ? game.true_board?.[coords[0]]?.[coords[1]] : null;
       const hit = typeof shipValue === 'number' && shipValue > 0 && event.board?.[coords[0]]?.[coords[1]] === shipValue;
       if (hit) {
-        return `Shot ${tile} and hit ${getShipName(shipValue)}.`;
+        return `Shot ${tile} → Hit ${getShipName(shipValue)}`;
       }
-      return `Shot ${tile} and missed.`;
+      return `Shot ${tile} → Miss`;
     }
     if (event.decision === 'question') {
       const questionText = event.question?.text || 'Question';
@@ -1192,14 +1497,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const {
       scrollTimeline = true,
       animateSlider = false,
-      animationDuration = playback.intervalMs,
+      animationDuration,
+      eventTimeScale,
     } = options;
+    const targetEvent = game.events[clampedStage];
+    const effectiveScale = Number.isFinite(eventTimeScale) ? eventTimeScale : getEventTimeScale(targetEvent);
+    const effectiveDuration = typeof animationDuration === 'number'
+      ? animationDuration
+      : playback.intervalMs * effectiveScale;
     timelineScrollRequested = scrollTimeline && clampedStage !== prevStage;
     state.currentStage = clampedStage;
     if (elements.slider) {
-      if (animateSlider && animationDuration > 0 && clampedStage !== prevStage) {
+      if (animateSlider && effectiveDuration > 0 && clampedStage !== prevStage) {
         enableSliderStepless();
-        animateSliderValue(prevStage, clampedStage, animationDuration, () => {
+        animateSliderValue(prevStage, clampedStage, effectiveDuration, () => {
           if (!playback.isPlaying) {
             disableSliderStepless();
           }
