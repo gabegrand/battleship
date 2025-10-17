@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Invert symbol mapping for convenience: 'R' -> 1, etc.
   const shipIdBySymbol = Object.fromEntries(Object.entries(shipSymbols).map(([id, sym]) => [sym, Number(id)]));
 
-  const DEFAULT_PLAYBACK_INTERVAL_MS = 500;
+  const DEFAULT_PLAYBACK_INTERVAL_MS = 1000;
 
   const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
 
