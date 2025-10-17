@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const fallbackColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#2b908f', '#f45b5b', '#91e8e1', '#6f38a0'];
   const shipNames = { 1: 'Red ship', 2: 'Green ship', 3: 'Purple ship', 4: 'Orange ship' };
   const shipSymbols = { 1: 'R', 2: 'G', 3: 'P', 4: 'O' };
+  // Invert symbol mapping for convenience: 'R' -> 1, etc.
+  const shipIdBySymbol = Object.fromEntries(Object.entries(shipSymbols).map(([id, sym]) => [sym, Number(id)]));
 
   const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
 
@@ -233,6 +235,45 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     return total;
+  }
+
+  // Compute ship tracker rows using the same logic as Board.ship_tracker in Python.
+  // Returns an array of { length, sunkSymbol|null, id }
+  function getShipTrackerRows(trueBoard, partialBoard) {
+    if (!Array.isArray(trueBoard) || !Array.isArray(partialBoard)) return [];
+    // Find max ship id present on the true board
+    let maxId = 0;
+    trueBoard.forEach((row) => {
+      if (!Array.isArray(row)) return;
+      row.forEach((v) => {
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 0) maxId = Math.max(maxId, n);
+      });
+    });
+
+    const rows = [];
+    for (let shipType = 1; shipType <= maxId; shipType += 1) {
+      // Count tiles of this ship id in true and partial boards
+      let targetCount = 0;
+      let stateCount = 0;
+      for (let i = 0; i < trueBoard.length; i += 1) {
+        const tRow = trueBoard[i] || [];
+        const pRow = partialBoard[i] || [];
+        for (let j = 0; j < tRow.length; j += 1) {
+          if (tRow[j] === shipType) targetCount += 1;
+          if (pRow[j] === shipType) stateCount += 1;
+        }
+      }
+      if (targetCount > 0) {
+        const symbol = shipSymbols[shipType] || String(shipType);
+        const sunk = stateCount === targetCount; // reveal color only once fully sunk
+        rows.push({ length: targetCount, sunkSymbol: sunk ? symbol : null, id: shipType });
+      }
+    }
+
+    // Sort by ship length descending to match Python figure behavior
+    rows.sort((a, b) => b.length - a.length);
+    return rows;
   }
 
   function getCurrentGame() {
@@ -682,40 +723,59 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.shipTracker.textContent = 'Ship data unavailable.';
       return;
     }
-    const ships = computeShipSummary(game.true_board, partialBoard);
-    if (!ships.length) {
+
+    // Build tracker rows: unknown color until sunk
+    const rows = getShipTrackerRows(game.true_board, partialBoard);
+    if (!rows.length) {
       elements.shipTracker.textContent = 'No ships detected on this board.';
       return;
     }
-    ships.forEach((ship) => {
+
+    const neutral = getColor(0); // water gray used for unknown/unsunk ships
+
+    rows.forEach((rowInfo) => {
       const row = document.createElement('div');
       row.className = 'ship-row';
 
-      const dot = document.createElement('span');
-      dot.className = 'ship-color-dot';
-      dot.style.background = getColor(ship.id);
+      const info = document.createElement('div');
+      info.className = 'ship-info';
+
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-ship ship-icon';
+      icon.setAttribute('aria-hidden', 'true');
 
       const label = document.createElement('span');
       label.className = 'ship-label';
-      label.textContent = `${getShipName(ship.id)} (${ship.total})`;
+      label.textContent = `Length ${rowInfo.length}`;
 
-      const progress = document.createElement('div');
-      progress.className = 'ship-progress';
+      const segments = document.createElement('div');
+      segments.className = 'ship-segments';
 
-      const progressBar = document.createElement('div');
-      progressBar.className = 'ship-progress-bar';
-      progressBar.style.background = getColor(ship.id);
-      const percentage = ship.total === 0 ? 0 : Math.round((ship.revealed / ship.total) * 100);
-      progressBar.style.width = `${percentage}%`;
+      const shipColor = rowInfo.sunkSymbol
+        ? getColor(shipIdBySymbol[rowInfo.sunkSymbol] || rowInfo.id)
+        : neutral;
+
+      icon.style.color = shipColor;
+
+      for (let k = 0; k < rowInfo.length; k += 1) {
+        const seg = document.createElement('span');
+        seg.className = 'ship-segment';
+        seg.style.background = shipColor;
+        seg.style.border = '1px solid #ffffff';
+        seg.setAttribute('aria-hidden', 'true');
+        segments.appendChild(seg);
+      }
 
       const status = document.createElement('span');
       status.className = 'ship-status';
-      status.textContent = `${ship.revealed}/${ship.total}${ship.revealed === ship.total ? ' ✓' : ''}`;
+      status.textContent = 'Sunk ✓';
+      status.classList.toggle('is-hidden', !rowInfo.sunkSymbol);
 
-      progress.appendChild(progressBar);
-      row.appendChild(dot);
-      row.appendChild(label);
-      row.appendChild(progress);
+      info.appendChild(icon);
+      info.appendChild(label);
+      info.appendChild(segments);
+
+      row.appendChild(info);
       row.appendChild(status);
 
       elements.shipTracker.appendChild(row);

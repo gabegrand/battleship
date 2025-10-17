@@ -422,43 +422,59 @@ body {
 .ship-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  width: 100%;
 }
 
-.ship-color-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+.ship-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ship-icon {
+  color: #9b9c97;
+  font-size: 0.95rem;
   flex: 0 0 auto;
+  transition: color 0.2s ease;
 }
 
 .ship-label {
   font-weight: 600;
   color: #172642;
-  min-width: 120px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.ship-segments {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex: 0 0 auto;
 }
 
-.ship-progress {
-  flex: 1;
-  background: rgba(23, 38, 66, 0.1);
-  border-radius: 999px;
-  overflow: hidden;
-  position: relative;
-  height: 8px;
-}
-
-.ship-progress-bar {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
+.ship-segment {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  flex: 0 0 12px;
 }
 
 .ship-status {
   font-size: 0.85rem;
   color: #5c6c8f;
-  min-width: 70px;
+  min-width: 80px;
   text-align: right;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.ship-status.is-hidden {
+  visibility: hidden;
 }
 
 .event-details,
