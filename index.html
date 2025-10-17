@@ -84,30 +84,37 @@
   </div>
 </section>
 
-<!-- <section class="hero is-light is-small">
-  <div class="hero-body">
-    <div class="container">
-      <div class="columns is-multiline is-centered">
-        <div class="column is-one-third">
-          <div class="placeholder-media">
-            <span>Highlight 1</span>
+<section class="section" id="motivation">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths has-text-left">
+        <h2 class="title is-3 has-text-centered">Motivation</h2>
+        <div class="motivation-chat" id="motivation-chat" aria-describedby="motivation-chat-status">
+          <div class="motivation-chat-header">
+            <p class="motivation-chat-intro">A curious reader chats with our team about why Collaborative Battleship matters.</p>
+            <button class="motivation-chat-replay" id="motivation-chat-replay" type="button" aria-label="Replay the motivation chat">
+              <span class="icon" aria-hidden="true"><i class="fas fa-sync-alt"></i></span>
+              <span class="label">Replay</span>
+            </button>
           </div>
-        </div>
-        <div class="column is-one-third">
-          <div class="placeholder-media">
-            <span>Highlight 2</span>
+          <div class="event-chat-log" id="motivation-chat-log" role="log" aria-live="polite">
+            <noscript>
+              <p><strong>Reader:</strong> OK, so why did you do this research?</p>
+              <p><strong>Authors:</strong> In a variety of real-world settings, such as scientific discovery and medical diagnosis, AI agents need to form hypotheses and run targeted experiments. We wanted to understand whether agents act rationally when given limited resources, and how their behavior compares to humans.</p>
+              <p><strong>Reader:</strong> Sounds interesting! How did you study this?</p>
+              <p><strong>Authors:</strong> We introduce a novel decision-oriented dialogue task designed to evaluate agentic information-seeking. In Collaborative Battleship, a partially informed Captain must balance exploration and action, while a fully informed Spotter must provide accurate answers under an information bottleneck.</p>
+              <p><strong>Reader:</strong> Why Battleship? Isn't that just a kids' game?</p>
+              <p><strong>Authors:</strong> Battleship lets us study rich behavioral dynamics in a controlled, minimal environment. Because we can compute information-theoretic values—like “how useful was this question?” or “how good was that move?”—we can rigorously compare the decision-making of both human and AI players.</p>
+            </noscript>
           </div>
-        </div>
-        <div class="column is-one-third">
-          <div class="placeholder-media">
-            <span>Highlight 3</span>
+          <div class="motivation-chat-footer">
+            <span class="motivation-chat-status" id="motivation-chat-status" role="status" aria-live="polite">Loading chat…</span>
           </div>
         </div>
       </div>
-      <p class="has-text-centered mt-4">Carousel slots reserved for benchmark visuals and gameplay captures.</p>
     </div>
   </div>
-</section> -->
+</section>
 
 <section class="section" id="abstract">
   <div class="container is-max-desktop">
@@ -116,22 +123,13 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-Many high-stakes applications of agentic AI—e.g., scientific discovery and medical diagnosis—require forming hypotheses
-and running targeted experiments. Given limited resources, to what extent do agents act rationally, and can insights
-from human behavior make them more efficient information-seekers? We introduce a decision-oriented dialogue task that
-provides a lightweight evaluation harness for Bayesian Experimental Design (BED).</p><p>In our cognitively-inspired
-*Collaborative Battleship* game, a partially-informed *Captain* must balance exploration (asking questions) and action
-(taking shots), while a fully-informed *Spotter* must provide grounded answers under an information bottleneck.
-Experiments with human players (N=42) and language model (LM) agents reveal gaps in reasoning about answer context,
-generating informative questions, and selecting high-value actions. We propose Bayes-rational strategies that translate
-questions into Python for Monte Carlo inference.</p><p>
-For Spotter agents, this approach boosts accuracy by up to 14.7%
-absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits
-(94.2% of the achievable noise ceiling). Combined with a maximum a posteriori action policy, these components yield
-sharper targeting (+0.303–0.374 F1) and enable weaker LMs to attain strong Captain performance against humans (78–81%
-win rate) and frontier models (59–62% vs. GPT-5). Finally, we generalize our approach to an open-domain setting based on
-Twenty Questions. Overall, our work contributes a novel dataset and benchmark for BED and multiple inference-time
-strategies for building rational agents in discovery settings.
+Many high-stakes applications of AI require forming data-driven hypotheses and making targeted guesses; e.g., in
+scientific and diagnostic settings. Given limited resources, to what extent do agents based on language models (LMs) act
+rationally? We develop methods to benchmark and enhance agentic information-seeking, drawing on insights from human
+behavior. First, we introduce a strategic decision-oriented dialogue task called Collaborative Battleship, in which a
+partially-informed Captain must balance exploration (asking questions) and action (taking shots), while a fully-informed
+Spotter must provide accurate answers under an information bottleneck. Compared to human players (N=42), we find that LM
+agents struggle to ground answers in context, generate informative questions, and select high-value actions. Next, to address these gaps, we develop novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED). For Spotter agents, our approach boosts accuracy by up to 14.7% absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits (94.2% of the achievable noise ceiling). Combined, these components yield sharper targeting (+0.303–0.374 F1), and enable weaker LMs, such as Llama-4-Scout, to outperform both humans (8% → 82% win rate) and frontier models (0% → 67% win rate vs. GPT-5) at ≈1% of GPT-5's cost. We replicate these findings on Guess Who? where our methods significantly boost accuracy (+28.3–42.4 p.p.), demonstrating their general applicability for building rational information-seeking agents.
           </p>
         </div>
       </div>

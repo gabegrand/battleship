@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return message;
   }
 
-  function createChatMessage({ role, label }) {
+  function createChatMessage({ role, label, iconClass }) {
     const messageWrapper = document.createElement('div');
     messageWrapper.className = 'event-message';
 
@@ -250,10 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
       avatarEl = document.createElement('div');
       avatarEl.className = 'event-avatar';
       avatarEl.setAttribute('aria-hidden', 'true');
-      const iconClass = getAvatarIconClass(role);
-      if (iconClass) {
+      const resolvedIconClass = iconClass || getAvatarIconClass(role);
+      if (resolvedIconClass) {
         const iconEl = document.createElement('i');
-        iconEl.className = iconClass;
+        iconEl.className = resolvedIconClass;
         iconEl.setAttribute('aria-hidden', 'true');
         avatarEl.appendChild(iconEl);
       } else {
@@ -1673,7 +1673,324 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function initMotivationChat() {
+    const root = document.getElementById('motivation-chat');
+    const logEl = root ? root.querySelector('.event-chat-log') : null;
+    const statusEl = document.getElementById('motivation-chat-status');
+    const replayButton = document.getElementById('motivation-chat-replay');
+
+    if (!root || !logEl || !statusEl) {
+      return;
+    }
+
+    const conversation = [
+      {
+        id: 'reader-why',
+        role: 'captain',
+        label: 'Reader',
+        text: 'OK, so why did you do this research?',
+        delayAfter: 360,
+        iconClass: 'fas fa-book-reader',
+      },
+      {
+        id: 'authors-why',
+        role: 'spotter',
+        label: 'Authors',
+        text: 'In a variety of real-world settings, such as scientific discovery and medical diagnosis, AI agents need to form hypotheses and run targeted experiments. We wanted to understand whether agents act rationally when given limited resources, and how their behavior compares to humans.',
+        showThinking: true,
+        delayAfter: 480,
+        iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      },
+      {
+        id: 'reader-how',
+        role: 'captain',
+        label: 'Reader',
+        text: 'Sounds interesting! How did you study this?',
+        delayAfter: 320,
+        iconClass: 'fas fa-book-reader',
+      },
+      {
+        id: 'authors-how',
+        role: 'spotter',
+        label: 'Authors',
+        text: 'We introduce a decision-oriented dialogue task, Collaborative Battleship, to benchmark agentic information-seeking. A partially informed Captain balances asking questions with taking shots, while a fully informed Spotter answers accurately under an information bottleneck.',
+        showThinking: true,
+        delayAfter: 520,
+        iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      },
+      {
+        id: 'reader-why-battleship',
+        role: 'captain',
+        label: 'Reader',
+        text: "Why Battleship? Isn't that just a kids' game?",
+        delayAfter: 300,
+        iconClass: 'fas fa-book-reader',
+      },
+      {
+        id: 'authors-why-battleship',
+        role: 'spotter',
+        label: 'Authors',
+        text: 'Battleship lets us study rich behavioral dynamics in a controlled, minimal environment. Because we can compute information-theoretic values—like “how useful was this question?” or “how good was that move?”—we can rigorously compare the decision-making of human and AI players.',
+        showThinking: true,
+        iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      },
+    ];
+
+    const scheduledTimeouts = new Set();
+    let activeAnimationToken = 0;
+    let isAnimating = false;
+    let hasStarted = false;
+
+    function scheduleTimeout(callback, duration) {
+      const handle = window.setTimeout(() => {
+        scheduledTimeouts.delete(handle);
+        callback();
+      }, Math.max(0, duration));
+      scheduledTimeouts.add(handle);
+      return handle;
+    }
+
+    function clearScheduledTimeouts() {
+      scheduledTimeouts.forEach((handle) => {
+        window.clearTimeout(handle);
+      });
+      scheduledTimeouts.clear();
+    }
+
+    function setStatus(stateClass, text) {
+      statusEl.textContent = text;
+      statusEl.classList.remove('is-idle', 'is-complete', 'is-error');
+      if (stateClass) {
+        statusEl.classList.add(stateClass);
+      }
+    }
+
+    function setReplayDisabled(disabled) {
+      if (!replayButton) return;
+      if (disabled) {
+        replayButton.disabled = true;
+        replayButton.setAttribute('aria-disabled', 'true');
+      } else {
+        replayButton.disabled = false;
+        replayButton.setAttribute('aria-disabled', 'false');
+      }
+    }
+
+    function resetLog() {
+      logEl.innerHTML = '';
+    }
+
+    function scrollLogToEnd() {
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function typeTextWithToken({ textEl, caret, text, animationToken, logElement, timeScale = 1 }) {
+      return new Promise((resolve) => {
+        const messageText = typeof text === 'string' ? text : '';
+        if (!textEl) {
+          resolve();
+          return;
+        }
+
+        if (prefersReducedMotion() || animationToken !== activeAnimationToken || messageText.length === 0) {
+          textEl.textContent = messageText;
+          setTypingCaretVisibility(caret, false);
+          if (logElement) {
+            logElement.scrollTop = logElement.scrollHeight;
+          }
+          resolve();
+          return;
+        }
+
+        textEl.textContent = '';
+        setTypingCaretVisibility(caret, true);
+        let index = 0;
+
+        const step = () => {
+          if (animationToken !== activeAnimationToken) {
+            textEl.textContent = messageText;
+            setTypingCaretVisibility(caret, false);
+            if (logElement) {
+              logElement.scrollTop = logElement.scrollHeight;
+            }
+            resolve();
+            return;
+          }
+
+          textEl.textContent += messageText.charAt(index);
+          index += 1;
+
+          if (logElement) {
+            logElement.scrollTop = logElement.scrollHeight;
+          }
+
+          if (index >= messageText.length) {
+            setTypingCaretVisibility(caret, false);
+            resolve();
+            return;
+          }
+
+          const previousChar = messageText.charAt(index - 1);
+          let delay = TYPEWRITER_CHAR_DELAY_MS;
+          if (/[,.;!?]/.test(previousChar)) {
+            delay = TYPEWRITER_PUNCTUATION_DELAY_MS;
+          } else if (previousChar === ' ') {
+            delay = TYPEWRITER_SPACE_DELAY_MS;
+          }
+
+          scheduleTimeout(step, delay * timeScale);
+        };
+
+        step();
+      });
+    }
+
+    function waitWithToken(durationMs, animationToken) {
+      if (prefersReducedMotion() || durationMs <= 0) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        scheduleTimeout(() => {
+          if (animationToken !== activeAnimationToken) {
+            resolve();
+            return;
+          }
+          resolve();
+        }, durationMs);
+      });
+    }
+
+    async function renderMessage(entry, animationToken) {
+  const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
+      logEl.appendChild(message.wrapper);
+      scrollLogToEnd();
+
+      if (entry.showThinking && !prefersReducedMotion()) {
+        const thinking = createThinkingElement();
+        message.textEl.style.display = 'none';
+        setTypingCaretVisibility(message.caret, false);
+        message.bubble.insertBefore(thinking, message.textEl);
+  const thinkingDelay = THINKING_BASE_DELAY_MS + (entry.thinkingDelay || 0);
+  await waitWithToken(thinkingDelay, animationToken);
+        if (animationToken !== activeAnimationToken) {
+          return;
+        }
+        if (message.bubble.contains(thinking)) {
+          message.bubble.removeChild(thinking);
+        }
+        message.textEl.style.display = '';
+      }
+
+      await typeTextWithToken({
+        textEl: message.textEl,
+        caret: message.caret,
+        text: entry.text,
+        animationToken,
+        logElement: logEl,
+      });
+    }
+
+    async function playConversation() {
+      if (isAnimating) {
+        return;
+      }
+
+      isAnimating = true;
+      setReplayDisabled(true);
+      clearScheduledTimeouts();
+      activeAnimationToken += 1;
+      const animationToken = activeAnimationToken;
+      resetLog();
+      setStatus(null, 'Streaming conversation…');
+
+      try {
+        for (let i = 0; i < conversation.length; i += 1) {
+          const entry = conversation[i];
+          if (entry.delayBefore) {
+            await waitWithToken(entry.delayBefore, animationToken);
+            if (animationToken !== activeAnimationToken) {
+              return;
+            }
+          }
+          await renderMessage(entry, animationToken);
+          if (animationToken !== activeAnimationToken) {
+            return;
+          }
+          if (entry.delayAfter) {
+            await waitWithToken(entry.delayAfter, animationToken);
+            if (animationToken !== activeAnimationToken) {
+              return;
+            }
+          }
+        }
+        if (animationToken === activeAnimationToken) {
+          setStatus('is-complete', 'Replay to watch again.');
+        }
+      } finally {
+        clearScheduledTimeouts();
+        if (animationToken === activeAnimationToken) {
+          isAnimating = false;
+          setReplayDisabled(false);
+        }
+      }
+    }
+
+    function startPlayback() {
+      if (isAnimating) {
+        return;
+      }
+      hasStarted = true;
+      setReplayDisabled(true);
+      playConversation();
+    }
+
+    if (prefersReducedMotion()) {
+      resetLog();
+      conversation.forEach((entry) => {
+        const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
+        message.textEl.textContent = entry.text;
+        setTypingCaretVisibility(message.caret, false);
+        logEl.appendChild(message.wrapper);
+      });
+      scrollLogToEnd();
+      setStatus('is-idle', 'Motion reduced: transcript shown without animation.');
+      setReplayDisabled(true);
+      return;
+    }
+
+    setReplayDisabled(false);
+    setStatus('is-idle', 'Ready to chat. Scroll here or press replay to start.');
+
+    if (replayButton) {
+      replayButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        startPlayback();
+      });
+    }
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStarted && !isAnimating) {
+            startPlayback();
+            if (obs) {
+              obs.unobserve(root);
+            }
+          }
+        });
+      }, { threshold: 0.35 });
+      observer.observe(root);
+    } else {
+      scheduleTimeout(() => {
+        if (!hasStarted && !isAnimating) {
+          startPlayback();
+        }
+      }, 600);
+    }
+  }
+
   updateSpeedControl();
   updateGameNavButtons();
+  initMotivationChat();
   loadData();
 });
