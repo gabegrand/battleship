@@ -171,59 +171,74 @@ strategies for building rational agents in discovery settings.
         <h2 class="title is-3">Interactive Explorer</h2>
         <div id="trajectory-explorer" class="trajectory-explorer">
           <div class="trajectory-status" id="trajectory-status" role="status">Loading curated games…</div>
-          <div class="trajectory-top">
-            <div class="trajectory-selection">
-              <label class="label is-small" for="trajectory-game">Select a Game</label>
-              <div class="select is-fullwidth">
-                <select id="trajectory-game" aria-label="Select a Battleship round"></select>
-              </div>
-            </div>
-            <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
-              <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">Captain View</button>
-              <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">Spotter View</button>
-            </div>
-            <div class="trajectory-metrics" id="trajectory-metrics"></div>
-          </div>
+          <div class="trajectory-layout">
+            <div class="viewer-panel">
+              <div class="viewer-content">
+                <div class="board-card">
+                  <div class="board-card-header">
+                    <h3 class="title is-5 mb-1">Board State</h3>
+                    <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
+                      <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">Captain View</button>
+                      <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">Spotter View</button>
+                    </div>
+                  </div>
+                  <p class="board-caption" id="board-caption">Captain’s belief</p>
+                  <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
+                </div>
 
-          <div class="trajectory-grid">
-            <div class="board-card">
-              <div class="board-card-header">
-                <h3 class="title is-5 mb-1">Board State</h3>
-                <p class="board-caption" id="board-caption">Captain’s belief</p>
+                <div class="side-panel">
+                  <div class="side-card">
+                    <h4 class="title is-6 mb-2">Ship Tracker</h4>
+                    <div id="ship-tracker" class="ship-tracker"></div>
+                  </div>
+                  <div class="side-card">
+                    <h4 class="title is-6 mb-2">Current Event</h4>
+                    <div id="event-details" class="event-details"></div>
+                  </div>
+                  <div class="side-card">
+                    <h4 class="title is-6 mb-2">Progress</h4>
+                    <div id="progress-details" class="progress-details"></div>
+                  </div>
+                </div>
               </div>
-              <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
             </div>
 
-            <div class="side-panel">
-              <div class="side-card">
-                <h4 class="title is-6 mb-2">Ship Tracker</h4>
-                <div id="ship-tracker" class="ship-tracker"></div>
+            <div class="trajectory-timeline">
+              <div class="timeline-header">
+                <label for="trajectory-slider" class="label is-small">Timeline</label>
+                <button type="button" class="playback-button" id="timeline-play" aria-label="Pause autoplay" aria-pressed="true">
+                  <span class="playback-icon" aria-hidden="true">❚❚</span>
+                  <span class="playback-text">Pause</span>
+                </button>
               </div>
-              <div class="side-card">
-                <h4 class="title is-6 mb-2">Current Event</h4>
-                <div id="event-details" class="event-details"></div>
+              <input class="slider is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1"
+                aria-live="polite">
+              <div class="timeline-meta">
+                <span id="frame-label" class="timeline-frame"></span>
+                <span id="event-label" class="timeline-event"></span>
               </div>
-              <div class="side-card">
-                <h4 class="title is-6 mb-2">Progress</h4>
-                <div id="progress-details" class="progress-details"></div>
-              </div>
+              <div id="trajectory-event-list" class="timeline-list" aria-label="Event timeline"></div>
             </div>
-          </div>
 
-          <div class="trajectory-timeline">
-            <div class="timeline-header">
-              <label for="trajectory-slider" class="label is-small">Timeline</label>
-              <button type="button" class="playback-button" id="timeline-play" aria-label="Pause autoplay" aria-pressed="true">
-                <span class="playback-icon" aria-hidden="true">❚❚</span>
-                <span class="playback-text">Pause</span>
-              </button>
+            <div class="selection-panel" aria-label="Game selector">
+              <h3 class="title is-5">Game Browser</h3>
+              <div class="selection-grid">
+                <div class="filter-group">
+                  <label class="label is-small" for="filter-llm">Captain LLM</label>
+                  <div class="select is-fullwidth">
+                    <select id="filter-llm" aria-label="Filter games by captain LLM"></select>
+                  </div>
+                </div>
+                <div class="filter-group">
+                  <label class="label is-small" for="filter-type">Captain Strategy</label>
+                  <div class="select is-fullwidth">
+                    <select id="filter-type" aria-label="Filter games by captain strategy"></select>
+                  </div>
+                </div>
+              </div>
+              <div class="game-list" id="trajectory-game-list" role="listbox" aria-label="Available games"></div>
+              <div class="trajectory-metrics" id="trajectory-metrics"></div>
             </div>
-            <input class="slider is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1" aria-live="polite">
-            <div class="timeline-meta">
-              <span id="frame-label" class="timeline-frame"></span>
-              <span id="event-label" class="timeline-event"></span>
-            </div>
-            <div id="trajectory-event-list" class="timeline-list" aria-label="Event timeline"></div>
           </div>
         </div>
       </div>

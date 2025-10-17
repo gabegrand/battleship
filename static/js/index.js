@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const elements = {
     status: document.getElementById('trajectory-status'),
-    select: document.getElementById('trajectory-game'),
+    filterLLM: document.getElementById('filter-llm'),
+    filterType: document.getElementById('filter-type'),
+    gameList: document.getElementById('trajectory-game-list'),
     viewCaptain: document.getElementById('view-captain'),
     viewSpotter: document.getElementById('view-spotter'),
     metrics: document.getElementById('trajectory-metrics'),
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const shipSymbols = { 1: 'R', 2: 'G', 3: 'P', 4: 'O' };
 
   let fallbackIndex = 0;
+  let gameButtons = new Map();
   let timelineButtons = [];
   let timelineScrollRequested = false;
 
@@ -43,6 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentGameIndex: 0,
     currentStage: 0,
     currentView: 'captain',
+    filters: {
+      llm: '',
+      type: '',
+    },
+    filteredIndices: [],
+    hasActiveGame: false,
   };
 
   const playback = {
@@ -214,17 +223,206 @@ document.addEventListener('DOMContentLoaded', () => {
     return game.events[state.currentStage] ?? null;
   }
 
-  function populateGameOptions(games) {
-    if (!elements.select) return;
-    elements.select.innerHTML = '';
-    games.forEach((game, index) => {
-      const option = document.createElement('option');
-      option.value = String(index);
-      const f1 = typeof game.f1_score === 'number' ? formatDecimal(game.f1_score) : '–';
-      const outcome = game.is_won ? 'Win' : 'Loss';
-      option.textContent = `#${index + 1} — ${game.captain_type} (${outcome}, F1 ${f1})`;
-      elements.select.appendChild(option);
+  function getUniqueValues(games, key) {
+    const values = new Set();
+    games.forEach((game) => {
+      const value = game?.[key];
+      if (value !== undefined && value !== null && value !== '') {
+        values.add(String(value));
+      }
     });
+    return Array.from(values);
+  }
+
+  function renderFilterOptions(selectEl, values, defaultLabel) {
+    if (!selectEl) return;
+    selectEl.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = defaultLabel;
+    selectEl.appendChild(defaultOption);
+    values.forEach((value) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      selectEl.appendChild(option);
+    });
+  }
+
+  function populateFilterOptions(games) {
+    const llmValues = getUniqueValues(games, 'captain_llm');
+    const typeValues = getUniqueValues(games, 'captain_type');
+    renderFilterOptions(elements.filterLLM, llmValues, 'All LLMs');
+    renderFilterOptions(elements.filterType, typeValues, 'All strategies');
+
+    if (elements.filterLLM) {
+      const desired = state.filters.llm;
+      const value = desired && llmValues.includes(desired) ? desired : '';
+      elements.filterLLM.value = value;
+      state.filters.llm = elements.filterLLM.value || '';
+    }
+
+    if (elements.filterType) {
+      const desired = state.filters.type;
+      const value = desired && typeValues.includes(desired) ? desired : '';
+      elements.filterType.value = value;
+      state.filters.type = elements.filterType.value || '';
+    }
+  }
+
+  function renderGameList() {
+    if (!elements.gameList) return;
+    elements.gameList.innerHTML = '';
+    gameButtons = new Map();
+
+    if (!state.filteredIndices.length) {
+      const message = document.createElement('div');
+      message.className = 'empty-state';
+      message.textContent = 'No games match these filters.';
+      elements.gameList.appendChild(message);
+      elements.gameList.removeAttribute('aria-activedescendant');
+      return;
+    }
+
+    state.filteredIndices.forEach((gameIndex) => {
+      const game = state.data?.games?.[gameIndex];
+      if (!game) return;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'game-item';
+      button.id = `game-option-${gameIndex}`;
+      button.dataset.gameIndex = String(gameIndex);
+      button.setAttribute('role', 'option');
+
+      const title = document.createElement('span');
+      title.className = 'game-item-title';
+      title.textContent = `${game.captain_type} vs ${game.spotter_type}`;
+
+      const meta = document.createElement('span');
+      meta.className = 'game-item-meta';
+      const metaParts = [];
+      if (game.captain_llm) {
+        metaParts.push(String(game.captain_llm));
+      }
+      metaParts.push(game.is_won ? 'Win' : 'Loss');
+      if (typeof game.f1_score === 'number') {
+        metaParts.push(`F1 ${formatDecimal(game.f1_score)}`);
+      }
+      if (game.board_id !== undefined) {
+        metaParts.push(`Board ${game.board_id}`);
+      }
+      meta.textContent = metaParts.join(' • ');
+
+      button.appendChild(title);
+      button.appendChild(meta);
+
+      button.addEventListener('click', () => {
+        setGame(gameIndex);
+      });
+
+      elements.gameList.appendChild(button);
+      gameButtons.set(gameIndex, button);
+    });
+
+    highlightActiveGameButton();
+  }
+
+  function highlightActiveGameButton() {
+    if (!elements.gameList) return;
+    let activeId = null;
+    gameButtons.forEach((button, index) => {
+      const isActive = index === state.currentGameIndex;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive) {
+        activeId = button.id;
+      }
+    });
+    if (activeId) {
+      elements.gameList.setAttribute('aria-activedescendant', activeId);
+    } else {
+      elements.gameList.removeAttribute('aria-activedescendant');
+    }
+  }
+
+  function clearViewer() {
+    clearPlaybackTimer();
+    playback.isPlaying = false;
+    updatePlayButton();
+    state.currentStage = 0;
+    state.hasActiveGame = false;
+
+    if (elements.metrics) {
+      elements.metrics.innerHTML = '';
+    }
+    if (elements.board) {
+      elements.board.innerHTML = '';
+    }
+    if (elements.boardCaption) {
+      elements.boardCaption.textContent = 'Select a game to view the board.';
+    }
+    if (elements.shipTracker) {
+      elements.shipTracker.innerHTML = '';
+    }
+    if (elements.eventDetails) {
+      elements.eventDetails.innerHTML = '';
+    }
+    if (elements.progressDetails) {
+      elements.progressDetails.innerHTML = '';
+    }
+    if (elements.timelineList) {
+      elements.timelineList.innerHTML = '';
+    }
+    if (elements.frameLabel) {
+      elements.frameLabel.textContent = '';
+    }
+    if (elements.eventLabel) {
+      elements.eventLabel.textContent = '';
+    }
+    if (elements.slider) {
+      elements.slider.value = '0';
+      elements.slider.disabled = true;
+      elements.slider.setAttribute('aria-valuemax', '0');
+      elements.slider.setAttribute('aria-valuenow', '0');
+    }
+
+    timelineButtons = [];
+  }
+
+  function applyFilters(options = {}) {
+    const { preserveSelection = true } = options;
+    const games = state.data?.games ?? [];
+    const filtered = [];
+
+    games.forEach((game, index) => {
+      if (!game) return;
+      const matchesLLM = !state.filters.llm || game.captain_llm === state.filters.llm;
+      const matchesType = !state.filters.type || game.captain_type === state.filters.type;
+      if (matchesLLM && matchesType) {
+        filtered.push(index);
+      }
+    });
+
+    state.filteredIndices = filtered;
+    renderGameList();
+
+    if (!filtered.length) {
+      setStatusMessage('No games match the selected filters. Try a different combination.', true);
+      clearViewer();
+      return;
+    }
+
+  const preserveCurrent = preserveSelection && state.hasActiveGame && filtered.includes(state.currentGameIndex);
+    if (preserveCurrent) {
+      const game = getCurrentGame();
+      if (game) {
+        updateStatusForGame(game);
+        highlightActiveGameButton();
+      }
+    } else {
+      setGame(filtered[0]);
+    }
   }
 
   function renderMetrics(game) {
@@ -617,16 +815,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const clampedIndex = Math.max(0, Math.min(index, games.length - 1));
     state.currentGameIndex = clampedIndex;
     state.currentStage = 0;
-    if (elements.select) {
-      elements.select.value = String(clampedIndex);
-    }
     const game = getCurrentGame();
     if (!game) return;
+  state.hasActiveGame = true;
     updateStatusForGame(game);
     renderMetrics(game);
     buildTimeline(game);
     updateSlider(game);
     timelineScrollRequested = true;
+    highlightActiveGameButton();
     setPlaying(true);
     renderStageDependent();
   }
@@ -666,10 +863,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function attachEventListeners() {
-    if (elements.select) {
-      elements.select.addEventListener('change', (event) => {
-        const index = Number(event.target.value);
-        setGame(Number.isNaN(index) ? 0 : index);
+    if (elements.filterLLM) {
+      elements.filterLLM.addEventListener('change', (event) => {
+        state.filters.llm = event.target.value || '';
+        applyFilters();
+      });
+    }
+
+    if (elements.filterType) {
+      elements.filterType.addEventListener('change', (event) => {
+        state.filters.type = event.target.value || '';
+        applyFilters();
       });
     }
 
@@ -708,11 +912,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       state.data = data;
-      populateGameOptions(data.games);
+      populateFilterOptions(data.games);
       attachEventListeners();
       updateViewButtons();
       updatePlayButton();
-      setGame(0);
+      applyFilters({ preserveSelection: false });
     } catch (error) {
       console.error('Failed to load trajectory samples', error);
       setStatusMessage('Unable to load trajectory samples. Please refresh the page.', true);

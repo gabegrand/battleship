@@ -118,6 +118,103 @@ body {
   gap: 1.75rem;
 }
 
+.trajectory-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.selection-panel {
+  background: rgba(23, 38, 66, 0.03);
+  border-radius: 18px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: inset 0 0 0 1px rgba(23, 38, 66, 0.05);
+}
+
+.selection-panel h3 {
+  margin-bottom: 0.25rem;
+  color: #172642;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-group .select select {
+  background: #ffffff;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 38, 66, 0.15);
+  font-weight: 600;
+  color: #172642;
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.game-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(15, 31, 60, 0.06);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.game-item:hover {
+  background: rgba(48, 78, 216, 0.12);
+  transform: translateY(-1px);
+}
+
+.game-item.is-active {
+  background: rgba(48, 78, 216, 0.2);
+  box-shadow: 0 10px 20px rgba(48, 78, 216, 0.25);
+}
+
+.game-item-title {
+  font-weight: 700;
+  color: #172642;
+  font-size: 0.95rem;
+}
+
+.game-item-meta {
+  font-size: 0.8rem;
+  color: #5c6c8f;
+}
+
+.viewer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.viewer-content {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.5rem;
+}
+
 .trajectory-status {
   padding: 0.75rem 1rem;
   border-radius: 10px;
@@ -221,15 +318,17 @@ body {
 
 .board-card-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .board-caption {
   color: #5c6c8f;
   font-size: 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
 .board-grid {
@@ -293,6 +392,15 @@ body {
 .board-cell.is-current::after {
   border: 2px solid rgba(23, 38, 66, 0.9);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.empty-state {
+  background: rgba(23, 38, 66, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: #5c6c8f;
+  text-align: center;
+  font-weight: 600;
 }
 
 .side-panel {
@@ -524,9 +632,33 @@ body {
   line-height: 1;
 }
 
-@media (max-width: 1024px) {
-  .trajectory-grid {
+@media (max-width: 1200px) {
+  .viewer-content {
     grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+
+  .side-card {
+    flex: 1 1 260px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .trajectory-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-list {
+    max-height: 240px;
+  }
+
+  .viewer-panel {
+    gap: 1.25rem;
   }
 
   .trajectory-metrics {
@@ -539,6 +671,20 @@ body {
     padding: 1.5rem;
   }
 
+  .game-list {
+    max-height: none;
+  }
+
+  .selection-panel {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .board-card,
+  .side-card {
+    padding: 1.25rem;
+  }
+
   .board-cell,
   .board-label-cell {
     min-height: 2rem;
@@ -546,7 +692,7 @@ body {
   }
 
   .timeline-list {
-    max-height: 220px;
+    max-height: 200px;
   }
 }
 
