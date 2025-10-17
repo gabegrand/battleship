@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     intervalMs: DEFAULT_PLAYBACK_INTERVAL_MS,
     timerId: null,
     isPlaying: false,
+    sequenceId: 0,
   };
 
   const sliderAnimation = {
@@ -110,13 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const TYPEWRITER_CHAR_DELAY_MS = 26;
   const TYPEWRITER_PUNCTUATION_DELAY_MS = 140;
   const TYPEWRITER_SPACE_DELAY_MS = 35;
-  const QUESTION_TO_MOVE_TIME_RATIO = 1;
-  const MOVE_EVENT_TIME_SCALE = 1;
-  const QUESTION_EVENT_TIME_SCALE = QUESTION_TO_MOVE_TIME_RATIO;
-  const OTHER_EVENT_TIME_SCALE = 1.15;
   const THINKING_BASE_DELAY_MS = 520;
   const RESULT_REVEAL_DELAY_MS = 220;
+  const QUESTION_LINGER_BUFFER_MS = 900;
+  const MOVE_LINGER_BUFFER_MS = 320;
+  const OTHER_LINGER_BUFFER_MS = 500;
   let activeEventAnimationId = 0;
+  let lastEventAnimationPromise = Promise.resolve();
+  let lastRenderedStageIndex = 0;
 
   const ICON_CLASSES = {
     captain: 'fas fa-anchor',
@@ -140,26 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
-  function getEventTimeScale(event) {
-    if (!event || !event.decision) return OTHER_EVENT_TIME_SCALE;
-    if (event.decision === 'question') return QUESTION_EVENT_TIME_SCALE;
-    if (event.decision === 'move') return MOVE_EVENT_TIME_SCALE;
-    return OTHER_EVENT_TIME_SCALE;
-  }
-
-  function getEventTimeScaleByDecision(decision) {
-    if (decision === 'question') return QUESTION_EVENT_TIME_SCALE;
-    if (decision === 'move') return MOVE_EVENT_TIME_SCALE;
-    return OTHER_EVENT_TIME_SCALE;
-  }
-
   function delayWithCancel(durationMs, animationId, scale = 1) {
     const duration = prefersReducedMotion() ? 0 : Math.max(0, durationMs * scale);
     if (duration === 0) {
       return Promise.resolve();
     }
     return new Promise((resolve) => {
-      const timeoutId = window.setTimeout(resolve, duration);
+      const timeoutId = window.setTimeout(() => {
+        resolve();
+      }, duration);
       if (animationId !== activeEventAnimationId) {
         window.clearTimeout(timeoutId);
         resolve();
@@ -208,9 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return result;
   }
 
-  function getEventByStage(game, stageIndex) {
-    if (!game || !Array.isArray(game.events)) return null;
-    return game.events[stageIndex] ?? null;
+  function computeLingerDuration(event) {
+    const base = playback.intervalMs;
+    let buffer = OTHER_LINGER_BUFFER_MS;
+    if (event?.decision === 'question') {
+      buffer = QUESTION_LINGER_BUFFER_MS;
+    } else if (event?.decision === 'move') {
+      buffer = MOVE_LINGER_BUFFER_MS;
+    }
+    const speed = state.playbackSpeed || 1;
+    const adjustedBuffer = prefersReducedMotion() ? 0 : buffer / speed;
+    return Math.max(0, base + adjustedBuffer);
   }
 
   async function displayTypewrittenMessage({
@@ -219,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
     label,
     text,
     animationId,
-    timeScale = 1,
   }) {
     if (!logEl) return null;
     const message = createChatMessage({ role, label });
@@ -231,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
       text,
       animationId,
       logEl,
-      timeScale,
     });
     return message;
   }
@@ -475,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function clearPlaybackTimer() {
+    playback.sequenceId += 1;
     if (playback.timerId !== null) {
       clearTimeout(playback.timerId);
       playback.timerId = null;
@@ -543,16 +541,15 @@ document.addEventListener('DOMContentLoaded', () => {
     sliderAnimation.frameId = window.requestAnimationFrame(step);
   }
 
-  function schedulePlayback() {
+  function schedulePlaybackAfterEvent(animationPromise, game, stageIndex) {
     clearPlaybackTimer();
     if (!playback.isPlaying) {
       return;
     }
-    const game = getCurrentGame();
     if (!game || !Array.isArray(game.events) || game.events.length === 0) {
       return;
     }
-    if (state.currentStage >= game.events.length - 1) {
+    if (stageIndex >= game.events.length - 1) {
       playback.isPlaying = false;
       updatePlayButton();
       if (sliderAnimation.frameId === null) {
@@ -560,19 +557,37 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return;
     }
-    const nextEvent = game.events[state.currentStage + 1];
-    const nextScale = getEventTimeScale(nextEvent);
-    const intervalDuration = playback.intervalMs * nextScale;
 
-    playback.timerId = window.setTimeout(() => {
-      playback.timerId = null;
-      setStage(state.currentStage + 1, {
-        scrollTimeline: false,
-        animateSlider: true,
-        animationDuration: intervalDuration * SLIDER_ANIMATION_DURATION_RATIO,
-        eventTimeScale: nextScale,
+    const sequenceId = ++playback.sequenceId;
+    Promise.resolve(animationPromise)
+      .catch((error) => {
+        console.error('Event animation failed', error);
+      })
+      .then(() => {
+        if (!playback.isPlaying || playback.sequenceId !== sequenceId) {
+          return;
+        }
+        if (state.currentStage !== stageIndex) {
+          return;
+        }
+
+        const lingerDuration = computeLingerDuration(game.events[stageIndex]);
+        const sliderDuration = playback.intervalMs * SLIDER_ANIMATION_DURATION_RATIO;
+        playback.timerId = window.setTimeout(() => {
+          if (!playback.isPlaying || playback.sequenceId !== sequenceId) {
+            return;
+          }
+          if (state.currentStage !== stageIndex) {
+            return;
+          }
+          const nextStage = stageIndex + 1;
+          setStage(nextStage, {
+            scrollTimeline: false,
+            animateSlider: true,
+            animationDuration: sliderDuration,
+          });
+        }, lingerDuration);
       });
-    }, intervalDuration);
   }
 
   function computeIntervalForSpeed(speed) {
@@ -605,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearPlaybackTimer();
     updateSpeedControl();
     if (playback.isPlaying) {
-      schedulePlayback();
+      schedulePlaybackAfterEvent(lastEventAnimationPromise, getCurrentGame(), lastRenderedStageIndex);
     }
   }
 
@@ -660,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (next === playback.isPlaying) {
       if (next) {
-        schedulePlayback();
+        schedulePlaybackAfterEvent(lastEventAnimationPromise, getCurrentGame(), lastRenderedStageIndex);
       } else {
         clearPlaybackTimer();
       }
@@ -669,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
     playback.isPlaying = next;
     updatePlayButton();
     if (playback.isPlaying) {
-      schedulePlayback();
+      schedulePlaybackAfterEvent(lastEventAnimationPromise, getCurrentGame(), lastRenderedStageIndex);
     } else {
       clearPlaybackTimer();
       disableSliderStepless();
@@ -1285,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const runAnimation = async () => {
+    const animationPromise = (async () => {
       if (decision === 'question') {
         const questionText = event.question?.text?.trim() || 'The captain posed a question.';
         await displayTypewrittenMessage({
@@ -1294,7 +1309,6 @@ document.addEventListener('DOMContentLoaded', () => {
           label: 'Captain',
           text: questionText,
           animationId,
-          timeScale: QUESTION_EVENT_TIME_SCALE,
         });
         if (animationId !== activeEventAnimationId) return;
 
@@ -1307,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const thinkingEl = createThinkingElement();
         spotterMessage.bubble.insertBefore(thinkingEl, spotterMessage.textEl);
 
-        await delayWithCancel(THINKING_BASE_DELAY_MS, animationId, QUESTION_EVENT_TIME_SCALE);
+        await delayWithCancel(THINKING_BASE_DELAY_MS, animationId);
         if (animationId !== activeEventAnimationId) return;
 
         if (spotterMessage.bubble.contains(thinkingEl)) {
@@ -1320,7 +1334,6 @@ document.addEventListener('DOMContentLoaded', () => {
           text: formatAnswerText(event.answer),
           animationId,
           logEl: log,
-          timeScale: QUESTION_EVENT_TIME_SCALE,
         });
         return;
       }
@@ -1334,11 +1347,10 @@ document.addEventListener('DOMContentLoaded', () => {
           label: 'Captain',
           text: `Fire at ${tile}`,
           animationId,
-          timeScale: MOVE_EVENT_TIME_SCALE,
         });
         if (animationId !== activeEventAnimationId) return;
 
-        await delayWithCancel(RESULT_REVEAL_DELAY_MS, animationId, MOVE_EVENT_TIME_SCALE);
+        await delayWithCancel(RESULT_REVEAL_DELAY_MS, animationId);
         if (animationId !== activeEventAnimationId) return;
 
         const shipValue = Array.isArray(coords) ? game.true_board?.[coords[0]]?.[coords[1]] : null;
@@ -1354,11 +1366,13 @@ document.addEventListener('DOMContentLoaded', () => {
       log.appendChild(fallbackMessage.wrapper);
       fallbackMessage.textEl.textContent = 'No additional details for this event.';
       setTypingCaretVisibility(fallbackMessage.caret, false);
-    };
+    })();
 
-    runAnimation().catch((error) => {
+    animationPromise.catch((error) => {
       console.error('Failed to animate event details', error);
     });
+
+    return animationPromise;
   }
 
   function renderProgress(game, partialBoard) {
@@ -1456,17 +1470,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderStageDependent() {
     const game = getCurrentGame();
     const event = getCurrentEvent();
-    if (!game || !event) return;
+    if (!game || !event) {
+      const fallback = Promise.resolve();
+      lastRenderedStageIndex = state.currentStage;
+      lastEventAnimationPromise = fallback;
+      return fallback;
+    }
     renderBoard(game, event);
     renderShipTracker(game, event.board);
-    renderEventDetails(game, event);
+    const animationPromise = renderEventDetails(game, event);
+    lastRenderedStageIndex = state.currentStage;
+    lastEventAnimationPromise = Promise.resolve(animationPromise);
     renderProgress(game, event.board);
     updateFrameAndEventLabels(game, event);
     highlightActiveTimeline();
     if (elements.slider) {
       elements.slider.setAttribute('aria-valuenow', String(state.currentStage));
     }
-    schedulePlayback();
+    return lastEventAnimationPromise;
   }
 
   function setGame(index) {
@@ -1498,13 +1519,10 @@ document.addEventListener('DOMContentLoaded', () => {
       scrollTimeline = true,
       animateSlider = false,
       animationDuration,
-      eventTimeScale,
     } = options;
-    const targetEvent = game.events[clampedStage];
-    const effectiveScale = Number.isFinite(eventTimeScale) ? eventTimeScale : getEventTimeScale(targetEvent);
     const effectiveDuration = typeof animationDuration === 'number'
       ? animationDuration
-      : playback.intervalMs * effectiveScale;
+      : playback.intervalMs;
     timelineScrollRequested = scrollTimeline && clampedStage !== prevStage;
     state.currentStage = clampedStage;
     if (elements.slider) {
@@ -1524,7 +1542,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       elements.slider.setAttribute('aria-valuenow', String(clampedStage));
     }
-    renderStageDependent();
+    const animationPromise = renderStageDependent();
+    if (playback.isPlaying) {
+      schedulePlaybackAfterEvent(animationPromise, game, clampedStage);
+    } else {
+      clearPlaybackTimer();
+    }
   }
 
   function updateViewButtons() {
