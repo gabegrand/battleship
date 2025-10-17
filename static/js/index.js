@@ -36,6 +36,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const shipNames = { 1: 'Red ship', 2: 'Green ship', 3: 'Purple ship', 4: 'Orange ship' };
   const shipSymbols = { 1: 'R', 2: 'G', 3: 'P', 4: 'O' };
 
+  const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
+
+  const LLM_LABELS = {
+    'GPT-5': 'GPT-5',
+    'GPT-4o': 'GPT-4o',
+    'Llama-4-Scout': 'Llama-4-Scout',
+    'Baseline': 'Baseline (No LLM)',
+  };
+
+  const CAPTAIN_TYPE_ORDER = ['LM', '+Bayes-Q', '+Bayes-M', '+Bayes-QM', '+Bayes-QMD', 'Random', 'Greedy'];
+
+  const CAPTAIN_TYPE_LABELS = {
+    'LM': 'LM-only',
+    '+Bayes-Q': 'LM+Bayes-Q',
+    '+Bayes-M': 'LM+Bayes-M',
+    '+Bayes-QM': 'LM+Bayes-QM',
+    '+Bayes-QMD': 'LM+Bayes-QMD',
+    'Random': 'Random',
+    'Greedy': 'Greedy',
+  };
+
   let fallbackIndex = 0;
   let gameButtons = new Map();
   let timelineButtons = [];
@@ -69,7 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateStatusForGame(game) {
     if (!elements.status || !game) return;
     const parts = [
-      `${game.captain_type} vs ${game.spotter_type}`,
+      `${game.captain_llm}`,
+      `${game.captain_type}`,
       `Board ${game.board_id}`,
       `Round ${game.round_id}`,
     ];
@@ -234,7 +256,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return Array.from(values);
   }
 
-  function renderFilterOptions(selectEl, values, defaultLabel) {
+  function getOrderRank(value, order) {
+    if (!Array.isArray(order)) return Number.POSITIVE_INFINITY;
+    const index = order.indexOf(value);
+    return index === -1 ? order.length : index;
+  }
+
+  function compareByOrder(a, b, order) {
+    const rankA = getOrderRank(a, order);
+    const rankB = getOrderRank(b, order);
+    return rankA - rankB;
+  }
+
+  function sortByPreferredOrder(values, preferredOrder) {
+    if (!Array.isArray(values)) return [];
+    if (!Array.isArray(preferredOrder) || preferredOrder.length === 0) {
+      return [...values].sort();
+    }
+    const valueSet = new Set(values);
+    const ordered = preferredOrder.filter((value) => valueSet.has(value));
+    const remaining = values.filter((value) => !preferredOrder.includes(value)).sort();
+    return [...ordered, ...remaining];
+  }
+
+  function renderFilterOptions(selectEl, values, defaultLabel, labels = {}) {
     if (!selectEl) return;
     selectEl.innerHTML = '';
     const defaultOption = document.createElement('option');
@@ -244,16 +289,16 @@ document.addEventListener('DOMContentLoaded', () => {
     values.forEach((value) => {
       const option = document.createElement('option');
       option.value = value;
-      option.textContent = value;
+      option.textContent = labels[value] ?? value;
       selectEl.appendChild(option);
     });
   }
 
   function populateFilterOptions(games) {
-    const llmValues = getUniqueValues(games, 'captain_llm');
-    const typeValues = getUniqueValues(games, 'captain_type');
-    renderFilterOptions(elements.filterLLM, llmValues, 'All LLMs');
-    renderFilterOptions(elements.filterType, typeValues, 'All strategies');
+    const llmValues = sortByPreferredOrder(getUniqueValues(games, 'captain_llm'), LLM_ORDER);
+    const typeValues = sortByPreferredOrder(getUniqueValues(games, 'captain_type'), CAPTAIN_TYPE_ORDER);
+    renderFilterOptions(elements.filterLLM, llmValues, 'All LLMs', LLM_LABELS);
+    renderFilterOptions(elements.filterType, typeValues, 'All strategies', CAPTAIN_TYPE_LABELS);
 
     if (elements.filterLLM) {
       const desired = state.filters.llm;
@@ -297,13 +342,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const title = document.createElement('span');
       title.className = 'game-item-title';
-      title.textContent = `${game.captain_type} vs ${game.spotter_type}`;
+      const llmLabel = LLM_LABELS[game.captain_llm] ?? game.captain_llm ?? 'Unknown LLM';
+      title.textContent = String(llmLabel);
 
       const meta = document.createElement('span');
       meta.className = 'game-item-meta';
       const metaParts = [];
-      if (game.captain_llm) {
-        metaParts.push(String(game.captain_llm));
+      if (game.captain_type) {
+        const captainTypeLabel = CAPTAIN_TYPE_LABELS[game.captain_type] ?? game.captain_type;
+        metaParts.push(String(captainTypeLabel));
       }
       metaParts.push(game.is_won ? 'Win' : 'Loss');
       if (typeof game.f1_score === 'number') {
@@ -402,6 +449,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (matchesLLM && matchesType) {
         filtered.push(index);
       }
+    });
+
+    filtered.sort((indexA, indexB) => {
+      const gameA = games[indexA];
+      const gameB = games[indexB];
+      if (!gameA || !gameB) {
+        return indexA - indexB;
+      }
+
+      const llmComparison = compareByOrder(gameA.captain_llm, gameB.captain_llm, LLM_ORDER);
+      if (llmComparison !== 0) {
+        return llmComparison;
+      }
+
+      const typeComparison = compareByOrder(gameA.captain_type, gameB.captain_type, CAPTAIN_TYPE_ORDER);
+      if (typeComparison !== 0) {
+        return typeComparison;
+      }
+
+      return indexA - indexB;
     });
 
     state.filteredIndices = filtered;
