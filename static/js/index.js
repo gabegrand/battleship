@@ -91,6 +91,40 @@ document.addEventListener('DOMContentLoaded', () => {
     isPlaying: false,
   };
 
+  const sliderAnimation = {
+    frameId: null,
+    startValue: 0,
+    targetValue: 0,
+    startTime: 0,
+    duration: 0,
+    onComplete: null,
+  };
+
+  const SLIDER_ANIMATION_DURATION_RATIO = 1.0;
+
+  const sliderStepControl = {
+    defaultStep: elements.slider ? elements.slider.getAttribute('step') || '1' : '1',
+    isStepless: false,
+  };
+
+  function enableSliderStepless() {
+    const slider = elements.slider;
+    if (!slider || sliderStepControl.isStepless) return;
+    slider.setAttribute('step', 'any');
+    sliderStepControl.isStepless = true;
+  }
+
+  function disableSliderStepless() {
+    const slider = elements.slider;
+    if (!slider) return;
+    if (sliderStepControl.defaultStep) {
+      slider.setAttribute('step', sliderStepControl.defaultStep);
+    } else {
+      slider.removeAttribute('step');
+    }
+    sliderStepControl.isStepless = false;
+  }
+
   function setStatusMessage(message, isError = false) {
     if (!elements.status) return;
     elements.status.textContent = message;
@@ -171,6 +205,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function cancelSliderAnimation() {
+    if (sliderAnimation.frameId !== null) {
+      window.cancelAnimationFrame(sliderAnimation.frameId);
+      sliderAnimation.frameId = null;
+    }
+    sliderAnimation.onComplete = null;
+  }
+
+  function easeOutCubic(t) {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    const delta = 1 - t;
+    return 1 - delta * delta * delta;
+  }
+
+  function animateSliderValue(startValue, targetValue, duration, onComplete) {
+    const slider = elements.slider;
+    if (!slider) return;
+    cancelSliderAnimation();
+    let effectiveDuration = duration;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      effectiveDuration = 0;
+    }
+    sliderAnimation.startValue = startValue;
+    sliderAnimation.targetValue = targetValue;
+    sliderAnimation.duration = effectiveDuration;
+    sliderAnimation.startTime = performance.now();
+    sliderAnimation.onComplete = typeof onComplete === 'function' ? onComplete : null;
+
+    if (effectiveDuration <= 0 || startValue === targetValue) {
+      slider.value = String(targetValue);
+      sliderAnimation.frameId = null;
+      if (sliderAnimation.onComplete) {
+        sliderAnimation.onComplete();
+        sliderAnimation.onComplete = null;
+      }
+      return;
+    }
+
+    slider.value = String(startValue);
+
+    const step = (now) => {
+      const elapsed = now - sliderAnimation.startTime;
+  const progress = Math.min(elapsed / sliderAnimation.duration, 1);
+  const eased = easeOutCubic(progress);
+      const value = sliderAnimation.startValue + (sliderAnimation.targetValue - sliderAnimation.startValue) * eased;
+      slider.value = String(value);
+      if (progress < 1) {
+        sliderAnimation.frameId = window.requestAnimationFrame(step);
+      } else {
+        sliderAnimation.frameId = null;
+        slider.value = String(targetValue);
+        if (sliderAnimation.onComplete) {
+          sliderAnimation.onComplete();
+          sliderAnimation.onComplete = null;
+        }
+      }
+    };
+
+    sliderAnimation.frameId = window.requestAnimationFrame(step);
+  }
+
   function schedulePlayback() {
     clearPlaybackTimer();
     if (!playback.isPlaying) {
@@ -183,11 +279,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.currentStage >= game.events.length - 1) {
       playback.isPlaying = false;
       updatePlayButton();
+      if (sliderAnimation.frameId === null) {
+        disableSliderStepless();
+      }
       return;
     }
     playback.timerId = window.setTimeout(() => {
       playback.timerId = null;
-      setStage(state.currentStage + 1, { scrollTimeline: false });
+      setStage(state.currentStage + 1, {
+        scrollTimeline: false,
+        animateSlider: true,
+        animationDuration: playback.intervalMs * SLIDER_ANIMATION_DURATION_RATIO,
+      });
     }, playback.intervalMs);
   }
 
@@ -263,7 +366,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setPlaying(isPlaying) {
     const next = Boolean(isPlaying);
+    cancelSliderAnimation();
     if (next) {
+      enableSliderStepless();
       const game = getCurrentGame();
       if (game && Array.isArray(game.events) && game.events.length > 0 && state.currentStage >= game.events.length - 1) {
         state.currentStage = 0;
@@ -288,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
       schedulePlayback();
     } else {
       clearPlaybackTimer();
+      disableSliderStepless();
     }
   }
 
@@ -526,6 +632,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePlayButton();
     state.currentStage = 0;
     state.hasActiveGame = false;
+    cancelSliderAnimation();
+    disableSliderStepless();
 
     if (elements.metrics) {
       elements.metrics.innerHTML = '';
@@ -648,6 +756,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSlider(game) {
     if (!elements.slider) return;
+    cancelSliderAnimation();
+    if (!playback.isPlaying) {
+      disableSliderStepless();
+    }
     const totalEvents = Array.isArray(game.events) ? game.events.length : 0;
     const maxStage = Math.max(totalEvents - 1, 0);
     elements.slider.max = String(maxStage);
@@ -1049,11 +1161,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!game || !Array.isArray(game.events) || game.events.length === 0) return;
     const clampedStage = Math.max(0, Math.min(stage, game.events.length - 1));
     const prevStage = state.currentStage;
-    const { scrollTimeline = true } = options;
+    const {
+      scrollTimeline = true,
+      animateSlider = false,
+      animationDuration = playback.intervalMs,
+    } = options;
     timelineScrollRequested = scrollTimeline && clampedStage !== prevStage;
     state.currentStage = clampedStage;
     if (elements.slider) {
-      elements.slider.value = String(clampedStage);
+      if (animateSlider && animationDuration > 0 && clampedStage !== prevStage) {
+        enableSliderStepless();
+        animateSliderValue(prevStage, clampedStage, animationDuration, () => {
+          if (!playback.isPlaying) {
+            disableSliderStepless();
+          }
+        });
+      } else {
+        cancelSliderAnimation();
+        elements.slider.value = String(clampedStage);
+        if (!playback.isPlaying) {
+          disableSliderStepless();
+        }
+      }
+      elements.slider.setAttribute('aria-valuenow', String(clampedStage));
     }
     renderStageDependent();
   }
@@ -1095,8 +1225,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.slider) {
       elements.slider.addEventListener('input', (event) => {
-        const stage = Number(event.target.value);
-        setStage(Number.isNaN(stage) ? 0 : stage, { scrollTimeline: false });
+        const rawValue = Number(event.target.value);
+        const stage = Number.isNaN(rawValue) ? 0 : Math.round(rawValue);
+        if (!Number.isNaN(rawValue) && rawValue !== stage) {
+          event.target.value = String(stage);
+        }
+        setStage(stage, { scrollTimeline: false });
       });
     }
 
