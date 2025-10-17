@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     progressDetails: document.getElementById('progress-details'),
     shipTracker: document.getElementById('ship-tracker'),
     timelineList: document.getElementById('trajectory-event-list'),
+    playButton: document.getElementById('timeline-play'),
   };
 
   const colorPalette = new Map([
@@ -35,12 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let fallbackIndex = 0;
   let timelineButtons = [];
+  let timelineScrollRequested = false;
 
   const state = {
     data: null,
     currentGameIndex: 0,
     currentStage: 0,
     currentView: 'captain',
+  };
+
+  const playback = {
+    intervalMs: 500,
+    timerId: null,
+    isPlaying: true,
   };
 
   function setStatusMessage(message, isError = false) {
@@ -87,6 +95,83 @@ document.addEventListener('DOMContentLoaded', () => {
   function truncate(text, maxLength = 70) {
     if (!text) return '';
     return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+  }
+
+  function updatePlayButton() {
+    if (!elements.playButton) return;
+    const button = elements.playButton;
+    const icon = button.querySelector('.playback-icon');
+    const label = button.querySelector('.playback-text');
+    if (playback.isPlaying) {
+      button.classList.remove('is-paused');
+      button.setAttribute('aria-label', 'Pause autoplay');
+      button.setAttribute('aria-pressed', 'true');
+      if (icon) icon.textContent = '❚❚';
+      if (label) label.textContent = 'Pause';
+    } else {
+      button.classList.add('is-paused');
+      button.setAttribute('aria-label', 'Start autoplay');
+      button.setAttribute('aria-pressed', 'false');
+      if (icon) icon.textContent = '▶';
+      if (label) label.textContent = 'Play';
+    }
+  }
+
+  function clearPlaybackTimer() {
+    if (playback.timerId !== null) {
+      clearTimeout(playback.timerId);
+      playback.timerId = null;
+    }
+  }
+
+  function schedulePlayback() {
+    clearPlaybackTimer();
+    if (!playback.isPlaying) {
+      return;
+    }
+    const game = getCurrentGame();
+    if (!game || !Array.isArray(game.events) || game.events.length === 0) {
+      return;
+    }
+    if (state.currentStage >= game.events.length - 1) {
+      playback.isPlaying = false;
+      updatePlayButton();
+      return;
+    }
+    playback.timerId = window.setTimeout(() => {
+      playback.timerId = null;
+      setStage(state.currentStage + 1, { scrollTimeline: false });
+    }, playback.intervalMs);
+  }
+
+  function setPlaying(isPlaying) {
+    const next = Boolean(isPlaying);
+    if (next) {
+      const game = getCurrentGame();
+      if (game && Array.isArray(game.events) && game.events.length > 0 && state.currentStage >= game.events.length - 1) {
+        state.currentStage = 0;
+        if (elements.slider) {
+          elements.slider.value = '0';
+        }
+        timelineScrollRequested = false;
+        renderStageDependent();
+      }
+    }
+    if (next === playback.isPlaying) {
+      if (next) {
+        schedulePlayback();
+      } else {
+        clearPlaybackTimer();
+      }
+      return;
+    }
+    playback.isPlaying = next;
+    updatePlayButton();
+    if (playback.isPlaying) {
+      schedulePlayback();
+    } else {
+      clearPlaybackTimer();
+    }
   }
 
   function coordsToTile(coords) {
@@ -154,10 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
     metrics.forEach((metric) => {
       const card = document.createElement('div');
       card.className = 'metric-card';
+
       const label = document.createElement('span');
       label.textContent = metric.label;
+
       const value = document.createElement('strong');
       value.textContent = metric.value;
+
       card.appendChild(label);
       card.appendChild(value);
       elements.metrics.appendChild(card);
@@ -166,7 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSlider(game) {
     if (!elements.slider) return;
-    const maxStage = Math.max((game.events?.length ?? 1) - 1, 0);
+    const totalEvents = Array.isArray(game.events) ? game.events.length : 0;
+    const maxStage = Math.max(totalEvents - 1, 0);
     elements.slider.max = String(maxStage);
     elements.slider.setAttribute('aria-valuemax', String(maxStage));
     elements.slider.value = String(state.currentStage);
@@ -179,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     timelineButtons = [];
     elements.timelineList.innerHTML = '';
     if (!Array.isArray(game.events)) return;
-    let activeButton = null;
+
     game.events.forEach((event, index) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -209,35 +298,30 @@ document.addEventListener('DOMContentLoaded', () => {
       button.appendChild(summaryWrapper);
 
       button.addEventListener('click', () => {
-        setStage(index);
+        setStage(index, { scrollTimeline: true });
       });
 
       elements.timelineList.appendChild(button);
       timelineButtons.push(button);
-
-      if (index === state.currentStage) {
-        activeButton = button;
-      }
     });
-
-    if (activeButton) {
-      requestAnimationFrame(() => {
-        activeButton.scrollIntoView({ block: 'nearest' });
-      });
-    }
   }
 
   function highlightActiveTimeline() {
+    let targetButton = null;
     timelineButtons.forEach((button, index) => {
       const isActive = index === state.currentStage;
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       if (isActive) {
-        requestAnimationFrame(() => {
-          button.scrollIntoView({ block: 'nearest' });
-        });
+        targetButton = button;
       }
     });
+    if (timelineScrollRequested && targetButton) {
+      requestAnimationFrame(() => {
+        targetButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+    timelineScrollRequested = false;
   }
 
   function renderBoard(game, event) {
@@ -428,10 +512,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const missesSoFar = countCells(partialBoard, (value) => value === 0);
 
     const progressEntries = [
-      { label: 'Moves', value: `${movesSoFar}/${game.move_count ?? '–'}` },
-      { label: 'Questions', value: `${questionsSoFar}/${game.question_count ?? '–'}` },
-      { label: 'Hits', value: `${hitsSoFar}/${game.hits ?? '–'}` },
-      { label: 'Misses', value: `${missesSoFar}/${game.misses ?? '–'}` },
+      { label: 'Moves', value: `${Math.min(movesSoFar, 40)}/40` },
+      { label: 'Questions', value: `${Math.min(questionsSoFar, 15)}/15` },
+      { label: 'Hits', value: `${hitsSoFar}` },
+      { label: 'Misses', value: `${missesSoFar}` },
     ];
 
     elements.progressDetails.innerHTML = '';
@@ -524,6 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.slider) {
       elements.slider.setAttribute('aria-valuenow', String(state.currentStage));
     }
+    schedulePlayback();
   }
 
   function setGame(index) {
@@ -541,13 +626,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMetrics(game);
     buildTimeline(game);
     updateSlider(game);
+    timelineScrollRequested = true;
+    setPlaying(true);
     renderStageDependent();
   }
 
-  function setStage(stage) {
+  function setStage(stage, options = {}) {
     const game = getCurrentGame();
     if (!game || !Array.isArray(game.events) || game.events.length === 0) return;
     const clampedStage = Math.max(0, Math.min(stage, game.events.length - 1));
+    const prevStage = state.currentStage;
+    const { scrollTimeline = true } = options;
+    timelineScrollRequested = scrollTimeline && clampedStage !== prevStage;
     state.currentStage = clampedStage;
     if (elements.slider) {
       elements.slider.value = String(clampedStage);
@@ -586,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.slider) {
       elements.slider.addEventListener('input', (event) => {
         const stage = Number(event.target.value);
-        setStage(Number.isNaN(stage) ? 0 : stage);
+        setStage(Number.isNaN(stage) ? 0 : stage, { scrollTimeline: false });
       });
     }
 
@@ -596,6 +686,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.viewSpotter) {
       elements.viewSpotter.addEventListener('click', () => setView('spotter'));
+    }
+
+    if (elements.playButton) {
+      elements.playButton.addEventListener('click', () => {
+        setPlaying(!playback.isPlaying);
+      });
     }
   }
 
@@ -615,6 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
       populateGameOptions(data.games);
       attachEventListeners();
       updateViewButtons();
+      updatePlayButton();
       setGame(0);
     } catch (error) {
       console.error('Failed to load trajectory samples', error);

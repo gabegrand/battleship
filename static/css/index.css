@@ -175,11 +175,11 @@ body {
 }
 
 .trajectory-metrics {
-  display: flex;
-  flex: 1 1 240px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  width: 100%;
+  align-items: stretch;
 }
 
 .metric-card {
@@ -480,13 +480,57 @@ body {
   outline-offset: 2px;
 }
 
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.playback-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #304ed8;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(48, 78, 216, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.playback-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(48, 78, 216, 0.25);
+}
+
+.playback-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.playback-button.is-paused {
+  background: rgba(48, 78, 216, 0.12);
+  color: #304ed8;
+  box-shadow: none;
+}
+
+.playback-button .playback-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
 @media (max-width: 1024px) {
   .trajectory-grid {
     grid-template-columns: 1fr;
   }
 
   .trajectory-metrics {
-    justify-content: flex-start;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
 
