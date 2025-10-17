@@ -16,6 +16,12 @@ from typing import Sequence
 
 from battleship.board import Board
 from battleship.utils import resolve_project_path
+from experiments.collaborative.analysis import CAPTAIN_TYPE_LABELS
+from experiments.collaborative.analysis import MODEL_DISPLAY_NAMES
+
+MODEL_DISPLAY_NAMES.update(
+    {k.split("/")[-1]: v for k, v in MODEL_DISPLAY_NAMES.items()}
+)
 
 
 DEFAULT_RUN_DIR = "experiments/collaborative/captain_benchmarks/run_2025_08_25_22_02_29"
@@ -273,12 +279,16 @@ def build_games(
         captain_llm = (
             metadata.get("experiment_args", {}).get("captain_llm") if metadata else None
         )
+        if entry.captain_type in ["RandomCaptain", "MAPCaptain"]:
+            captain_llm = "Baseline"
 
         games.append(
             {
                 "round_id": entry.round_id,
-                "captain_llm": captain_llm,
-                "captain_type": entry.captain_type,
+                "captain_llm": MODEL_DISPLAY_NAMES.get(captain_llm, captain_llm),
+                "captain_type": CAPTAIN_TYPE_LABELS.get(
+                    entry.captain_type, entry.captain_type
+                ),
                 "spotter_type": entry.data.get("spotter_type"),
                 "board_id": entry.data.get("board_id"),
                 "seed": entry.data.get("seed"),
