@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     shipTracker: document.getElementById('ship-tracker'),
     timelineList: document.getElementById('trajectory-event-list'),
     playButton: document.getElementById('timeline-play'),
+    timelineReset: document.getElementById('timeline-reset'),
+    timelineSkip: document.getElementById('timeline-skip'),
+    prevGame: document.getElementById('prev-game'),
+    nextGame: document.getElementById('next-game'),
+    speedSelect: document.getElementById('playback-speed'),
   };
 
   const colorPalette = new Map([
@@ -37,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const shipSymbols = { 1: 'R', 2: 'G', 3: 'P', 4: 'O' };
   // Invert symbol mapping for convenience: 'R' -> 1, etc.
   const shipIdBySymbol = Object.fromEntries(Object.entries(shipSymbols).map(([id, sym]) => [sym, Number(id)]));
+
+  const DEFAULT_PLAYBACK_INTERVAL_MS = 500;
 
   const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
 
@@ -75,12 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     filteredIndices: [],
     hasActiveGame: false,
+    playbackSpeed: 1,
   };
 
   const playback = {
-    intervalMs: 500,
+    intervalMs: DEFAULT_PLAYBACK_INTERVAL_MS,
     timerId: null,
-    isPlaying: true,
+    isPlaying: false,
   };
 
   function setStatusMessage(message, isError = false) {
@@ -139,13 +147,19 @@ document.addEventListener('DOMContentLoaded', () => {
       button.classList.remove('is-paused');
       button.setAttribute('aria-label', 'Pause autoplay');
       button.setAttribute('aria-pressed', 'true');
-      if (icon) icon.textContent = '❚❚';
+      if (icon) {
+        icon.classList.remove('fa-play');
+        icon.classList.add('fa-pause');
+      }
       if (label) label.textContent = 'Pause';
     } else {
       button.classList.add('is-paused');
       button.setAttribute('aria-label', 'Start autoplay');
       button.setAttribute('aria-pressed', 'false');
-      if (icon) icon.textContent = '▶';
+      if (icon) {
+        icon.classList.remove('fa-pause');
+        icon.classList.add('fa-play');
+      }
       if (label) label.textContent = 'Play';
     }
   }
@@ -175,6 +189,76 @@ document.addEventListener('DOMContentLoaded', () => {
       playback.timerId = null;
       setStage(state.currentStage + 1, { scrollTimeline: false });
     }, playback.intervalMs);
+  }
+
+  function computeIntervalForSpeed(speed) {
+    const multiplier = Number(speed);
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      return DEFAULT_PLAYBACK_INTERVAL_MS;
+    }
+    return DEFAULT_PLAYBACK_INTERVAL_MS / multiplier;
+  }
+
+  function updateSpeedControl() {
+    if (!elements.speedSelect) return;
+    const value = String(state.playbackSpeed);
+    if (elements.speedSelect.value !== value) {
+      elements.speedSelect.value = value;
+    }
+  }
+
+  function setPlaybackSpeed(speed) {
+    const multiplier = Number(speed);
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      return;
+    }
+    if (Math.abs(multiplier - state.playbackSpeed) < 1e-6) {
+      updateSpeedControl();
+      return;
+    }
+    state.playbackSpeed = multiplier;
+    playback.intervalMs = computeIntervalForSpeed(multiplier);
+    clearPlaybackTimer();
+    updateSpeedControl();
+    if (playback.isPlaying) {
+      schedulePlayback();
+    }
+  }
+
+  function setButtonAvailability(button, enabled) {
+    if (!button) return;
+    button.disabled = !enabled;
+    button.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+  }
+
+  function updateGameNavButtons() {
+    if (!elements.prevGame || !elements.nextGame) return;
+    const position = state.filteredIndices.indexOf(state.currentGameIndex);
+    const hasGames = position !== -1 && state.filteredIndices.length > 0;
+    const canGoPrev = hasGames && position > 0;
+    const canGoNext = hasGames && position < state.filteredIndices.length - 1;
+    setButtonAvailability(elements.prevGame, canGoPrev);
+    setButtonAvailability(elements.nextGame, canGoNext);
+  }
+
+  function changeGame(offset) {
+    if (!Number.isInteger(offset) || state.filteredIndices.length === 0) return;
+    let position = state.filteredIndices.indexOf(state.currentGameIndex);
+    if (position === -1) {
+      position = 0;
+    }
+    const nextPosition = Math.min(
+      Math.max(position + offset, 0),
+      state.filteredIndices.length - 1,
+    );
+    if (nextPosition === position) return;
+    const nextGameIndex = state.filteredIndices[nextPosition];
+    setGame(nextGameIndex);
+    const button = gameButtons.get(nextGameIndex);
+    if (button) {
+      button.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      button.focus();
+    }
   }
 
   function setPlaying(isPlaying) {
@@ -367,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
       message.textContent = 'No games match these filters.';
       elements.gameList.appendChild(message);
       elements.gameList.removeAttribute('aria-activedescendant');
+      updateGameNavButtons();
       return;
     }
 
@@ -414,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     highlightActiveGameButton();
+    updateGameNavButtons();
   }
 
   function highlightActiveGameButton() {
@@ -476,6 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     timelineButtons = [];
+    updateGameNavButtons();
   }
 
   function applyFilters(options = {}) {
@@ -521,12 +608,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-  const preserveCurrent = preserveSelection && state.hasActiveGame && filtered.includes(state.currentGameIndex);
+    const preserveCurrent = preserveSelection && state.hasActiveGame && filtered.includes(state.currentGameIndex);
     if (preserveCurrent) {
       const game = getCurrentGame();
       if (game) {
         updateStatusForGame(game);
         highlightActiveGameButton();
+        updateGameNavButtons();
       }
     } else {
       setGame(filtered[0]);
@@ -951,7 +1039,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSlider(game);
     timelineScrollRequested = true;
     highlightActiveGameButton();
-    setPlaying(true);
+    updateGameNavButtons();
+    setPlaying(false);
     renderStageDependent();
   }
 
@@ -1024,6 +1113,43 @@ document.addEventListener('DOMContentLoaded', () => {
         setPlaying(!playback.isPlaying);
       });
     }
+
+    if (elements.timelineReset) {
+      elements.timelineReset.addEventListener('click', () => {
+        const game = getCurrentGame();
+        if (!game || !Array.isArray(game.events) || !game.events.length) return;
+        setStage(0);
+      });
+    }
+
+    if (elements.timelineSkip) {
+      elements.timelineSkip.addEventListener('click', () => {
+        const game = getCurrentGame();
+        if (!game || !Array.isArray(game.events) || !game.events.length) return;
+        setStage(game.events.length - 1);
+        setPlaying(false);
+      });
+    }
+
+    if (elements.prevGame) {
+      elements.prevGame.addEventListener('click', () => {
+        changeGame(-1);
+      });
+    }
+
+    if (elements.nextGame) {
+      elements.nextGame.addEventListener('click', () => {
+        changeGame(1);
+      });
+    }
+
+    if (elements.speedSelect) {
+      elements.speedSelect.addEventListener('change', (event) => {
+        const value = Number(event.target.value);
+        if (!Number.isFinite(value) || value <= 0) return;
+        setPlaybackSpeed(value);
+      });
+    }
   }
 
   async function loadData() {
@@ -1043,6 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
       attachEventListeners();
       updateViewButtons();
       updatePlayButton();
+      updateSpeedControl();
       applyFilters({ preserveSelection: false });
     } catch (error) {
       console.error('Failed to load trajectory samples', error);
@@ -1050,5 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  updateSpeedControl();
+  updateGameNavButtons();
   loadData();
 });
