@@ -1678,10 +1678,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const logEl = root ? root.querySelector('.event-chat-log') : null;
     const statusEl = document.getElementById('motivation-chat-status');
     const replayButton = document.getElementById('motivation-chat-replay');
+    const abstractToggleButton = document.getElementById('motivation-show-abstract');
+    const abstractCloseButton = document.getElementById('motivation-hide-abstract');
+    const abstractPanel = document.getElementById('motivation-abstract-panel');
+    const abstractHeading = document.getElementById('abstract-heading');
 
     if (!root || !logEl || !statusEl) {
       return;
     }
+
+  const reduceMotion = prefersReducedMotion();
 
     const conversation = [
       {
@@ -1740,6 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeAnimationToken = 0;
     let isAnimating = false;
     let hasStarted = false;
+    let isAbstractExpanded = false;
 
     function scheduleTimeout(callback, duration) {
       const handle = window.setTimeout(() => {
@@ -1784,6 +1791,69 @@ document.addEventListener('DOMContentLoaded', () => {
       logEl.scrollTop = logEl.scrollHeight;
     }
 
+    function setAbstractVisibility(expand, { focus = 'auto', announce = true } = {}) {
+      const nextState = Boolean(expand);
+      isAbstractExpanded = nextState;
+
+      if (abstractPanel) {
+        abstractPanel.hidden = !isAbstractExpanded;
+        abstractPanel.setAttribute('aria-hidden', isAbstractExpanded ? 'false' : 'true');
+      }
+
+      if (abstractToggleButton) {
+        abstractToggleButton.setAttribute('aria-expanded', isAbstractExpanded ? 'true' : 'false');
+        const labelEl = abstractToggleButton.querySelector('.label');
+        if (labelEl) {
+          labelEl.textContent = isAbstractExpanded ? 'Hide full abstract' : 'View full abstract';
+        }
+      }
+
+      if (abstractCloseButton) {
+        abstractCloseButton.hidden = !isAbstractExpanded;
+        abstractCloseButton.setAttribute('aria-hidden', isAbstractExpanded ? 'false' : 'true');
+      }
+
+      if (announce) {
+        setStatus(null, '');
+      }
+
+      if (focus === 'none') {
+        return;
+      }
+
+      if (isAbstractExpanded) {
+        if (abstractHeading && (focus === 'auto' || focus === 'abstract')) {
+          const delay = reduceMotion ? 0 : 120;
+          window.setTimeout(() => {
+            abstractHeading.focus({ preventScroll: false });
+          }, delay);
+        }
+        return;
+      }
+
+      if (focus === 'toggle' && abstractToggleButton) {
+        const delay = reduceMotion ? 0 : 120;
+        window.setTimeout(() => {
+          abstractToggleButton.focus({ preventScroll: false });
+        }, delay);
+        return;
+      }
+
+      if (focus === 'auto' || focus === 'log') {
+        const delay = reduceMotion ? 0 : 120;
+        const prevTabIndex = logEl.getAttribute('tabindex');
+        if (prevTabIndex === null) {
+          logEl.setAttribute('tabindex', '-1');
+        }
+        window.setTimeout(() => {
+          logEl.focus({ preventScroll: false });
+          if (prevTabIndex === null) {
+            logEl.removeAttribute('tabindex');
+          }
+        }, delay);
+      }
+    }
+
     function typeTextWithToken({ textEl, caret, text, animationToken, logElement, timeScale = 1 }) {
       return new Promise((resolve) => {
         const messageText = typeof text === 'string' ? text : '';
@@ -1792,7 +1862,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        if (prefersReducedMotion() || animationToken !== activeAnimationToken || messageText.length === 0) {
+        if (reduceMotion || animationToken !== activeAnimationToken || messageText.length === 0) {
           textEl.textContent = messageText;
           setTypingCaretVisibility(caret, false);
           if (logElement) {
@@ -1846,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function waitWithToken(durationMs, animationToken) {
-      if (prefersReducedMotion() || durationMs <= 0) {
+      if (reduceMotion || durationMs <= 0) {
         return Promise.resolve();
       }
       return new Promise((resolve) => {
@@ -1861,17 +1931,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function renderMessage(entry, animationToken) {
-  const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
+      const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
       logEl.appendChild(message.wrapper);
       scrollLogToEnd();
 
-      if (entry.showThinking && !prefersReducedMotion()) {
+      if (entry.showThinking && !reduceMotion) {
         const thinking = createThinkingElement();
         message.textEl.style.display = 'none';
         setTypingCaretVisibility(message.caret, false);
         message.bubble.insertBefore(thinking, message.textEl);
-  const thinkingDelay = THINKING_BASE_DELAY_MS + (entry.thinkingDelay || 0);
-  await waitWithToken(thinkingDelay, animationToken);
+        const thinkingDelay = THINKING_BASE_DELAY_MS + (entry.thinkingDelay || 0);
+        await waitWithToken(thinkingDelay, animationToken);
         if (animationToken !== activeAnimationToken) {
           return;
         }
@@ -1895,13 +1965,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (isAbstractExpanded) {
+        setAbstractVisibility(false, { focus: 'none', announce: false });
+      }
+
       isAnimating = true;
+      hasStarted = true;
       setReplayDisabled(true);
       clearScheduledTimeouts();
       activeAnimationToken += 1;
       const animationToken = activeAnimationToken;
       resetLog();
-      setStatus(null, 'Streaming conversation…');
 
       try {
         for (let i = 0; i < conversation.length; i += 1) {
@@ -1923,9 +1997,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         }
-        if (animationToken === activeAnimationToken) {
-          setStatus('is-complete', 'Replay to watch again.');
-        }
       } finally {
         clearScheduledTimeouts();
         if (animationToken === activeAnimationToken) {
@@ -1936,15 +2007,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startPlayback() {
-      if (isAnimating) {
+      if (reduceMotion || isAnimating) {
         return;
       }
-      hasStarted = true;
-      setReplayDisabled(true);
       playConversation();
     }
 
-    if (prefersReducedMotion()) {
+    function expandAbstract({ focus = 'abstract', announce = true } = {}) {
+      setAbstractVisibility(true, { focus, announce });
+    }
+
+    function collapseAbstract({ focus = 'log', announce = true } = {}) {
+      if (!isAbstractExpanded) {
+        if (announce || focus !== 'none') {
+          setAbstractVisibility(false, { focus, announce });
+        }
+        return;
+      }
+      setAbstractVisibility(false, { focus, announce });
+    }
+
+    function initialiseTranscript() {
       resetLog();
       conversation.forEach((entry) => {
         const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
@@ -1953,39 +2036,82 @@ document.addEventListener('DOMContentLoaded', () => {
         logEl.appendChild(message.wrapper);
       });
       scrollLogToEnd();
-      setStatus('is-idle', 'Motion reduced: transcript shown without animation.');
-      setReplayDisabled(true);
-      return;
     }
 
-    setReplayDisabled(false);
-    setStatus('is-idle', 'Ready to chat. Scroll here or press replay to start.');
+    if (reduceMotion) {
+      initialiseTranscript();
+      setStatus(null, '');
+      setReplayDisabled(true);
+    } else {
+      setReplayDisabled(false);
+      setStatus(null, '');
 
-    if (replayButton) {
-      replayButton.addEventListener('click', (event) => {
+      if (replayButton) {
+        replayButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          if (isAbstractExpanded) {
+            collapseAbstract({ focus: 'none', announce: false });
+          }
+          startPlayback();
+        });
+      }
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasStarted && !isAnimating && !isAbstractExpanded) {
+              startPlayback();
+              if (obs) {
+                obs.unobserve(root);
+              }
+            }
+          });
+        }, { threshold: 0.35 });
+        observer.observe(root);
+      } else {
+        scheduleTimeout(() => {
+          if (!hasStarted && !isAnimating && !isAbstractExpanded) {
+            startPlayback();
+          }
+        }, 600);
+      }
+    }
+
+    if (abstractToggleButton) {
+      abstractToggleButton.addEventListener('click', (event) => {
         event.preventDefault();
-        startPlayback();
+        const nextState = !isAbstractExpanded;
+        if (nextState) {
+          expandAbstract({ focus: 'abstract' });
+        } else {
+          collapseAbstract({ focus: 'toggle' });
+        }
       });
     }
 
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasStarted && !isAnimating) {
-            startPlayback();
-            if (obs) {
-              obs.unobserve(root);
-            }
-          }
-        });
-      }, { threshold: 0.35 });
-      observer.observe(root);
-    } else {
-      scheduleTimeout(() => {
-        if (!hasStarted && !isAnimating) {
-          startPlayback();
-        }
-      }, 600);
+    if (abstractCloseButton) {
+      abstractCloseButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        collapseAbstract({ focus: 'toggle' });
+      });
+    }
+
+    setAbstractVisibility(false, { focus: 'none', announce: false });
+
+    if (window.location.hash === '#abstract') {
+      expandAbstract({ focus: 'abstract', announce: false });
+    }
+
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash === '#abstract') {
+        expandAbstract({ focus: 'abstract', announce: false });
+      } else if (isAbstractExpanded) {
+        collapseAbstract({ focus: 'none', announce: false });
+      }
+    });
+
+    if (reduceMotion) {
+      setReplayDisabled(true);
     }
   }
 
