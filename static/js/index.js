@@ -1747,6 +1747,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isAnimating = false;
     let hasStarted = false;
     let isAbstractExpanded = false;
+  let abstractVisibilityFrame = null;
+  let abstractHideListener = null;
 
     function scheduleTimeout(callback, duration) {
       const handle = window.setTimeout(() => {
@@ -1793,10 +1795,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setAbstractVisibility(expand, { focus = 'auto', announce = true } = {}) {
       const nextState = Boolean(expand);
+      const previousState = isAbstractExpanded;
       isAbstractExpanded = nextState;
 
       if (abstractPanel) {
-        abstractPanel.hidden = !isAbstractExpanded;
+        if (abstractVisibilityFrame !== null) {
+          window.cancelAnimationFrame(abstractVisibilityFrame);
+          abstractVisibilityFrame = null;
+        }
+
+        if (abstractHideListener) {
+          abstractPanel.removeEventListener('transitionend', abstractHideListener);
+          abstractHideListener = null;
+        }
+
+        if (reduceMotion) {
+          abstractPanel.hidden = !isAbstractExpanded;
+          abstractPanel.classList.toggle('is-visible', isAbstractExpanded);
+        } else if (previousState !== isAbstractExpanded) {
+          if (isAbstractExpanded) {
+            abstractPanel.hidden = false;
+            abstractPanel.classList.remove('is-visible');
+            abstractPanel.getBoundingClientRect();
+            abstractVisibilityFrame = window.requestAnimationFrame(() => {
+              abstractVisibilityFrame = null;
+              if (!isAbstractExpanded) {
+                if (!abstractPanel.hidden) {
+                  abstractPanel.hidden = true;
+                }
+                return;
+              }
+              abstractPanel.classList.add('is-visible');
+            });
+          } else {
+            abstractPanel.classList.remove('is-visible');
+            if (!abstractPanel.hidden) {
+              abstractHideListener = (event) => {
+                if (event.target !== abstractPanel || event.propertyName !== 'opacity') {
+                  return;
+                }
+                if (!isAbstractExpanded) {
+                  abstractPanel.hidden = true;
+                }
+                if (abstractHideListener) {
+                  abstractPanel.removeEventListener('transitionend', abstractHideListener);
+                  abstractHideListener = null;
+                }
+              };
+              abstractPanel.addEventListener('transitionend', abstractHideListener);
+            } else {
+              abstractPanel.hidden = true;
+            }
+          }
+        } else {
+          abstractPanel.hidden = !isAbstractExpanded;
+          abstractPanel.classList.toggle('is-visible', isAbstractExpanded);
+        }
+
         abstractPanel.setAttribute('aria-hidden', isAbstractExpanded ? 'false' : 'true');
       }
 

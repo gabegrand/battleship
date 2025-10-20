@@ -713,10 +713,21 @@ body {
   gap: 1.4rem;
   width: 100%;
   color: #172642;
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+  will-change: opacity, transform;
 }
 
 .motivation-abstract[hidden] {
   display: none;
+}
+
+.motivation-abstract.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .motivation-abstract-header {
@@ -735,6 +746,19 @@ body {
 .motivation-abstract-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motivation-abstract {
+    transition: none;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .motivation-abstract.is-visible {
+    transform: none;
+  }
 }
 
 .motivation-noscript-abstract {
