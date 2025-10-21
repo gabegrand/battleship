@@ -1813,187 +1813,52 @@ class TrajectoryExplorer {
 }
 
 function initMotivationHighlights() {
-  const timelineList = document.getElementById('motivation-timeline-list');
   const accordionContainer = document.getElementById('motivation-accordion-items');
   const showAbstractButton = document.getElementById('motivation-show-abstract');
   const hideAbstractButton = document.getElementById('motivation-hide-abstract');
   const abstractPanel = document.getElementById('motivation-abstract-panel');
   const abstractHeading = document.getElementById('abstract-heading');
 
-  if (!timelineList || !accordionContainer) {
+  if (!accordionContainer) {
     return;
   }
+  const accordionElements = Array.from(
+    accordionContainer.querySelectorAll('.motivation-accordion-item'),
+  );
 
-  const timelineHighlights = [
-    {
-      icon: 'fas fa-compass',
-      kicker: 'Motivation',
-      text: 'High-stakes decisions often require agents to ask smart questions before acting, but we lack benchmarks that measure this balance.',
-    },
-    {
-      icon: 'fas fa-chess-board',
-      kicker: 'Task',
-      text: 'Collaborative Battleship pits a question-asking Captain and an all-knowing Spotter against hidden ships, turning information search into gameplay.',
-    },
-    {
-      icon: 'fas fa-user-friends',
-      kicker: 'Behavior gap',
-      text: 'Compared to 42 humans, language-model captains under-question, mis-ground answers, and waste turns on low-value moves.',
-    },
-    {
-      icon: 'fas fa-flask',
-      kicker: 'Method',
-      text: 'Bayesian Experimental Design heuristics inject Monte Carlo reasoning into LM agents, guiding what they ask and where they fire.',
-    },
-    {
-      icon: 'fas fa-rocket',
-      kicker: 'Impact',
-      text: 'The upgraded agents dramatically boost win rates, close most of the F1 gap, and transfer to Guess Who? with double-digit accuracy gains.',
-    },
-  ];
+  const accordionItems = accordionElements
+    .map((item, index) => {
+      const button = item.querySelector('.motivation-accordion-button');
+      const panel = item.querySelector('.motivation-accordion-panel');
 
-  timelineList.innerHTML = '';
-  timelineHighlights.forEach((item) => {
-    const li = document.createElement('li');
-    li.className = 'motivation-timeline-item';
+      if (!button || !panel) {
+        return null;
+      }
 
-    const icon = document.createElement('span');
-    icon.className = 'motivation-timeline-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    if (item.icon) {
-      const iconEl = document.createElement('i');
-      iconEl.className = item.icon;
-      iconEl.setAttribute('aria-hidden', 'true');
-      icon.appendChild(iconEl);
-    }
+      if (!button.id) {
+        button.id = `motivation-accordion-trigger-${index}`;
+      }
 
-    const body = document.createElement('div');
-    body.className = 'motivation-timeline-body';
+      if (!panel.id) {
+        panel.id = `motivation-accordion-panel-${index}`;
+      }
 
-    if (item.kicker) {
-      const kicker = document.createElement('p');
-      kicker.className = 'motivation-timeline-kicker';
-      kicker.textContent = item.kicker;
-      body.appendChild(kicker);
-    }
+      if (!button.hasAttribute('aria-controls')) {
+        button.setAttribute('aria-controls', panel.id);
+      }
 
-    if (item.text) {
-      const copy = document.createElement('p');
-      copy.className = 'motivation-timeline-copy';
-      copy.textContent = item.text;
-      body.appendChild(copy);
-    }
+      if (!panel.hasAttribute('aria-labelledby')) {
+        panel.setAttribute('aria-labelledby', button.id);
+      }
 
-    li.appendChild(icon);
-    li.appendChild(body);
-    timelineList.appendChild(li);
-  });
+      panel.setAttribute('role', 'region');
+      const isExpanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      panel.hidden = !isExpanded;
 
-  const accordionEntries = [
-    {
-      question: 'Why use Battleship as a testbed?',
-      answer: [
-        'Battleship strips decision making down to its essentials: every turn forces a trade-off between gathering information and acting on it.',
-        'Because the board is fully observable to the Spotter, we can score each question and move with expected information gain and F1 metrics.',
-      ],
-    },
-    {
-      question: 'What did the baseline language models struggle with?',
-      bullets: [
-        'Grounding: answers sometimes drift away from the board state.',
-        'Question quality: captains fixate on low-yield queries.',
-        'Action selection: many moves resemble random firing, wasting scarce turns.',
-      ],
-      answer: 'These patterns echo qualitative feedback from human players, who describe the agents as “hesitant” and “scattershot.”',
-    },
-    {
-      question: 'How do the Bayesian add-ons help?',
-      answer: [
-        'We sample hypothetical boards, score candidate questions with BED-inspired heuristics, and re-rank LM answers using Monte Carlo evidence.',
-        'This nudges the LM toward informative follow-ups without requiring task-specific supervision.',
-      ],
-    },
-    {
-      question: 'Do the gains extend beyond Battleship?',
-      answer: [
-        'Yes—replicating the setup on Guess Who? lifts accuracy by 28 to 42 percentage points.',
-        'The same heuristics apply to other partially observed games and diagnostic workflows where agents must alternate between probing and acting.',
-      ],
-    },
-    {
-      question: 'Where should readers go next?',
-      answer: [
-        'Scan the full abstract for the quantitative takeaways, then head to the interactive demo to watch the upgraded agents plan in real time.',
-      ],
-    },
-  ];
-
-  accordionContainer.innerHTML = '';
-  const accordionItems = [];
-
-  accordionEntries.forEach((entry, index) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'motivation-accordion-item';
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'motivation-accordion-button';
-    const buttonId = `motivation-accordion-trigger-${index}`;
-    const panelId = `motivation-accordion-panel-${index}`;
-    button.id = buttonId;
-    button.setAttribute('aria-controls', panelId);
-    button.setAttribute('aria-expanded', 'false');
-
-    const label = document.createElement('span');
-    label.className = 'motivation-accordion-label';
-    label.textContent = entry.question;
-
-    const indicator = document.createElement('span');
-    indicator.className = 'motivation-accordion-indicator';
-    indicator.setAttribute('aria-hidden', 'true');
-    const indicatorIcon = document.createElement('i');
-    indicatorIcon.className = 'fas fa-chevron-down';
-    indicatorIcon.setAttribute('aria-hidden', 'true');
-    indicator.appendChild(indicatorIcon);
-
-    button.appendChild(label);
-    button.appendChild(indicator);
-
-    const panel = document.createElement('div');
-    panel.className = 'motivation-accordion-panel';
-    panel.id = panelId;
-    panel.setAttribute('role', 'region');
-    panel.setAttribute('aria-labelledby', buttonId);
-    panel.hidden = true;
-
-    const addParagraph = (text) => {
-      if (!text) return;
-      const paragraph = document.createElement('p');
-      paragraph.textContent = text;
-      panel.appendChild(paragraph);
-    };
-
-    if (Array.isArray(entry.answer)) {
-      entry.answer.forEach(addParagraph);
-    } else {
-      addParagraph(entry.answer);
-    }
-
-    if (Array.isArray(entry.bullets) && entry.bullets.length > 0) {
-      const list = document.createElement('ul');
-      entry.bullets.forEach((bullet) => {
-        const li = document.createElement('li');
-        li.textContent = bullet;
-        list.appendChild(li);
-      });
-      panel.appendChild(list);
-    }
-
-    wrapper.appendChild(button);
-    wrapper.appendChild(panel);
-    accordionContainer.appendChild(wrapper);
-    accordionItems.push({ button, panel });
-  });
+      return { button, panel };
+    })
+    .filter(Boolean);
 
   const setAccordionState = (targetIndex) => {
     accordionItems.forEach(({ button, panel }, index) => {

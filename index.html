@@ -124,12 +124,112 @@
                 <span class="label">View full abstract</span>
               </button>
             </header>
-            <ol class="motivation-timeline-list" id="motivation-timeline-list"></ol>
+            <ol class="motivation-timeline-list" id="motivation-timeline-list">
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-compass" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Motivation</p>
+                  <p class="motivation-timeline-copy">High-stakes decisions often require agents to ask smart questions before acting, but we lack benchmarks that measure this balance.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-chess-board" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Task</p>
+                  <p class="motivation-timeline-copy">Collaborative Battleship pits a question-asking Captain and an all-knowing Spotter against hidden ships, turning information search into gameplay.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-user-friends" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Behavior gap</p>
+                  <p class="motivation-timeline-copy">Compared to 42 humans, language-model captains under-question, mis-ground answers, and waste turns on low-value moves.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-flask" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Method</p>
+                  <p class="motivation-timeline-copy">Bayesian Experimental Design heuristics inject Monte Carlo reasoning into LM agents, guiding what they ask and where they fire.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-rocket" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Impact</p>
+                  <p class="motivation-timeline-copy">The upgraded agents dramatically boost win rates, close most of the F1 gap, and transfer to Guess Who? with double-digit accuracy gains.</p>
+                </div>
+              </li>
+            </ol>
           </section>
 
           <section class="motivation-accordion" id="motivation-accordion" aria-label="Abstract questions and answers">
             <h3 class="title is-5 mb-2">Dig deeper</h3>
-            <div class="motivation-accordion-items" id="motivation-accordion-items"></div>
+            <div class="motivation-accordion-items" id="motivation-accordion-items">
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-0" aria-controls="motivation-accordion-panel-0" aria-expanded="false">
+                  <span class="motivation-accordion-label">Why use Battleship as a testbed?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-0" role="region" aria-labelledby="motivation-accordion-trigger-0" hidden>
+                  <p>Battleship strips decision making down to its essentials: every turn forces a trade-off between gathering information and acting on it.</p>
+                  <p>Because the board is fully observable to the Spotter, we can score each question and move with expected information gain and F1 metrics.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-1" aria-controls="motivation-accordion-panel-1" aria-expanded="false">
+                  <span class="motivation-accordion-label">What did the baseline language models struggle with?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-1" role="region" aria-labelledby="motivation-accordion-trigger-1" hidden>
+                  <ul>
+                    <li>Grounding: answers sometimes drift away from the board state.</li>
+                    <li>Question quality: captains fixate on low-yield queries.</li>
+                    <li>Action selection: many moves resemble random firing, wasting scarce turns.</li>
+                  </ul>
+                  <p>These patterns echo qualitative feedback from human players, who describe the agents as “hesitant” and “scattershot.”</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-2" aria-controls="motivation-accordion-panel-2" aria-expanded="false">
+                  <span class="motivation-accordion-label">How do the Bayesian add-ons help?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-2" role="region" aria-labelledby="motivation-accordion-trigger-2" hidden>
+                  <p>We sample hypothetical boards, score candidate questions with BED-inspired heuristics, and re-rank LM answers using Monte Carlo evidence.</p>
+                  <p>This nudges the LM toward informative follow-ups without requiring task-specific supervision.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-3" aria-controls="motivation-accordion-panel-3" aria-expanded="false">
+                  <span class="motivation-accordion-label">Do the gains extend beyond Battleship?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-3" role="region" aria-labelledby="motivation-accordion-trigger-3" hidden>
+                  <p>Yes—replicating the setup on Guess Who? lifts accuracy by 28 to 42 percentage points.</p>
+                  <p>The same heuristics apply to other partially observed games and diagnostic workflows where agents must alternate between probing and acting.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-4" aria-controls="motivation-accordion-panel-4" aria-expanded="false">
+                  <span class="motivation-accordion-label">Where should readers go next?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-4" role="region" aria-labelledby="motivation-accordion-trigger-4" hidden>
+                  <p>Scan the full abstract for the quantitative takeaways, then head to the interactive demo to watch the upgraded agents plan in real time.</p>
+                </div>
+              </div>
+            </div>
           </section>
 
           <div class="motivation-abstract" id="motivation-abstract-panel" role="region" aria-labelledby="abstract-heading" aria-hidden="true" hidden>
@@ -149,19 +249,6 @@ Many high-stakes applications of AI require forming data-driven hypotheses and m
             </div>
           </div>
         </div>
-        <noscript>
-          <div class="motivation-noscript-abstract content has-text-justified" id="abstract-noscript">
-            <h2 class="title is-4">Abstract highlights</h2>
-            <ul>
-              <li>We study how resource-limited agents balance asking questions and taking actions in Collaborative Battleship.</li>
-              <li>Human players outperform language model agents at grounding, questioning, and decision quality.</li>
-              <li>Bayesian Experimental Design heuristics close major performance gaps and generalize to other games.</li>
-            </ul>
-            <p>
-Many high-stakes applications of AI require forming data-driven hypotheses and making targeted guesses; e.g., in scientific and diagnostic settings. Given limited resources, to what extent do agents based on language models (LMs) act rationally? We develop methods to benchmark and enhance agentic information-seeking, drawing on insights from human behavior. First, we introduce a strategic decision-oriented dialogue task called Collaborative Battleship, in which a partially informed Captain must balance exploration (asking questions) and action (taking shots), while a fully informed Spotter must provide accurate answers under an information bottleneck. Compared to human players (N=42), we find that LM agents struggle to ground answers in context, generate informative questions, and select high-value actions. Next, to address these gaps, we develop novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED). For Spotter agents, our approach boosts accuracy by up to 14.7% absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits (94.2% of the achievable noise ceiling). Combined, these components yield sharper targeting (+0.303–0.374 F1), and enable weaker LMs, such as Llama-4-Scout, to outperform both humans (8% → 82% win rate) and frontier models (0% → 67% win rate vs. GPT-5) at ≈1% of GPT-5's cost. We replicate these findings on Guess Who? where our methods significantly boost accuracy (+28.3–42.4 p.p.), demonstrating their general applicability for building rational information-seeking agents.
-            </p>
-          </div>
-        </noscript>
       </div>
     </div>
   </div>
@@ -288,28 +375,6 @@ Many high-stakes applications of AI require forming data-driven hypotheses and m
     </div>
   </div>
 </section>
-
-<section class="section" id="dataset">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-half">
-        <figure class="image is-4by3">
-          <img src="./static/images/placeholder-figure.svg" alt="Dataset visualization placeholder">
-        </figure>
-      </div>
-      <div class="column">
-        <h2 class="title is-3">BattleshipQA Dataset</h2>
-        <p>Placeholder text summarizing dataset scale, annotations, and modalities. Bullet points below will be replaced with highlights.</p>
-        <ul>
-          <li>Placeholder: Number of trajectories and QA pairs.</li>
-          <li>Placeholder: Annotation schema and pragmatic labels.</li>
-          <li>Placeholder: Release plan and licensing.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
 
 
 <section class="section" id="BibTeX">
