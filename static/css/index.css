@@ -758,9 +758,11 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(48, 78, 216, 0.22), rgba(4, 175, 112, 0.3));
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #304ed8, #04af70);
+  color: #ffffff;
+  border: 3px solid rgba(245, 248, 255, 0.95);
   box-shadow: 0 10px 24px rgba(23, 38, 66, 0.22);
-  color: var(--color-primary);
   font-size: 1.15rem;
 }
 
@@ -812,6 +814,12 @@ body {
   gap: 0.75rem;
 }
 
+.motivation-accordion-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
 .motivation-accordion-item {
   border-radius: 16px;
   overflow: hidden;
@@ -826,6 +834,7 @@ body {
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
+  box-sizing: border-box;
   padding: 1rem 1.25rem;
   cursor: pointer;
   font-weight: 700;
@@ -844,6 +853,7 @@ body {
 
 .motivation-accordion-label {
   flex: 1 1 auto;
+  min-width: 0;
   font-size: 1rem;
 }
 

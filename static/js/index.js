@@ -1960,12 +1960,7 @@ function initMotivationHighlights() {
   if (showAbstractButton) {
     showAbstractButton.addEventListener('click', (event) => {
       event.preventDefault();
-      const expanded = showAbstractButton.getAttribute('aria-expanded') === 'true';
-      if (expanded) {
-        hideAbstract({ returnFocus: false });
-      } else {
-        showAbstract({ focusHeading: true, scrollIntoView: true });
-      }
+      showAbstract({ focusHeading: true, scrollIntoView: true });
     });
   }
 
