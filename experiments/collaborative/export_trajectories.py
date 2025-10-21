@@ -90,7 +90,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--seed",
         type=int,
-        default=None,
+        default=42,
         help="Random seed used to sample games (default: %(default)s).",
     )
     parser.add_argument(
@@ -147,6 +147,9 @@ def normalize_event(event: dict) -> dict:
             "text": answer.get("text"),
             "value": answer.get("value"),
         }
+        code_question = answer.get("code_question")
+        if code_question:
+            normalized["fn_str"] = code_question.get("fn_str")
 
     return normalized
 
