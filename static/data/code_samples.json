@@ -1,0 +1,22 @@
+[
+    {
+        "question": {
+            "text": "Is there any part of a ship on the tiles between D3 and E6?"
+        },
+        "answer": {
+            "text": "yes",
+            "value": true
+        },
+        "fn_str": "\nimport numpy as np\n\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Helper to convert coordinates like 'D3' to zero-based (row, col) indices\n    def to_idx(coord: str):\n        row = ord(coord[0].upper()) - ord('A')\n        col = int(coord[1:]) - 1\n        return row, col\n\n    start = 'D3'\n    end = 'E6'\n    r1, c1 = to_idx(start)\n    r2, c2 = to_idx(end)\n\n    rmin, rmax = sorted((r1, r2))\n    cmin, cmax = sorted((c1, c2))\n\n    true_sub = true_board[rmin:rmax+1, cmin:cmax+1]\n    partial_sub = partial_board[rmin:rmax+1, cmin:cmax+1]\n\n    # We answer Yes if there is any unrevealed ship tile in the region.\n    return bool(np.any((true_sub > 0) & (partial_sub == -1)))\n"
+    },
+    {
+        "question": {
+            "text": "Is there a ship in column 3 that spans more than 2 rows?"
+        },
+        "answer": {
+            "text": "yes",
+            "value": true
+        },
+        "fn_str": "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Check if there exists a vertically oriented ship segment in column 3\n    # that spans more than 2 rows (i.e., length >= 3).\n    col_idx = 2  # zero-based index for column 3\n    current_val = None\n    current_len = 0\n\n    for v in true_board[:, col_idx]:\n        if v > 0:\n            if v == current_val:\n                current_len += 1\n            else:\n                # Start a new run for a different ship id\n                current_val = v\n                current_len = 1\n        else:\n            # Water breaks any current run\n            if current_len >= 3:\n                return True\n            current_val = None\n            current_len = 0\n\n    # Check the final run after the loop\n    return current_len >= 3\n"
+    }
+]

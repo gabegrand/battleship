@@ -80,9 +80,18 @@
 <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <figure class="image" style="max-width: 800px; margin: 0 auto;">
-        <img src="./static/images/battleship-splash-2.png" alt="BattleshipQA splash figure" style="width: 100%; height: auto; object-fit: contain;">
-      </figure>
+      <div id="hero-trajectory" class="hero-trajectory" aria-live="polite">
+        <div class="hero-trajectory-board">
+          <div class="board-caption hero-board-caption" data-role="hero-board-caption">Captain view (autoplay)</div>
+          <div class="board-grid hero-board-grid" data-role="hero-board" role="grid" aria-label="Autoplay Battleship game"></div>
+        </div>
+        <div class="hero-trajectory-panel">
+          <h3 class="hero-panel-title">Spotlight recap</h3>
+          <div class="event-details hero-event-details" data-role="hero-event-details" role="log" aria-live="polite" aria-atomic="false">
+            <div class="empty-state">Loading live playthrough…</div>
+          </div>
+        </div>
+      </div>
       <h2 class="subtitle has-text-centered mt-5">
         Collaborative Battleship: Rational agents balance exploration and action in a decision-oriented dialogue game.
       </h2>
@@ -303,14 +312,7 @@ Many high-stakes applications of AI require forming data-driven hypotheses and m
   </div>
 </section>
 
-<section class="section" id="related">
-  <div class="container is-max-desktop">
-    <h2 class="title is-3 has-text-centered">Related &amp; Concurrent Work</h2>
-    <div class="content has-text-justified">
-      <p>Links to related research projects will be curated here. For now, this section marks where we will highlight complementary efforts in rational agents and information-seeking benchmarks.</p>
-    </div>
-  </div>
-</section>
+
 
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
