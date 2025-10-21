@@ -82,11 +82,22 @@
     <div class="hero-body">
       <div id="hero-trajectory" class="hero-trajectory" aria-live="polite">
         <div class="hero-trajectory-board">
-          <div class="board-caption hero-board-caption" data-role="hero-board-caption">Captain view (autoplay)</div>
+          <div class="hero-board-header">
+            <div class="trajectory-view-toggle hero-view-toggle" role="group" aria-label="Board perspective">
+              <button type="button" class="view-toggle-button is-active" data-role="hero-view-captain" data-view="captain">
+                <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                <span class="label">Captain View</span>
+              </button>
+              <button type="button" class="view-toggle-button" data-role="hero-view-spotter" data-view="spotter">
+                <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                <span class="label">Spotter View</span>
+              </button>
+            </div>
+          </div>
           <div class="board-grid hero-board-grid" data-role="hero-board" role="grid" aria-label="Autoplay Battleship game"></div>
+          <div class="hero-board-footer" data-role="hero-meta" aria-live="polite"></div>
         </div>
         <div class="hero-trajectory-panel">
-          <h3 class="hero-panel-title">Spotlight recap</h3>
           <div class="event-details hero-event-details" data-role="hero-event-details" role="log" aria-live="polite" aria-atomic="false">
             <div class="empty-state">Loading live playthrough…</div>
           </div>

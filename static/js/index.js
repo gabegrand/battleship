@@ -36,6 +36,14 @@ const CAPTAIN_TYPE_LABELS = {
   Greedy: 'Greedy',
 };
 
+function getCaptainTypeLabel(type) {
+  return CAPTAIN_TYPE_LABELS[type] ?? (typeof type === 'string' ? type : '–');
+}
+
+function getCaptainLLMLabel(llm) {
+  return LLM_LABELS[llm] ?? (typeof llm === 'string' ? llm : 'Unknown LLM');
+}
+
 const ICON_CLASSES = {
   captain: 'fas fa-anchor',
   spotter: 'fas fa-binoculars',
@@ -451,17 +459,33 @@ class TrajectoryExplorer {
 
   updateStatusForGame(game) {
     if (!this.elements.status || !game) return;
+    const llmLabel = getCaptainLLMLabel(game.captain_llm);
+    const strategyLabel = getCaptainTypeLabel(game.captain_type);
     const parts = [
-      `${game.captain_llm}`,
-      `${game.captain_type}`,
-      `Board ${game.board_id}`,
-      `Round ${game.round_id}`,
+      llmLabel,
+      strategyLabel,
+      game.board_id !== undefined && game.board_id !== null ? `Board ${game.board_id}` : '',
+      game.round_id !== undefined && game.round_id !== null ? `Round ${game.round_id}` : '',
     ];
     if (typeof game.seed === 'number') {
       parts.push(`Seed ${game.seed}`);
     }
-    this.elements.status.textContent = parts.join(' • ');
+    this.elements.status.textContent = parts.filter(Boolean).join(' • ');
     this.elements.status.classList.remove('has-error');
+  }
+
+  updateHeroMeta(game) {
+    const footer = this.elements.heroMeta;
+    if (!footer) return;
+    if (!game) {
+      footer.textContent = '';
+      return;
+    }
+    const llmLabel = getCaptainLLMLabel(game.captain_llm);
+    const strategyLabel = getCaptainTypeLabel(game.captain_type);
+    const roundLabel = game.round_id !== undefined && game.round_id !== null ? `Round ${game.round_id}` : '';
+    const segments = [llmLabel, strategyLabel, roundLabel].filter(Boolean);
+    footer.textContent = segments.join(' • ');
   }
 
   getColor(value) {
@@ -1241,11 +1265,7 @@ class TrajectoryExplorer {
       this.elements.eventLabel.textContent = this.createEventSummary(event, game);
     }
     if (this.elements.boardCaption) {
-      if (this.state.currentView === 'captain') {
-        this.elements.boardCaption.textContent = `Captain view after turn ${this.state.currentStage + 1}`;
-      } else {
-        this.elements.boardCaption.textContent = 'Spotter view (hatched = hidden from the captain)';
-      }
+      this.elements.boardCaption.textContent = '';
     }
   }
 
@@ -1374,6 +1394,7 @@ class TrajectoryExplorer {
     if (!game) return;
     this.state.hasActiveGame = true;
     this.updateStatusForGame(game);
+  this.updateHeroMeta(game);
     this.renderMetrics(game);
     this.buildTimeline(game);
     this.updateSlider(game);
@@ -1496,6 +1517,9 @@ class TrajectoryExplorer {
       this.elements.slider.max = '0';
       this.elements.slider.setAttribute('aria-valuemax', '0');
       this.elements.slider.setAttribute('aria-valuenow', '0');
+    }
+    if (this.elements.heroMeta) {
+      this.elements.heroMeta.textContent = '';
     }
 
     this.timelineButtons = [];
@@ -2360,14 +2384,15 @@ function initHeroExplorer(dataPromise) {
     selectors: {
       board: '[data-role="hero-board"]',
       eventDetails: '[data-role="hero-event-details"]',
+      heroMeta: '[data-role="hero-meta"]',
       status: null,
       filterLLM: null,
       filterType: null,
       gameList: null,
-      viewCaptain: null,
-      viewSpotter: null,
+      viewCaptain: '[data-role="hero-view-captain"]',
+      viewSpotter: '[data-role="hero-view-spotter"]',
       metrics: null,
-      boardCaption: '[data-role="hero-board-caption"]',
+      boardCaption: null,
       slider: null,
       frameLabel: null,
       eventLabel: null,
