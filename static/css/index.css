@@ -690,28 +690,17 @@ body {
   gap: 1.75rem;
 }
 
-.motivation-chat {
-  background: linear-gradient(180deg, rgba(48, 78, 216, 0.16) 0%, rgba(4, 175, 112, 0.12) 100%);
+.motivation-timeline {
+  background: linear-gradient(180deg, rgba(48, 78, 216, 0.14) 0%, rgba(4, 175, 112, 0.1) 100%);
   border-radius: 20px;
-  padding: 1.5rem;
+  padding: 1.65rem 1.75rem;
   box-shadow: 0 18px 40px rgba(17, 34, 68, 0.16);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  text-align: left;
-  width: 100%;
 }
 
-.motivation-chat .event-chat-log {
-  background: rgba(255, 255, 255, 0.72);
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: inset 0 0 0 1px rgba(48, 78, 216, 0.18);
-  height: 320px;
-  overflow-y: auto;
-}
-
-.motivation-chat-footer {
+.motivation-timeline-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -719,15 +708,174 @@ body {
   flex-wrap: wrap;
 }
 
-.motivation-chat-buttons {
+.motivation-timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 1.35rem;
+  position: relative;
 }
 
-.motivation-chat-button {
+.motivation-timeline-list::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 26px;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(48, 78, 216, 0.45), rgba(4, 175, 112, 0.35));
+  border-radius: 999px;
+}
+
+.motivation-timeline-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 1rem;
+  position: relative;
+  align-items: start;
+}
+
+.motivation-timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: 26px;
+  width: 3px;
+  height: calc(100% - 28px);
+  background: rgba(48, 78, 216, 0.18);
+}
+
+.motivation-timeline-item:last-child::before {
+  display: none;
+}
+
+.motivation-timeline-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(48, 78, 216, 0.22), rgba(4, 175, 112, 0.3));
+  box-shadow: 0 10px 24px rgba(23, 38, 66, 0.22);
+  color: var(--color-primary);
+  font-size: 1.15rem;
+}
+
+.motivation-timeline-icon .fas,
+.motivation-timeline-icon .far,
+.motivation-timeline-icon .ai,
+.motivation-timeline-icon .fab {
+  font-size: 1.2rem;
+}
+
+.motivation-timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  box-shadow: inset 0 0 0 1px rgba(48, 78, 216, 0.16);
+  color: #172642;
+}
+
+.motivation-timeline-kicker {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(23, 38, 66, 0.62);
+}
+
+.motivation-timeline-copy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.motivation-accordion {
+  background: linear-gradient(180deg, rgba(23, 38, 66, 0.1) 0%, rgba(48, 78, 216, 0.14) 100%);
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 18px 40px rgba(17, 34, 68, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.motivation-accordion-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.motivation-accordion-item {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(48, 78, 216, 0.14);
+}
+
+.motivation-accordion-button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: #172642;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.motivation-accordion-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.motivation-accordion-button:hover {
+  background: rgba(48, 78, 216, 0.08);
+}
+
+.motivation-accordion-label {
+  flex: 1 1 auto;
+  font-size: 1rem;
+}
+
+.motivation-accordion-indicator {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(48, 78, 216, 0.12);
+  color: var(--color-primary);
+  transition: transform 0.18s ease;
+}
+
+.motivation-accordion-button[aria-expanded="true"] .motivation-accordion-indicator {
+  transform: rotate(180deg);
+}
+
+.motivation-accordion-panel {
+  padding: 0 1.25rem 1.15rem;
+  color: #304060;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.motivation-accordion-panel[hidden] {
+  display: none;
+}
+
+.motivation-action-button {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -742,63 +890,45 @@ body {
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
-.motivation-chat-button:not(.is-secondary):hover,
-.motivation-chat-button:not(.is-secondary):focus-visible {
+.motivation-action-button:not(.is-secondary):hover,
+.motivation-action-button:not(.is-secondary):focus-visible {
   color: var(--color-on-primary);
 }
 
-.motivation-chat-button .icon {
+.motivation-action-button .icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.motivation-chat-button:hover {
+.motivation-action-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 18px 32px rgba(48, 78, 216, 0.32);
 }
 
-.motivation-chat-button:focus-visible {
+.motivation-action-button:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 3px;
 }
 
-.motivation-chat-button.is-secondary {
+.motivation-action-button.is-secondary {
   background: rgba(255, 255, 255, 0.92);
   color: #172642;
   box-shadow: 0 12px 26px rgba(23, 38, 66, 0.16);
   border: 1px solid rgba(23, 38, 66, 0.12);
 }
 
-.motivation-chat-button.is-secondary:hover {
+.motivation-action-button.is-secondary:hover {
   background: #ffffff;
   box-shadow: 0 16px 30px rgba(23, 38, 66, 0.2);
 }
 
-.motivation-chat-button[disabled],
-.motivation-chat-button[aria-disabled="true"] {
+.motivation-action-button[disabled],
+.motivation-action-button[aria-disabled="true"] {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: 0 10px 20px rgba(48, 78, 216, 0.18);
-}
-
-.motivation-chat-status {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #304060;
-}
-
-.motivation-chat-status.is-complete {
-  color: #04af70;
-}
-
-.motivation-chat-status.is-idle {
-  color: #5c6c8f;
-}
-
-.motivation-chat-status.is-error {
-  color: #ac2028;
 }
 
 .motivation-abstract {
@@ -1408,16 +1538,32 @@ body {
     max-height: 200px;
   }
 
-  .motivation-chat {
-    padding: 1.25rem;
-  }
-
-  .motivation-chat .event-chat-log {
-    height: 260px;
-  }
-
   .motivation-content {
     gap: 1.5rem;
+  }
+
+  .motivation-timeline,
+  .motivation-accordion {
+    padding: 1.35rem 1.25rem;
+  }
+
+  .motivation-timeline-list::before {
+    left: 22px;
+  }
+
+  .motivation-timeline-item {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .motivation-timeline-item::before {
+    left: 22px;
+  }
+
+  .motivation-timeline-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
   }
 }
 

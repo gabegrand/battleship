@@ -1812,569 +1812,317 @@ class TrajectoryExplorer {
   }
 }
 
-function initMotivationChat() {
-  const root = document.getElementById('motivation-chat');
-  const logEl = root ? root.querySelector('.event-chat-log') : null;
-  const statusEl = document.getElementById('motivation-chat-status');
-  const replayButton = document.getElementById('motivation-chat-replay');
-  const abstractToggleButton = document.getElementById('motivation-show-abstract');
-  const abstractCloseButton = document.getElementById('motivation-hide-abstract');
+function initMotivationHighlights() {
+  const timelineList = document.getElementById('motivation-timeline-list');
+  const accordionContainer = document.getElementById('motivation-accordion-items');
+  const showAbstractButton = document.getElementById('motivation-show-abstract');
+  const hideAbstractButton = document.getElementById('motivation-hide-abstract');
   const abstractPanel = document.getElementById('motivation-abstract-panel');
   const abstractHeading = document.getElementById('abstract-heading');
 
-  if (!root || !logEl || !statusEl) {
+  if (!timelineList || !accordionContainer) {
     return;
   }
 
-  const reduceMotion = prefersReducedMotion();
-
-  const conversation = [
+  const timelineHighlights = [
     {
-      id: 'reader-why',
-      role: 'captain',
-      label: 'Reader',
-      text: 'OK, so why did you do this research?',
-      delayAfter: 360,
-      iconClass: 'fas fa-book-reader',
+      icon: 'fas fa-compass',
+      kicker: 'Motivation',
+      text: 'High-stakes decisions often require agents to ask smart questions before acting, but we lack benchmarks that measure this balance.',
     },
     {
-      id: 'authors-why',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'In many real-world settings like scientific discovery and medical diagnosis, AI agents need to form hypotheses and run targeted experiments. We wanted to understand whether agents act rationally in these settings when given limited resources, and how their behavior compares to humans.',
-      showThinking: true,
-      delayAfter: 480,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      icon: 'fas fa-chess-board',
+      kicker: 'Task',
+      text: 'Collaborative Battleship pits a question-asking Captain and an all-knowing Spotter against hidden ships, turning information search into gameplay.',
     },
     {
-      id: 'reader-how',
-      role: 'captain',
-      label: 'Reader',
-      text: 'Sounds interesting! How did you study this?',
-      delayAfter: 320,
-      iconClass: 'fas fa-book-reader',
+      icon: 'fas fa-user-friends',
+      kicker: 'Behavior gap',
+      text: 'Compared to 42 humans, language-model captains under-question, mis-ground answers, and waste turns on low-value moves.',
     },
     {
-      id: 'authors-how',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'We introduce a decision-oriented dialogue task designed to evaluate agentic information-seeking. In Collaborative Battleship, players can ask natural language questions to reveal information about the positions of hidden ships on the board.',
-      showThinking: true,
-      delayAfter: 520,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      icon: 'fas fa-flask',
+      kicker: 'Method',
+      text: 'Bayesian Experimental Design heuristics inject Monte Carlo reasoning into LM agents, guiding what they ask and where they fire.',
     },
     {
-      id: 'reader-why-battleship',
-      role: 'captain',
-      label: 'Reader',
-      text: "Why Battleship? Isn't that a kids' game?",
-      delayAfter: 300,
-      iconClass: 'fas fa-book-reader',
-    },
-    {
-      id: 'authors-why-battleship',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'Battleship enables us to study behavioral dynamics in a controlled, minimal environment. Because we can compute information-theoretic values—like “how useful was this question?” or “how good was that move?”—we can rigorously compare the decision-making of both human and AI players.',
-      showThinking: true,
-      delayAfter: 480,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
-    },
-    {
-      id: 'reader-findings',
-      role: 'captain',
-      label: 'Reader',
-      text: 'Got it. So what did you find?',
-      delayAfter: 320,
-      iconClass: 'fas fa-book-reader',
-    },
-    {
-      id: 'authors-findings',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'We found some key skill gaps -- compared to human players, language model agents struggle to ground answers in context, generate informative questions, and select high-value actions. To address these gaps, we developed novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED), which significantly improved agent performance.',
-      showThinking: true,
-      delayAfter: 520,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
-    },
-    {
-      id: 'reader-example',
-      role: 'captain',
-      label: 'Reader',
-      text: "That's impressive! Can you give an example?",
-      delayAfter: 320,
-      iconClass: 'fas fa-book-reader',
-    },
-    {
-      id: 'authors-example',
-      role: 'spotter',
-      label: 'Authors',
-      text: "Sure! For example, we find that Llama-4-Scout is barely above random chance. However, with our methods, Llama-4-Scout improves dramatically at both asking and answering questions -- we see win rates of 82% against humans and 67% against GPT-5. This is especially exciting given that Llama-4-Scout costs about 100x less to run than GPT-5; our findings suggest that there's a lot of room to build more efficient AI systems.",
-      showThinking: true,
-      delayAfter: 520,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
-    },
-    {
-      id: 'reader-generalize',
-      role: 'captain',
-      label: 'Reader',
-      text: 'That sounds significant... but does any of this generalize beyond Battleship?',
-      delayAfter: 320,
-      iconClass: 'fas fa-book-reader',
-    },
-    {
-      id: 'authors-generalize',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'Yes! With a few caveats described in the paper, our methods are general to many kinds of decision-making settings with partial information. As a first step, we replicated our findings on the “Guess Who?” game, where our methods significantly boosted accuracy by 28.3 to 42.4 percentage points. This demonstrates that our approach is broadly applicable for building rational information-seeking agents across different tasks.',
-      showThinking: true,
-      delayAfter: 520,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
-    },
-    {
-      id: 'reader-learn-more',
-      role: 'captain',
-      label: 'Reader',
-      text: "That's great to hear! How can I learn more about this work?",
-      delayAfter: 320,
-      iconClass: 'fas fa-book-reader',
-    },
-    {
-      id: 'authors-learn-more',
-      role: 'spotter',
-      label: 'Authors',
-      text: 'You can check out our paper, which is available on arXiv. Also, keep scrolling below to check out more resources, including an interactive demo!',
-      showThinking: true,
-      iconClass: 'fa-solid fa-chalkboard-user fas fa-chalkboard-teacher',
+      icon: 'fas fa-rocket',
+      kicker: 'Impact',
+      text: 'The upgraded agents dramatically boost win rates, close most of the F1 gap, and transfer to Guess Who? with double-digit accuracy gains.',
     },
   ];
 
-  const scheduledTimeouts = new Set();
-  let activeAnimationToken = 0;
-  let isAnimating = false;
-  let hasStarted = false;
-  let isAbstractExpanded = false;
-  let abstractVisibilityFrame = null;
-  let abstractHideListener = null;
+  timelineList.innerHTML = '';
+  timelineHighlights.forEach((item) => {
+    const li = document.createElement('li');
+    li.className = 'motivation-timeline-item';
 
-  function scheduleTimeout(callback, duration) {
-    const handle = window.setTimeout(() => {
-      scheduledTimeouts.delete(handle);
-      callback();
-    }, Math.max(0, duration));
-    scheduledTimeouts.add(handle);
-    return handle;
-  }
-
-  function clearScheduledTimeouts() {
-    scheduledTimeouts.forEach((handle) => {
-      window.clearTimeout(handle);
-    });
-    scheduledTimeouts.clear();
-  }
-
-  function setStatus(stateClass, text) {
-    statusEl.textContent = text;
-    statusEl.classList.remove('is-idle', 'is-complete', 'is-error');
-    if (stateClass) {
-      statusEl.classList.add(stateClass);
-    }
-  }
-
-  function setReplayDisabled(disabled) {
-    if (!replayButton) return;
-    if (disabled) {
-      replayButton.disabled = true;
-      replayButton.setAttribute('aria-disabled', 'true');
-    } else {
-      replayButton.disabled = false;
-      replayButton.setAttribute('aria-disabled', 'false');
-    }
-  }
-
-  function resetLog() {
-    logEl.innerHTML = '';
-  }
-
-  function scrollLogToEnd() {
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function setAbstractVisibility(expand, { focus = 'auto', announce = true } = {}) {
-    const nextState = Boolean(expand);
-    const previousState = isAbstractExpanded;
-    isAbstractExpanded = nextState;
-
-    if (abstractPanel) {
-      if (abstractVisibilityFrame !== null) {
-        window.cancelAnimationFrame(abstractVisibilityFrame);
-        abstractVisibilityFrame = null;
-      }
-
-      if (abstractHideListener) {
-        abstractPanel.removeEventListener('transitionend', abstractHideListener);
-        abstractHideListener = null;
-      }
-
-      if (reduceMotion) {
-        abstractPanel.hidden = !isAbstractExpanded;
-        abstractPanel.classList.toggle('is-visible', isAbstractExpanded);
-      } else if (previousState !== isAbstractExpanded) {
-        if (isAbstractExpanded) {
-          abstractPanel.hidden = false;
-          abstractPanel.classList.remove('is-visible');
-          abstractPanel.getBoundingClientRect();
-          abstractVisibilityFrame = window.requestAnimationFrame(() => {
-            abstractVisibilityFrame = null;
-            if (!isAbstractExpanded) {
-              if (!abstractPanel.hidden) {
-                abstractPanel.hidden = true;
-              }
-              return;
-            }
-            abstractPanel.classList.add('is-visible');
-          });
-        } else {
-          abstractPanel.classList.remove('is-visible');
-          if (!abstractPanel.hidden) {
-            abstractHideListener = (event) => {
-              if (event.target !== abstractPanel || event.propertyName !== 'opacity') {
-                return;
-              }
-              if (!isAbstractExpanded) {
-                abstractPanel.hidden = true;
-              }
-              if (abstractHideListener) {
-                abstractPanel.removeEventListener('transitionend', abstractHideListener);
-                abstractHideListener = null;
-              }
-            };
-            abstractPanel.addEventListener('transitionend', abstractHideListener);
-          } else {
-            abstractPanel.hidden = true;
-          }
-        }
-      } else {
-        abstractPanel.hidden = !isAbstractExpanded;
-        abstractPanel.classList.toggle('is-visible', isAbstractExpanded);
-      }
-
-      abstractPanel.setAttribute('aria-hidden', isAbstractExpanded ? 'false' : 'true');
+    const icon = document.createElement('span');
+    icon.className = 'motivation-timeline-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    if (item.icon) {
+      const iconEl = document.createElement('i');
+      iconEl.className = item.icon;
+      iconEl.setAttribute('aria-hidden', 'true');
+      icon.appendChild(iconEl);
     }
 
-    if (abstractToggleButton) {
-      abstractToggleButton.setAttribute('aria-expanded', isAbstractExpanded ? 'true' : 'false');
-      const labelEl = abstractToggleButton.querySelector('.label');
-      if (labelEl) {
-        labelEl.textContent = isAbstractExpanded ? 'Hide full abstract' : 'View full abstract';
-      }
+    const body = document.createElement('div');
+    body.className = 'motivation-timeline-body';
+
+    if (item.kicker) {
+      const kicker = document.createElement('p');
+      kicker.className = 'motivation-timeline-kicker';
+      kicker.textContent = item.kicker;
+      body.appendChild(kicker);
     }
 
-    if (abstractCloseButton) {
-      abstractCloseButton.hidden = !isAbstractExpanded;
-      abstractCloseButton.setAttribute('aria-hidden', isAbstractExpanded ? 'false' : 'true');
+    if (item.text) {
+      const copy = document.createElement('p');
+      copy.className = 'motivation-timeline-copy';
+      copy.textContent = item.text;
+      body.appendChild(copy);
     }
 
-    if (announce) {
-      setStatus(null, '');
-    }
-
-    if (focus === 'none') {
-      return;
-    }
-
-    if (isAbstractExpanded) {
-      if (abstractHeading && (focus === 'auto' || focus === 'abstract')) {
-        const delay = reduceMotion ? 0 : 120;
-        window.setTimeout(() => {
-          abstractHeading.focus({ preventScroll: false });
-        }, delay);
-      }
-      return;
-    }
-
-    if (focus === 'toggle' && abstractToggleButton) {
-      const delay = reduceMotion ? 0 : 120;
-      window.setTimeout(() => {
-        abstractToggleButton.focus({ preventScroll: false });
-      }, delay);
-      return;
-    }
-
-    if (focus === 'auto' || focus === 'log') {
-      const delay = reduceMotion ? 0 : 120;
-      const prevTabIndex = logEl.getAttribute('tabindex');
-      if (prevTabIndex === null) {
-        logEl.setAttribute('tabindex', '-1');
-      }
-      window.setTimeout(() => {
-        logEl.focus({ preventScroll: false });
-        if (prevTabIndex === null) {
-          logEl.removeAttribute('tabindex');
-        }
-      }, delay);
-    }
-  }
-
-  function typeTextWithToken({ textEl, caret, text, animationToken, logElement, timeScale = 1 }) {
-    return new Promise((resolve) => {
-      const messageText = typeof text === 'string' ? text : '';
-      if (!textEl) {
-        resolve();
-        return;
-      }
-
-      if (reduceMotion || animationToken !== activeAnimationToken || messageText.length === 0) {
-        textEl.textContent = messageText;
-        setTypingCaretVisibility(caret, false);
-        if (logElement) {
-          logElement.scrollTop = logElement.scrollHeight;
-        }
-        resolve();
-        return;
-      }
-
-      textEl.textContent = '';
-      setTypingCaretVisibility(caret, true);
-      let index = 0;
-
-      const step = () => {
-        if (animationToken !== activeAnimationToken) {
-          textEl.textContent = messageText;
-          setTypingCaretVisibility(caret, false);
-          if (logElement) {
-            logElement.scrollTop = logElement.scrollHeight;
-          }
-          resolve();
-          return;
-        }
-
-        textEl.textContent += messageText.charAt(index);
-        index += 1;
-
-        if (logElement) {
-          logElement.scrollTop = logElement.scrollHeight;
-        }
-
-        if (index >= messageText.length) {
-          setTypingCaretVisibility(caret, false);
-          resolve();
-          return;
-        }
-
-        const previousChar = messageText.charAt(index - 1);
-        let delay = TYPEWRITER_CHAR_DELAY_MS;
-        if (/[,.;!?]/.test(previousChar)) {
-          delay = TYPEWRITER_PUNCTUATION_DELAY_MS;
-        } else if (previousChar === ' ') {
-          delay = TYPEWRITER_SPACE_DELAY_MS;
-        }
-
-        scheduleTimeout(step, delay * timeScale);
-      };
-
-      step();
-    });
-  }
-
-  function waitWithToken(durationMs, animationToken) {
-    if (reduceMotion || durationMs <= 0) {
-      return Promise.resolve();
-    }
-    return new Promise((resolve) => {
-      scheduleTimeout(() => {
-        if (animationToken !== activeAnimationToken) {
-          resolve();
-          return;
-        }
-        resolve();
-      }, durationMs);
-    });
-  }
-
-  async function renderMessage(entry, animationToken) {
-    const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
-    logEl.appendChild(message.wrapper);
-    scrollLogToEnd();
-
-    if (entry.showThinking && !reduceMotion) {
-      const thinking = createThinkingElement();
-      message.textEl.style.display = 'none';
-      setTypingCaretVisibility(message.caret, false);
-      message.bubble.insertBefore(thinking, message.textEl);
-      const thinkingDelay = THINKING_BASE_DELAY_MS + (entry.thinkingDelay || 0);
-      await waitWithToken(thinkingDelay, animationToken);
-      if (animationToken !== activeAnimationToken) {
-        return;
-      }
-      if (message.bubble.contains(thinking)) {
-        message.bubble.removeChild(thinking);
-      }
-      message.textEl.style.display = '';
-    }
-
-    await typeTextWithToken({
-      textEl: message.textEl,
-      caret: message.caret,
-      text: entry.text,
-      animationToken,
-      logElement: logEl,
-    });
-  }
-
-  async function playConversation() {
-    if (isAnimating) {
-      return;
-    }
-
-    if (isAbstractExpanded) {
-      setAbstractVisibility(false, { focus: 'none', announce: false });
-    }
-
-    isAnimating = true;
-    hasStarted = true;
-    setReplayDisabled(true);
-    clearScheduledTimeouts();
-    activeAnimationToken += 1;
-    const animationToken = activeAnimationToken;
-    resetLog();
-
-    try {
-      for (let i = 0; i < conversation.length; i += 1) {
-        const entry = conversation[i];
-        if (entry.delayBefore) {
-          await waitWithToken(entry.delayBefore, animationToken);
-          if (animationToken !== activeAnimationToken) {
-            return;
-          }
-        }
-        await renderMessage(entry, animationToken);
-        if (animationToken !== activeAnimationToken) {
-          return;
-        }
-        if (entry.delayAfter) {
-          await waitWithToken(entry.delayAfter, animationToken);
-          if (animationToken !== activeAnimationToken) {
-            return;
-          }
-        }
-      }
-    } finally {
-      clearScheduledTimeouts();
-      if (animationToken === activeAnimationToken) {
-        isAnimating = false;
-        setReplayDisabled(false);
-      }
-    }
-  }
-
-  function startPlayback() {
-    if (reduceMotion || isAnimating) {
-      return;
-    }
-    playConversation();
-  }
-
-  function expandAbstract({ focus = 'abstract', announce = true } = {}) {
-    setAbstractVisibility(true, { focus, announce });
-  }
-
-  function collapseAbstract({ focus = 'log', announce = true } = {}) {
-    if (!isAbstractExpanded) {
-      if (announce || focus !== 'none') {
-        setAbstractVisibility(false, { focus, announce });
-      }
-      return;
-    }
-    setAbstractVisibility(false, { focus, announce });
-  }
-
-  function initialiseTranscript() {
-    resetLog();
-    conversation.forEach((entry) => {
-      const message = createChatMessage({ role: entry.role, label: entry.label, iconClass: entry.iconClass });
-      message.textEl.textContent = entry.text;
-      setTypingCaretVisibility(message.caret, false);
-      logEl.appendChild(message.wrapper);
-    });
-    scrollLogToEnd();
-  }
-
-  if (reduceMotion) {
-    initialiseTranscript();
-    setStatus(null, '');
-    setReplayDisabled(true);
-  } else {
-    setReplayDisabled(false);
-    setStatus(null, '');
-
-    if (replayButton) {
-      replayButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (isAbstractExpanded) {
-          collapseAbstract({ focus: 'none', announce: false });
-        }
-        startPlayback();
-      });
-    }
-
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasStarted && !isAnimating && !isAbstractExpanded) {
-            startPlayback();
-            if (obs) {
-              obs.unobserve(root);
-            }
-          }
-        });
-      }, { threshold: 0.35 });
-      observer.observe(root);
-    } else {
-      scheduleTimeout(() => {
-        if (!hasStarted && !isAnimating && !isAbstractExpanded) {
-          startPlayback();
-        }
-      }, 600);
-    }
-  }
-
-  if (abstractToggleButton) {
-    abstractToggleButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      const nextState = !isAbstractExpanded;
-      if (nextState) {
-        expandAbstract({ focus: 'abstract' });
-      } else {
-        collapseAbstract({ focus: 'toggle' });
-      }
-    });
-  }
-
-  if (abstractCloseButton) {
-    abstractCloseButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      collapseAbstract({ focus: 'toggle' });
-    });
-  }
-
-  setAbstractVisibility(false, { focus: 'none', announce: false });
-
-  if (window.location.hash === '#abstract') {
-    expandAbstract({ focus: 'abstract', announce: false });
-  }
-
-  window.addEventListener('hashchange', () => {
-    if (window.location.hash === '#abstract') {
-      expandAbstract({ focus: 'abstract', announce: false });
-    } else if (isAbstractExpanded) {
-      collapseAbstract({ focus: 'none', announce: false });
-    }
+    li.appendChild(icon);
+    li.appendChild(body);
+    timelineList.appendChild(li);
   });
 
-  if (reduceMotion) {
-    setReplayDisabled(true);
+  const accordionEntries = [
+    {
+      question: 'Why use Battleship as a testbed?',
+      answer: [
+        'Battleship strips decision making down to its essentials: every turn forces a trade-off between gathering information and acting on it.',
+        'Because the board is fully observable to the Spotter, we can score each question and move with expected information gain and F1 metrics.',
+      ],
+    },
+    {
+      question: 'What did the baseline language models struggle with?',
+      bullets: [
+        'Grounding: answers sometimes drift away from the board state.',
+        'Question quality: captains fixate on low-yield queries.',
+        'Action selection: many moves resemble random firing, wasting scarce turns.',
+      ],
+      answer: 'These patterns echo qualitative feedback from human players, who describe the agents as “hesitant” and “scattershot.”',
+    },
+    {
+      question: 'How do the Bayesian add-ons help?',
+      answer: [
+        'We sample hypothetical boards, score candidate questions with BED-inspired heuristics, and re-rank LM answers using Monte Carlo evidence.',
+        'This nudges the LM toward informative follow-ups without requiring task-specific supervision.',
+      ],
+    },
+    {
+      question: 'Do the gains extend beyond Battleship?',
+      answer: [
+        'Yes—replicating the setup on Guess Who? lifts accuracy by 28 to 42 percentage points.',
+        'The same heuristics apply to other partially observed games and diagnostic workflows where agents must alternate between probing and acting.',
+      ],
+    },
+    {
+      question: 'Where should readers go next?',
+      answer: [
+        'Scan the full abstract for the quantitative takeaways, then head to the interactive demo to watch the upgraded agents plan in real time.',
+      ],
+    },
+  ];
+
+  accordionContainer.innerHTML = '';
+  const accordionItems = [];
+
+  accordionEntries.forEach((entry, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'motivation-accordion-item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'motivation-accordion-button';
+    const buttonId = `motivation-accordion-trigger-${index}`;
+    const panelId = `motivation-accordion-panel-${index}`;
+    button.id = buttonId;
+    button.setAttribute('aria-controls', panelId);
+    button.setAttribute('aria-expanded', 'false');
+
+    const label = document.createElement('span');
+    label.className = 'motivation-accordion-label';
+    label.textContent = entry.question;
+
+    const indicator = document.createElement('span');
+    indicator.className = 'motivation-accordion-indicator';
+    indicator.setAttribute('aria-hidden', 'true');
+    const indicatorIcon = document.createElement('i');
+    indicatorIcon.className = 'fas fa-chevron-down';
+    indicatorIcon.setAttribute('aria-hidden', 'true');
+    indicator.appendChild(indicatorIcon);
+
+    button.appendChild(label);
+    button.appendChild(indicator);
+
+    const panel = document.createElement('div');
+    panel.className = 'motivation-accordion-panel';
+    panel.id = panelId;
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-labelledby', buttonId);
+    panel.hidden = true;
+
+    const addParagraph = (text) => {
+      if (!text) return;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      panel.appendChild(paragraph);
+    };
+
+    if (Array.isArray(entry.answer)) {
+      entry.answer.forEach(addParagraph);
+    } else {
+      addParagraph(entry.answer);
+    }
+
+    if (Array.isArray(entry.bullets) && entry.bullets.length > 0) {
+      const list = document.createElement('ul');
+      entry.bullets.forEach((bullet) => {
+        const li = document.createElement('li');
+        li.textContent = bullet;
+        list.appendChild(li);
+      });
+      panel.appendChild(list);
+    }
+
+    wrapper.appendChild(button);
+    wrapper.appendChild(panel);
+    accordionContainer.appendChild(wrapper);
+    accordionItems.push({ button, panel });
+  });
+
+  const setAccordionState = (targetIndex) => {
+    accordionItems.forEach(({ button, panel }, index) => {
+      const isActive = index === targetIndex;
+      button.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+      panel.hidden = !isActive;
+    });
+  };
+
+  accordionItems.forEach(({ button }, index) => {
+    button.addEventListener('click', () => {
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        setAccordionState(null);
+      } else {
+        setAccordionState(index);
+      }
+    });
+  });
+
+  if (accordionItems.length > 0) {
+    setAccordionState(0);
   }
+
+  const reduceMotion = prefersReducedMotion();
+  let hideTimer = null;
+
+  const clearHideTimer = () => {
+    if (hideTimer !== null) {
+      window.clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  };
+
+  const showAbstract = ({ focusHeading = true, scrollIntoView = true } = {}) => {
+    if (!abstractPanel) return;
+    clearHideTimer();
+    abstractPanel.hidden = false;
+    abstractPanel.classList.add('is-visible');
+    abstractPanel.setAttribute('aria-hidden', 'false');
+
+    if (showAbstractButton) {
+      showAbstractButton.setAttribute('aria-expanded', 'true');
+    }
+    if (hideAbstractButton) {
+      hideAbstractButton.hidden = false;
+    }
+
+    if (scrollIntoView && typeof abstractPanel.scrollIntoView === 'function') {
+      abstractPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    if (focusHeading && abstractHeading) {
+      window.requestAnimationFrame(() => {
+        try {
+          abstractHeading.focus({ preventScroll: true });
+        } catch (error) {
+          abstractHeading.focus();
+        }
+      });
+    }
+  };
+
+  const hideAbstract = ({ returnFocus = false } = {}) => {
+    if (!abstractPanel) return;
+    abstractPanel.classList.remove('is-visible');
+    abstractPanel.setAttribute('aria-hidden', 'true');
+
+    if (showAbstractButton) {
+      showAbstractButton.setAttribute('aria-expanded', 'false');
+    }
+    if (hideAbstractButton) {
+      hideAbstractButton.hidden = true;
+    }
+
+    const finalizeHide = () => {
+      abstractPanel.hidden = true;
+      hideTimer = null;
+    };
+
+    clearHideTimer();
+    if (reduceMotion) {
+      finalizeHide();
+    } else {
+      hideTimer = window.setTimeout(finalizeHide, 240);
+    }
+
+    if (returnFocus && showAbstractButton) {
+      window.requestAnimationFrame(() => {
+        try {
+          showAbstractButton.focus({ preventScroll: true });
+        } catch (error) {
+          showAbstractButton.focus();
+        }
+      });
+    }
+  };
+
+  if (showAbstractButton) {
+    showAbstractButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      const expanded = showAbstractButton.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        hideAbstract({ returnFocus: false });
+      } else {
+        showAbstract({ focusHeading: true, scrollIntoView: true });
+      }
+    });
+  }
+
+  if (hideAbstractButton) {
+    hideAbstractButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      hideAbstract({ returnFocus: true });
+    });
+  }
+
+  const handleHashChange = () => {
+    if (window.location.hash === '#abstract') {
+      showAbstract({ focusHeading: false, scrollIntoView: false });
+    } else if (abstractPanel && !abstractPanel.hidden) {
+      hideAbstract({ returnFocus: false });
+    }
+  };
+
+  window.addEventListener('hashchange', handleHashChange);
+
+  hideAbstract({ returnFocus: false });
+  handleHashChange();
 }
 
 function initHeroExplorer(dataPromise) {
@@ -2425,5 +2173,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const dataPromise = getTrajectoryData();
   initHeroExplorer(dataPromise);
   initMainExplorer(dataPromise);
-  initMotivationChat();
+  initMotivationHighlights();
 });

@@ -114,42 +114,24 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-four-fifths has-text-left">
-        <h2 class="title is-3 has-text-centered" id="motivation-title">Abstract Q&A</h2>
+        <h2 class="title is-3 has-text-centered" id="motivation-title">Abstract at a Glance</h2>
         <div class="motivation-content">
-          <div class="motivation-chat" id="motivation-chat" aria-describedby="motivation-chat-status">
-            <div class="event-chat-log" id="motivation-chat-log" role="log" aria-live="polite">
-              <noscript>
-                <p><strong>Reader:</strong> OK, so why did you do this research?</p>
-                <p><strong>Authors:</strong> In many real-world settings like scientific discovery and medical diagnosis, AI agents need to form hypotheses and run targeted experiments. We wanted to understand whether agents act rationally in these settings when given limited resources, and how their behavior compares to humans.</p>
-                <p><strong>Reader:</strong> Sounds interesting! How did you study this?</p>
-                <p><strong>Authors:</strong> We introduce a decision-oriented dialogue task designed to evaluate agentic information-seeking. In <strong>Collaborative Battleship</strong>, players can ask natural language questions to reveal information about the positions of hidden ships on the board.</p>
-                <p><strong>Reader:</strong> Why Battleship? Isn't that a kids' game?</p>
-                <p><strong>Authors:</strong> Battleship enables us to study behavioral dynamics in a controlled, minimal environment. Because we can compute information-theoretic values—like “how useful was this question?” or “how good was that move?”—we can rigorously compare the decision-making of both human and AI players.</p>
-                <p><strong>Reader:</strong> Got it. So what did you find?</p>
-                <p><strong>Authors:</strong> We found some key skill gaps -- compared to human players, language model agents struggle to ground answers in context, generate informative questions, and select high-value actions. To address these gaps, we developed novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED), which significantly improved agent performance.</p>
-                <p><strong>Reader:</strong> That's impressive! Can you give an example?</p>
-                <p><strong>Authors:</strong> Sure! For example, we find that Llama-4-Scout is barely above random chance. However, with our methods, Llama-4-Scout improves dramatically at both asking and answering questions -- we see win rates of 82% against humans and 67% against GPT-5. This is especially exciting given that Llama-4-Scout costs about 100x less to run than GPT-5; our findings suggest that there's a lot of room to build more efficient AI systems.</p>
-                <p><strong>Reader:</strong> That sounds significant... but does any of this generalize beyond Battleship?</p>
-                <p><strong>Authors:</strong> Yes! With a few caveats described in the paper, our methods are general to many kinds of decision-making settings with partial information. As a first step, we replicated our findings on the “Guess Who?” game, where our methods significantly boosted accuracy by 28.3 to 42.4 percentage points. This demonstrates that our approach is broadly applicable for building rational information-seeking agents across different tasks.</p>
-                <p><strong>Reader:</strong> That's great to hear! How can I learn more about this work?</p>
-                <p><strong>Authors:</strong> You can check out our paper, which is available on arXiv. Also, keep scrolling below to check out more resources, including an interactive demo!</p>
-                <p><a href="#abstract-noscript">Skip ahead to the abstract.</a></p>
-              </noscript>
-            </div>
-            <div class="motivation-chat-footer">
-              <span class="motivation-chat-status" id="motivation-chat-status" role="status" aria-live="polite">Loading chat…</span>
-              <div class="motivation-chat-buttons">
-                <button class="motivation-chat-button is-secondary" id="motivation-show-abstract" type="button" aria-expanded="false" aria-controls="motivation-abstract-panel">
-                  <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
-                  <span class="label">View full abstract</span>
-                </button>
-                <button class="motivation-chat-button" id="motivation-chat-replay" type="button" aria-label="Replay the motivation chat">
-                  <span class="icon" aria-hidden="true"><i class="fas fa-sync-alt"></i></span>
-                  <span class="label">Replay</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <section class="motivation-timeline" id="motivation-timeline" aria-label="Abstract highlights timeline">
+            <header class="motivation-timeline-header">
+              <h3 class="title is-5 mb-2">Key points</h3>
+              <button class="motivation-action-button is-secondary" id="motivation-show-abstract" type="button" aria-expanded="false" aria-controls="motivation-abstract-panel">
+                <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+                <span class="label">View full abstract</span>
+              </button>
+            </header>
+            <ol class="motivation-timeline-list" id="motivation-timeline-list"></ol>
+          </section>
+
+          <section class="motivation-accordion" id="motivation-accordion" aria-label="Abstract questions and answers">
+            <h3 class="title is-5 mb-2">Dig deeper</h3>
+            <div class="motivation-accordion-items" id="motivation-accordion-items"></div>
+          </section>
+
           <div class="motivation-abstract" id="motivation-abstract-panel" role="region" aria-labelledby="abstract-heading" aria-hidden="true" hidden>
             <div class="motivation-abstract-header">
               <h2 class="title is-3" id="abstract-heading" tabindex="-1">Abstract</h2>
@@ -160,7 +142,7 @@ Many high-stakes applications of AI require forming data-driven hypotheses and m
               </p>
             </div>
             <div class="motivation-abstract-actions">
-              <button class="motivation-chat-button is-secondary" id="motivation-hide-abstract" type="button" hidden>
+              <button class="motivation-action-button is-secondary" id="motivation-hide-abstract" type="button" hidden>
                 <span class="icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>
                 <span class="label">Hide abstract</span>
               </button>
@@ -169,7 +151,12 @@ Many high-stakes applications of AI require forming data-driven hypotheses and m
         </div>
         <noscript>
           <div class="motivation-noscript-abstract content has-text-justified" id="abstract-noscript">
-            <h2 class="title is-4">Abstract</h2>
+            <h2 class="title is-4">Abstract highlights</h2>
+            <ul>
+              <li>We study how resource-limited agents balance asking questions and taking actions in Collaborative Battleship.</li>
+              <li>Human players outperform language model agents at grounding, questioning, and decision quality.</li>
+              <li>Bayesian Experimental Design heuristics close major performance gaps and generalize to other games.</li>
+            </ul>
             <p>
 Many high-stakes applications of AI require forming data-driven hypotheses and making targeted guesses; e.g., in scientific and diagnostic settings. Given limited resources, to what extent do agents based on language models (LMs) act rationally? We develop methods to benchmark and enhance agentic information-seeking, drawing on insights from human behavior. First, we introduce a strategic decision-oriented dialogue task called Collaborative Battleship, in which a partially informed Captain must balance exploration (asking questions) and action (taking shots), while a fully informed Spotter must provide accurate answers under an information bottleneck. Compared to human players (N=42), we find that LM agents struggle to ground answers in context, generate informative questions, and select high-value actions. Next, to address these gaps, we develop novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED). For Spotter agents, our approach boosts accuracy by up to 14.7% absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits (94.2% of the achievable noise ceiling). Combined, these components yield sharper targeting (+0.303–0.374 F1), and enable weaker LMs, such as Llama-4-Scout, to outperform both humans (8% → 82% win rate) and frontier models (0% → 67% win rate vs. GPT-5) at ≈1% of GPT-5's cost. We replicate these findings on Guess Who? where our methods significantly boost accuracy (+28.3–42.4 p.p.), demonstrating their general applicability for building rational information-seeking agents.
             </p>
