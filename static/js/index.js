@@ -1498,12 +1498,13 @@ document.addEventListener('DOMContentLoaded', () => {
     state.currentStage = 0;
     const game = getCurrentGame();
     if (!game) return;
-  state.hasActiveGame = true;
+    const wasActive = state.hasActiveGame;
+    state.hasActiveGame = true;
     updateStatusForGame(game);
     renderMetrics(game);
     buildTimeline(game);
     updateSlider(game);
-    timelineScrollRequested = true;
+    timelineScrollRequested = wasActive;
     highlightActiveGameButton();
     updateGameNavButtons();
     setPlaying(false);
