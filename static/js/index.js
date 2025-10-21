@@ -751,8 +751,16 @@ class TrajectoryExplorer {
     this.setGame(nextGameIndex);
     const button = this.gameButtons.get(nextGameIndex);
     if (button) {
-      button.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      button.focus();
+      const activeElement = document.activeElement;
+      const shouldMoveFocus = activeElement && activeElement !== document.body && this.root.contains(activeElement);
+      if (shouldMoveFocus) {
+        button.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        try {
+          button.focus({ preventScroll: true });
+        } catch (error) {
+          button.focus();
+        }
+      }
     }
   }
 
@@ -1322,9 +1330,13 @@ class TrajectoryExplorer {
       }
     });
     if (this.timelineScrollRequested && targetButton) {
-      requestAnimationFrame(() => {
-        targetButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
+      const activeElement = document.activeElement;
+      const shouldScroll = activeElement && activeElement !== document.body && this.root.contains(activeElement);
+      if (shouldScroll) {
+        requestAnimationFrame(() => {
+          targetButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+      }
     }
     this.timelineScrollRequested = false;
   }
