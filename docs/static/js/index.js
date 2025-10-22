@@ -63,6 +63,7 @@ const SLIDER_ANIMATION_DURATION_RATIO = 1.0;
 const CODE_SNIPPET_LINGER_MS = 900;
 const CODE_EVALUATION_DELAY_MS = 1100;
 const CODE_RESULT_LINGER_MS = 700;
+const CODE_BLOCK_REVEAL_DELAY_MS = 780;
 
 const DEFAULT_SELECTORS = {
   status: '#trajectory-status',
@@ -2069,13 +2070,10 @@ class CodeGenerationShowcase {
     });
     if (animationId !== this.animationId) return;
 
-    await this.delayWithCancel(QUESTION_LINGER_BUFFER_MS, instant);
-    if (animationId !== this.animationId) return;
-
     const codeString = typeof example.fn_str === 'string' && example.fn_str.trim().length
       ? example.fn_str.trim()
       : '# No code generated for this exchange.';
-  await this.displayCodeMessage({ logEl, code: codeString, animationId, instant });
+  const codeMessage = await this.displayCodeMessage({ logEl, code: codeString, animationId, instant });
     if (animationId !== this.animationId) return;
 
     await this.delayWithCancel(CODE_SNIPPET_LINGER_MS, instant);
@@ -2091,13 +2089,8 @@ class CodeGenerationShowcase {
     await this.delayWithCancel(CODE_RESULT_LINGER_MS, instant);
     if (animationId !== this.animationId) return;
 
-    const thinkingMessage = this.showThinkingMessage({ logEl, role: 'spotter', label: 'Spotter' });
     await this.delayWithCancel(THINKING_BASE_DELAY_MS, instant);
     if (animationId !== this.animationId) return;
-    if (thinkingMessage) {
-      this.removeMessage(thinkingMessage);
-      logEl.scrollTop = logEl.scrollHeight;
-    }
 
     const answerText = example.answer?.text?.trim() || (example.answer?.value ? 'Yes.' : 'No.');
     await this.displayTypewrittenMessage({
@@ -2147,7 +2140,7 @@ class CodeGenerationShowcase {
     logEl.scrollTop = logEl.scrollHeight;
 
     if (message.textEl) {
-      message.textEl.textContent = typeof code === 'string' ? code : '';
+      message.textEl.textContent = '';
     }
 
     if (message.caret && message.caret.parentNode) {
@@ -2155,12 +2148,37 @@ class CodeGenerationShowcase {
       message.caret = null;
     }
 
-    if (codeWrapper && !instant && !prefersReducedMotion()) {
+    message.codeWrapper = codeWrapper;
+    message.codeEl = codeEl;
+
+    const reduceMotion = prefersReducedMotion();
+    const shouldAnimate = !instant && !reduceMotion;
+
+    if (codeWrapper && shouldAnimate) {
+      codeWrapper.classList.add('is-pending');
       requestAnimationFrame(() => {
         codeWrapper.classList.add('is-visible');
       });
     } else if (codeWrapper) {
       codeWrapper.classList.add('is-visible');
+    }
+
+    if (shouldAnimate) {
+      await this.delayWithCancel(CODE_BLOCK_REVEAL_DELAY_MS, instant);
+      if (animationId !== this.animationId) {
+        if (codeWrapper) {
+          codeWrapper.classList.remove('is-pending');
+        }
+        return message;
+      }
+    }
+
+    if (codeWrapper) {
+      codeWrapper.classList.remove('is-pending');
+    }
+
+    if (message.textEl) {
+      message.textEl.textContent = typeof code === 'string' ? code : '';
     }
 
     if (animationId !== this.animationId) {
@@ -2171,32 +2189,12 @@ class CodeGenerationShowcase {
       window.hljs.highlightElement(codeEl);
     }
 
+    if (codeWrapper) {
+      codeWrapper.classList.add('is-revealed');
+    }
+
     logEl.scrollTop = logEl.scrollHeight;
     return message;
-  }
-
-  showThinkingMessage({ logEl, role = 'spotter', label = 'Spotter' } = {}) {
-    if (!logEl) return null;
-    const message = createChatMessage({ role, label });
-    if (message.textEl && message.textEl.parentNode) {
-      message.textEl.parentNode.removeChild(message.textEl);
-      message.textEl = null;
-    }
-    if (message.caret && message.caret.parentNode) {
-      message.caret.parentNode.removeChild(message.caret);
-      message.caret = null;
-    }
-    const thinkingEl = createThinkingElement();
-    message.bubble.appendChild(thinkingEl);
-    logEl.appendChild(message.wrapper);
-    logEl.scrollTop = logEl.scrollHeight;
-    return message;
-  }
-
-  removeMessage(message) {
-    if (message?.wrapper && message.wrapper.parentNode) {
-      message.wrapper.parentNode.removeChild(message.wrapper);
-    }
   }
 
   showEvaluatingMessage({ logEl }) {

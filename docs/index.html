@@ -328,12 +328,11 @@
   <section class="section section-codegen" id="code-generation">
     <div class="container is-max-widescreen">
       <div class="section-heading has-text-centered">
-        <h2 class="title is-3">Grounding Questions by Generating Code</h2>
-        <p class="subtitle is-5">Watch our Spotter convert natural language into executable Python that inspects both
-          boards before answering.</p>
+        <h2 class="title is-3 is-spaced">Grounding questions by generating code</h2>
+        <p class="subtitle is-5">Translating questions into Python code enables the Spotter to reason more effectively about the board state.</p>
       </div>
       <div class="codegen-controls">
-        <div class="codegen-example-label">Explore curated playthroughs:</div>
+        <div class="codegen-example-label">Explore examples:</div>
         <div class="codegen-example-switch" data-role="codegen-example-switch" role="tablist"
           aria-label="Code grounding examples"></div>
       </div>
@@ -366,6 +365,23 @@
             <p class="board-caption codegen-board-caption" data-role="codegen-board-caption">True board known to the
               Spotter</p>
             <div class="board-grid" data-role="codegen-board-grid" role="grid" aria-label="Spotter board"></div>
+          </div>
+        </div>
+      </div>
+      <div class="codegen-metrics mt-6">
+        <h3 class="subtitle is-4 has-text-centered">Across LMs, code generation boosts Spotter accuracy by +14.7% absolute percentage points.</h3>
+        <div class="columns is-multiline is-centered mt-4">
+          <div class="column is-5">
+            <figure class="image">
+              <img src="./static/images/spotter_accuracy_by_model.png" alt="Spotter QA accuracy by language model" />
+              <figcaption class="has-text-centered is-size-6 mt-2">Accuracy varies across the 15 LMs we evaluated.</figcaption>
+            </figure>
+          </div>
+          <div class="column is-5">
+            <figure class="image">
+              <img src="./static/images/spotter_accuracy_overall.png" alt="Spotter QA accuracy by strategy, highlighting code generation" />
+              <figcaption class="has-text-centered is-size-6 mt-2">Code generation consistently improves Spotter QA over direct answering and CoT.</figcaption>
+            </figure>
           </div>
         </div>
       </div>

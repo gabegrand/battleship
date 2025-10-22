@@ -1202,6 +1202,11 @@ body {
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 220ms ease, transform 220ms ease;
+  min-height: 3.25rem;
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  width: 100%;
 }
 
 .codegen-code-block.is-visible {
@@ -1209,16 +1214,49 @@ body {
   transform: translateY(0);
 }
 
+.codegen-code-block.is-pending::after {
+  content: 'Generating code…';
+  position: absolute;
+  inset: 0;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(233, 238, 252, 0.62);
+  pointer-events: none;
+}
+
+.codegen-code-block.is-revealed::after {
+  content: none;
+}
+
 .codegen-code-block code {
   background: transparent;
   padding: 0;
   white-space: pre-wrap;
+  width: 100%;
+  display: block;
+  line-height: 1.45;
+  overflow-x: auto;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.codegen-code-block.is-revealed code {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .codegen-code-block {
     transition: none;
     transform: none;
+    opacity: 1;
+  }
+
+  .codegen-code-block code {
+    transition: none;
     opacity: 1;
   }
 }
