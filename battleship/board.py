@@ -187,6 +187,8 @@ class Board(object):
 
     @staticmethod
     def from_trial_id(trial_id: int, experiment: str = "collaborative"):
+        if isinstance(trial_id, int):
+            trial_id = f"B{trial_id:02d}"
         board_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "experiments",
