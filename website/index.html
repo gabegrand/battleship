@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="BattleshipQA project website placeholder." />
+  <meta name="keywords" content="BattleshipQA, information seeking, language models" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BattleshipQA: Shoot First, Ask Questions Later?</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/css/bulma-carousel.min.css" /> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/css/bulma-slider.min.css" /> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1/css/academicons.min.css" />
+  <link rel="stylesheet" href="./static/css/index.css" />
+  <link rel="icon" href="./static/images/placeholder-figure.svg" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/js/bulma-carousel.min.js"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/js/bulma-slider.min.js"></script> -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<section class="hero hero-main" id="top">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Shoot First, Ask Questions Later?</h1>
+            <h2 class="subtitle is-4">Building Rational Agents That Explore and Act Like People</h2>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><a href="https://gabegrand.com" target="_blank" rel="noopener">Gabriel Grand</a><sup>1,2*</sup>,</span>
+            <span class="author-block"><a href="https://vpepe.github.io/" rel="noopener">Valerio Pepe</a><sup>3*</sup>,</span>
+            <span class="author-block"><a href="https://bcs.mit.edu/directory/joshua-b-tenenbaum" rel="noopener">Joshua B. Tenenbaum</a><sup>1,2</sup>,</span>
+            <span class="author-block"><a href="https://www.mit.edu/~jda/" rel="noopener">Jacob Andreas</a><sup>1</sup></span>
+          </div>
+          <div class="is-size-6 publication-authors">
+            <span class="author-block"><sup>1</sup>MIT CSAIL</span>
+            <span class="author-block"><sup>2</sup>MIT Brain and Cognitive Sciences</span>
+            <span class="author-block"><sup>3</sup>Harvard SEAS</span>
+          </div>
+          <div class="publication-links">
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="#" aria-disabled="true">
+                <span class="icon"><i class="ai ai-arxiv"></i></span>
+                <span>arXiv</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="https://github.com/gabegrand/battleship" target="_blank" rel="noopener">
+                <span class="icon"><i class="fab fa-github"></i></span>
+                <span>Code</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a class="button is-rounded is-dark" href="#demo">
+              <span class="icon"><i class="fas fa-gamepad"></i></span>
+              <span>Interactive Demo</span>
+              </a>
+            </span>
+            <!-- <span class="link-block">
+              <a class="button is-rounded is-dark" href="#" aria-disabled="true">
+                <span class="icon">🤗</span>
+                <span>Dataset (coming soon)</span>
+              </a>
+            </span> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div id="hero-trajectory" class="hero-trajectory" aria-live="polite">
+        <div class="hero-trajectory-board">
+          <div class="hero-board-header">
+            <div class="trajectory-view-toggle hero-view-toggle" role="group" aria-label="Board perspective">
+              <button type="button" class="view-toggle-button is-active" data-role="hero-view-captain" data-view="captain">
+                <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                <span class="label">Captain View</span>
+              </button>
+              <button type="button" class="view-toggle-button" data-role="hero-view-spotter" data-view="spotter">
+                <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                <span class="label">Spotter View</span>
+              </button>
+            </div>
+          </div>
+          <div class="board-grid hero-board-grid" data-role="hero-board" role="grid" aria-label="Autoplay Battleship game"></div>
+          <div class="hero-board-footer" data-role="hero-meta" aria-live="polite"></div>
+        </div>
+        <div class="hero-trajectory-panel">
+          <div class="event-details hero-event-details" data-role="hero-event-details" role="log" aria-live="polite" aria-atomic="false">
+            <div class="empty-state">Loading live playthrough…</div>
+          </div>
+        </div>
+      </div>
+      <h2 class="subtitle has-text-centered mt-5">
+        Collaborative Battleship: Rational agents balance exploration and action in a decision-oriented dialogue game.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="motivation">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths has-text-left">
+        <h2 class="title is-3 has-text-centered" id="motivation-title">Abstract at a Glance</h2>
+        <div class="motivation-content">
+          <section class="motivation-timeline" id="motivation-timeline" aria-label="Abstract highlights timeline">
+            <header class="motivation-timeline-header">
+              <h3 class="title is-5 mb-2">Key points</h3>
+            </header>
+            <ol class="motivation-timeline-list" id="motivation-timeline-list">
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-compass" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Motivation</p>
+                  <p class="motivation-timeline-copy">High-stakes decisions often require agents to ask smart questions before acting, but we lack benchmarks that measure this balance.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-chess-board" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Task</p>
+                  <p class="motivation-timeline-copy">Collaborative Battleship pits a question-asking Captain and an all-knowing Spotter against hidden ships, turning information search into gameplay.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-user-friends" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Behavior gap</p>
+                  <p class="motivation-timeline-copy">Compared to 42 humans, language-model captains under-question, mis-ground answers, and waste turns on low-value moves.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-flask" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Method</p>
+                  <p class="motivation-timeline-copy">Bayesian Experimental Design heuristics inject Monte Carlo reasoning into LM agents, guiding what they ask and where they fire.</p>
+                </div>
+              </li>
+              <li class="motivation-timeline-item">
+                <span class="motivation-timeline-icon" aria-hidden="true">
+                  <i class="fas fa-rocket" aria-hidden="true"></i>
+                </span>
+                <div class="motivation-timeline-body">
+                  <p class="motivation-timeline-kicker">Impact</p>
+                  <p class="motivation-timeline-copy">The upgraded agents dramatically boost win rates, close most of the F1 gap, and transfer to Guess Who? with double-digit accuracy gains.</p>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <section class="motivation-accordion" id="motivation-accordion" aria-label="Abstract questions and answers">
+            <h3 class="title is-5 mb-2">Dig deeper</h3>
+            <div class="motivation-accordion-items" id="motivation-accordion-items">
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-0" aria-controls="motivation-accordion-panel-0" aria-expanded="false">
+                  <span class="motivation-accordion-label">Why use Battleship as a testbed?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-0" role="region" aria-labelledby="motivation-accordion-trigger-0" hidden>
+                  <p>Battleship strips decision making down to its essentials: every turn forces a trade-off between gathering information and acting on it.</p>
+                  <p>Because the board is fully observable to the Spotter, we can score each question and move with expected information gain and F1 metrics.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-1" aria-controls="motivation-accordion-panel-1" aria-expanded="false">
+                  <span class="motivation-accordion-label">What did the baseline language models struggle with?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-1" role="region" aria-labelledby="motivation-accordion-trigger-1" hidden>
+                  <ul>
+                    <li>Grounding: answers sometimes drift away from the board state.</li>
+                    <li>Question quality: captains fixate on low-yield queries.</li>
+                    <li>Action selection: many moves resemble random firing, wasting scarce turns.</li>
+                  </ul>
+                  <p>These patterns echo qualitative feedback from human players, who describe the agents as “hesitant” and “scattershot.”</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-2" aria-controls="motivation-accordion-panel-2" aria-expanded="false">
+                  <span class="motivation-accordion-label">How do the Bayesian add-ons help?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-2" role="region" aria-labelledby="motivation-accordion-trigger-2" hidden>
+                  <p>We sample hypothetical boards, score candidate questions with BED-inspired heuristics, and re-rank LM answers using Monte Carlo evidence.</p>
+                  <p>This nudges the LM toward informative follow-ups without requiring task-specific supervision.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-3" aria-controls="motivation-accordion-panel-3" aria-expanded="false">
+                  <span class="motivation-accordion-label">Do the gains extend beyond Battleship?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-3" role="region" aria-labelledby="motivation-accordion-trigger-3" hidden>
+                  <p>Yes—replicating the setup on Guess Who? lifts accuracy by 28 to 42 percentage points.</p>
+                  <p>The same heuristics apply to other partially observed games and diagnostic workflows where agents must alternate between probing and acting.</p>
+                </div>
+              </div>
+              <div class="motivation-accordion-item">
+                <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-4" aria-controls="motivation-accordion-panel-4" aria-expanded="false">
+                  <span class="motivation-accordion-label">Where should readers go next?</span>
+                  <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+                </button>
+                <div class="motivation-accordion-panel" id="motivation-accordion-panel-4" role="region" aria-labelledby="motivation-accordion-trigger-4" hidden>
+                  <p>Scan the full abstract for the quantitative takeaways, then head to the interactive demo to watch the upgraded agents plan in real time.</p>
+                </div>
+              </div>
+            </div>
+            <div class="motivation-accordion-actions">
+              <button class="motivation-action-button is-secondary" id="motivation-show-abstract" type="button" aria-expanded="false" aria-controls="motivation-abstract-panel">
+                <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+                <span class="label">View full abstract</span>
+              </button>
+            </div>
+          </section>
+
+          <div class="motivation-abstract" id="motivation-abstract-panel" role="region" aria-labelledby="abstract-heading" aria-hidden="true" hidden>
+            <div class="motivation-abstract-header">
+              <h2 class="title is-3" id="abstract-heading" tabindex="-1">Abstract</h2>
+            </div>
+            <div class="content has-text-justified" id="abstract">
+              <p>
+Many high-stakes applications of AI require forming data-driven hypotheses and making targeted guesses; e.g., in scientific and diagnostic settings. Given limited resources, to what extent do agents based on language models (LMs) act rationally? We develop methods to benchmark and enhance agentic information-seeking, drawing on insights from human behavior. First, we introduce a strategic decision-oriented dialogue task called Collaborative Battleship, in which a partially informed Captain must balance exploration (asking questions) and action (taking shots), while a fully informed Spotter must provide accurate answers under an information bottleneck. Compared to human players (N=42), we find that LM agents struggle to ground answers in context, generate informative questions, and select high-value actions. Next, to address these gaps, we develop novel Monte Carlo inference strategies for LMs based on principles from Bayesian Experimental Design (BED). For Spotter agents, our approach boosts accuracy by up to 14.7% absolute over LM-only baselines; for Captain agents, it raises expected information gain (EIG) by up to 0.227 bits (94.2% of the achievable noise ceiling). Combined, these components yield sharper targeting (+0.303–0.374 F1), and enable weaker LMs, such as Llama-4-Scout, to outperform both humans (8% → 82% win rate) and frontier models (0% → 67% win rate vs. GPT-5) at ≈1% of GPT-5's cost. We replicate these findings on Guess Who? where our methods significantly boost accuracy (+28.3–42.4 p.p.), demonstrating their general applicability for building rational information-seeking agents.
+              </p>
+            </div>
+            <div class="motivation-abstract-actions">
+              <button class="motivation-action-button is-secondary" id="motivation-hide-abstract" type="button" hidden>
+                <span class="icon" aria-hidden="true"><i class="fas fa-eye-slash"></i></span>
+                <span class="label">Hide abstract</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="demo">
+  <div class="container is-max-desktop">
+
+    <div class="columns is-centered mt-5">
+      <div class="column">
+        <h2 class="title is-3">Interactive Demo</h2>
+        <div id="trajectory-explorer" class="trajectory-explorer">
+          <div class="trajectory-status" id="trajectory-status" role="status">Loading curated games…</div>
+          <div class="trajectory-layout">
+            <div class="viewer-panel">
+              <div class="viewer-content">
+                <div class="board-card">
+                  <div class="board-card-header">
+                    <h3 class="title is-5 mb-1">Board State</h3>
+                    <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
+                      <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                        <span class="label">Captain View</span>
+                      </button>
+                      <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                        <span class="label">Spotter View</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
+                </div>
+
+                <div class="side-panel">
+                  <div class="side-card event-card">
+                    <h4 class="title is-6 mb-2">Current Event</h4>
+                    <div id="event-details" class="event-details" role="log" aria-live="polite" aria-atomic="false"></div>
+                  </div>
+                  <div class="side-card">
+                    <h4 class="title is-6 mb-2">Ship Tracker</h4>
+                    <div id="ship-tracker" class="ship-tracker"></div>
+                  </div>
+                  <div class="side-card">
+                    <h4 class="title is-6 mb-2">Progress</h4>
+                    <div id="progress-details" class="progress-details"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="trajectory-timeline">
+              <div class="timeline-slider">
+                <input class="is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1" aria-live="polite" aria-label="Timeline position">
+              </div>
+              <div class="timeline-header">
+                <div class="timeline-primary-controls" role="group" aria-label="Playback controls">
+                  <button type="button" class="timeline-control-button" id="timeline-reset" aria-label="Reset to beginning">
+                    <i class="fas fa-undo-alt" aria-hidden="true"></i>
+                    <span class="sr-only">Reset to beginning</span>
+                  </button>
+                  <button type="button" class="timeline-control-button" id="timeline-play" aria-label="Start autoplay" aria-pressed="false">
+                    <i class="fas fa-play playback-icon" aria-hidden="true"></i>
+                    <span class="playback-text sr-only">Play</span>
+                  </button>
+                  <button type="button" class="timeline-control-button" id="timeline-skip" aria-label="Skip to end">
+                    <i class="fas fa-fast-forward" aria-hidden="true"></i>
+                    <span class="sr-only">Skip to end</span>
+                  </button>
+                </div>
+                <div class="timeline-speed-select">
+                  <label class="sr-only" for="playback-speed">Playback speed</label>
+                  <div class="select is-small is-rounded">
+                    <select id="playback-speed" aria-label="Select playback speed">
+                      <option value="0.25">0.25×</option>
+                      <option value="0.5">0.5×</option>
+                      <option value="1" selected>1×</option>
+                      <option value="2">2×</option>
+                      <option value="4">4×</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="timeline-meta">
+                <span id="frame-label" class="timeline-frame"></span>
+                <span id="event-label" class="timeline-event"></span>
+              </div>
+              <div id="trajectory-event-list" class="timeline-list" aria-label="Event timeline"></div>
+            </div>
+
+            <div class="selection-panel" aria-label="Game selector">
+              <div class="game-browser-header">
+                <h3 class="title is-5">Game Browser</h3>
+                <div class="game-browser-toolbar" role="group" aria-label="Game navigation">
+                  <button type="button" class="timeline-nav-button" id="prev-game" aria-label="Previous game" aria-disabled="true" disabled>
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    <span class="sr-only">Previous game</span>
+                  </button>
+                  <button type="button" class="timeline-nav-button" id="next-game" aria-label="Next game" aria-disabled="true" disabled>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    <span class="sr-only">Next game</span>
+                  </button>
+                </div>
+              </div>
+              <div class="selection-grid">
+                <div class="filter-group">
+                  <label class="label is-small" for="filter-llm">Captain LLM</label>
+                  <div class="select is-fullwidth">
+                    <select id="filter-llm" aria-label="Filter games by captain LLM"></select>
+                  </div>
+                </div>
+                <div class="filter-group">
+                  <label class="label is-small" for="filter-type">Captain Strategy</label>
+                  <div class="select is-fullwidth">
+                    <select id="filter-type" aria-label="Filter games by captain strategy"></select>
+                  </div>
+                </div>
+              </div>
+              <div class="game-list" id="trajectory-game-list" role="listbox" aria-label="Available games"></div>
+              <div class="trajectory-metrics" id="trajectory-metrics"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{grand2026battleshipqa,
+  author    = {Grand, Gabriel and Pepe, Valerio and Tenenbaum, Joshua B. and Andreas, Jacob},
+  title     = {Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People},
+  journal   = {ICLR},
+  year      = {2026},
+  note      = {Placeholder entry}
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="#" aria-disabled="true">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/gabegrand/battleship" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content cc-license">
+          <p>
+            Website template adapted from the <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener">Nerfies project site</a> licensed under CC BY-SA 4.0.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+</body>
+</html>
