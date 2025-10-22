@@ -1,15 +1,177 @@
 [
     {
-        "question": {
-            "text": "Is there any part of a ship on the tiles between D3 and E6?"
-        },
-        "answer": {
-            "text": "yes",
-            "value": true
-        },
-        "fn_str": "\nimport numpy as np\n\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Helper to convert coordinates like 'D3' to zero-based (row, col) indices\n    def to_idx(coord: str):\n        row = ord(coord[0].upper()) - ord('A')\n        col = int(coord[1:]) - 1\n        return row, col\n\n    start = 'D3'\n    end = 'E6'\n    r1, c1 = to_idx(start)\n    r2, c2 = to_idx(end)\n\n    rmin, rmax = sorted((r1, r2))\n    cmin, cmax = sorted((c1, c2))\n\n    true_sub = true_board[rmin:rmax+1, cmin:cmax+1]\n    partial_sub = partial_board[rmin:rmax+1, cmin:cmax+1]\n\n    # We answer Yes if there is any unrevealed ship tile in the region.\n    return bool(np.any((true_sub > 0) & (partial_sub == -1)))\n"
-    },
-    {
+        "round_id": "bba18f00",
+        "captain_llm": "Llama-4-Scout",
+        "captain_type": "LM",
+        "spotter_type": "Spotter",
+        "board_id": "B03",
+        "seed": 1337,
+        "true_board": [
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                4
+            ],
+            [
+                0,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                4
+            ],
+            [
+                0,
+                0,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                1,
+                1,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        ],
+        "stage": 25,
+        "decision": "question",
+        "board": [
+            [
+                0,
+                0,
+                0,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                0,
+                0,
+                2,
+                0,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                0,
+                3,
+                2,
+                0,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ]
+        ],
         "question": {
             "text": "Is there a ship in column 3 that spans more than 2 rows?"
         },
@@ -18,5 +180,377 @@
             "value": true
         },
         "fn_str": "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Check if there exists a vertically oriented ship segment in column 3\n    # that spans more than 2 rows (i.e., length >= 3).\n    col_idx = 2  # zero-based index for column 3\n    current_val = None\n    current_len = 0\n\n    for v in true_board[:, col_idx]:\n        if v > 0:\n            if v == current_val:\n                current_len += 1\n            else:\n                # Start a new run for a different ship id\n                current_val = v\n                current_len = 1\n        else:\n            # Water breaks any current run\n            if current_len >= 3:\n                return True\n            current_val = None\n            current_len = 0\n\n    # Check the final run after the loop\n    return current_len >= 3\n"
-    }
+    },
+    {
+        "round_id": "a62ec2c1",
+        "captain_llm": "GPT-5",
+        "captain_type": "+Bayes-QM",
+        "spotter_type": "Spotter",
+        "board_id": "B14",
+        "seed": 111,
+        "true_board": [
+            [
+                0,
+                4,
+                4,
+                4,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                2,
+                2,
+                2,
+                2
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                3,
+                3,
+                3,
+                3,
+                3,
+                0,
+                0
+            ]
+        ],
+        "stage": 7,
+        "decision": "question",
+        "board": [
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                0,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                0,
+                2,
+                2,
+                2,
+                2
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                0,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ],
+            [
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1,
+                -1
+            ]
+        ],
+        "question": {
+            "text": "Is the orange (length-5) ship oriented horizontally?"
+        },
+        "answer": {
+            "text": "yes",
+            "value": true
+        },
+        "fn_str": "\nimport numpy as np\n\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Orange ship is encoded as 4\n    orange_cells = np.argwhere(true_board == 4)\n    if orange_cells.size == 0:\n        # No orange ship found; cannot be horizontally oriented\n        return False\n    \n    rows = np.unique(orange_cells[:, 0])\n    cols = np.unique(orange_cells[:, 1])\n    \n    # Horizontal if all cells share the same row (and at least length 2)\n    if len(rows) == 1 and len(orange_cells) >= 2:\n        return True\n    # Vertical if all cells share the same column\n    if len(cols) == 1 and len(orange_cells) >= 2:\n        return False\n    \n    # Fallback for irregular data: decide by bounding box aspect\n    rmin, rmax = orange_cells[:, 0].min(), orange_cells[:, 0].max()\n    cmin, cmax = orange_cells[:, 1].min(), orange_cells[:, 1].max()\n    height = rmax - rmin + 1\n    width = cmax - cmin + 1\n    return width >= height\n"
+    },
+        {
+    "round_id": "20195cd5",
+    "captain_llm": "GPT-5",
+    "captain_type": "LM",
+    "spotter_type": "Spotter",
+    "board_id": "B08",
+    "seed": 1337,
+    "f1_score": 0.8333333333333333,
+    "hits": 10,
+    "misses": 4,
+    "question_count": 10,
+    "move_count": 14,
+    "is_won": true,
+    "precision": 0.7142857142857143,
+    "recall": 1.0,
+    "true_board": [
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            2,
+            2,
+            2,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            3,
+            3,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            1,
+            1,
+            0,
+            4,
+            4,
+            4,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    ],
+            "stage": 2,
+            "decision": "question",
+            "board": [
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ],
+                [
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1,
+                    -1
+                ]
+            ],
+            "question": {
+                "text": "Are at least two of the four ships located entirely within columns 1\u20134?"
+            },
+            "answer": {
+                "text": "yes",
+                "value": true
+            },
+            "fn_str": "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n    # Columns 1\u20134 correspond to zero-based indices 0\u20133\n    max_allowed_col = 3\n    # Identify ship IDs present on the true board (positive integers)\n    ship_ids = [sid for sid in np.unique(true_board) if sid > 0]\n    \n    count_within_1_4 = 0\n    for sid in ship_ids:\n        cols = np.where(true_board == sid)[1]\n        if cols.size > 0 and cols.max() <= max_allowed_col:\n            count_within_1_4 += 1\n    \n    return count_within_1_4 >= 2\n"
+        }
 ]
