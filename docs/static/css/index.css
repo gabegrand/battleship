@@ -1199,12 +1199,28 @@ body {
   margin: 0;
   background: transparent;
   padding: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.codegen-code-block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .codegen-code-block code {
   background: transparent;
   padding: 0;
   white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codegen-code-block {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1200px) {

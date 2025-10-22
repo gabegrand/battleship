@@ -2075,7 +2075,7 @@ class CodeGenerationShowcase {
     const codeString = typeof example.fn_str === 'string' && example.fn_str.trim().length
       ? example.fn_str.trim()
       : '# No code generated for this exchange.';
-    await this.displayCodeMessage({ logEl, code: codeString, animationId, instant });
+  await this.displayCodeMessage({ logEl, code: codeString, animationId, instant });
     if (animationId !== this.animationId) return;
 
     await this.delayWithCancel(CODE_SNIPPET_LINGER_MS, instant);
@@ -2091,6 +2091,14 @@ class CodeGenerationShowcase {
     await this.delayWithCancel(CODE_RESULT_LINGER_MS, instant);
     if (animationId !== this.animationId) return;
 
+    const thinkingMessage = this.showThinkingMessage({ logEl, role: 'spotter', label: 'Spotter' });
+    await this.delayWithCancel(THINKING_BASE_DELAY_MS, instant);
+    if (animationId !== this.animationId) return;
+    if (thinkingMessage) {
+      this.removeMessage(thinkingMessage);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
     const answerText = example.answer?.text?.trim() || (example.answer?.value ? 'Yes.' : 'No.');
     await this.displayTypewrittenMessage({
       logEl,
@@ -2103,19 +2111,18 @@ class CodeGenerationShowcase {
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  async displayTypewrittenMessage({ logEl, role, label, text, animationId, instant = false }) {
+  async displayTypewrittenMessage({ logEl, role, label, text }) {
     if (!logEl) return null;
     const message = createChatMessage({ role, label });
+    if (message.textEl) {
+      message.textEl.textContent = typeof text === 'string' ? text : '';
+    }
+    if (message.caret && message.caret.parentNode) {
+      message.caret.parentNode.removeChild(message.caret);
+      message.caret = null;
+    }
     logEl.appendChild(message.wrapper);
     logEl.scrollTop = logEl.scrollHeight;
-    await this.typeText({
-      textEl: message.textEl,
-      caret: message.caret,
-      text,
-      animationId,
-      logEl,
-      instant,
-    });
     return message;
   }
 
@@ -2139,15 +2146,23 @@ class CodeGenerationShowcase {
     logEl.appendChild(message.wrapper);
     logEl.scrollTop = logEl.scrollHeight;
 
-    await this.typeText({
-      textEl: message.textEl,
-      caret: message.caret,
-      text: code,
-      animationId,
-      logEl,
-      instant,
-      timeScale: 0.25,
-    });
+    if (message.textEl) {
+      message.textEl.textContent = typeof code === 'string' ? code : '';
+    }
+
+    if (message.caret && message.caret.parentNode) {
+      message.caret.parentNode.removeChild(message.caret);
+      message.caret = null;
+    }
+
+    if (codeWrapper && !instant && !prefersReducedMotion()) {
+      requestAnimationFrame(() => {
+        codeWrapper.classList.add('is-visible');
+      });
+    } else if (codeWrapper) {
+      codeWrapper.classList.add('is-visible');
+    }
+
     if (animationId !== this.animationId) {
       return message;
     }
@@ -2158,6 +2173,30 @@ class CodeGenerationShowcase {
 
     logEl.scrollTop = logEl.scrollHeight;
     return message;
+  }
+
+  showThinkingMessage({ logEl, role = 'spotter', label = 'Spotter' } = {}) {
+    if (!logEl) return null;
+    const message = createChatMessage({ role, label });
+    if (message.textEl && message.textEl.parentNode) {
+      message.textEl.parentNode.removeChild(message.textEl);
+      message.textEl = null;
+    }
+    if (message.caret && message.caret.parentNode) {
+      message.caret.parentNode.removeChild(message.caret);
+      message.caret = null;
+    }
+    const thinkingEl = createThinkingElement();
+    message.bubble.appendChild(thinkingEl);
+    logEl.appendChild(message.wrapper);
+    logEl.scrollTop = logEl.scrollHeight;
+    return message;
+  }
+
+  removeMessage(message) {
+    if (message?.wrapper && message.wrapper.parentNode) {
+      message.wrapper.parentNode.removeChild(message.wrapper);
+    }
   }
 
   showEvaluatingMessage({ logEl }) {
@@ -2224,68 +2263,6 @@ class CodeGenerationShowcase {
     }
     return new Promise((resolve) => {
       window.setTimeout(resolve, duration);
-    });
-  }
-
-  typeText({ textEl, caret, text, animationId, logEl, instant = false, timeScale = 1 }) {
-    return new Promise((resolve) => {
-      const messageText = typeof text === 'string' ? text : '';
-      if (!textEl) {
-        resolve();
-        return;
-      }
-
-      if (instant || animationId !== this.animationId || messageText.length === 0) {
-        textEl.textContent = messageText;
-        setTypingCaretVisibility(caret, false);
-        if (logEl) {
-          logEl.scrollTop = logEl.scrollHeight;
-        }
-        resolve();
-        return;
-      }
-
-      textEl.textContent = '';
-      setTypingCaretVisibility(caret, true);
-      let index = 0;
-
-      const step = () => {
-        if (animationId !== this.animationId) {
-          textEl.textContent = messageText;
-          setTypingCaretVisibility(caret, false);
-          if (logEl) {
-            logEl.scrollTop = logEl.scrollHeight;
-          }
-          resolve();
-          return;
-        }
-
-        textEl.textContent += messageText.charAt(index);
-        index += 1;
-
-        if (logEl) {
-          logEl.scrollTop = logEl.scrollHeight;
-        }
-
-        if (index >= messageText.length) {
-          setTypingCaretVisibility(caret, false);
-          resolve();
-          return;
-        }
-
-        const previousChar = messageText.charAt(index - 1);
-        const scale = Number.isFinite(timeScale) && timeScale > 0 ? timeScale : 1;
-        let delay = TYPEWRITER_CHAR_DELAY_MS;
-        if (/[,.;!?]/.test(previousChar)) {
-          delay = TYPEWRITER_PUNCTUATION_DELAY_MS;
-        } else if (previousChar === ' ') {
-          delay = TYPEWRITER_SPACE_DELAY_MS;
-        }
-
-        window.setTimeout(step, delay * scale);
-      };
-
-      step();
     });
   }
 

@@ -12,8 +12,6 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/css/bulma-carousel.min.css" /> -->
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/css/bulma-slider.min.css" /> -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1/css/academicons.min.css" />
@@ -24,8 +22,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"
     referrerpolicy="no-referrer"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.4/dist/js/bulma-carousel.min.js"></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/bulma-slider@2.0.5/dist/js/bulma-slider.min.js"></script> -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" crossorigin="anonymous"
     referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"
@@ -79,12 +75,6 @@
                   <span>Interactive Demo</span>
                 </a>
               </span>
-              <!-- <span class="link-block">
-              <a class="button is-rounded is-dark" href="#" aria-disabled="true">
-                <span class="icon">🤗</span>
-                <span>Dataset (coming soon)</span>
-              </a>
-            </span> -->
             </div>
           </div>
         </div>
@@ -146,12 +136,12 @@
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Motivation</p>
                     <p class="motivation-timeline-copy">High-stakes decisions often require agents to ask smart
-                      questions before acting, but we lack benchmarks that measure this balance.</p>
+                      questions before acting, but we lack benchmarks that measure how agents navigate explore/exploit tradeoffs.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
                   <span class="motivation-timeline-icon" aria-hidden="true">
-                    <i class="fas fa-chess-board" aria-hidden="true"></i>
+                    <i class="fas fa-anchor" aria-hidden="true"></i>
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Task</p>
@@ -165,8 +155,7 @@
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Behavior gap</p>
-                    <p class="motivation-timeline-copy">Compared to 42 humans, language-model captains under-question,
-                      mis-ground answers, and waste turns on low-value moves.</p>
+                    <p class="motivation-timeline-copy">Compared to human players, LM agents generally ask less informative questions, produce inaccurate answers, and waste turns on low-probability moves.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
@@ -175,8 +164,7 @@
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Method</p>
-                    <p class="motivation-timeline-copy">Bayesian Experimental Design heuristics inject Monte Carlo
-                      reasoning into LM agents, guiding what they ask and where they fire.</p>
+                    <p class="motivation-timeline-copy">We develop novel Monte Carlo inference strategies for agents based on principles from Bayesian Experimental Design (BED), guiding <em>what</em> they ask, <em> where</em> they shoot, and <em>when</em> they choose to explore vs. act.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
@@ -184,11 +172,29 @@
                     <i class="fas fa-rocket" aria-hidden="true"></i>
                   </span>
                   <div class="motivation-timeline-body">
-                    <p class="motivation-timeline-kicker">Impact</p>
-                    <p class="motivation-timeline-copy">The upgraded agents dramatically boost win rates, close most of
-                      the F1 gap, and transfer to Guess Who? with double-digit accuracy gains.</p>
+                    <p class="motivation-timeline-kicker">Results</p>
+                    <p class="motivation-timeline-copy">Our approach enables weaker LMs, such as Llama-4-Scout, to outperform both humans (8% → 82% win rate) and frontier models (0% → 67% win rate vs. GPT-5) at ≈1% of GPT-5's cost.</p>
                   </div>
                 </li>
+                <li class="motivation-timeline-item">
+                  <span class="motivation-timeline-icon" aria-hidden="true">
+                    <i class="fas fa-question" aria-hidden="true"></i>
+                  </span>
+                  <div class="motivation-timeline-body">
+                    <p class="motivation-timeline-kicker">Generality</p>
+                    <p class="motivation-timeline-copy">We replicate these findings on "Guess Who?" where our methods significantly boost accuracy (+28.3–42.4 p.p.), illustrating the generality of our approach.</p>
+                  </div>
+                </li>
+                <li class="motivation-timeline-item">
+                  <span class="motivation-timeline-icon" aria-hidden="true">
+                    <i class="fas fa-globe" aria-hidden="true"></i>
+                  </span>
+                  <div class="motivation-timeline-body">
+                    <p class="motivation-timeline-kicker">Impact</p>
+                    <p class="motivation-timeline-copy">Our findings demonstrate how Bayesian inference at test time can improve information-seeking and decision-making in discovery settings.</p>
+                  </div>
+                </li>
+
               </ol>
             </section>
 
