@@ -419,13 +419,11 @@ body {
 
 #trajectory-slider::-webkit-slider-runnable-track {
   height: 12px;
-  background: linear-gradient(
-    to right,
-    var(--slider-track-fill) 0%,
-    var(--slider-track-fill) var(--slider-progress),
-    var(--slider-track-bg) var(--slider-progress),
-    var(--slider-track-bg) 100%
-  );
+  background: linear-gradient(to right,
+      var(--slider-track-fill) 0%,
+      var(--slider-track-fill) var(--slider-progress),
+      var(--slider-track-bg) var(--slider-progress),
+      var(--slider-track-bg) 100%);
   border-radius: 999px;
 }
 
@@ -605,7 +603,7 @@ body {
   gap: 1rem;
 }
 
-.side-card + .side-card {
+.side-card+.side-card {
   margin-top: 0;
 }
 
@@ -1008,6 +1006,233 @@ body {
   color: #172642;
 }
 
+.section-codegen {
+  background: linear-gradient(180deg, rgba(17, 34, 68, 0.05) 0%, rgba(48, 78, 216, 0.08) 100%);
+}
+
+.section-codegen .section-heading {
+  margin-bottom: 2.5rem;
+  color: #172642;
+}
+
+.section-codegen .section-heading .title {
+  margin-bottom: 0.75rem;
+}
+
+.codegen-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.75rem;
+  color: #172642;
+}
+
+.codegen-example-label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: rgba(23, 38, 66, 0.7);
+}
+
+.codegen-example-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.codegen-example-button {
+  border: none;
+  border-radius: 999px;
+  background: rgba(23, 38, 66, 0.08);
+  color: #172642;
+  padding: 0.5rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  min-width: 110px;
+}
+
+.codegen-example-button:hover {
+  background: rgba(48, 78, 216, 0.18);
+  transform: translateY(-1px);
+}
+
+.codegen-example-button.is-active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 12px 28px rgba(48, 78, 216, 0.26);
+}
+
+.codegen-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.codegen-chat-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.codegen-chat-box {
+  min-height: 460px;
+  max-width: 720px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 44px rgba(17, 34, 68, 0.18);
+}
+
+.codegen-chat-box .event-chat-log {
+  max-width: 100%;
+}
+
+.codegen-board-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.codegen-board-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 20px 42px rgba(17, 34, 68, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.codegen-board-caption {
+  margin: 0;
+  color: #5c6c8f;
+  font-size: 0.85rem;
+}
+
+
+.codegen-board-card .board-cell,
+.codegen-board-card .board-label-cell {
+  min-height: 2.2rem;
+}
+
+.event-message.is-spotter .event-bubble.is-code-snippet {
+  background: #101826 !important;
+  color: #e9eefc !important;
+  box-shadow: 0 18px 40px rgba(10, 20, 40, 0.45) !important;
+  border: 1px solid rgba(117, 132, 168, 0.35) !important;
+  padding: 0.85rem 1rem;
+  max-width: min(100%, 640px);
+}
+
+.event-bubble.is-code-snippet {
+  background: #101826;
+  color: #e9eefc;
+  box-shadow: 0 18px 40px rgba(10, 20, 40, 0.45);
+  border: 1px solid rgba(117, 132, 168, 0.35);
+  padding: 0.85rem 1rem;
+  max-width: min(100%, 640px);
+}
+
+.event-bubble.is-code-snippet .event-speaker {
+  color: rgba(188, 204, 255, 0.85);
+}
+
+.event-bubble pre {
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font-family: 'Source Code Pro', 'Fira Code', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  padding: 0;
+}
+
+.event-bubble pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+
+.codegen-evaluating-icon {
+  margin-right: 0.5rem;
+}
+
+.codegen-evaluating-icon.fa-cog {
+  animation: fa-spin 2s infinite linear;
+}
+
+.codegen-evaluating-icon.fa-check-circle,
+.codegen-evaluating-icon.fa-times-circle {
+  animation: none !important;
+}
+
+.codegen-evaluating-message {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.codegen-evaluating-message .fas {
+  color: #304ed8;
+}
+
+.codegen-evaluating-message .fa-check-circle {
+  color: #04af70;
+}
+
+.codegen-evaluating-message .fa-times-circle {
+  color: #ac2028;
+}
+
+.codegen-chat-box .event-message.is-system .event-bubble {
+  max-width: min(100%, 420px);
+}
+
+.codegen-chat-box .event-message.is-captain .event-bubble,
+.codegen-chat-box .event-message.is-spotter .event-bubble {
+  max-width: min(100%, 640px);
+}
+
+.codegen-code-block {
+  margin: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.codegen-code-block code {
+  background: transparent;
+  padding: 0;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 1200px) {
+  .codegen-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .codegen-chat-box {
+    max-width: 100%;
+  }
+
+  .codegen-board-card {
+    padding: 1.1rem 1.2rem 1.35rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .codegen-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .codegen-board-card .board-cell,
+  .codegen-board-card .board-label-cell {
+    min-height: 1.9rem;
+  }
+}
+
 .event-details {
   flex: 1 1 auto;
   display: flex;
@@ -1100,6 +1325,13 @@ body {
   border: 1px solid rgba(4, 175, 112, 0.2);
 }
 
+.event-message.is-spotter .event-bubble.is-code-snippet {
+  background: #101826;
+  color: #e9eefc;
+  box-shadow: 0 18px 40px rgba(10, 20, 40, 0.45);
+  border: 1px solid rgba(117, 132, 168, 0.35);
+}
+
 .event-message.is-spotter .event-bubble .event-speaker {
   color: #04af70;
 }
@@ -1144,19 +1376,27 @@ body {
 }
 
 @keyframes typingCaretBlink {
-  0%, 49% {
+
+  0%,
+  49% {
     opacity: 1;
   }
-  50%, 100% {
+
+  50%,
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes eventThinkingBlink {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     opacity: 0.25;
     transform: translateY(0);
   }
+
   40% {
     opacity: 1;
     transform: translateY(-2px);
@@ -1168,6 +1408,7 @@ body {
     opacity: 0;
     transform: translateY(8px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);

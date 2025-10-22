@@ -60,6 +60,9 @@ const QUESTION_LINGER_BUFFER_MS = 900;
 const MOVE_LINGER_BUFFER_MS = 320;
 const OTHER_LINGER_BUFFER_MS = 500;
 const SLIDER_ANIMATION_DURATION_RATIO = 1.0;
+const CODE_SNIPPET_LINGER_MS = 900;
+const CODE_EVALUATION_DELAY_MS = 1100;
+const CODE_RESULT_LINGER_MS = 700;
 
 const DEFAULT_SELECTORS = {
   status: '#trajectory-status',
@@ -84,6 +87,15 @@ const DEFAULT_SELECTORS = {
   prevGame: '#prev-game',
   nextGame: '#next-game',
   speedSelect: '#playback-speed',
+};
+
+const CODEGEN_SELECTORS = {
+  exampleSwitch: '[data-role="codegen-example-switch"]',
+  chatLog: '[data-role="codegen-chat-log"]',
+  chatBox: '[data-role="codegen-chat-box"]',
+  boardGrid: '[data-role="codegen-board-grid"]',
+  boardCaption: '[data-role="codegen-board-caption"]',
+  viewToggle: '[data-role="codegen-view-toggle"]',
 };
 
 function prefersReducedMotion() {
@@ -315,6 +327,27 @@ function computeIntervalForSpeed(speed) {
     return DEFAULT_PLAYBACK_INTERVAL_MS;
   }
   return DEFAULT_PLAYBACK_INTERVAL_MS / multiplier;
+}
+
+let codeSamplesPromise = null;
+
+function getCodeSamplesData() {
+  if (!codeSamplesPromise) {
+    codeSamplesPromise = fetch('./static/data/code_samples.json', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('No code generation samples found.');
+        }
+        return data;
+      });
+  }
+  return codeSamplesPromise;
 }
 
 let trajectoryDataPromise = null;
@@ -1221,11 +1254,11 @@ class TrajectoryExplorer {
       const questionText = event.question?.text ? truncate(event.question.text, 60) : 'Question';
       const answerText = event.answer
         ? truncate(
-            typeof event.answer.text === 'string'
-              ? event.answer.text
-              : String(event.answer.value ?? ''),
-            20,
-          )
+          typeof event.answer.text === 'string'
+            ? event.answer.text
+            : String(event.answer.value ?? ''),
+          20,
+        )
         : '–';
       return `${questionText} → ${answerText}`;
     }
@@ -1394,7 +1427,7 @@ class TrajectoryExplorer {
     if (!game) return;
     this.state.hasActiveGame = true;
     this.updateStatusForGame(game);
-  this.updateHeroMeta(game);
+    this.updateHeroMeta(game);
     this.renderMetrics(game);
     this.buildTimeline(game);
     this.updateSlider(game);
@@ -1812,6 +1845,481 @@ class TrajectoryExplorer {
   }
 }
 
+class CodeGenerationShowcase {
+  constructor(root, options = {}) {
+    this.root = root;
+    this.config = Object.assign(
+      {
+        selectors: CODEGEN_SELECTORS,
+        dataPromise: getCodeSamplesData(),
+      },
+      options,
+    );
+
+    this.elements = this.resolveElements(this.config.selectors);
+    this.colorPalette = new Map(BASE_COLOR_PALETTE_ENTRIES);
+    this.fallbackIndex = 0;
+    this.exampleButtons = [];
+    this.animationId = 0;
+    this.state = {
+      data: [],
+      activeIndex: -1,
+      activeView: 'spotter',
+    };
+
+    if (!this.root) {
+      return;
+    }
+
+    Promise.resolve(this.config.dataPromise || getCodeSamplesData())
+      .then((data) => this.initialize(data))
+      .catch((error) => this.handleDataError(error));
+  }
+
+  resolveElements(selectors = {}) {
+    const resolved = {};
+    if (!this.root) return resolved;
+    Object.entries(selectors).forEach(([key, selector]) => {
+      resolved[key] = typeof selector === 'string' ? this.root.querySelector(selector) : null;
+    });
+    return resolved;
+  }
+
+  initialize(data) {
+    if (!Array.isArray(data) || data.length === 0) {
+      this.showFallbackMessage('No code generation samples available.');
+      return;
+    }
+    this.state.data = data;
+    this.buildExampleButtons();
+    this.attachListeners();
+    this.setActiveView(this.state.activeView, { rerender: false });
+    this.setActiveExample(0, { animate: false });
+  }
+
+  handleDataError(error) {
+    console.error('Failed to load code generation samples', error);
+    this.showFallbackMessage('Unable to load code samples. Please refresh.');
+  }
+
+  showFallbackMessage(message) {
+    const logEl = this.elements.chatLog;
+    if (!logEl) return;
+    logEl.innerHTML = '';
+    const fallback = document.createElement('div');
+    fallback.className = 'empty-state';
+    fallback.textContent = message;
+    logEl.appendChild(fallback);
+  }
+
+  buildExampleButtons() {
+    const container = this.elements.exampleSwitch;
+    if (!container) return;
+    container.innerHTML = '';
+    this.exampleButtons = this.state.data.map((_, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'codegen-example-button';
+      button.textContent = `Example #${index + 1}`;
+      button.dataset.index = String(index);
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', String(index === this.state.activeIndex));
+      button.addEventListener('click', () => this.setActiveExample(index));
+      container.appendChild(button);
+      return button;
+    });
+  }
+
+  setActiveExample(index, { animate = true } = {}) {
+    if (!Array.isArray(this.state.data) || index < 0 || index >= this.state.data.length) {
+      return;
+    }
+    this.state.activeIndex = index;
+    this.exampleButtons.forEach((button, btnIndex) => {
+      if (!button) return;
+      const isActive = btnIndex === index;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', String(isActive));
+    });
+
+    const example = this.state.data[index];
+    this.renderBoard(example);
+
+    this.animationId += 1;
+    const animationId = this.animationId;
+    this.playConversation(example, { animate, animationId });
+  }
+
+  renderBoard(example = this.state.data[this.state.activeIndex]) {
+    const grid = this.elements.boardGrid;
+    if (!grid) return;
+    if (!example || !Array.isArray(example.true_board) || !Array.isArray(example.board)) {
+      grid.innerHTML = '<div class="empty-state">Board unavailable.</div>';
+      const caption = this.elements.boardCaption;
+      if (caption) {
+        caption.textContent = 'Board unavailable';
+      }
+      grid.setAttribute('aria-label', 'Board unavailable');
+      return;
+    }
+
+    const perspective = this.state.activeView === 'captain' ? 'captain' : 'spotter';
+    const trueBoard = example.true_board;
+    const partialBoard = example.board;
+    const size = trueBoard.length;
+
+    grid.innerHTML = '';
+    grid.style.setProperty('--board-columns', String(size + 1));
+
+    const topLeft = document.createElement('div');
+    topLeft.className = 'board-label-cell';
+    topLeft.setAttribute('role', 'presentation');
+    grid.appendChild(topLeft);
+
+    for (let col = 0; col < size; col += 1) {
+      const header = document.createElement('div');
+      header.className = 'board-label-cell';
+      header.textContent = String(col + 1);
+      header.setAttribute('role', 'columnheader');
+      grid.appendChild(header);
+    }
+
+    for (let row = 0; row < size; row += 1) {
+      const rowLabel = document.createElement('div');
+      rowLabel.className = 'board-label-cell';
+      rowLabel.textContent = String.fromCharCode(65 + row);
+      rowLabel.setAttribute('role', 'rowheader');
+      grid.appendChild(rowLabel);
+
+      for (let col = 0; col < size; col += 1) {
+        const cell = document.createElement('div');
+        cell.className = 'board-cell';
+        const partialValue = partialBoard[row]?.[col];
+        const trueValue = trueBoard[row]?.[col];
+        const displayValue = perspective === 'spotter' ? trueValue : partialValue;
+
+        cell.style.setProperty('--cell-bg', this.getColor(displayValue));
+        if (perspective === 'spotter' && partialValue === -1) {
+          cell.setAttribute('data-hidden', 'true');
+        } else {
+          cell.removeAttribute('data-hidden');
+        }
+
+        if (perspective === 'captain') {
+          if (partialValue === 0) {
+            cell.textContent = '•';
+          } else if (partialValue > 0) {
+            cell.textContent = SHIP_SYMBOLS[partialValue] || String(partialValue);
+          }
+        } else if (trueValue > 0) {
+          cell.textContent = SHIP_SYMBOLS[trueValue] || String(trueValue);
+        }
+
+        cell.setAttribute('aria-label', `${String.fromCharCode(65 + row)}${col + 1}`);
+        grid.appendChild(cell);
+      }
+    }
+
+    const caption = this.elements.boardCaption;
+    if (caption) {
+      caption.textContent = perspective === 'spotter'
+        ? 'True board known to the Spotter'
+        : 'Partial board observed by the Captain';
+    }
+    grid.setAttribute('aria-label', perspective === 'spotter' ? 'Spotter board' : 'Captain board');
+  }
+
+  getColor(value) {
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (this.colorPalette.has(numeric)) {
+      return this.colorPalette.get(numeric);
+    }
+    if (Number.isFinite(numeric) && numeric > 0) {
+      const color = FALLBACK_COLORS[this.fallbackIndex % FALLBACK_COLORS.length];
+      this.colorPalette.set(numeric, color);
+      this.fallbackIndex += 1;
+      return color;
+    }
+    return '#d0d4dc';
+  }
+
+  async playConversation(example, { animate = true, animationId } = {}) {
+    const logEl = this.elements.chatLog;
+    if (!logEl) return;
+    logEl.innerHTML = '';
+
+    if (!example) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Conversation unavailable for this example.';
+      logEl.appendChild(empty);
+      return;
+    }
+
+    const instant = !animate || prefersReducedMotion();
+    const questionText = example.question?.text?.trim() || 'The Captain poses a question.';
+
+    await this.displayTypewrittenMessage({
+      logEl,
+      role: 'captain',
+      label: 'Captain',
+      text: questionText,
+      animationId,
+      instant,
+    });
+    if (animationId !== this.animationId) return;
+
+    await this.delayWithCancel(QUESTION_LINGER_BUFFER_MS, instant);
+    if (animationId !== this.animationId) return;
+
+    const codeString = typeof example.fn_str === 'string' && example.fn_str.trim().length
+      ? example.fn_str.trim()
+      : '# No code generated for this exchange.';
+    await this.displayCodeMessage({ logEl, code: codeString, animationId, instant });
+    if (animationId !== this.animationId) return;
+
+    await this.delayWithCancel(CODE_SNIPPET_LINGER_MS, instant);
+    if (animationId !== this.animationId) return;
+
+    const evaluatingMessage = this.showEvaluatingMessage({ logEl });
+    await this.delayWithCancel(CODE_EVALUATION_DELAY_MS, instant);
+    if (animationId !== this.animationId) return;
+
+    this.resolveEvaluatingMessage(evaluatingMessage, example.answer?.value);
+    if (animationId !== this.animationId) return;
+
+    await this.delayWithCancel(CODE_RESULT_LINGER_MS, instant);
+    if (animationId !== this.animationId) return;
+
+    const answerText = example.answer?.text?.trim() || (example.answer?.value ? 'Yes.' : 'No.');
+    await this.displayTypewrittenMessage({
+      logEl,
+      role: 'spotter',
+      label: 'Spotter',
+      text: answerText,
+      animationId,
+      instant,
+    });
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  async displayTypewrittenMessage({ logEl, role, label, text, animationId, instant = false }) {
+    if (!logEl) return null;
+    const message = createChatMessage({ role, label });
+    logEl.appendChild(message.wrapper);
+    logEl.scrollTop = logEl.scrollHeight;
+    await this.typeText({
+      textEl: message.textEl,
+      caret: message.caret,
+      text,
+      animationId,
+      logEl,
+      instant,
+    });
+    return message;
+  }
+
+  async displayCodeMessage({ logEl, code, animationId, instant = false }) {
+    if (!logEl) return null;
+    const message = createChatMessage({ role: 'spotter', label: 'Spotter' });
+    message.bubble.classList.add('is-code-snippet');
+
+    if (message.textEl && message.textEl.parentNode) {
+      message.textEl.parentNode.removeChild(message.textEl);
+    }
+
+    const codeWrapper = document.createElement('pre');
+    codeWrapper.className = 'codegen-code-block';
+    const codeEl = document.createElement('code');
+    codeEl.className = 'language-python';
+    codeWrapper.appendChild(codeEl);
+    message.bubble.insertBefore(codeWrapper, message.caret);
+    message.textEl = codeEl;
+
+    logEl.appendChild(message.wrapper);
+    logEl.scrollTop = logEl.scrollHeight;
+
+    await this.typeText({
+      textEl: message.textEl,
+      caret: message.caret,
+      text: code,
+      animationId,
+      logEl,
+      instant,
+      timeScale: 0.25,
+    });
+    if (animationId !== this.animationId) {
+      return message;
+    }
+
+    if (window.hljs && typeof window.hljs.highlightElement === 'function') {
+      window.hljs.highlightElement(codeEl);
+    }
+
+    logEl.scrollTop = logEl.scrollHeight;
+    return message;
+  }
+
+  showEvaluatingMessage({ logEl }) {
+    if (!logEl) return null;
+    const message = createChatMessage({ role: 'system', label: 'Execution' });
+    const bubble = message.bubble;
+    if (message.textEl && message.textEl.parentNode) {
+      message.textEl.parentNode.removeChild(message.textEl);
+    }
+    if (message.caret && message.caret.parentNode) {
+      message.caret.parentNode.removeChild(message.caret);
+    }
+
+    const content = document.createElement('span');
+    content.className = 'codegen-evaluating-message';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-cog codegen-evaluating-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    const labelEl = document.createElement('span');
+    labelEl.textContent = 'Evaluating…';
+    content.appendChild(icon);
+    content.appendChild(labelEl);
+    bubble.appendChild(content);
+
+    logEl.appendChild(message.wrapper);
+    logEl.scrollTop = logEl.scrollHeight;
+
+    return { message, iconEl: icon, labelEl, content };
+  }
+
+  resolveEvaluatingMessage(evaluatingMessage, value) {
+    if (!evaluatingMessage) {
+      return;
+    }
+
+    const boolString = value === true ? 'True' : value === false ? 'False' : 'Unknown';
+
+    if (evaluatingMessage.labelEl) {
+      evaluatingMessage.labelEl.textContent = `Evaluating… → ${boolString}`;
+    }
+
+    if (evaluatingMessage.content) {
+      // Find the first child (icon element) - Font Awesome may have replaced <i> with <svg>
+      const oldIcon = evaluatingMessage.content.firstChild;
+      if (oldIcon) {
+        // Create a completely new icon element
+        const newIcon = document.createElement('i');
+        const newIconClass = value === false ? 'fa-times-circle' : 'fa-check-circle';
+        newIcon.className = `fas ${newIconClass} codegen-evaluating-icon`;
+        newIcon.setAttribute('aria-hidden', 'true');
+
+        // Replace the old icon with the new one
+        evaluatingMessage.content.replaceChild(newIcon, oldIcon);
+        // Update the reference
+        evaluatingMessage.iconEl = newIcon;
+      }
+    }
+  }
+
+  delayWithCancel(durationMs, instant = false) {
+    const duration = instant ? 0 : Math.max(0, durationMs);
+    if (duration === 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, duration);
+    });
+  }
+
+  typeText({ textEl, caret, text, animationId, logEl, instant = false, timeScale = 1 }) {
+    return new Promise((resolve) => {
+      const messageText = typeof text === 'string' ? text : '';
+      if (!textEl) {
+        resolve();
+        return;
+      }
+
+      if (instant || animationId !== this.animationId || messageText.length === 0) {
+        textEl.textContent = messageText;
+        setTypingCaretVisibility(caret, false);
+        if (logEl) {
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        resolve();
+        return;
+      }
+
+      textEl.textContent = '';
+      setTypingCaretVisibility(caret, true);
+      let index = 0;
+
+      const step = () => {
+        if (animationId !== this.animationId) {
+          textEl.textContent = messageText;
+          setTypingCaretVisibility(caret, false);
+          if (logEl) {
+            logEl.scrollTop = logEl.scrollHeight;
+          }
+          resolve();
+          return;
+        }
+
+        textEl.textContent += messageText.charAt(index);
+        index += 1;
+
+        if (logEl) {
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        if (index >= messageText.length) {
+          setTypingCaretVisibility(caret, false);
+          resolve();
+          return;
+        }
+
+        const previousChar = messageText.charAt(index - 1);
+        const scale = Number.isFinite(timeScale) && timeScale > 0 ? timeScale : 1;
+        let delay = TYPEWRITER_CHAR_DELAY_MS;
+        if (/[,.;!?]/.test(previousChar)) {
+          delay = TYPEWRITER_PUNCTUATION_DELAY_MS;
+        } else if (previousChar === ' ') {
+          delay = TYPEWRITER_SPACE_DELAY_MS;
+        }
+
+        window.setTimeout(step, delay * scale);
+      };
+
+      step();
+    });
+  }
+
+  setActiveView(view, { rerender = true } = {}) {
+    const allowed = ['captain', 'spotter'];
+    const targetView = allowed.includes(view) ? view : 'spotter';
+    this.state.activeView = targetView;
+
+    const toggle = this.elements.viewToggle;
+    if (toggle) {
+      Array.from(toggle.querySelectorAll('button[data-view]')).forEach((button) => {
+        const isActive = button.dataset.view === targetView;
+        button.classList.toggle('is-active', isActive);
+      });
+    }
+
+    if (rerender) {
+      this.renderBoard();
+    }
+  }
+
+  attachListeners() {
+    const toggle = this.elements.viewToggle;
+    if (toggle) {
+      toggle.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-view]');
+        if (!button) return;
+        const { view } = button.dataset;
+        this.setActiveView(view);
+      });
+    }
+  }
+}
+
 function initMotivationHighlights() {
   const accordionContainer = document.getElementById('motivation-accordion-items');
   const showAbstractButton = document.getElementById('motivation-show-abstract');
@@ -2029,9 +2537,20 @@ function initMainExplorer(dataPromise) {
   new TrajectoryExplorer(explorerRoot, { dataPromise });
 }
 
+function initCodeGenerationShowcase(dataPromise) {
+  const sectionRoot = document.getElementById('code-generation');
+  if (!sectionRoot) return;
+  new CodeGenerationShowcase(sectionRoot, { dataPromise });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const dataPromise = getTrajectoryData();
+  const codeSamples = getCodeSamplesData();
+  if (window.hljs && typeof window.hljs.configure === 'function') {
+    window.hljs.configure({ ignoreUnescapedHTML: true });
+  }
   initHeroExplorer(dataPromise);
   initMainExplorer(dataPromise);
+  initCodeGenerationShowcase(codeSamples);
   initMotivationHighlights();
 });
