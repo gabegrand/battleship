@@ -1688,15 +1688,19 @@ class TrajectoryExplorer {
 
       const title = document.createElement('span');
       title.className = 'game-item-title';
-      const llmLabel = LLM_LABELS[game.captain_llm] ?? game.captain_llm ?? 'Unknown LLM';
-      title.textContent = String(llmLabel);
+      const strategyLabel = CAPTAIN_TYPE_LABELS[game.captain_type] ?? game.captain_type;
+      const llmLabel = LLM_LABELS[game.captain_llm] ?? game.captain_llm;
+      const titleText = strategyLabel || llmLabel || 'Unknown strategy';
+      title.textContent = String(titleText);
 
       const meta = document.createElement('span');
       meta.className = 'game-item-meta';
       const metaParts = [];
-      if (game.captain_type) {
-        const captainTypeLabel = CAPTAIN_TYPE_LABELS[game.captain_type] ?? game.captain_type;
-        metaParts.push(String(captainTypeLabel));
+      if (llmLabel) {
+        metaParts.push(String(llmLabel));
+      }
+      if (strategyLabel && strategyLabel !== titleText) {
+        metaParts.push(String(strategyLabel));
       }
       metaParts.push(game.is_won ? 'Win' : 'Loss');
       if (typeof game.f1_score === 'number') {
@@ -1765,14 +1769,14 @@ class TrajectoryExplorer {
           return indexA - indexB;
         }
 
-        const llmComparison = compareByOrder(gameA.captain_llm, gameB.captain_llm, LLM_ORDER);
-        if (llmComparison !== 0) {
-          return llmComparison;
-        }
-
         const typeComparison = compareByOrder(gameA.captain_type, gameB.captain_type, CAPTAIN_TYPE_ORDER);
         if (typeComparison !== 0) {
           return typeComparison;
+        }
+
+        const llmComparison = compareByOrder(gameA.captain_llm, gameB.captain_llm, LLM_ORDER);
+        if (llmComparison !== 0) {
+          return llmComparison;
         }
 
         return indexA - indexB;

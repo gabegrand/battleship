@@ -29,3 +29,5 @@ public/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+
+static/scratch/
