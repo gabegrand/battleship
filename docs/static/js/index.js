@@ -15,7 +15,9 @@ const SHIP_ID_BY_SYMBOL = Object.fromEntries(Object.entries(SHIP_SYMBOLS).map(([
 
 const DEFAULT_PLAYBACK_INTERVAL_MS = 1000;
 
-const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
+// const LLM_ORDER = ['GPT-5', 'GPT-4o', 'Llama-4-Scout', 'Baseline'];
+
+LLM_ORDER = ['Llama-4-Scout', 'GPT-4o', 'GPT-5', 'Baseline'];
 
 const LLM_LABELS = {
   'GPT-5': 'GPT-5',
@@ -24,7 +26,7 @@ const LLM_LABELS = {
   Baseline: 'Baseline (No LLM)',
 };
 
-const CAPTAIN_TYPE_ORDER = ['LM', '+Bayes-Q', '+Bayes-M', '+Bayes-QM', '+Bayes-QMD', 'Random', 'Greedy'];
+const CAPTAIN_TYPE_ORDER = ['+Bayes-QMD', '+Bayes-QM', '+Bayes-M', '+Bayes-Q', 'LM', 'Greedy', 'Random'];
 
 const CAPTAIN_TYPE_LABELS = {
   LM: 'LM-only',

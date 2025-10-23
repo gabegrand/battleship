@@ -1907,3 +1907,23 @@ body {
   height: 10px;
   border-radius: 2px;
 }
+
+/* Left-justify all figure captions site-wide */
+.image figcaption,
+figure figcaption {
+  text-align: left !important;
+}
+
+/* Bottom-align the two Spotter subfigures in the codegen metrics section */
+.codegen-spotter-figs {
+  /* keep equal-height columns, then push figures to the bottom inside each column */
+  align-items: stretch;
+}
+.codegen-spotter-figs .column {
+  display: flex;
+  flex-direction: column;
+}
+.codegen-spotter-figs .column > figure,
+.codegen-spotter-figs .column > .image {
+  margin-top: auto;
+}
