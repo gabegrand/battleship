@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import random
 import re
 from collections import defaultdict
@@ -23,9 +24,20 @@ MODEL_DISPLAY_NAMES.update(
     {k.split("/")[-1]: v for k, v in MODEL_DISPLAY_NAMES.items()}
 )
 
-
-DEFAULT_RUN_DIR = "experiments/collaborative/captain_benchmarks/run_2025_08_25_22_02_29"
-DEFAULT_RUN_DIRS: list[str] = [DEFAULT_RUN_DIR]
+DEFAULT_RUN_DIRS: list[str] = [
+    os.path.join("experiments/collaborative/captain_benchmarks", d)
+    for d in [
+        "run_2025_08_25_16_28_19",
+        "run_2025_09_20_12_52_51",
+        "run_2025_09_22_23_32_49",
+        "run_2025_08_25_22_02_29",
+        "run_2025_09_20_14_49_29",
+        "run_2025_08_26_17_56_46",
+        "run_2025_09_20_16_09_56",
+        "run_2025_09_22_19_26_50",
+        "run_2025_08_26_17_23_23",
+    ]
+]
 DEFAULT_CONTEXTS_DIR = "experiments/collaborative/contexts"
 DEFAULT_OUTPUT_PATH = "battleship.github.io/static/data/_tmp_trajectory_samples.json"
 
@@ -43,16 +55,10 @@ def parse_args() -> argparse.Namespace:
         description="Export representative trajectories from a captain benchmark run"
     )
     parser.add_argument(
-        "--run-dir",
-        type=str,
-        default=None,
-        help=("Path to a benchmark run directory (default: " f"{DEFAULT_RUN_DIR})."),
-    )
-    parser.add_argument(
         "--run-dirs",
         type=str,
         nargs="+",
-        default=None,
+        default=DEFAULT_RUN_DIRS,
         help="One or more benchmark run directories to include in the export.",
     )
     parser.add_argument(
@@ -100,9 +106,6 @@ def parse_args() -> argparse.Namespace:
         help="Logging level (default: %(default)s)",
     )
     args = parser.parse_args()
-
-    if args.run_dir and args.run_dirs:
-        parser.error("Use either --run-dir or --run-dirs, not both.")
 
     return args
 
@@ -332,11 +335,7 @@ def main() -> None:
     args = parse_args()
     configure_logging(args.log_level)
 
-    run_dir_inputs = (
-        args.run_dirs
-        if args.run_dirs is not None
-        else ([args.run_dir] if args.run_dir else None)
-    )
+    run_dir_inputs = args.run_dirs
 
     if run_dir_inputs is None:
         run_dir_inputs = DEFAULT_RUN_DIRS
