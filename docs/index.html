@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="BattleshipQA project website placeholder." />
+  <meta name="description" content="BattleshipQA" />
   <meta name="keywords" content="BattleshipQA, information seeking, language models" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BattleshipQA: Shoot First, Ask Questions Later?</title>
@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="./static/css/index.css" />
-  <link rel="icon" href="./static/images/placeholder-figure.svg" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext x='12' y='54' font-size='48'%3E%E2%9A%93%3C/text%3E%3C/svg%3E" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"
     referrerpolicy="no-referrer"></script>
@@ -210,10 +210,19 @@
                   </button>
                   <div class="motivation-accordion-panel" id="motivation-accordion-panel-0" role="region"
                     aria-labelledby="motivation-accordion-trigger-0" hidden>
-                    <p>Battleship strips decision making down to its essentials: every turn forces a trade-off between
-                      gathering information and acting on it.</p>
-                    <p>Because the board is fully observable to the Spotter, we can score each question and move with
-                      expected information gain and F1 metrics.</p>
+                    <p>Battleship encapsulates a full active learning loop: agents must form data-driven hypotheses, perform experiments, and made educated guesses. At the same time, the game rules are straightforward, and state and action representations are lightweight. This makes Battleship an ideal evaluation harness for agents that doesn't require extensive prompt engineering.</p>
+                  </div>
+                </div>
+                <div class="motivation-accordion-item">
+                  <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-1"
+                    aria-controls="motivation-accordion-panel-1" aria-expanded="false">
+                    <span class="motivation-accordion-label">How do you measure performance?</span>
+                    <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down"
+                        aria-hidden="true"></i></span>
+                  </button>
+                  <div class="motivation-accordion-panel" id="motivation-accordion-panel-1" role="region"
+                    aria-labelledby="motivation-accordion-trigger-1" hidden>
+                    <p>For Spotter agents, we measure QA accuracy across a variety of questions, which often require grounded reasoning about the board and dialogue context. For Captain agents, our Collaborative Battleship task provides a variety of metrics that measure both end-to-end game performance as well as more granular aspects of question-asking. For instance, to measure overall performance, Targeting Score (F1) captures the balance between precision and recall in taking shots. Meanwhile, to measure the utility of specific questions, we compute expected information gain (EIG), which measures how much information a question is likely to reveal about the board state.</p>
                   </div>
                 </div>
                 <div class="motivation-accordion-item">
@@ -230,36 +239,30 @@
                       <li>Question quality: captains fixate on low-yield queries.</li>
                       <li>Action selection: many moves resemble random firing, wasting scarce turns.</li>
                     </ul>
-                    <p>These patterns echo qualitative feedback from human players, who describe the agents as
-                      “hesitant” and “scattershot.”</p>
                   </div>
                 </div>
                 <div class="motivation-accordion-item">
                   <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-2"
                     aria-controls="motivation-accordion-panel-2" aria-expanded="false">
-                    <span class="motivation-accordion-label">How do the Bayesian add-ons help?</span>
+                    <span class="motivation-accordion-label">How do the Bayesian strategies work?</span>
                     <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down"
                         aria-hidden="true"></i></span>
                   </button>
                   <div class="motivation-accordion-panel" id="motivation-accordion-panel-2" role="region"
                     aria-labelledby="motivation-accordion-trigger-2" hidden>
-                    <p>We sample hypothetical boards, score candidate questions with BED-inspired heuristics, and
-                      re-rank LM answers using Monte Carlo evidence.</p>
-                    <p>This nudges the LM toward informative follow-ups without requiring task-specific supervision.</p>
+                    <p>We equip agents with a "world model" -- think of this as a tool that agents can call to sample hypothetical board states. This allows agents to maintain a hypothesis space over possible board configurations and perform Bayesian belief updates based on new evidence. The key to making this work is code generation: this allows agents to translate questions expressed in natural language into executable code that interacts with the world model. Scroll down for <a href="#code-generation">examples</a> of how this works in practice.</p>
                   </div>
                 </div>
                 <div class="motivation-accordion-item">
                   <button type="button" class="motivation-accordion-button" id="motivation-accordion-trigger-3"
                     aria-controls="motivation-accordion-panel-3" aria-expanded="false">
-                    <span class="motivation-accordion-label">Do the gains extend beyond Battleship?</span>
+                    <span class="motivation-accordion-label">Do these Bayesian strategies work in other settings?</span>
                     <span class="motivation-accordion-indicator" aria-hidden="true"><i class="fas fa-chevron-down"
                         aria-hidden="true"></i></span>
                   </button>
                   <div class="motivation-accordion-panel" id="motivation-accordion-panel-3" role="region"
                     aria-labelledby="motivation-accordion-trigger-3" hidden>
-                    <p>Yes—replicating the setup on Guess Who? lifts accuracy by 28 to 42 percentage points.</p>
-                    <p>The same heuristics apply to other partially observed games and diagnostic workflows where agents
-                      must alternate between probing and acting.</p>
+                    <p>Yes -- we extend our Bayesian strategies to a general family of information-seeking games from <a href="https://www.textarena.ai/" target="_blank" rel="noopener">TextArena</a>. As an initial test, we replicated our full experiments on "Guess Who?", a classic game where players ask yes/no questions to identify a hidden character. Here, we find that our approach boosts accuracy by 28 to 42 percentage points. The same strategies apply to other partially observed games and diagnostic workflows where agents must alternate between probing and acting.</p>
                   </div>
                 </div>
                 <div class="motivation-accordion-item">
@@ -382,6 +385,71 @@
               <img src="./static/images/spotter_accuracy_overall.png" alt="Spotter QA accuracy by strategy, highlighting code generation" />
               <figcaption class="has-text-centered is-size-6 mt-2">Code generation consistently improves Spotter QA over direct answering and CoT.</figcaption>
             </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-bayesian" id="bayesian-strategies">
+    <div class="container is-max-widescreen">
+      <div class="section-heading has-text-centered">
+        <h2 class="title is-3 is-spaced">Bayesian Strategies for Building Rational Agents</h2>
+        <p class="subtitle is-5 is-spaced">Belief-aware policies let agents decide what to ask, where to act, and when to switch between the two.</p>
+      </div>
+      <div class="columns is-variable is-6 is-multiline">
+        <div class="column is-12-mobile is-6-tablet is-4-desktop">
+          <div class="card strategy-card">
+            <div class="card-content">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-large has-text-info"><i class="fas fa-bullseye fa-2x" aria-hidden="true"></i></span>
+                </div>
+                <div class="media-content">
+                  <p class="title is-4 mb-1 is-spaced">Precision Moves</p>
+                  <p class="subtitle is-6 has-text-grey">Bayes-M</p>
+                </div>
+              </div>
+              <div class="content">
+                Maintain a weighted particle belief over feasible boards and fire at the tile with the highest posterior chance of containing a ship, yielding sharp MAP-driven targeting.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-12-mobile is-6-tablet is-4-desktop">
+          <div class="card strategy-card">
+            <div class="card-content">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-large has-text-warning"><i class="fas fa-question-circle fa-2x" aria-hidden="true"></i></span>
+                </div>
+                <div class="media-content">
+                  <p class="title is-4 mb-1 is-spaced">Informative Questions</p>
+                  <p class="subtitle is-6 has-text-grey">Bayes-Q</p>
+                </div>
+              </div>
+              <div class="content">
+                Sample candidate questions, translate them to executable checks, and choose the one whose expected information gain (EIG) is highest under the current belief.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-12-mobile is-12-tablet is-4-desktop">
+          <div class="card strategy-card">
+            <div class="card-content">
+              <div class="media">
+                <div class="media-left">
+                  <span class="icon is-large has-text-primary"><i class="fas fa-balance-scale fa-2x" aria-hidden="true"></i></span>
+                </div>
+                <div class="media-content">
+                  <p class="title is-4 mb-1 is-spaced">Explore vs. Act</p>
+                  <p class="subtitle is-6 has-text-grey">Bayes-D</p>
+                </div>
+              </div>
+              <div class="content">
+                Compare the discounted post-question MAP hit rate against the current best shot; ask when the value of information exceeds immediate reward, otherwise exploit with a targeted move.
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -521,14 +589,15 @@
   <section class="section" id="BibTeX">
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX</h2>
-      <pre><code>@article{grand2025battleship,
-    title={Shoot First, Ask Questions Later? Building Rational Agents That Explore and Act Like People},
-    author={Gabriel Grand and Valerio Pepe and Joshua B. Tenenbaum and Jacob Andreas},
-    journal={ArXiv},
-    year={2025},
-    volume={abs/XXXX.XXXXX},
-    url={https://arxiv.org/abs/XXXX.XXXXX}
-    }</code></pre>
+      <pre><code>
+@article{grand2025battleship,
+  title={Shoot First, Ask Questions Later? Building Rational Agents That Explore and Act Like People},
+  author={Gabriel Grand and Valerio Pepe and Joshua B. Tenenbaum and Jacob Andreas},
+  journal={ArXiv},
+  year={2025},
+  volume={abs/XXXX.XXXXX},
+  url={https://arxiv.org/abs/XXXX.XXXXX}
+}</code></pre>
     </div>
   </section>
 

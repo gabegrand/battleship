@@ -22,6 +22,10 @@ body {
   font-weight: 700;
 }
 
+.subtitle.is-spaced {
+  margin-bottom: 1.25rem;
+}
+
 .publication-authors {
   font-family: 'Google Sans', sans-serif;
 }
