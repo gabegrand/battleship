@@ -66,6 +66,11 @@ const CODE_SNIPPET_LINGER_MS = 900;
 const CODE_EVALUATION_DELAY_MS = 1100;
 const CODE_RESULT_LINGER_MS = 700;
 const CODE_BLOCK_REVEAL_DELAY_MS = 780;
+const FINAL_STATUS_REVEAL_DELAY_MS = 520;
+// Extra dwell added to the last stage so the final status chip stays visible before auto-advance
+const FINAL_STATUS_EXTRA_DWELL_MS = 3000;
+// Absolute minimum time (ms) the final status should remain on-screen after it appears
+const FINAL_STATUS_MIN_VISIBLE_MS = 2400;
 
 const DEFAULT_SELECTORS = {
   status: '#trajectory-status',
@@ -185,12 +190,12 @@ function createThinkingElement() {
   return thinker;
 }
 
-function buildResultElement({ isHit, text }) {
+function buildResultElement({ isHit, text, iconClass }) {
   const result = document.createElement('div');
   result.className = 'event-result';
   result.classList.add(isHit ? 'is-hit' : 'is-miss');
   const icon = document.createElement('i');
-  icon.className = `result-icon ${isHit ? ICON_CLASSES.hit : ICON_CLASSES.miss}`;
+  icon.className = `result-icon ${iconClass || (isHit ? ICON_CLASSES.hit : ICON_CLASSES.miss)}`;
   icon.setAttribute('aria-hidden', 'true');
   const copy = document.createElement('span');
   copy.textContent = text;
@@ -437,6 +442,8 @@ class TrajectoryExplorer {
     this.activeEventAnimationId = 0;
     this.lastEventAnimationPromise = Promise.resolve();
     this.lastRenderedStageIndex = 0;
+  // Track when the final status chip was shown to enforce a minimum visible time
+  this.lastFinalStatusShownAt = 0;
 
     this.setStatusMessage('Loading curated games…');
     this.updateSpeedControl();
@@ -716,7 +723,20 @@ class TrajectoryExplorer {
           return;
         }
 
-        const lingerDuration = this.computeLingerDuration(game.events[stageIndex]);
+        let lingerDuration = this.computeLingerDuration(game.events[stageIndex]);
+        if (isLastStage) {
+          // Ensure the final status remains visible long enough, regardless of playback speed
+          lingerDuration += FINAL_STATUS_EXTRA_DWELL_MS;
+          lingerDuration = Math.max(lingerDuration, FINAL_STATUS_MIN_VISIBLE_MS);
+          // Enforce any remaining time needed to reach the minimum visible duration
+          if (this.lastFinalStatusShownAt && Number.isFinite(this.lastFinalStatusShownAt)) {
+            const sinceShown = performance.now() - this.lastFinalStatusShownAt;
+            const remaining = FINAL_STATUS_MIN_VISIBLE_MS - sinceShown;
+            if (remaining > 0) {
+              lingerDuration = Math.max(lingerDuration, remaining);
+            }
+          }
+        }
         const sliderDuration = this.playback.intervalMs * SLIDER_ANIMATION_DURATION_RATIO;
 
         this.playback.timerId = window.setTimeout(() => {
@@ -1178,6 +1198,24 @@ class TrajectoryExplorer {
           animationId,
           logEl: log,
         });
+        // If this is the last event, append final board status
+        if (this.state.currentStage >= (game.events?.length ?? 1) - 1) {
+          await this.delayWithCancel(FINAL_STATUS_REVEAL_DELAY_MS, animationId);
+          if (animationId !== this.activeEventAnimationId) return;
+          const totalShipCells = countCells(game.true_board, (v) => typeof v === 'number' && v > 0);
+          const revealedShipCells = countCells(event.board, (v) => typeof v === 'number' && v > 0);
+          const complete = totalShipCells > 0 ? revealedShipCells >= totalShipCells : true;
+          const statusEl = buildResultElement({
+            isHit: complete,
+            text: complete ? 'Board complete' : 'Board incomplete',
+            iconClass: complete ? 'fas fa-trophy' : ICON_CLASSES.miss,
+          });
+          statusEl.classList.add('is-final');
+          if (complete) statusEl.classList.add('is-complete');
+          log.appendChild(statusEl);
+          log.scrollTop = log.scrollHeight;
+          this.lastFinalStatusShownAt = performance.now();
+        }
         return;
       }
 
@@ -1202,6 +1240,24 @@ class TrajectoryExplorer {
         const resultEl = buildResultElement({ isHit: hit, text: resultText });
         log.appendChild(resultEl);
         log.scrollTop = log.scrollHeight;
+        // If this is the last event, append final board status
+        if (this.state.currentStage >= (game.events?.length ?? 1) - 1) {
+          await this.delayWithCancel(FINAL_STATUS_REVEAL_DELAY_MS, animationId);
+          if (animationId !== this.activeEventAnimationId) return;
+          const totalShipCells = countCells(game.true_board, (v) => typeof v === 'number' && v > 0);
+          const revealedShipCells = countCells(event.board, (v) => typeof v === 'number' && v > 0);
+          const complete = totalShipCells > 0 ? revealedShipCells >= totalShipCells : true;
+          const statusEl = buildResultElement({
+            isHit: complete,
+            text: complete ? 'Board complete' : 'Board incomplete',
+            iconClass: complete ? 'fas fa-trophy' : ICON_CLASSES.miss,
+          });
+          statusEl.classList.add('is-final');
+          if (complete) statusEl.classList.add('is-complete');
+          log.appendChild(statusEl);
+          log.scrollTop = log.scrollHeight;
+          this.lastFinalStatusShownAt = performance.now();
+        }
         return;
       }
 

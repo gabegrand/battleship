@@ -1312,6 +1312,7 @@ body {
   flex-direction: column;
   gap: 0.9rem;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 0.25rem;
 }
 
@@ -1539,6 +1540,62 @@ body {
 
 .event-result.is-miss .result-icon {
   color: #ac2028;
+}
+
+/* Final board status styles */
+.event-result.is-final {
+  /* override the default reveal with a soft fade/slide that doesn't change width */
+  animation: finalFadeSlide 500ms ease-out forwards;
+}
+
+.event-result.is-final.is-complete {
+  /* orange-yellow celebratory background */
+  background: rgba(255, 193, 7, 0.25); /* ~#FFC107 with transparency */
+  color: #7a4e00;
+  box-shadow: 0 12px 26px rgba(255, 193, 7, 0.25);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.event-result.is-final.is-complete .result-icon {
+  color: #ff9800; /* slightly deeper orange for the trophy */
+  animation: trophyPulse 1200ms ease-in-out 120ms 1 alternate;
+}
+
+/* Optional subtle wiggle for incomplete status */
+.event-result.is-final:not(.is-complete) {
+  animation: finalBob 600ms ease-out forwards;
+}
+
+@keyframes finalFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trophyPulse {
+  0% { color: #ff9800; }
+  50% { color: #ffc107; }
+  100% { color: #ff9800; }
+}
+
+@keyframes finalBob {
+  0% { opacity: 0; transform: translateY(8px); }
+  40% { opacity: 1; transform: translateY(-2px); }
+  70% { opacity: 1; transform: translateY(1px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-result.is-final,
+  .event-result.is-final.is-complete,
+  .event-result.is-final:not(.is-complete) {
+    animation: none !important;
+  }
 }
 
 .progress-details {
