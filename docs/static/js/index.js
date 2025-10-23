@@ -385,6 +385,8 @@ class TrajectoryExplorer {
         autoplay: false,
         autoAdvanceGames: false,
         loopGames: false,
+        // When true, keep games in their incoming order and do not resort in applyFilters.
+        keepOriginalOrder: false,
         dataPromise: getTrajectoryData(),
       },
       options,
@@ -1696,25 +1698,30 @@ class TrajectoryExplorer {
       }
     });
 
-    filtered.sort((indexA, indexB) => {
-      const gameA = games[indexA];
-      const gameB = games[indexB];
-      if (!gameA || !gameB) {
+    if (this.config.keepOriginalOrder) {
+      // Preserve incoming order for hero viewer; useful when upstream already curated the list.
+      // Note: filtered already follows the current data.games order.
+    } else {
+      filtered.sort((indexA, indexB) => {
+        const gameA = games[indexA];
+        const gameB = games[indexB];
+        if (!gameA || !gameB) {
+          return indexA - indexB;
+        }
+
+        const llmComparison = compareByOrder(gameA.captain_llm, gameB.captain_llm, LLM_ORDER);
+        if (llmComparison !== 0) {
+          return llmComparison;
+        }
+
+        const typeComparison = compareByOrder(gameA.captain_type, gameB.captain_type, CAPTAIN_TYPE_ORDER);
+        if (typeComparison !== 0) {
+          return typeComparison;
+        }
+
         return indexA - indexB;
-      }
-
-      const llmComparison = compareByOrder(gameA.captain_llm, gameB.captain_llm, LLM_ORDER);
-      if (llmComparison !== 0) {
-        return llmComparison;
-      }
-
-      const typeComparison = compareByOrder(gameA.captain_type, gameB.captain_type, CAPTAIN_TYPE_ORDER);
-      if (typeComparison !== 0) {
-        return typeComparison;
-      }
-
-      return indexA - indexB;
-    });
+      });
+    }
 
     this.state.filteredIndices = filtered;
     this.renderGameList();
@@ -2473,6 +2480,43 @@ function initMotivationHighlights() {
 function initHeroExplorer(dataPromise) {
   const heroRoot = document.getElementById('hero-trajectory');
   if (!heroRoot) return;
+  // Curate the hero carousel to only loop through specific round IDs.
+  // If none of the specified rounds are present, fall back to all games.
+  const HERO_ROUND_IDS = ['ce88177d', '54dceb49', '559c2065'];
+  const filteredDataPromise = Promise.resolve(dataPromise).then((data) => {
+    try {
+      if (!data || !Array.isArray(data.games)) {
+        return data;
+      }
+      // Build order mapping and filter by target rounds
+      const orderIndex = new Map(HERO_ROUND_IDS.map((id, i) => [String(id), i]));
+      const target = new Set(orderIndex.keys());
+      const filteredWithIndex = data.games
+        .map((g, idx) => ({ g, idx }))
+        .filter(({ g }) => target.has(String(g?.round_id)));
+
+      if (filteredWithIndex.length === 0) {
+        return data;
+      }
+
+      // Sort by HERO_ROUND_IDS order, then by original index as a stable tiebreaker
+      filteredWithIndex.sort((a, b) => {
+        const ai = orderIndex.get(String(a.g?.round_id));
+        const bi = orderIndex.get(String(b.g?.round_id));
+        if (ai !== bi) return (ai ?? Number.POSITIVE_INFINITY) - (bi ?? Number.POSITIVE_INFINITY);
+        return a.idx - b.idx;
+      });
+
+      const games = filteredWithIndex.map(({ g }) => g);
+      if (games.length > 0) {
+        return { ...data, games };
+      }
+      return data;
+    } catch (e) {
+      return data;
+    }
+  });
+
   new TrajectoryExplorer(heroRoot, {
     selectors: {
       board: '[data-role="hero-board"]',
@@ -2504,7 +2548,8 @@ function initHeroExplorer(dataPromise) {
     playbackSpeed: 1,
     autoAdvanceGames: true,
     loopGames: true,
-    dataPromise,
+    keepOriginalOrder: true,
+    dataPromise: filteredDataPromise,
   });
 }
 
