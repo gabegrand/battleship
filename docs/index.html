@@ -387,6 +387,13 @@
             </figure>
           </div>
         </div>
+        <!-- Legend reproduced from Spotter figure in the paper -->
+        <div class="legend has-text-centered is-size-6 mt-2" role="note" aria-label="Legend for Spotter QA figures">
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#66C2A5"></span> Base LM</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#FC8D62"></span> CoT</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#8DA0CB"></span> Code</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#E78AC3"></span> CoT + Code</span>
+        </div>
       </div>
     </div>
   </section>
@@ -449,6 +456,29 @@
               <div class="content">
                 Compare the discounted post-question MAP hit rate against the current best shot; ask when the value of information exceeds immediate reward, otherwise exploit with a targeted move.
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Captain F1 boxplot figure highlighting key result -->
+      <div class="section mt-4 pt-0" aria-labelledby="captain-f1-heading">
+        <h3 id="captain-f1-heading" class="title is-4 has-text-centered mb-4">Targeting performance by strategy</h3>
+        <div class="columns is-centered">
+          <div class="column is-10 is-8-desktop">
+            <figure class="image">
+              <img src="./static/images/captain_f1_boxplot.png" alt="Targeting scores (F1) by Captain strategy" />
+              <figcaption class="has-text-centered is-size-6 mt-2">
+                Targeting scores (F1) by Captain strategy. Incorporating Bayesian strategies for questions (Q<sub>Bayes</sub>), moves (M<sub>Bayes</sub>), and decisions (D<sub>Bayes</sub>) brings weaker LMs from near-random performance to super-human levels.
+              </figcaption>
+            </figure>
+            <!-- Legend reproduced from fig:captain-analysis in the paper -->
+            <div class="legend has-text-centered is-size-6 mt-3" role="note" aria-label="Legend for Captain F1 boxplot">
+              <span class="legend-item"><span class="legend-swatch" style="background-color:#008f69"></span> Human</span>
+              <span class="legend-item"><span class="legend-swatch" style="background-color:#848482"></span> Baseline</span>
+              <span class="legend-item"><span class="legend-swatch" style="background-color:#71a0c1"></span> Llama-4-Scout</span>
+              <span class="legend-item"><span class="legend-swatch" style="background-color:#0e79b2"></span> GPT-4o</span>
+              <span class="legend-item"><span class="legend-swatch" style="background-color:#000080"></span> GPT-5</span>
             </div>
           </div>
         </div>
