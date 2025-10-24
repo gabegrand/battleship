@@ -28,6 +28,10 @@
     referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
   <script src="./static/js/index.js"></script>
 </head>
 
@@ -397,6 +401,159 @@
     </div>
   </section>
 
+  <section class="section section-world-model" id="world-model">
+    <div class="container is-max-widescreen">
+      <div class="section-heading has-text-centered">
+        <h2 class="title is-3 is-spaced">Monte Carlo inference with a probabilistic world model</h2>
+        <p class="subtitle is-5">We equip agents with a "world model" that allows them to sample possible boards. This allows agents to represent uncertainty, form approximate beliefs, and make grounded inferences.</p>
+      </div>
+
+      <div class="world-model-pipeline" data-role="world-model-pipeline">
+        <div class="world-model-stage world-model-stage--input">
+          <div class="world-model-card world-model-card--board" data-role="world-model-partial-wrapper">
+            <div class="world-model-card-header">
+              <h3 class="title is-5">Observed partial board</h3>
+            </div>
+            <div class="world-model-card-media">
+              <img src="./static/images/world_model_samples/partial_board.png" alt="Partial Battleship board showing observed hits and misses" class="world-model-board" data-role="world-model-partial">
+            </div>
+            <p class="world-model-card-subtitle">Shots so far constrain the hypothesis space.</p>
+          </div>
+        </div>
+
+        <div class="world-model-arrow" aria-hidden="true">
+          <span class="world-model-arrow-line"></span>
+        </div>
+
+        <div class="world-model-stage world-model-stage--model">
+          <div class="world-model-stage-stack">
+            <div class="world-model-hypothesis" data-role="world-model-hypothesis">
+              <span class="world-model-hypothesis-label">Hypothesis Space</span>
+              <div class="world-model-samples" data-role="world-model-samples" aria-label="Sampled hypothesis boards">
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_0.png" alt="Sampled board hypothesis 1">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_1.png" alt="Sampled board hypothesis 2">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_2.png" alt="Sampled board hypothesis 3">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_3.png" alt="Sampled board hypothesis 4">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_4.png" alt="Sampled board hypothesis 5">
+                </figure>
+              </div>
+            </div>
+            <div class="world-model-generator" data-role="world-model-generator" aria-label="Probabilistic world model" role="img">
+              <span class="world-model-icon" aria-hidden="true"><i class="fas fa-globe-americas"></i></span>
+            </div>
+          </div>
+          <p class="world-model-caption world-model-caption--stage">Each sample is one plausible arrangement of ships consistent with the evidence.</p>
+        </div>
+
+        <div class="world-model-arrow" aria-hidden="true">
+          <span class="world-model-arrow-line"></span>
+        </div>
+
+        <div class="world-model-stage world-model-stage--output">
+          <div class="world-model-card world-model-card--heatmap" data-role="world-model-heatmap-wrapper">
+            <div class="world-model-card-header">
+              <h3 class="title is-5">Approximate belief state</h3>
+            </div>
+            <div class="world-model-card-media">
+              <img src="./static/images/world_model_samples/heatmap.png" alt="Heatmap showing marginal probability that each tile contains a ship" class="world-model-heatmap" data-role="world-model-heatmap">
+            </div>
+          <p class="world-model-card-subtitle">We marginalize over the sample set to obtain a tile-level probability map.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="section section-information-gain" id="information-gain">
+      <div class="container is-max-widescreen">
+      <div class="section-heading has-text-centered">
+        <h2 class="title is-3 is-spaced">Optimizing questions via expected information gain (EIG)</h2>
+        <p class="subtitle is-5">Executable questions let us score how much information each hypothesis-reducing split reveals.</p>
+      </div>
+        <div class="information-gain-layout">
+          <div class="information-gain-card information-gain-chat-card">
+            <h3 class="title is-5 mb-3">Code translation enables mental simulation</h3>
+            <p class="information-gain-note">Captain agents can simulate an "internal" Spotter agent that provides code translations for candidate questions.</p>
+            <div class="event-details information-gain-chat" data-role="eig-chat" aria-live="polite">
+              <div class="event-chat-log" data-role="eig-chat-log">
+                <div class="empty-state">Preparing example…</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="information-gain-card information-gain-sorting-card">
+            <h3 class="title is-5 mb-3">Evaluating across the hypothesis space</h3>
+            <p class="information-gain-note">Executing the code against each sample splits the hypothesis space into True/False partitions.</p>
+            <div class="information-gain-sorting" data-role="eig-sorting">
+              <div class="information-gain-sample-pool" data-role="eig-sample-source">
+                <h4 class="subtitle is-6 has-text-grey mb-2">Sampled boards</h4>
+                <div class="information-gain-sample-grid" data-role="eig-sample-grid" role="list" aria-label="Samples awaiting evaluation">
+                  <div class="eig-sample-chip" data-role="eig-sample" data-target="pending" data-result="false" data-sample-index="0" role="listitem">
+                    <img class="eig-sample-image" src="./static/images/world_model_samples/sample_0.png" alt="Hypothesis board sample 0">
+                    <span class="sr-only eig-sample-label">Sample 0 → pending</span>
+                  </div>
+                  <div class="eig-sample-chip" data-role="eig-sample" data-target="pending" data-result="false" data-sample-index="1" role="listitem">
+                    <img class="eig-sample-image" src="./static/images/world_model_samples/sample_1.png" alt="Hypothesis board sample 1">
+                    <span class="sr-only eig-sample-label">Sample 1 → pending</span>
+                  </div>
+                  <div class="eig-sample-chip" data-role="eig-sample" data-target="pending" data-result="false" data-sample-index="2" role="listitem">
+                    <img class="eig-sample-image" src="./static/images/world_model_samples/sample_2.png" alt="Hypothesis board sample 2">
+                    <span class="sr-only eig-sample-label">Sample 2 → pending</span>
+                  </div>
+                  <div class="eig-sample-chip" data-role="eig-sample" data-target="pending" data-result="false" data-sample-index="3" role="listitem">
+                    <img class="eig-sample-image" src="./static/images/world_model_samples/sample_3.png" alt="Hypothesis board sample 3">
+                    <span class="sr-only eig-sample-label">Sample 3 → pending</span>
+                  </div>
+                  <div class="eig-sample-chip" data-role="eig-sample" data-target="pending" data-result="true" data-sample-index="4" role="listitem">
+                    <img class="eig-sample-image" src="./static/images/world_model_samples/sample_4.png" alt="Hypothesis board sample 4">
+                    <span class="sr-only eig-sample-label">Sample 4 → pending</span>
+                  </div>
+                </div>
+              </div>
+              <div class="information-gain-buckets">
+                <div class="information-gain-bucket" data-result="false">
+                  <h4 class="subtitle is-6 mb-2">Returns False</h4>
+                  <div class="information-gain-bucket-body" data-role="eig-bucket-false" role="list" aria-label="Samples returning False"></div>
+                </div>
+                <div class="information-gain-bucket" data-result="true">
+                  <h4 class="subtitle is-6 mb-2">Returns True</h4>
+                  <div class="information-gain-bucket-body" data-role="eig-bucket-true" role="list" aria-label="Samples returning True"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="information-gain-card information-gain-plot-card">
+            <h3 class="title is-5 mb-3" id="information-gain-plot-heading">EIG peaks at balanced hypotheses</h3>
+            <p class="information-gain-note">Expected information gain (EIG) is maximized when the question splits the hypothesis space evenly.</p>
+            <div class="information-gain-plot-wrapper">
+              <svg class="information-gain-plot" data-role="eig-plot" role="img" aria-labelledby="information-gain-plot-heading information-gain-plot-desc"></svg>
+              <div class="sr-only" id="information-gain-plot-desc">Expected information gain vs. p(True) under ε = 0.10. Curve peaks at p(True) = 0.5.</div>
+            </div>
+            <dl class="information-gain-plot-meta">
+              <div>
+                <dt>Channel noise</dt>
+                <dd data-role="eig-epsilon">ε = 0.10</dd>
+              </div>
+              <div>
+                <dt>Max EIG</dt>
+                <dd data-role="eig-max-eig">1 − H(ε)</dd>
+              </div>
+            </dl>
+            <p class="information-gain-note">We use channel noise (ε) to model uncertainty in the predicted answer (either due to mis-translations or inherent ambiguity in the question).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
   <section class="section section-bayesian" id="bayesian-strategies">
     <div class="container is-max-widescreen">
       <div class="section-heading has-text-centered">
@@ -463,23 +620,31 @@
       <!-- Captain F1 boxplot figure highlighting key result -->
       <div class="section mt-4 pt-0" aria-labelledby="captain-f1-heading">
         <h3 id="captain-f1-heading" class="title is-4 has-text-centered mb-4">Targeting performance by strategy</h3>
-        <div class="columns is-centered">
-          <div class="column is-10 is-8-desktop">
+        <div class="columns is-centered is-variable is-6 captain-key-figures">
+          <div class="column is-12-tablet is-6-desktop">
             <figure class="image">
               <img src="./static/images/captain_f1_boxplot.png" alt="Targeting scores (F1) by Captain strategy" />
-              <!-- Legend reproduced from fig:captain-analysis in the paper -->
-              <div class="legend has-text-centered is-size-6 mt-3" role="note" aria-label="Legend for Captain F1 boxplot">
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#008f69"></span> Human</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#848482"></span> Baseline</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#71a0c1"></span> Llama-4-Scout</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#0e79b2"></span> GPT-4o</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#000080"></span> GPT-5</span>
-              </div>
               <figcaption class="has-text-centered is-size-6 mt-2">
                 Targeting scores (F1) by Captain strategy. Incorporating Bayesian strategies for questions (Q<sub>Bayes</sub>), moves (M<sub>Bayes</sub>), and decisions (D<sub>Bayes</sub>) brings weaker LMs from near-random performance to super-human levels.
               </figcaption>
             </figure>
           </div>
+          <div class="column is-12-tablet is-5-desktop">
+            <figure class="image">
+              <img src="./static/images/eig_max_vs_k.png" alt="Expected information gain as a function of sampled questions under Q Bayes" />
+              <figcaption class="has-text-centered is-size-6 mt-2">
+                Expected information gain (EIG) scales with the number of candidate questions sampled by Q<sub>Bayes</sub>. Drawing up to 10 programs yields +0.227 bits per question (94.2% of the information-theoretic ceiling) while driving redundant questions nearly to zero for weaker models.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+        <!-- Shared legend for Captain metrics -->
+        <div class="legend has-text-centered is-size-6 mt-3" role="note" aria-label="Legend for Captain metrics">
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#008f69"></span> Human</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#848482"></span> Baseline</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#71a0c1"></span> Llama-4-Scout</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#0e79b2"></span> GPT-4o</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#000080"></span> GPT-5</span>
         </div>
       </div>
     </div>
@@ -495,7 +660,7 @@
             <p class="is-5 is-spaced">Press the Play button below to get started. Use the Game Browser to select scenarios based on Captain Strategy and LLM.</p>
           </div>
           <div id="trajectory-explorer" class="trajectory-explorer">
-            <div class="trajectory-status" id="trajectory-status" role="status">Loading curated games…</div>
+
             <div class="trajectory-layout">
               <div class="viewer-panel">
                 <div class="viewer-content">
@@ -533,6 +698,7 @@
                     </div>
                   </div>
                 </div>
+            <div class="trajectory-status" id="trajectory-status" role="status">Loading curated games…</div>
               </div>
 
               <div class="trajectory-timeline">

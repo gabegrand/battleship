@@ -106,6 +106,16 @@ const CODEGEN_SELECTORS = {
   viewToggle: '[data-role="codegen-view-toggle"]',
 };
 
+const EIG_DEMO_SAMPLE_RESULTS = [
+  { index: 0, result: false },
+  { index: 1, result: false },
+  { index: 2, result: false },
+  { index: 3, result: false },
+  { index: 4, result: true },
+];
+
+const EIG_DEMO_ROUND_ID = 'eig-demo';
+
 function prefersReducedMotion() {
   return Boolean(window.matchMedia) && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -2371,6 +2381,47 @@ function initMotivationHighlights() {
   const abstractPanel = document.getElementById('motivation-abstract-panel');
   const abstractHeading = document.getElementById('abstract-heading');
 
+  const reduceMotion = prefersReducedMotion();
+
+  const timelineItems = Array.from(document.querySelectorAll('.motivation-timeline-item'));
+  if (timelineItems.length > 0) {
+    const hasIntersectionObserver = typeof window !== 'undefined'
+      && typeof window.IntersectionObserver === 'function';
+
+    timelineItems.forEach((item, index) => {
+      item.classList.add('is-reveal-pending');
+      const clampedDelay = Math.min(index * 0.08, 0.32);
+      item.style.setProperty('--timeline-delay', `${clampedDelay}s`);
+    });
+
+    if (reduceMotion || !hasIntersectionObserver) {
+      timelineItems.forEach((item) => {
+        item.classList.add('is-visible');
+        item.classList.remove('is-reveal-pending');
+        if (reduceMotion) {
+          item.style.removeProperty('--timeline-delay');
+        }
+      });
+    } else {
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting || entry.intersectionRatio > 0) {
+            const { target } = entry;
+            target.classList.add('is-visible');
+            target.classList.remove('is-reveal-pending');
+            target.style.removeProperty('--timeline-delay');
+            obs.unobserve(target);
+          }
+        });
+      }, {
+        threshold: 0.25,
+        rootMargin: '0px 0px -10% 0px',
+      });
+
+      timelineItems.forEach((item) => observer.observe(item));
+    }
+  }
+
   if (!accordionContainer) {
     return;
   }
@@ -2435,7 +2486,6 @@ function initMotivationHighlights() {
     setAccordionState(0);
   }
 
-  const reduceMotion = prefersReducedMotion();
   let hideTimer = null;
 
   const clearHideTimer = () => {
@@ -2625,6 +2675,562 @@ function initCodeGenerationShowcase(dataPromise) {
   new CodeGenerationShowcase(sectionRoot, { dataPromise });
 }
 
+function initWorldModelSection() {
+  const section = document.getElementById('world-model');
+  if (!section) return;
+  const pipeline = section.querySelector('[data-role="world-model-pipeline"]');
+  if (!pipeline || typeof gsap === 'undefined') return;
+
+  const samples = Array.from(section.querySelectorAll('[data-role="world-model-sample"]'));
+  const partial = section.querySelector('[data-role="world-model-partial"]');
+  const generator = section.querySelector('[data-role="world-model-generator"]');
+  const hypothesis = section.querySelector('[data-role="world-model-hypothesis"]');
+  const heatmap = section.querySelector('[data-role="world-model-heatmap"]');
+
+  if (!partial || !generator || !hypothesis || !heatmap || samples.length === 0) return;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const prefersReducedMotion = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) {
+    pipeline.classList.add('is-animated', 'is-complete');
+    if (generator) {
+      generator.style.opacity = '1';
+      generator.style.transform = 'none';
+    }
+    if (hypothesis) {
+      hypothesis.style.opacity = '1';
+      hypothesis.style.transform = 'none';
+    }
+    if (partial) {
+      partial.style.opacity = '1';
+    }
+    if (heatmap) {
+      heatmap.style.opacity = '1';
+    }
+    samples.forEach((sample) => {
+      sample.style.opacity = '1';
+      sample.style.transform = 'none';
+      sample.style.position = 'static';
+      sample.style.left = 'auto';
+      sample.style.bottom = 'auto';
+    });
+    return;
+  }
+
+  pipeline.classList.add('is-animated');
+  gsap.set(samples, { xPercent: -50 });
+
+  const sampleTargets = [
+    { x: -70, y: -90, rotation: -12, scale: 1 },
+    { x: -25, y: -65, rotation: -5, scale: 1 },
+    { x: 22, y: -80, rotation: 7, scale: 1 },
+    { x: 58, y: -55, rotation: 11, scale: 1 },
+    { x: -4, y: -40, rotation: -1, scale: 1 },
+  ];
+
+  const samplesTimeline = gsap.timeline();
+  samples.forEach((sample, index) => {
+    const target = sampleTargets[index % sampleTargets.length];
+    sample.style.zIndex = String(10 + index);
+    samplesTimeline.fromTo(sample, {
+      opacity: 0,
+      scale: 0.45,
+      x: 0,
+      y: 80,
+      rotation: 0,
+    }, {
+      opacity: 1,
+      scale: target.scale ?? 1,
+      x: target.x,
+      y: target.y,
+      rotation: target.rotation,
+      duration: 0.7,
+      ease: 'power3.out',
+    }, index * 0.12);
+  });
+
+  const tl = gsap.timeline({ paused: true });
+
+  tl.fromTo(partial, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
+    .fromTo(generator, { opacity: 0, scale: 0.5 }, {
+      opacity: 1,
+      scale: 1,
+      duration: 0.55,
+      ease: 'back.out(1.8)'
+    }, '-=0.1')
+    .fromTo(hypothesis, { opacity: 0, y: 40 }, {
+      opacity: 1,
+      y: 0,
+      duration: 0.55,
+      ease: 'power2.out'
+    }, '-=0.2')
+    .add(samplesTimeline)
+    .fromTo(heatmap, { opacity: 0, scale: 0.92, y: 30 }, {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.65,
+      ease: 'power2.out'
+    }, '+=0.15')
+    .add(() => {
+      pipeline.classList.add('is-complete');
+    });
+
+  ScrollTrigger.create({
+    trigger: section,
+    start: 'top 75%',
+    once: true,
+    onEnter: () => tl.play(0),
+  });
+}
+
+function binaryEntropy(prob) {
+  if (!Number.isFinite(prob) || prob <= 0 || prob >= 1) {
+    if (prob === 0 || prob === 1) {
+      return 0;
+    }
+    return 0;
+  }
+  const log2 = (value) => Math.log(value) / Math.log(2);
+  return -(prob * log2(prob) + (1 - prob) * log2(1 - prob));
+}
+
+function expectedInformationGain(probTrue, epsilon) {
+  const p = Math.min(1, Math.max(0, Number.isFinite(probTrue) ? probTrue : 0));
+  const eps = Math.min(0.5, Math.max(0, Number.isFinite(epsilon) ? epsilon : 0));
+  const noisyProb = eps + (1 - 2 * eps) * p;
+  return binaryEntropy(noisyProb) - binaryEntropy(eps);
+}
+
+function renderEIGPlot(svg, { epsilon = 0.1, steps = 240 } = {}) {
+  if (!svg) return;
+  const width = 520;
+  const height = 320;
+  const margin = { top: 40, right: 32, bottom: 56, left: 72 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+
+  const data = [];
+  let maxValue = 0;
+  for (let i = 0; i <= steps; i += 1) {
+    const p = i / steps;
+    const eig = expectedInformationGain(p, epsilon);
+    data.push({ p, eig });
+    if (eig > maxValue) {
+      maxValue = eig;
+    }
+  }
+  if (!(maxValue > 0)) {
+    maxValue = 1;
+  }
+
+  const xScale = (p) => margin.left + p * innerWidth;
+  const yScale = (value) => margin.top + (innerHeight - (value / maxValue) * innerHeight);
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const createElement = (tag, attrs = {}) => {
+    const node = document.createElementNS(svgNS, tag);
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        node.setAttribute(key, String(value));
+      }
+    });
+    return node;
+  };
+
+  const axesGroup = createElement('g', { class: 'eig-axes' });
+  axesGroup.appendChild(createElement('line', {
+    x1: margin.left,
+    y1: margin.top + innerHeight,
+    x2: margin.left + innerWidth,
+    y2: margin.top + innerHeight,
+    class: 'axis-line',
+  }));
+  axesGroup.appendChild(createElement('line', {
+    x1: margin.left,
+    y1: margin.top,
+    x2: margin.left,
+    y2: margin.top + innerHeight,
+    class: 'axis-line',
+  }));
+
+  const xTicks = [0, 0.25, 0.5, 0.75, 1];
+  xTicks.forEach((tick) => {
+    const x = xScale(tick);
+    axesGroup.appendChild(createElement('line', {
+      x1: x,
+      y1: margin.top + innerHeight,
+      x2: x,
+      y2: margin.top + innerHeight + 8,
+      class: 'tick-line',
+    }));
+    const label = createElement('text', {
+      x,
+      y: margin.top + innerHeight + 26,
+      class: 'tick-label',
+    });
+    label.textContent = tick === 0 ? '0' : tick === 1 ? '1' : tick === 0.5 ? '0.5' : tick.toFixed(2);
+    axesGroup.appendChild(label);
+  });
+
+  const yTicks = [0, maxValue / 2, maxValue];
+  yTicks.forEach((tick) => {
+    const y = yScale(tick);
+    axesGroup.appendChild(createElement('line', {
+      x1: margin.left - 8,
+      y1: y,
+      x2: margin.left,
+      y2: y,
+      class: 'tick-line',
+    }));
+    const label = createElement('text', {
+      x: margin.left - 14,
+      y: y + 4,
+      class: 'tick-label tick-label--y',
+    });
+    label.textContent = tick.toFixed(2);
+    axesGroup.appendChild(label);
+  });
+
+  svg.appendChild(axesGroup);
+
+  let curvePath = '';
+  data.forEach((point, idx) => {
+    const x = xScale(point.p);
+    const y = yScale(point.eig);
+    curvePath += idx === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+  });
+
+  const fillPath = `${curvePath} L ${margin.left + innerWidth} ${margin.top + innerHeight} L ${margin.left} ${margin.top + innerHeight} Z`;
+  svg.appendChild(createElement('path', {
+    d: fillPath,
+    class: 'eig-curve-fill',
+  }));
+
+  svg.appendChild(createElement('path', {
+    d: curvePath,
+    class: 'eig-curve',
+  }));
+
+  const highlightGroup = createElement('g', { class: 'eig-highlight' });
+  const peakProb = 0.5;
+  const peakValue = expectedInformationGain(peakProb, epsilon);
+  highlightGroup.appendChild(createElement('line', {
+    x1: xScale(peakProb),
+    y1: yScale(peakValue),
+    x2: xScale(peakProb),
+    y2: margin.top + innerHeight,
+    class: 'eig-highlight-line eig-highlight-line--vertical',
+  }));
+  highlightGroup.appendChild(createElement('line', {
+    x1: margin.left,
+    y1: yScale(peakValue),
+    x2: xScale(peakProb),
+    y2: yScale(peakValue),
+    class: 'eig-highlight-line eig-highlight-line--horizontal',
+  }));
+  highlightGroup.appendChild(createElement('circle', {
+    cx: xScale(peakProb),
+    cy: yScale(peakValue),
+    r: 6,
+    class: 'eig-highlight-point',
+  }));
+  const highlightLabel = createElement('text', {
+    x: xScale(peakProb) + 12,
+    y: yScale(peakValue) - 14,
+    class: 'eig-highlight-label',
+  });
+  highlightLabel.textContent = `p(True) = 0.50 → EIG ≈ ${peakValue.toFixed(2)} bits`;
+  highlightGroup.appendChild(highlightLabel);
+  svg.appendChild(highlightGroup);
+
+  const axisLabels = createElement('g', { class: 'eig-axis-labels' });
+  const xLabel = createElement('text', {
+    x: margin.left + innerWidth / 2,
+    y: height - 16,
+    class: 'axis-title',
+  });
+  xLabel.setAttribute('text-anchor', 'middle');
+  xLabel.textContent = 'p(True)';
+  axisLabels.appendChild(xLabel);
+  const yLabel = createElement('text', {
+    x: 26,
+    y: margin.top + innerHeight / 2,
+    class: 'axis-title axis-title--vertical',
+  });
+  yLabel.setAttribute('text-anchor', 'middle');
+  yLabel.setAttribute('dominant-baseline', 'central');
+  yLabel.setAttribute('transform', `rotate(-90 26 ${margin.top + innerHeight / 2})`);
+  yLabel.textContent = 'EIG (bits)';
+  axisLabels.appendChild(yLabel);
+  svg.appendChild(axisLabels);
+
+  return { maxValue, peakValue };
+}
+
+function initInformationGainSection(dataPromise) {
+  const section = document.getElementById('information-gain');
+  if (!section) return;
+
+  const chatLog = section.querySelector('[data-role="eig-chat-log"]');
+  const bucketFalse = section.querySelector('[data-role="eig-bucket-false"]');
+  const bucketTrue = section.querySelector('[data-role="eig-bucket-true"]');
+  const plotSvg = section.querySelector('[data-role="eig-plot"]');
+  const epsilonMeta = section.querySelector('[data-role="eig-epsilon"]');
+  const maxMeta = section.querySelector('[data-role="eig-max-eig"]');
+
+  const defaultQuestion = 'Is the purple ship vertical?';
+  const defaultCode = 'def answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n  # check if the purple ship is vertical\n  ...';
+
+  const renderChat = (questionText = defaultQuestion, codeText = defaultCode) => {
+    if (!chatLog) return;
+    chatLog.innerHTML = '';
+
+    const questionMsg = createChatMessage({ role: 'captain', label: 'Captain' });
+    if (questionMsg.textEl) {
+      questionMsg.textEl.textContent = questionText;
+    }
+    if (questionMsg.caret && questionMsg.caret.parentNode) {
+      questionMsg.caret.parentNode.removeChild(questionMsg.caret);
+    }
+    chatLog.appendChild(questionMsg.wrapper);
+
+    const codeMsg = createChatMessage({ role: 'spotter', label: 'Internal Spotter' });
+    codeMsg.bubble.classList.add('is-code-snippet');
+    if (codeMsg.textEl && codeMsg.textEl.parentNode) {
+      codeMsg.textEl.parentNode.removeChild(codeMsg.textEl);
+    }
+    const codeWrapper = document.createElement('pre');
+    codeWrapper.className = 'codegen-code-block is-visible is-revealed';
+    const codeEl = document.createElement('code');
+    codeEl.className = 'language-python';
+    codeEl.textContent = codeText;
+    codeWrapper.appendChild(codeEl);
+    if (codeMsg.caret && codeMsg.caret.parentNode) {
+      codeMsg.caret.parentNode.removeChild(codeMsg.caret);
+    }
+    codeMsg.bubble.appendChild(codeWrapper);
+    chatLog.appendChild(codeMsg.wrapper);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    if (window.hljs && typeof window.hljs.highlightElement === 'function') {
+      window.hljs.highlightElement(codeEl);
+    }
+  };
+
+  const assignments = EIG_DEMO_SAMPLE_RESULTS.map((entry) => ({ ...entry }));
+
+  const animateSamples = () => {
+    const sampleElements = Array.from(section.querySelectorAll('[data-role="eig-sample"]'));
+    const sampleMap = new Map();
+    const labelMap = new Map();
+    sampleElements.forEach((el) => {
+      const index = Number(el.dataset.sampleIndex);
+      sampleMap.set(index, el);
+      const labelEl = el.querySelector('.eig-sample-label');
+      if (labelEl) {
+        labelMap.set(index, labelEl);
+        labelEl.textContent = `Sample ${index} → pending`;
+      }
+      el.setAttribute('aria-label', `Sample ${index} → pending`);
+      if (!el.dataset.target) {
+        el.dataset.target = 'pending';
+      }
+      el.classList.remove('is-processing', 'is-assigned');
+      if (typeof gsap !== 'undefined') {
+        gsap.set(el, { clearProps: 'transform,opacity' });
+      } else {
+        el.style.transform = '';
+        el.style.opacity = '';
+      }
+    });
+
+    const updateLabel = (index, status, resultValue = false) => {
+      const sampleEl = sampleMap.get(index);
+      const labelEl = labelMap.get(index);
+      if (!sampleEl) return;
+      let text = `Sample ${index} → pending`;
+      if (status === 'evaluating') {
+        text = `Sample ${index} → evaluating`;
+      } else if (status === 'result') {
+        const resultText = resultValue ? 'True' : 'False';
+        text = `Sample ${index} → ${resultText}`;
+      }
+      sampleEl.setAttribute('aria-label', text);
+      if (labelEl) {
+        labelEl.textContent = text;
+      }
+    };
+
+    const instantAssign = () => {
+      assignments.forEach((assignment) => {
+        const sampleEl = sampleMap.get(assignment.index);
+        const targetBucket = assignment.result ? bucketTrue : bucketFalse;
+        if (!sampleEl || !targetBucket) return;
+        targetBucket.appendChild(sampleEl);
+        sampleEl.dataset.target = assignment.result ? 'true' : 'false';
+        sampleEl.classList.remove('is-processing');
+        sampleEl.classList.add('is-assigned');
+        updateLabel(assignment.index, 'result', assignment.result);
+      });
+    };
+
+    if (!bucketTrue || !bucketFalse || assignments.length === 0) {
+      instantAssign();
+      return;
+    }
+
+    const reduceMotion = prefersReducedMotion();
+    if (reduceMotion || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+      instantAssign();
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.out' } });
+
+    assignments.forEach((assignment) => {
+      const sampleEl = sampleMap.get(assignment.index);
+      const targetBucket = assignment.result ? bucketTrue : bucketFalse;
+      if (!sampleEl || !targetBucket) {
+        tl.add(() => {
+          updateLabel(assignment.index, 'result', assignment.result);
+        });
+        return;
+      }
+
+      tl.add(() => {
+        updateLabel(assignment.index, 'evaluating');
+        sampleEl.classList.add('is-processing');
+        sampleEl.classList.remove('is-assigned');
+        if (typeof gsap !== 'undefined') {
+          gsap.set(sampleEl, { clearProps: 'transform,opacity' });
+        } else {
+          sampleEl.style.transform = '';
+          sampleEl.style.opacity = '';
+        }
+      });
+
+      tl.to(sampleEl, {
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power1.inOut',
+      });
+
+      tl.add(() => {
+        targetBucket.appendChild(sampleEl);
+        sampleEl.dataset.target = assignment.result ? 'true' : 'false';
+        if (typeof gsap !== 'undefined') {
+          gsap.set(sampleEl, { clearProps: 'transform', opacity: 0 });
+        } else {
+          sampleEl.style.transform = '';
+          sampleEl.style.opacity = '0';
+        }
+      });
+
+      tl.to(sampleEl, {
+        opacity: 1,
+        duration: 0.45,
+        ease: 'power2.out',
+        onComplete: () => {
+          sampleEl.classList.remove('is-processing');
+          sampleEl.classList.add('is-assigned');
+          updateLabel(assignment.index, 'result', assignment.result);
+          if (typeof gsap !== 'undefined') {
+            gsap.set(sampleEl, { clearProps: 'opacity' });
+          } else {
+            sampleEl.style.opacity = '';
+          }
+        },
+      });
+
+      tl.add(() => {}, '+=0.08');
+    });
+
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top 80%',
+      once: true,
+      onEnter: () => tl.play(0),
+    });
+  };
+
+  const applyData = (data) => {
+    const example = Array.isArray(data)
+      ? data.find((item) => item?.round_id === EIG_DEMO_ROUND_ID)
+      : null;
+
+    const questionText = example?.question?.text?.trim() || defaultQuestion;
+    const codeText = example?.fn_str?.trim() || defaultCode;
+    const epsilon = 0.1;
+    renderChat(questionText, codeText);
+    animateSamples();
+    const plotStats = renderEIGPlot(plotSvg, { epsilon });
+
+    if (epsilonMeta) {
+      epsilonMeta.textContent = `ε = ${epsilon.toFixed(2)}`;
+    }
+    if (maxMeta && plotStats?.peakValue !== undefined) {
+      maxMeta.textContent = `${plotStats.peakValue.toFixed(2)} bits`;
+    }
+  };
+
+  Promise.resolve(dataPromise || getCodeSamplesData())
+    .then((data) => {
+      applyData(data);
+    })
+    .catch(() => {
+      applyData(null);
+    });
+}
+
+function initBayesianStrategiesSection() {
+  const section = document.querySelector('.section-bayesian');
+  if (!section) return;
+  const cards = Array.from(section.querySelectorAll('.strategy-card'));
+  if (!cards.length) return;
+
+  const reduceMotion = prefersReducedMotion();
+  if (reduceMotion || typeof IntersectionObserver === 'undefined') {
+    cards.forEach((card) => {
+      card.classList.add('is-visible');
+      card.style.removeProperty('--strategy-card-delay');
+    });
+    return;
+  }
+
+  const baseDelaySeconds = 0.16;
+  cards.forEach((card, index) => {
+    card.dataset.strategyStaggerIndex = String(index);
+    card.classList.remove('is-visible');
+    card.style.removeProperty('--strategy-card-delay');
+  });
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const card = entry.target;
+      const index = Number(card.dataset.strategyStaggerIndex) || 0;
+      card.style.setProperty('--strategy-card-delay', `${(index * baseDelaySeconds).toFixed(3)}s`);
+      requestAnimationFrame(() => {
+        card.classList.add('is-visible');
+      });
+      obs.unobserve(card);
+    });
+  }, {
+    threshold: 0.3,
+  });
+
+  cards.forEach((card) => observer.observe(card));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const dataPromise = getTrajectoryData();
   const codeSamples = getCodeSamplesData();
@@ -2634,5 +3240,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroExplorer(dataPromise);
   initMainExplorer(dataPromise);
   initCodeGenerationShowcase(codeSamples);
+  initInformationGainSection(codeSamples);
+  initBayesianStrategiesSection();
   initMotivationHighlights();
+  initWorldModelSection();
 });
