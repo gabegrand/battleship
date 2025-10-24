@@ -2689,11 +2689,11 @@ function initWorldModelSection() {
     }, '-=0.2')
     .add(() => {
       const presetLayouts = [
-        { x: -80, y: -150, rotation: -14, scale: 1 },
-        { x: -30, y: -110, rotation: -6, scale: 1 },
-        { x: 25, y: -145, rotation: 8, scale: 1 },
-        { x: 70, y: -95, rotation: 12, scale: 1 },
-        { x: -5, y: -70, rotation: -2, scale: 1 }
+        { x: -70, y: -90, rotation: -12, scale: 1 },
+        { x: -25, y: -65, rotation: -5, scale: 1 },
+        { x: 22, y: -80, rotation: 7, scale: 1 },
+        { x: 58, y: -55, rotation: 11, scale: 1 },
+        { x: -4, y: -40, rotation: -1, scale: 1 }
       ];
 
       samples.forEach((sample, index) => {
