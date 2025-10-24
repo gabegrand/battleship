@@ -2672,6 +2672,35 @@ function initWorldModelSection() {
   pipeline.classList.add('is-animated');
   gsap.set(samples, { xPercent: -50 });
 
+  const sampleTargets = [
+    { x: -70, y: -90, rotation: -12, scale: 1 },
+    { x: -25, y: -65, rotation: -5, scale: 1 },
+    { x: 22, y: -80, rotation: 7, scale: 1 },
+    { x: 58, y: -55, rotation: 11, scale: 1 },
+    { x: -4, y: -40, rotation: -1, scale: 1 },
+  ];
+
+  const samplesTimeline = gsap.timeline();
+  samples.forEach((sample, index) => {
+    const target = sampleTargets[index % sampleTargets.length];
+    sample.style.zIndex = String(10 + index);
+    samplesTimeline.fromTo(sample, {
+      opacity: 0,
+      scale: 0.45,
+      x: 0,
+      y: 80,
+      rotation: 0,
+    }, {
+      opacity: 1,
+      scale: target.scale ?? 1,
+      x: target.x,
+      y: target.y,
+      rotation: target.rotation,
+      duration: 0.7,
+      ease: 'power3.out',
+    }, index * 0.12);
+  });
+
   const tl = gsap.timeline({ paused: true });
 
   tl.fromTo(partial, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
@@ -2687,43 +2716,14 @@ function initWorldModelSection() {
       duration: 0.55,
       ease: 'power2.out'
     }, '-=0.2')
-    .add(() => {
-      const presetLayouts = [
-        { x: -70, y: -90, rotation: -12, scale: 1 },
-        { x: -25, y: -65, rotation: -5, scale: 1 },
-        { x: 22, y: -80, rotation: 7, scale: 1 },
-        { x: 58, y: -55, rotation: 11, scale: 1 },
-        { x: -4, y: -40, rotation: -1, scale: 1 }
-      ];
-
-      samples.forEach((sample, index) => {
-        const target = presetLayouts[index % presetLayouts.length];
-        sample.style.zIndex = String(10 + index);
-        gsap.fromTo(sample, {
-          opacity: 0,
-          scale: 0.45,
-          x: 0,
-          y: 80,
-          rotation: 0
-        }, {
-          opacity: 1,
-          scale: target.scale ?? 1,
-          x: target.x,
-          y: target.y,
-          rotation: target.rotation,
-          duration: 0.7,
-          delay: index * 0.12,
-          ease: 'power3.out'
-        });
-      });
-    }, '>-0.05')
+    .add(samplesTimeline)
     .fromTo(heatmap, { opacity: 0, scale: 0.92, y: 30 }, {
       opacity: 1,
       scale: 1,
       y: 0,
       duration: 0.65,
       ease: 'power2.out'
-    }, '>-0.1')
+    }, '+=0.15')
     .add(() => {
       pipeline.classList.add('is-complete');
     });
