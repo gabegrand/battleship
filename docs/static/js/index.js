@@ -2625,6 +2625,117 @@ function initCodeGenerationShowcase(dataPromise) {
   new CodeGenerationShowcase(sectionRoot, { dataPromise });
 }
 
+function initWorldModelSection() {
+  const section = document.getElementById('world-model');
+  if (!section) return;
+  const pipeline = section.querySelector('[data-role="world-model-pipeline"]');
+  if (!pipeline || typeof gsap === 'undefined') return;
+
+  const samples = Array.from(section.querySelectorAll('[data-role="world-model-sample"]'));
+  const partial = section.querySelector('[data-role="world-model-partial"]');
+  const generator = section.querySelector('[data-role="world-model-generator"]');
+  const hypothesis = section.querySelector('[data-role="world-model-hypothesis"]');
+  const heatmap = section.querySelector('[data-role="world-model-heatmap"]');
+
+  if (!partial || !generator || !hypothesis || !heatmap || samples.length === 0) return;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const prefersReducedMotion = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) {
+    pipeline.classList.add('is-animated', 'is-complete');
+    if (generator) {
+      generator.style.opacity = '1';
+      generator.style.transform = 'none';
+    }
+    if (hypothesis) {
+      hypothesis.style.opacity = '1';
+      hypothesis.style.transform = 'none';
+    }
+    if (partial) {
+      partial.style.opacity = '1';
+    }
+    if (heatmap) {
+      heatmap.style.opacity = '1';
+    }
+    samples.forEach((sample) => {
+      sample.style.opacity = '1';
+      sample.style.transform = 'none';
+      sample.style.position = 'static';
+      sample.style.left = 'auto';
+      sample.style.bottom = 'auto';
+    });
+    return;
+  }
+
+  pipeline.classList.add('is-animated');
+  gsap.set(samples, { xPercent: -50 });
+
+  const tl = gsap.timeline({ paused: true });
+
+  tl.fromTo(partial, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
+    .fromTo(generator, { opacity: 0, scale: 0.5 }, {
+      opacity: 1,
+      scale: 1,
+      duration: 0.55,
+      ease: 'back.out(1.8)'
+    }, '-=0.1')
+    .fromTo(hypothesis, { opacity: 0, y: 40 }, {
+      opacity: 1,
+      y: 0,
+      duration: 0.55,
+      ease: 'power2.out'
+    }, '-=0.2')
+    .add(() => {
+      const presetLayouts = [
+        { x: -80, y: -150, rotation: -14, scale: 1 },
+        { x: -30, y: -110, rotation: -6, scale: 1 },
+        { x: 25, y: -145, rotation: 8, scale: 1 },
+        { x: 70, y: -95, rotation: 12, scale: 1 },
+        { x: -5, y: -70, rotation: -2, scale: 1 }
+      ];
+
+      samples.forEach((sample, index) => {
+        const target = presetLayouts[index % presetLayouts.length];
+        sample.style.zIndex = String(10 + index);
+        gsap.fromTo(sample, {
+          opacity: 0,
+          scale: 0.45,
+          x: 0,
+          y: 80,
+          rotation: 0
+        }, {
+          opacity: 1,
+          scale: target.scale ?? 1,
+          x: target.x,
+          y: target.y,
+          rotation: target.rotation,
+          duration: 0.7,
+          delay: index * 0.12,
+          ease: 'power3.out'
+        });
+      });
+    }, '>-0.05')
+    .fromTo(heatmap, { opacity: 0, scale: 0.92, y: 30 }, {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      duration: 0.65,
+      ease: 'power2.out'
+    }, '>-0.1')
+    .add(() => {
+      pipeline.classList.add('is-complete');
+    });
+
+  ScrollTrigger.create({
+    trigger: section,
+    start: 'top 75%',
+    once: true,
+    onEnter: () => tl.play(0),
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const dataPromise = getTrajectoryData();
   const codeSamples = getCodeSamplesData();
@@ -2635,4 +2746,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initMainExplorer(dataPromise);
   initCodeGenerationShowcase(codeSamples);
   initMotivationHighlights();
+  initWorldModelSection();
 });

@@ -28,6 +28,10 @@
     referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
   <script src="./static/js/index.js"></script>
 </head>
 
@@ -392,6 +396,78 @@
           <span class="legend-item"><span class="legend-swatch" style="background-color:#FC8D62"></span> CoT</span>
           <span class="legend-item"><span class="legend-swatch" style="background-color:#8DA0CB"></span> Code</span>
           <span class="legend-item"><span class="legend-swatch" style="background-color:#E78AC3"></span> CoT + Code</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-world-model" id="world-model">
+    <div class="container is-max-widescreen">
+      <div class="section-heading has-text-centered">
+        <h2 class="title is-3 is-spaced">Monte Carlo inference with a probabilistic world model</h2>
+        <p class="subtitle is-5">We approximate the hidden fleet by sampling worlds consistent with every clue the agents have uncovered.</p>
+      </div>
+
+      <div class="world-model-pipeline" data-role="world-model-pipeline">
+        <div class="world-model-stage world-model-stage--input">
+          <div class="world-model-card world-model-card--board" data-role="world-model-partial-wrapper">
+            <div class="world-model-card-header">
+              <h3 class="title is-5">Observed partial board</h3>
+            </div>
+            <div class="world-model-card-media">
+              <img src="./static/images/world_model_samples/partial_board.png" alt="Partial Battleship board showing observed hits and misses" class="world-model-board" data-role="world-model-partial">
+            </div>
+            <p class="world-model-card-subtitle">Shots so far constrain the hypothesis space.</p>
+          </div>
+        </div>
+
+        <div class="world-model-arrow" aria-hidden="true">
+          <span class="world-model-arrow-line"></span>
+        </div>
+
+        <div class="world-model-stage world-model-stage--model">
+          <div class="world-model-stage-stack">
+            <div class="world-model-hypothesis" data-role="world-model-hypothesis">
+              <span class="world-model-hypothesis-label">Hypothesis Space</span>
+              <div class="world-model-samples" data-role="world-model-samples" aria-label="Sampled hypothesis boards">
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_0.png" alt="Sampled board hypothesis 1">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_1.png" alt="Sampled board hypothesis 2">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_2.png" alt="Sampled board hypothesis 3">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_3.png" alt="Sampled board hypothesis 4">
+                </figure>
+                <figure class="world-model-sample" data-role="world-model-sample">
+                  <img src="./static/images/world_model_samples/sample_4.png" alt="Sampled board hypothesis 5">
+                </figure>
+              </div>
+            </div>
+            <div class="world-model-generator" data-role="world-model-generator" aria-label="Probabilistic world model" role="img">
+              <span class="world-model-icon" aria-hidden="true"><i class="fas fa-globe-americas"></i></span>
+            </div>
+          </div>
+          <p class="world-model-caption world-model-caption--stage">Each sample is one plausible arrangement of ships consistent with the evidence.</p>
+        </div>
+
+        <div class="world-model-arrow" aria-hidden="true">
+          <span class="world-model-arrow-line"></span>
+        </div>
+
+        <div class="world-model-stage world-model-stage--output">
+          <div class="world-model-card world-model-card--heatmap" data-role="world-model-heatmap-wrapper">
+            <div class="world-model-card-header">
+              <h3 class="title is-5">Approximate belief state</h3>
+            </div>
+            <div class="world-model-card-media">
+              <img src="./static/images/world_model_samples/heatmap.png" alt="Heatmap showing marginal probability that each tile contains a ship" class="world-model-heatmap" data-role="world-model-heatmap">
+            </div>
+          <p class="world-model-card-subtitle">We marginalize over the sample set to obtain a tile-level probability map.</p>
+          </div>
         </div>
       </div>
     </div>
