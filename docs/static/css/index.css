@@ -1985,6 +1985,19 @@ figure figcaption {
   margin-top: auto;
 }
 
+/* Align Captain key figures side-by-side while anchoring captions */
+.captain-key-figures {
+  align-items: stretch;
+}
+.captain-key-figures .column {
+  display: flex;
+  flex-direction: column;
+}
+.captain-key-figures .column > figure,
+.captain-key-figures .column > .image {
+  margin-top: auto;
+}
+
 .section-world-model {
   background: linear-gradient(180deg, rgba(9, 22, 52, 0.04) 0%, rgba(4, 175, 112, 0.08) 100%);
 }

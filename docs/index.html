@@ -539,23 +539,31 @@
       <!-- Captain F1 boxplot figure highlighting key result -->
       <div class="section mt-4 pt-0" aria-labelledby="captain-f1-heading">
         <h3 id="captain-f1-heading" class="title is-4 has-text-centered mb-4">Targeting performance by strategy</h3>
-        <div class="columns is-centered">
-          <div class="column is-10 is-8-desktop">
+        <div class="columns is-centered is-variable is-6 captain-key-figures">
+          <div class="column is-12-tablet is-6-desktop">
             <figure class="image">
               <img src="./static/images/captain_f1_boxplot.png" alt="Targeting scores (F1) by Captain strategy" />
-              <!-- Legend reproduced from fig:captain-analysis in the paper -->
-              <div class="legend has-text-centered is-size-6 mt-3" role="note" aria-label="Legend for Captain F1 boxplot">
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#008f69"></span> Human</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#848482"></span> Baseline</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#71a0c1"></span> Llama-4-Scout</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#0e79b2"></span> GPT-4o</span>
-                <span class="legend-item"><span class="legend-swatch" style="background-color:#000080"></span> GPT-5</span>
-              </div>
               <figcaption class="has-text-centered is-size-6 mt-2">
                 Targeting scores (F1) by Captain strategy. Incorporating Bayesian strategies for questions (Q<sub>Bayes</sub>), moves (M<sub>Bayes</sub>), and decisions (D<sub>Bayes</sub>) brings weaker LMs from near-random performance to super-human levels.
               </figcaption>
             </figure>
           </div>
+          <div class="column is-12-tablet is-5-desktop">
+            <figure class="image">
+              <img src="./static/images/eig_max_vs_k.png" alt="Expected information gain as a function of sampled questions under Q Bayes" />
+              <figcaption class="has-text-centered is-size-6 mt-2">
+                Expected information gain (EIG) scales with the number of candidate questions sampled by Q<sub>Bayes</sub>. Drawing up to 10 programs yields +0.227 bits per question (94.2% of the information-theoretic ceiling) while driving redundant questions nearly to zero for weaker models.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+        <!-- Shared legend for Captain metrics -->
+        <div class="legend has-text-centered is-size-6 mt-3" role="note" aria-label="Legend for Captain metrics">
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#008f69"></span> Human</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#848482"></span> Baseline</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#71a0c1"></span> Llama-4-Scout</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#0e79b2"></span> GPT-4o</span>
+          <span class="legend-item"><span class="legend-swatch" style="background-color:#000080"></span> GPT-5</span>
         </div>
       </div>
     </div>
