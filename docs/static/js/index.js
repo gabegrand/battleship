@@ -3043,6 +3043,12 @@ function initInformationGainSection(dataPromise) {
         el.dataset.target = 'pending';
       }
       el.classList.remove('is-processing', 'is-assigned');
+      if (typeof gsap !== 'undefined') {
+        gsap.set(el, { clearProps: 'transform,opacity' });
+      } else {
+        el.style.transform = '';
+        el.style.opacity = '';
+      }
     });
 
     const updateLabel = (index, status, resultValue = false) => {
@@ -3088,64 +3094,69 @@ function initInformationGainSection(dataPromise) {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const tl = gsap.timeline({ paused: true });
+    const tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.out' } });
 
-    assignments.forEach((assignment, stepIndex) => {
+    assignments.forEach((assignment) => {
       const sampleEl = sampleMap.get(assignment.index);
       const targetBucket = assignment.result ? bucketTrue : bucketFalse;
-      const label = `eig-step-${stepIndex}`;
       if (!sampleEl || !targetBucket) {
         tl.add(() => {
           updateLabel(assignment.index, 'result', assignment.result);
-        }, label);
+        });
         return;
       }
 
       tl.add(() => {
-        sampleEl.classList.add('is-processing');
         updateLabel(assignment.index, 'evaluating');
-      }, label);
-
-      tl.to(sampleEl, {
-        y: -12,
-        duration: 0.25,
-        ease: 'power1.out',
-      }, label);
+        sampleEl.classList.add('is-processing');
+        sampleEl.classList.remove('is-assigned');
+        if (typeof gsap !== 'undefined') {
+          gsap.set(sampleEl, { clearProps: 'transform,opacity' });
+        } else {
+          sampleEl.style.transform = '';
+          sampleEl.style.opacity = '';
+        }
+      });
 
       tl.to(sampleEl, {
         opacity: 0,
-        y: -20,
-        duration: 0.25,
-        ease: 'power1.in',
-        onComplete: () => {
-          targetBucket.appendChild(sampleEl);
-          sampleEl.dataset.target = assignment.result ? 'true' : 'false';
-        },
-      }, `${label}+=0.24`);
+        duration: 0.3,
+        ease: 'power1.inOut',
+      });
 
-      tl.set(sampleEl, { y: 16 }, `${label}+=0.26`);
+      tl.add(() => {
+        targetBucket.appendChild(sampleEl);
+        sampleEl.dataset.target = assignment.result ? 'true' : 'false';
+        if (typeof gsap !== 'undefined') {
+          gsap.set(sampleEl, { clearProps: 'transform', opacity: 0 });
+        } else {
+          sampleEl.style.transform = '';
+          sampleEl.style.opacity = '0';
+        }
+      });
 
       tl.to(sampleEl, {
         opacity: 1,
-        y: 0,
-        duration: 0.35,
+        duration: 0.45,
         ease: 'power2.out',
         onComplete: () => {
           sampleEl.classList.remove('is-processing');
           sampleEl.classList.add('is-assigned');
           updateLabel(assignment.index, 'result', assignment.result);
           if (typeof gsap !== 'undefined') {
-            gsap.set(sampleEl, { clearProps: 'transform' });
+            gsap.set(sampleEl, { clearProps: 'opacity' });
           } else {
-            sampleEl.style.transform = '';
+            sampleEl.style.opacity = '';
           }
         },
-      }, `${label}+=0.28`);
+      });
+
+      tl.add(() => {}, '+=0.08');
     });
 
     ScrollTrigger.create({
       trigger: section,
-      start: 'top 70%',
+      start: 'top 80%',
       once: true,
       onEnter: () => tl.play(0),
     });
@@ -3180,6 +3191,46 @@ function initInformationGainSection(dataPromise) {
     });
 }
 
+function initBayesianStrategiesSection() {
+  const section = document.querySelector('.section-bayesian');
+  if (!section) return;
+  const cards = Array.from(section.querySelectorAll('.strategy-card'));
+  if (!cards.length) return;
+
+  const reduceMotion = prefersReducedMotion();
+  if (reduceMotion || typeof IntersectionObserver === 'undefined') {
+    cards.forEach((card) => {
+      card.classList.add('is-visible');
+      card.style.removeProperty('--strategy-card-delay');
+    });
+    return;
+  }
+
+  const baseDelaySeconds = 0.16;
+  cards.forEach((card, index) => {
+    card.dataset.strategyStaggerIndex = String(index);
+    card.classList.remove('is-visible');
+    card.style.removeProperty('--strategy-card-delay');
+  });
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const card = entry.target;
+      const index = Number(card.dataset.strategyStaggerIndex) || 0;
+      card.style.setProperty('--strategy-card-delay', `${(index * baseDelaySeconds).toFixed(3)}s`);
+      requestAnimationFrame(() => {
+        card.classList.add('is-visible');
+      });
+      obs.unobserve(card);
+    });
+  }, {
+    threshold: 0.3,
+  });
+
+  cards.forEach((card) => observer.observe(card));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const dataPromise = getTrajectoryData();
   const codeSamples = getCodeSamplesData();
@@ -3190,6 +3241,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMainExplorer(dataPromise);
   initCodeGenerationShowcase(codeSamples);
   initInformationGainSection(codeSamples);
+  initBayesianStrategiesSection();
   initMotivationHighlights();
   initWorldModelSection();
 });
