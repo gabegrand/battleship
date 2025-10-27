@@ -1,6 +1,6 @@
 # Shoot First, Ask Questions Later: Building Rational Agents That Explore and Act Like People
 
-[![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
+[![arXiv](https://img.shields.io/badge/arXiv-2510.20886-b31b1b.svg)](https://arxiv.org/abs/2510.20886)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-green.svg)](https://www.python.org/downloads/release/python-3100/)
 
@@ -103,7 +103,7 @@ If you use this code or data in your research, please cite our paper:
   author={Gabriel Grand and Valerio Pepe and Joshua B. Tenenbaum and Jacob Andreas},
   journal={ArXiv},
   year={2025},
-  volume={abs/XXXX.XXXXX},
-  url={https://arxiv.org/abs/XXXX.XXXXX}
+  volume={abs/2510.20886},
+  url={https://arxiv.org/abs/2510.20886}
 }
 ```
