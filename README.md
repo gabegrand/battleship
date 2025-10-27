@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-green.svg)](https://www.python.org/downloads/release/python-3100/)
 
-This is the official code repository for the paper [Shoot First, Ask Questions Later: Building Rational Agents That Explore and Act Like People](https://openreview.net/forum?id=XvCBtm5PgF) by Gabriel Grand, Valerio Pepe, Joshua B. Tenenbaum, and Jacob Andreas.
+This is the official code repository for the paper [Shoot First, Ask Questions Later: Building Rational Agents That Explore and Act Like People](https://arxiv.org/abs/2510.20886) by Gabriel Grand, Valerio Pepe, Joshua B. Tenenbaum, and Jacob Andreas.
 
 ![DisCIPL Framework Overview](docs/static/images/battleship-splash-2.png)
 
