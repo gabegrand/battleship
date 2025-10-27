@@ -69,9 +69,24 @@ body {
   text-decoration: underline;
 }
 
+.publication-links {
+  margin-top: 1rem;
+}
+
 .link-block a {
   margin-top: 5px;
   margin-bottom: 5px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.link-block a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.link-block a:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .placeholder-card {
