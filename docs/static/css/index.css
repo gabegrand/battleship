@@ -69,6 +69,11 @@ body {
   text-decoration: underline;
 }
 
+.publication-venue {
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
 .publication-links {
   margin-top: 1rem;
 }
