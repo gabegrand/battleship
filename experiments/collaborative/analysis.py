@@ -67,6 +67,30 @@ CAPTAIN_TYPE_LABELS = {
     "PlannerCaptain_cot": "+Bayes-QMD",
 }
 
+# Inference costs from Table 5 (Total Cost USD) in iclr2026_conference.pdf
+# Costs are for full CaptainQA benchmark (54 games across 18 boards, 3 seeds each)
+# Keys match the competitor column format: "LLM | Captain"
+CAPTAIN_INFERENCE_COSTS = {
+    # Llama-4-Scout costs (per captain type)
+    "Llama-4-Scout | LM": 1.20,
+    "Llama-4-Scout | +Bayes-Q": 2.50,
+    "Llama-4-Scout | +Bayes-M": 0.60,
+    "Llama-4-Scout | +Bayes-QM": 1.85,
+    "Llama-4-Scout | +Bayes-QMD": 1.44,
+    # GPT-4o costs (per captain type)
+    "GPT-4o | LM": 35.06,
+    "GPT-4o | +Bayes-Q": 81.49,
+    "GPT-4o | +Bayes-M": 18.74,
+    "GPT-4o | +Bayes-QM": 53.01,
+    "GPT-4o | +Bayes-QMD": 50.82,
+    # GPT-5 costs (per captain type)
+    "GPT-5 | LM": 143.83,
+    "GPT-5 | +Bayes-Q": 368.24,
+    "GPT-5 | +Bayes-M": 82.97,
+    "GPT-5 | +Bayes-QM": 278.52,
+    # Note: GPT-5 | +Bayes-QMD was not evaluated due to cost
+}
+
 
 def load_dataset(
     experiment_path: str,
@@ -448,6 +472,7 @@ def compute_pairwise_win_rates(
     higher_is_better: bool = True,
     competitor_col: str = "competitor",
     board_col: str = "board_id",
+    cost_dict: dict = None,
 ) -> dict:
     """Compute pairwise win rates between all competitors.
 
@@ -456,8 +481,35 @@ def compute_pairwise_win_rates(
     summaries per pair:
       * mean_board_win_rate: mean of board-level win rates (unweighted).
       * weighted_all_pairs_win_rate: total wins / total comparisons (pooled).
+      * cost_weighted_win_rate: win rate weighted by cost efficiency (1/cost).
 
-    Returns a dict with detailed & aggregate DataFrames and symmetric matrices.
+    Args:
+        df: DataFrame with competitor results
+        metric: Column name to use for comparisons
+        higher_is_better: Whether higher metric values are better
+        competitor_col: Column name for competitor identifiers
+        board_col: Column name for board identifiers
+        cost_dict: Optional dict mapping competitor names to total USD costs.
+                   If provided, computes cost-weighted win rates.
+
+    Returns:
+        dict with keys:
+            - "detailed": DataFrame with per-board results
+            - "aggregate": DataFrame with aggregate results (includes cost info if provided)
+            - "mean_board_win_rate_matrix": symmetric matrix of mean win rates
+            - "weighted_win_rate_matrix": symmetric matrix of pooled win rates
+            - "cost_weighted_win_rate_matrix": (if cost_dict provided) symmetric matrix
+              of cost-efficiency-weighted win rates
+
+    Example:
+        >>> # Use the predefined cost dictionary from Table 5
+        >>> results = compute_pairwise_win_rates(
+        ...     df,
+        ...     metric="f1_score",
+        ...     cost_dict=CAPTAIN_INFERENCE_COSTS
+        ... )
+        >>> # Access cost-weighted matrix
+        >>> cost_matrix = results["cost_weighted_win_rate_matrix"]
     """
     if metric not in df.columns:
         raise ValueError(f"Metric '{metric}' not in DataFrame.")
@@ -501,11 +553,43 @@ def compute_pairwise_win_rates(
         if len(board_results) == 0:
             mean_board_win_rate = np.nan
             weighted_all_pairs_win_rate = np.nan
+            cost_weighted_win_rate = np.nan
         else:
             mean_board_win_rate = np.nanmean([br for _, br, _, _ in board_results])
             weighted_all_pairs_win_rate = (
                 total_wins / total_comparisons if total_comparisons > 0 else np.nan
             )
+
+            # Compute cost-weighted win rate if costs are provided
+            if cost_dict is not None:
+                cost_a = cost_dict.get(ca, None)
+                cost_b = cost_dict.get(cb, None)
+
+                if (
+                    cost_a is not None
+                    and cost_b is not None
+                    and cost_a > 0
+                    and cost_b > 0
+                ):
+                    # Weight by inverse cost (cost efficiency)
+                    # Higher efficiency (lower cost) gets more weight
+                    efficiency_a = 1.0 / cost_a
+                    efficiency_b = 1.0 / cost_b
+
+                    # Normalize to get relative weights
+                    total_efficiency = efficiency_a + efficiency_b
+                    weight_a = efficiency_a / total_efficiency
+                    weight_b = efficiency_b / total_efficiency
+
+                    # Weighted win rate: winrate * weight_a vs loss_rate * weight_b
+                    # This gives a cost-adjusted win rate
+                    cost_weighted_win_rate = weighted_all_pairs_win_rate * weight_a + (
+                        1 - weighted_all_pairs_win_rate
+                    ) * (1 - weight_b)
+                else:
+                    cost_weighted_win_rate = np.nan
+            else:
+                cost_weighted_win_rate = np.nan
 
         for board, br, wins, comps in board_results:
             records.append(
@@ -520,6 +604,11 @@ def compute_pairwise_win_rates(
                     "board_comparisons": comps,
                 }
             )
+
+        # Get costs for this pair if available
+        cost_a = cost_dict.get(ca, None) if cost_dict is not None else None
+        cost_b = cost_dict.get(cb, None) if cost_dict is not None else None
+
         records.append(
             {
                 "competitor_a": ca,
@@ -531,6 +620,9 @@ def compute_pairwise_win_rates(
                 "board_wins": total_wins,
                 "board_comparisons": total_comparisons,
                 "weighted_all_pairs_win_rate": weighted_all_pairs_win_rate,
+                "cost_weighted_win_rate": cost_weighted_win_rate,
+                "cost_a": cost_a,
+                "cost_b": cost_b,
                 "boards_considered": len(board_results),
             }
         )
@@ -559,32 +651,50 @@ def compute_pairwise_win_rates(
     weighted_matrix = pd.DataFrame(
         np.nan, index=competitors_sorted, columns=competitors_sorted
     )
+    cost_weighted_matrix = pd.DataFrame(
+        np.nan, index=competitors_sorted, columns=competitors_sorted
+    )
 
     for _, row in aggregate_df.iterrows():
         ca, cb = row["competitor_a"], row["competitor_b"]
         mean_ab = row["mean_board_win_rate"]
         weighted_ab = row["weighted_all_pairs_win_rate"]
+        cost_weighted_ab = row.get("cost_weighted_win_rate", np.nan)
+
         if ca in mean_matrix.index and cb in mean_matrix.columns:
             mean_matrix.loc[ca, cb] = mean_ab
             weighted_matrix.loc[ca, cb] = weighted_ab
+            cost_weighted_matrix.loc[ca, cb] = cost_weighted_ab
+
             if not pd.isna(mean_ab):
                 mean_matrix.loc[cb, ca] = 1 - mean_ab
             if not pd.isna(weighted_ab):
                 weighted_matrix.loc[cb, ca] = 1 - weighted_ab
+            if not pd.isna(cost_weighted_ab):
+                cost_weighted_matrix.loc[cb, ca] = 1 - cost_weighted_ab
+
             mean_matrix.loc[ca, ca] = 0.5
             weighted_matrix.loc[ca, ca] = 0.5
+            cost_weighted_matrix.loc[ca, ca] = 0.5
 
     # Ensure all diagonals filled
     for c in competitors_sorted:
         mean_matrix.loc[c, c] = 0.5
         weighted_matrix.loc[c, c] = 0.5
+        cost_weighted_matrix.loc[c, c] = 0.5
 
-    return {
+    result = {
         "detailed": detailed_df,
         "aggregate": aggregate_df,
         "mean_board_win_rate_matrix": mean_matrix,
         "weighted_win_rate_matrix": weighted_matrix,
     }
+
+    # Only add cost-weighted matrix if costs were provided
+    if cost_dict is not None:
+        result["cost_weighted_win_rate_matrix"] = cost_weighted_matrix
+
+    return result
 
 
 def _lighten(hex_color: str, factor: float = 0.9) -> str:
