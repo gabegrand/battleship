@@ -1,41 +1,5 @@
 [
     {
-        "round_id": "eig-demo",
-        "captain_llm": "Demo",
-        "captain_type": "Illustrative",
-        "spotter_type": "Spotter",
-        "board_id": "EIG",
-        "seed": 0,
-        "true_board": [
-            [0, 0, 0, 3, 0, 0, 0, 0],
-            [0, 0, 0, 3, 0, 0, 0, 0],
-            [0, 0, 0, 3, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0]
-        ],
-        "board": [
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1],
-            [-1, -1, -1, -1, -1, -1, -1, -1]
-        ],
-        "question": {
-            "text": "Is the purple ship vertical?"
-        },
-        "answer": {
-            "text": "We'll evaluate this question across the sampled boards.",
-            "value": null
-        },
-        "fn_str": "\ndef answer(true_board: np.ndarray, partial_board: np.ndarray) -> bool:\n  # check if the purple ship is vertical\n  ...\n"
-    },
-    {
         "round_id": "bba18f00",
         "captain_llm": "Llama-4-Scout",
         "captain_type": "LM",
