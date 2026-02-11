@@ -59,11 +59,20 @@
               <span class="author-block"><sup>2</sup>MIT Brain and Cognitive Sciences</span>
               <span class="author-block"><sup>3</sup>Harvard SEAS</span>
             </div>
+            <div class="is-size-6 publication-authors publication-venue">
+              <span class="author-block">🏆 ICLR 2026 · Oral</span>
+            </div>
             <div class="publication-links">
               <span class="link-block">
                 <a class="button is-rounded is-dark" href="https://arxiv.org/abs/2510.20886" aria-disabled="true">
                   <span class="icon"><i class="ai ai-arxiv"></i></span>
                   <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a class="button is-rounded is-dark" href="https://iclr.cc/" target="_blank" rel="noopener">
+                  <span class="icon"><i class="fas fa-award"></i></span>
+                  <span>ICLR 2026</span>
                 </a>
               </span>
               <span class="link-block">
@@ -145,8 +154,7 @@
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Motivation</p>
-                    <p class="motivation-timeline-copy">High-stakes decisions often require agents to ask smart
-                      questions before acting, but we lack benchmarks that measure how agents navigate explore/exploit tradeoffs.</p>
+                    <p class="motivation-timeline-copy">In many high-stakes settings, like scientific discovery or medical diagnosis, AI agents need to ask smart questions before acting. However, we currently lack benchmarks that evaluate how agents navigate explore/exploit tradeoffs.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
@@ -155,8 +163,7 @@
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Task</p>
-                    <p class="motivation-timeline-copy">Collaborative Battleship pits a question-asking Captain and an
-                      all-knowing Spotter against hidden ships, turning information search into gameplay.</p>
+                      <p class="motivation-timeline-copy">We introduce a two-player Collaborative Battleship task to study information-seeking behavior. The Captain must balance exploration (asking questions) with action (taking shots), while the Spotter must provide grounded answers based on their knowledge of the board.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
@@ -165,7 +172,7 @@
                   </span>
                   <div class="motivation-timeline-body">
                     <p class="motivation-timeline-kicker">Behavior gap</p>
-                    <p class="motivation-timeline-copy">Compared to human players, LM agents generally ask less informative questions, produce inaccurate answers, and waste turns on low-probability moves.</p>
+                    <p class="motivation-timeline-copy">Compared to human players, agents generally ask less informative questions, produce inaccurate answers, and waste turns on low-probability moves.</p>
                   </div>
                 </li>
                 <li class="motivation-timeline-item">
@@ -795,7 +802,8 @@
       <h2 class="title">Prior Work</h2>
       <div class="content has-text-justified">
         <p>
-          This work builds on our prior paper on modeling human-like question-asking in Battleship:
+          This work builds on our prior paper on modeling human-like question-asking in Battleship, as well
+          as foundational work by Rothe, Lake, and Gureckis on human question-asking:
         </p>
         <div class="box">
           <div class="columns is-vcentered">
@@ -806,18 +814,40 @@
                 </a>
               </p>
               <p class="has-text-grey mb-2">
-                <i class="ai ai-arxiv"></i> arXiv preprint 2402.19471
+                Gabriel Grand, Valerio Pepe, Jacob Andreas, Joshua B. Tenenbaum
               </p>
               <p class="is-size-7">
-                <a href="https://escholarship.org/uc/item/6gx0t2wj" target="_blank" rel="noopener" class="has-text-grey-dark">
-                  <i class="fas fa-book"></i> Published in CogSci 2024
-                </a>
+                <i class="fas fa-book"></i> CogSci, 2024
               </p>
             </div>
             <div class="column is-6">
               <figure class="image">
                 <a href="https://arxiv.org/abs/2402.19471" target="_blank" rel="noopener">
                   <img src="./static/images/lips-splash.png" alt="LIPS paper overview showing question sampling, LoT translation, and information gain computation" />
+                </a>
+              </figure>
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="columns is-vcentered">
+            <div class="column is-6">
+              <p class="is-size-5 has-text-weight-semibold mb-2">
+                <a href="https://www.cs.princeton.edu/~bl8144/papers/RotheEtAl2018CompBrainBehavior.pdf" target="_blank" rel="noopener">
+                  Do People Ask Good Questions?
+                </a>
+              </p>
+              <p class="has-text-grey mb-2">
+                Anselm Rothe, Brenden Lake, Todd Gureckis
+              </p>
+              <p class="is-size-7">
+                <i class="fas fa-book"></i> Computational Brain &amp; Behavior, 2018
+              </p>
+            </div>
+            <div class="column is-6">
+              <figure class="image">
+                <a href="https://www.cs.princeton.edu/~bl8144/papers/RotheEtAl2018CompBrainBehavior.pdf" target="_blank" rel="noopener">
+                  <img src="./static/images/rothe_et_al_2018.png" alt="Do People Ask Good Questions? paper overview" />
                 </a>
               </figure>
             </div>
@@ -831,13 +861,13 @@
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX</h2>
       <pre><code>
-@article{grand2025battleship,
-  title={Shoot First, Ask Questions Later? Building Rational Agents That Explore and Act Like People},
-  author={Gabriel Grand and Valerio Pepe and Joshua B. Tenenbaum and Jacob Andreas},
-  journal={ArXiv},
-  year={2025},
-  volume={abs/2510.20886},
-  url={https://arxiv.org/abs/2510.20886}
+@inproceedings{
+grand2026shoot,
+title={Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People},
+author={Gabriel Grand and Valerio Pepe and Joshua B. Tenenbaum and Jacob Andreas},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=EQhUvWH78U}
 }</code></pre>
     </div>
   </section>
