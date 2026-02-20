@@ -18,6 +18,9 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
 
+  <!-- reveal.js code highlighting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+
   <style>
     :root {
       --r-heading-font: 'Google Sans', 'Noto Sans', sans-serif;
@@ -177,6 +180,173 @@
     .two-col .col-narrow { flex: 0 0 38%; }
     .two-col .col-wide { flex: 0 0 58%; }
 
+    /* ── Code demo slide ── */
+    .code-demo-layout { display: flex; gap: 28px; margin-top: 16px; align-items: flex-start; }
+    .code-demo-chat { flex: 0 0 44%; }
+    .code-demo-code { flex: 1; }
+    .chat-bubble {
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+      font-size: 0.6em; line-height: 1.5; max-width: 95%;
+    }
+    .chat-bubble.captain {
+      background: #e8f0fe; border-left: 3px solid #3273dc;
+    }
+    .chat-bubble.spotter {
+      background: #fef3e0; border-left: 3px solid #b5890a;
+    }
+    .chat-bubble .chat-role {
+      font-weight: 700; font-size: 0.85em; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 2px; display: block;
+    }
+    .chat-bubble.captain .chat-role { color: #3273dc; }
+    .chat-bubble.spotter .chat-role { color: #b5890a; }
+    .chat-bubble .chat-answer {
+      display: inline-block; background: #2ecc71; color: #fff;
+      padding: 2px 10px; border-radius: 4px; font-weight: 600; font-size: 0.9em;
+    }
+    .code-demo-code pre { margin: 0; }
+    .code-demo-code .reveal pre code {
+      font-size: 0.48em; line-height: 1.5; max-height: 420px;
+      border-radius: 8px;
+    }
+
+    /* ── EIG visualization slide ── */
+    .eig-viz-layout { display: flex; gap: 20px; margin-top: 12px; align-items: flex-start; }
+    .eig-viz-samples { flex: 1; }
+    .eig-viz-plot { flex: 0 0 35%; text-align: center; }
+    .sample-bucket {
+      background: #f6f8ff; border-radius: 10px; padding: 12px;
+      margin-bottom: 10px; border: 1px solid #dde3f0;
+    }
+    .sample-bucket h4 {
+      font-size: 0.58em; font-weight: 600; margin: 0 0 8px 0;
+      text-align: left; color: #172642;
+    }
+    .sample-bucket .bucket-label-true { color: #2ecc71; }
+    .sample-bucket .bucket-label-false { color: #e74c3c; }
+    .sample-thumbnails {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .sample-thumbnails img {
+      height: 64px; border-radius: 4px; border: 2px solid transparent;
+    }
+    .sample-thumbnails .sample-true { border-color: #2ecc71; }
+    .sample-thumbnails .sample-false { border-color: #e74c3c; }
+    .eig-result-box {
+      background: #f0f4ff; border-radius: 10px; padding: 14px;
+      text-align: center; margin-top: 10px;
+    }
+    .eig-result-box .eig-value {
+      font-size: 1.4em; font-weight: 700; color: #304ed8;
+    }
+    .eig-result-box .eig-detail {
+      font-size: 0.52em; color: #666; margin-top: 4px;
+    }
+
+    /* ── Game-in-action slide (mirrors game-explorer styling) ── */
+    .game-action-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: 20px; margin-top: 12px; align-items: start;
+    }
+    .game-action-board-wrap {
+      background: #fff; border-radius: 14px; padding: 12px;
+      box-shadow: 0 4px 20px rgba(17,34,68,0.10);
+    }
+    .game-action-board-wrap h4 {
+      font-size: 0.6em; font-weight: 600; color: #172642;
+      margin: 0 0 8px 0; text-align: left;
+    }
+    .mini-board {
+      display: grid; gap: 2px; padding: 3px;
+      background: rgba(23,38,66,0.08); border-radius: 8px;
+      grid-template-columns: repeat(9, 1fr);  /* label + 8 cols */
+    }
+    .mini-board .b-label {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.48em; font-weight: 600; color: #5c6c8f;
+      min-height: 0; aspect-ratio: 1/1;
+    }
+    .mini-board .b-cell {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.52em; font-weight: 600; color: #fff;
+      border-radius: 4px; aspect-ratio: 1/1;
+      background: #eaeae4;  /* unknown */
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+    .mini-board .b-cell.water   { background: #9b9c97; }
+    .mini-board .b-cell.ship-1  { background: #ac2028; }
+    .mini-board .b-cell.ship-2  { background: #04af70; }
+    .mini-board .b-cell.ship-3  { background: #6d467b; }
+    .mini-board .b-cell.ship-4  { background: #ffa500; }
+    .mini-board .b-cell.current { box-shadow: 0 0 0 2px rgba(23,38,66,0.9), 0 0 0 4px rgba(255,255,255,0.6); z-index: 1; }
+
+    /* Cells hidden until their fragment reveals them */
+    .mini-board .b-cell[data-step] { background: #eaeae4; color: transparent; }
+    .mini-board .b-cell[data-step].revealed { color: #fff; }
+    .mini-board .b-cell[data-step="1"].revealed { background: #ffa500; }
+    .mini-board .b-cell[data-step="2"].revealed { background: #9b9c97; color: transparent; }
+    .mini-board .b-cell[data-step="3"].revealed { background: #ffa500; }
+    .mini-board .b-cell[data-step="4"].revealed { background: #9b9c97; color: transparent; }
+
+    .game-action-events {
+      display: flex; flex-direction: column; gap: 8px;
+      background: linear-gradient(180deg, rgba(48,78,216,0.10) 0%, rgba(48,78,216,0.02) 100%);
+      border-radius: 14px; padding: 12px;
+      box-shadow: inset 0 0 0 1px rgba(48,78,216,0.10);
+    }
+
+    /* Event message bubbles — mirror game-explorer */
+    .ge-msg {
+      display: flex; gap: 8px; align-items: flex-start;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .ge-msg.visible { opacity: 1; transform: translateY(0); }
+    .ge-msg.is-spotter { flex-direction: row-reverse; }
+    .ge-avatar {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 0.45em;
+    }
+    .ge-msg.is-captain .ge-avatar {
+      background: linear-gradient(135deg, #3a58d6, #6f88ff);
+      box-shadow: 0 6px 12px rgba(48,78,216,0.25);
+    }
+    .ge-msg.is-spotter .ge-avatar {
+      background: linear-gradient(135deg, #04af70, #55d69c);
+      box-shadow: 0 6px 12px rgba(4,175,112,0.25);
+    }
+    .ge-bubble {
+      flex: 1; padding: 8px 12px; border-radius: 12px;
+      font-size: 0.58em; line-height: 1.5;
+    }
+    .ge-msg.is-captain .ge-bubble {
+      background: rgba(48,78,216,0.18); color: #172642;
+      box-shadow: 0 6px 16px rgba(23,38,66,0.12);
+    }
+    .ge-msg.is-spotter .ge-bubble {
+      background: #fff; color: #172642;
+      border: 1px solid rgba(4,175,112,0.2);
+      box-shadow: 0 6px 14px rgba(4,175,112,0.12);
+    }
+    .ge-speaker {
+      font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.08em;
+      font-weight: 700; margin-bottom: 2px; display: block;
+    }
+    .ge-msg.is-captain .ge-speaker { color: #3a58d6; }
+    .ge-msg.is-spotter .ge-speaker { color: #04af70; }
+    .ge-result {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 5px; padding: 5px 10px; border-radius: 10px;
+      font-weight: 600; font-size: 0.92em;
+    }
+    .ge-result.is-hit { background: rgba(4,175,112,0.16); color: #036347; }
+    .ge-result.is-miss { background: rgba(172,32,40,0.16); color: #8f1c24; }
+    .ge-result .result-icon { font-size: 0.85em; }
+    .ge-result.is-hit .result-icon { color: #04af70; }
+    .ge-result.is-miss .result-icon { color: #ac2028; }
+
     /* ── Speaker notes ── */
     .reveal .speaker-notes { font-family: 'Noto Sans', sans-serif; font-size: 0.9em; }
   </style>
@@ -282,10 +452,147 @@
         </aside>
       </section>
 
-      <!-- 2b. Live demo: Game Explorer -->
-      <section class="iframe-slide" data-background-color="#0f1f3c">
+      <!-- 2b. Game in action — step-through demo -->
+      <section>
+        <div class="section-label">Task</div>
+        <h3>A game in action</h3>
+        <div class="game-action-layout">
+          <!-- ── Board ── -->
+          <div class="game-action-board-wrap">
+            <h4><i class="fas fa-anchor"></i> &nbsp;Captain&rsquo;s View &mdash; Board B08</h4>
+            <div class="mini-board">
+              <!-- Row headers -->
+              <div class="b-label"></div>
+              <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+              <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+              <div class="b-label">7</div><div class="b-label">8</div>
+              <!-- Row A -->
+              <div class="b-label">A</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row B -->
+              <div class="b-label">B</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row C -->
+              <div class="b-label">C</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row D -->
+              <div class="b-label">D</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell" data-step="2"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row E -->
+              <div class="b-label">E</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" data-step="4"></div>
+              <div class="b-cell" data-step="1"></div><div class="b-cell" data-step="3"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row F -->
+              <div class="b-label">F</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row G -->
+              <div class="b-label">G</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <!-- Row H -->
+              <div class="b-label">H</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+            </div>
+          </div>
+
+          <!-- ── Event log ── -->
+          <div class="game-action-events">
+            <!-- Step 0: Question (visible on slide load) -->
+            <div class="ge-msg is-captain visible" data-msg="0">
+              <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+              <div class="ge-bubble">
+                <span class="ge-speaker">Captain</span>
+                Is there any part of a ship between D3 and E6?
+              </div>
+            </div>
+            <div class="ge-msg is-spotter visible" data-msg="0">
+              <div class="ge-avatar"><i class="fas fa-binoculars"></i></div>
+              <div class="ge-bubble">
+                <span class="ge-speaker">Spotter</span>
+                Yes
+              </div>
+            </div>
+
+            <!-- Step 1: Move E5 → Hit Orange -->
+            <div class="fragment" data-fragment-index="0">
+              <div class="ge-msg is-captain visible" data-msg="1">
+                <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                <div class="ge-bubble">
+                  <span class="ge-speaker">Captain</span>
+                  Fire at E5
+                  <div class="ge-result is-hit">
+                    <i class="result-icon fas fa-bullseye"></i>
+                    <span>Hit Orange ship</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Move D5 → Miss -->
+            <div class="fragment" data-fragment-index="1">
+              <div class="ge-msg is-captain visible" data-msg="2">
+                <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                <div class="ge-bubble">
+                  <span class="ge-speaker">Captain</span>
+                  Fire at D5
+                  <div class="ge-result is-miss">
+                    <i class="result-icon fas fa-times"></i>
+                    <span>Miss</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Move E6 → Hit Orange -->
+            <div class="fragment" data-fragment-index="2">
+              <div class="ge-msg is-captain visible" data-msg="3">
+                <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                <div class="ge-bubble">
+                  <span class="ge-speaker">Captain</span>
+                  Fire at E6
+                  <div class="ge-result is-hit">
+                    <i class="result-icon fas fa-bullseye"></i>
+                    <span>Hit Orange ship</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Move E4 → Miss -->
+            <div class="fragment" data-fragment-index="3">
+              <div class="ge-msg is-captain visible" data-msg="4">
+                <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                <div class="ge-bubble">
+                  <span class="ge-speaker">Captain</span>
+                  Fire at E4
+                  <div class="ge-result is-miss">
+                    <i class="result-icon fas fa-times"></i>
+                    <span>Miss</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Walk through a few turns of a game. The Captain starts by asking a question —
+          questions are answered Yes or No by the Spotter. Then the Captain fires shots,
+          getting hit/miss feedback. Notice the Captain uses the question answer to guide
+          where to shoot — after learning there's a ship between D3-E6, they fire in that region.
+        </aside>
+      </section>
+
+      <!-- 2c. Live demo: Game Explorer (hidden — kept for reference) -->
+      <section class="iframe-slide" data-background-color="#0f1f3c" data-visibility="hidden">
         <h3><i class="fas fa-gamepad"></i> &nbsp;Game Explorer</h3>
-        <iframe data-src="game-explorer.html" style="height: 660px;" data-preload></iframe>
+        <iframe id="game-explorer-frame" data-src="game-explorer.html" style="height: 656px;" data-preload></iframe>
 
         <aside class="notes">
           Let me show you what a game looks like. You can see the Captain's partial view on the left,
@@ -362,14 +669,62 @@
         </aside>
       </section>
 
-      <!-- 3b. EIG interactive demo -->
-      <section class="iframe-slide" data-background-color="#0f1f3c">
-        <h3><i class="fas fa-chart-line"></i> &nbsp;Visualizing Expected Information Gain</h3>
-        <iframe data-src="eig-demo.html" style="height: 660px;" data-preload></iframe>
+      <!-- 3b. EIG visualization (native slide) -->
+      <section>
+        <div class="section-label">Framework</div>
+        <h3>Computing EIG by executing code against samples</h3>
+        <p style="text-align: center; font-size: 0.6em; color: #4a5770; margin-bottom: 8px;">
+          <em>&ldquo;Is the purple ship vertical?&rdquo;</em> &nbsp;&rarr;&nbsp;
+          Execute against each sampled board &nbsp;&rarr;&nbsp; count True/False split
+        </p>
+        <div class="eig-viz-layout">
+          <div class="eig-viz-samples">
+            <div class="sample-bucket">
+              <h4><i class="fas fa-database" style="color: #888;"></i> &nbsp;Sampled boards from world model</h4>
+              <div class="sample-thumbnails">
+                <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" class="sample-false" />
+                <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" class="sample-false" />
+                <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" class="sample-false" />
+                <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" class="sample-false" />
+                <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" class="sample-true" />
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <div class="sample-bucket" style="flex: 1;">
+                <h4><span class="bucket-label-false"><i class="fas fa-times-circle"></i> Returns False</span> &nbsp;(4 samples)</h4>
+                <div class="sample-thumbnails">
+                  <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" class="sample-false" />
+                  <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" class="sample-false" />
+                  <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" class="sample-false" />
+                  <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" class="sample-false" />
+                </div>
+              </div>
+              <div class="sample-bucket" style="flex: 1;">
+                <h4><span class="bucket-label-true"><i class="fas fa-check-circle"></i> Returns True</span> &nbsp;(1 sample)</h4>
+                <div class="sample-thumbnails">
+                  <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" class="sample-true" />
+                </div>
+              </div>
+            </div>
+            <div class="eig-result-box">
+              <div class="eig-detail">$p_t = 1/5 = 0.2$ &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Imbalanced split &rarr; lower EIG</div>
+              <div class="eig-value" style="font-size: 1.1em;">EIG = 0.217 bits</div>
+              <div class="eig-detail">A more balanced question ($p_t \approx 0.5$) would yield up to 0.531 bits</div>
+            </div>
+          </div>
+          <div class="eig-viz-plot">
+            <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of candidate questions"
+                 style="max-height: 260px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.48em; color: #666; margin-top: 6px;">
+              Sampling more candidate questions &rarr; higher max EIG
+            </p>
+          </div>
+        </div>
 
         <aside class="notes">
-          Here you can see the sample-sorting visualization. Samples from our world model are sorted into
-          True/False buckets based on the question. The more balanced the split, the higher the EIG.
+          Here's a concrete example. We ask "is the purple ship vertical?" and execute against
+          5 sampled boards. 4 return False, 1 returns True. This imbalanced 4:1 split gives
+          relatively low EIG. A question that splits samples more evenly would be more informative.
         </aside>
       </section>
 
@@ -391,9 +746,9 @@
             <figcaption><strong>(a)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
           </figure>
           <figure>
-            <img src="../static/images/question_timing.png"
-                 alt="Question timing over game" />
-            <figcaption><strong>(b)</strong> Players show diverse explore/exploit strategies: some front-load questions, others interleave throughout.</figcaption>
+            <img src="../static/images/board_timeline_B02.png"
+                 alt="Timeline of multiple human games on board B02" />
+            <figcaption><strong>(b)</strong> Different players show diverse explore/exploit strategies on the same board; colors indicate different players.</figcaption>
           </figure>
         </div>
         <div class="callout" style="margin-top: 12px;">
@@ -433,15 +788,54 @@
         </aside>
       </section>
 
-      <!-- 5b. Code demo interactive -->
-      <section class="iframe-slide" data-background-color="#0f1f3c">
-        <h3><i class="fas fa-code"></i> &nbsp;Grounding Questions by Generating Code</h3>
-        <iframe data-src="code-demo.html" style="height: 660px;" data-preload></iframe>
+      <!-- 5b. Code demo (native reveal.js slide) -->
+      <section>
+        <div class="section-label">SpotterQA</div>
+        <h3>Grounding questions by generating code</h3>
+        <div class="code-demo-layout">
+          <div class="code-demo-chat">
+            <div class="chat-bubble captain">
+              <span class="chat-role"><i class="fas fa-anchor"></i> Captain</span>
+              Are at least two of the four ships located entirely within columns 1&ndash;4?
+            </div>
+            <div class="chat-bubble spotter">
+              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter (thinking)</span>
+              Let me translate this to code and execute it against the board&hellip;
+            </div>
+            <div class="chat-bubble spotter">
+              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter</span>
+              <span class="chat-answer"><i class="fas fa-check"></i> Yes</span>
+            </div>
+            <div class="callout" style="margin-top: 12px;">
+              <p><span class="callout-label">Key idea:</span> Translating to code <strong>grounds</strong> the answer in the actual board state, avoiding hallucination and misinterpretation.</p>
+            </div>
+          </div>
+          <div class="code-demo-code">
+            <pre><code class="language-python" data-trim data-line-numbers="1-4|6-12|14">
+def answer(true_board, partial_board) -> bool:
+    # Columns 1-4 = zero-based indices 0-3
+    max_allowed_col = 3
+    ship_ids = [s for s in np.unique(true_board) if s > 0]
+
+    count_within = 0
+    for sid in ship_ids:
+        cols = np.where(true_board == sid)[1]
+        if cols.size > 0 and cols.max() <= max_allowed_col:
+            count_within += 1
+
+    return count_within >= 2
+
+# >>> answer(true_board, partial_board)
+# True
+            </code></pre>
+          </div>
+        </div>
 
         <aside class="notes">
-          Here's an example. The Captain asks a natural language question. The Spotter translates it
-          into a Python program, executes it against the board, and returns the answer.
-          This grounds the reasoning in the actual board state.
+          Here's a concrete example. The Captain asks whether at least two ships are in columns 1-4.
+          The Spotter translates this into Python, executes it against the true board, and returns Yes.
+          You can step through the code: first we set up, then iterate over ships checking column bounds,
+          and finally return the boolean. This grounds reasoning in the actual board state.
         </aside>
       </section>
 
@@ -741,6 +1135,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
   <script>
     Reveal.initialize({
       hash: true,
@@ -751,7 +1146,40 @@
       transitionSpeed: 'default',
       slideNumber: 'c/t',
       preloadIframes: false,
-      plugins: [ RevealNotes ],
+      plugins: [ RevealNotes, RevealHighlight ],
+    });
+
+    // Sync board cells with fragment steps on game-action slide
+    // Fragment index 0 → data-step="1", index 1 → data-step="2", etc.
+    Reveal.on('fragmentshown', function(event) {
+      var idx = event.fragment.getAttribute('data-fragment-index');
+      if (idx === null) return;
+      var step = parseInt(idx) + 1;
+      document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
+        cell.classList.add('revealed');
+      });
+    });
+    Reveal.on('fragmenthidden', function(event) {
+      var idx = event.fragment.getAttribute('data-fragment-index');
+      if (idx === null) return;
+      var step = parseInt(idx) + 1;
+      document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
+        cell.classList.remove('revealed');
+      });
+    });
+
+    // Auto-play the game explorer when its slide becomes active
+    Reveal.on('slidechanged', function(event) {
+      var iframe = event.currentSlide.querySelector('#game-explorer-frame');
+      if (iframe && iframe.contentWindow) {
+        // Try to click the play button inside the iframe after a short delay
+        setTimeout(function() {
+          try {
+            var playBtn = iframe.contentWindow.document.getElementById('timeline-play');
+            if (playBtn) playBtn.click();
+          } catch(e) { /* cross-origin safety */ }
+        }, 800);
+      }
     });
   </script>
 </body>

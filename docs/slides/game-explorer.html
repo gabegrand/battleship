@@ -14,15 +14,110 @@
   <link rel="stylesheet" href="./static/css/index.css" />
 
   <style>
-    html, body { margin: 0; padding: 0; overflow: hidden; background: #f6f8ff; }
-    .section { padding: 0.75rem 1rem !important; }
-    .container { max-width: 100% !important; }
-    .trajectory-explorer { font-size: 0.88em; }
-    .trajectory-layout { gap: 0.75rem !important; }
-    .viewer-content { gap: 0.6rem !important; }
-    .board-grid { font-size: 0.85rem !important; }
+    /* ── Slide-iframe fit strategy ──
+       The iframe is ~960×656px (reveal.js 1200×700 scaled).  We render at
+       1/0.65 ≈ 154% width so the layout engine sees ~1477px — above the
+       1200px media-query breakpoint.  Then transform: scale(0.65) shrinks
+       the visual output back into the iframe viewport. */
+
+    html, body {
+      margin: 0; padding: 0;
+      overflow: hidden;
+      background: #f6f8ff;
+    }
+    body {
+      width: 153.85%;            /* 1 / 0.65 */
+      transform: scale(0.65);
+      transform-origin: top left;
+    }
+    .section { padding: 0.4rem 0.6rem !important; }
+    .container { max-width: 100% !important; padding: 0 !important; }
+
+    /* Force two-column grid — overrides @media (max-width:1200px)
+       Use 2fr:3fr so the side panel (chat) gets MORE space than the board. */
+    .viewer-content {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) !important;
+      gap: 0.75rem !important;
+    }
+    /* Force side-panel back to column (media query switches it to row) */
+    .side-panel {
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+      gap: 0.5rem !important;
+    }
+    .side-card {
+      flex: unset !important;
+    }
+
+    .trajectory-explorer {
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      gap: 0.4rem !important;
+    }
+    .trajectory-layout { gap: 0.4rem !important; }
+
+    /* ── Board: cap width so cells stay small with aspect-ratio: 1/1 ── */
+    .board-card {
+      padding: 0.5rem !important;
+      border-radius: 10px !important;
+      max-width: 560px !important;       /* caps cell size to ~60px */
+    }
+    .board-grid {
+      font-size: 0.75rem !important;
+      gap: 2px !important;
+      padding: 3px !important;
+    }
+    .board-cell {
+      min-height: 0 !important;
+      font-size: 0.8rem !important;
+    }
+    .board-label-cell {
+      min-height: 0 !important;
+      font-size: 0.75rem !important;
+    }
+    .board-card-header { margin-bottom: 0.2rem !important; }
+    .board-card-header .title { font-size: 1rem !important; }
+    .side-card { padding: 0.5rem !important; border-radius: 10px !important; }
+
+    /* Hide elements not needed in presentation */
     .demo-intro { display: none; }
-    h2.title.is-3 { font-size: 1.3rem !important; margin-bottom: 0.3rem !important; }
+    .selection-panel { display: none !important; }
+    h2.title.is-3 { display: none !important; }
+
+    /* ── Event card / chat log: expand to fill available height ── */
+    .event-card {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+    }
+    .event-details {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      padding: 0.8rem !important;
+    }
+    .event-chat-log {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      gap: 0.6rem !important;
+    }
+
+    /* Ship tracker & progress — keep compact */
+    .ship-tracker { font-size: 0.9rem !important; }
+    .progress-details { font-size: 0.85rem !important; }
+
+    /* Compact timeline */
+    .trajectory-timeline { gap: 0.25rem !important; }
+    .timeline-list { max-height: 60px !important; }
+    .timeline-header { gap: 0.4rem !important; }
+    .timeline-slider { margin-bottom: 0 !important; }
+    .timeline-meta { font-size: 0.85rem !important; }
+
+    /* Compact viewer panel gap */
+    .viewer-panel { gap: 0.4rem !important; }
+
+    /* Hide the status bar when loaded */
+    .trajectory-status:not(.has-error) { display: none !important; }
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"></script>
