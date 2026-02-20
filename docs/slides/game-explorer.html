@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game Explorer — Slide Frame</title>
+  <!-- base tag makes ./static/... resolve to ../static/... (the docs root) -->
+  <base href="../" />
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="./static/css/index.css" />
+
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #f6f8ff; }
+    .section { padding: 0.75rem 1rem !important; }
+    .container { max-width: 100% !important; }
+    .trajectory-explorer { font-size: 0.88em; }
+    .trajectory-layout { gap: 0.75rem !important; }
+    .viewer-content { gap: 0.6rem !important; }
+    .board-grid { font-size: 0.85rem !important; }
+    .demo-intro { display: none; }
+    h2.title.is-3 { font-size: 1.3rem !important; margin-bottom: 0.3rem !important; }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+  <section class="section" id="demo">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column">
+          <h2 class="title is-3 is-spaced">Game Explorer</h2>
+          <div class="demo-intro mb-5">
+            <p>Press Play to get started.</p>
+          </div>
+          <div id="trajectory-explorer" class="trajectory-explorer">
+            <div class="trajectory-layout">
+              <div class="viewer-panel">
+                <div class="viewer-content">
+                  <div class="board-card">
+                    <div class="board-card-header">
+                      <h3 class="title is-5 mb-1">Board State</h3>
+                      <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
+                        <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">
+                          <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                          <span class="label">Captain View</span>
+                        </button>
+                        <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">
+                          <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                          <span class="label">Spotter View</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
+                  </div>
+                  <div class="side-panel">
+                    <div class="side-card event-card">
+                      <div id="event-details" class="event-details" role="log" aria-live="polite" aria-atomic="false"></div>
+                    </div>
+                    <div class="side-card">
+                      <div id="ship-tracker" class="ship-tracker"></div>
+                    </div>
+                    <div class="side-card">
+                      <div id="progress-details" class="progress-details"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="trajectory-status" id="trajectory-status" role="status">Loading games…</div>
+              </div>
+              <div class="trajectory-timeline">
+                <div class="timeline-slider">
+                  <input class="is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Timeline position" />
+                </div>
+                <div class="timeline-header">
+                  <div class="timeline-primary-controls" role="group" aria-label="Playback controls">
+                    <button type="button" class="timeline-control-button" id="timeline-reset" aria-label="Reset"><i class="fas fa-undo-alt"></i></button>
+                    <button type="button" class="timeline-control-button" id="timeline-play" aria-label="Play" aria-pressed="false"><i class="fas fa-play playback-icon"></i></button>
+                    <button type="button" class="timeline-control-button" id="timeline-skip" aria-label="Skip to end"><i class="fas fa-fast-forward"></i></button>
+                  </div>
+                  <div class="timeline-speed-select">
+                    <label class="sr-only" for="playback-speed">Playback speed</label>
+                    <div class="select is-small is-rounded">
+                      <select id="playback-speed" aria-label="Select playback speed">
+                        <option value="0.25">0.25&times;</option>
+                        <option value="0.5">0.5&times;</option>
+                        <option value="1" selected>1&times;</option>
+                        <option value="2">2&times;</option>
+                        <option value="4">4&times;</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="timeline-meta">
+                  <span id="frame-label" class="timeline-frame"></span>
+                  <span id="event-label" class="timeline-event"></span>
+                </div>
+                <div id="trajectory-event-list" class="timeline-list" aria-label="Event timeline"></div>
+              </div>
+              <div class="selection-panel" aria-label="Game selector">
+                <div class="game-browser-header">
+                  <h3 class="title is-5">Game Browser</h3>
+                  <div class="game-browser-toolbar" role="group" aria-label="Game navigation">
+                    <button type="button" class="timeline-nav-button" id="prev-game" aria-label="Previous game" disabled><i class="fas fa-chevron-left"></i></button>
+                    <button type="button" class="timeline-nav-button" id="next-game" aria-label="Next game" disabled><i class="fas fa-chevron-right"></i></button>
+                  </div>
+                </div>
+                <div class="selection-grid">
+                  <div class="filter-group">
+                    <label class="label is-small" for="filter-type">Captain Strategy</label>
+                    <div class="select is-fullwidth"><select id="filter-type"></select></div>
+                  </div>
+                  <div class="filter-group">
+                    <label class="label is-small" for="filter-llm">Captain LLM</label>
+                    <div class="select is-fullwidth"><select id="filter-llm"></select></div>
+                  </div>
+                </div>
+                <div class="game-list" id="trajectory-game-list" role="listbox" aria-label="Available games"></div>
+                <div class="trajectory-metrics" id="trajectory-metrics"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>
