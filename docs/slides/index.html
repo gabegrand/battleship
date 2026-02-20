@@ -12,6 +12,12 @@
     href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@300;400;500;700&family=Castoro&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
+
   <style>
     :root {
       --r-heading-font: 'Google Sans', 'Noto Sans', sans-serif;
@@ -29,19 +35,25 @@
     .reveal .slides .center { text-align: center; }
     .reveal .slides h1, .reveal .slides h2, .reveal .slides h3 { text-align: center; }
 
-    /* Title slide */
+    /* ── Title slide ── */
     .title-slide { text-align: center !important; }
     .title-slide h1 { font-size: 2.2em !important; margin-bottom: 0.1em !important; }
-    .title-slide h2 { font-size: 1.1em !important; color: #4a5770 !important; font-weight: 400 !important; margin-bottom: 0.8em !important; }
+    .title-slide h2 {
+      font-size: 1.1em !important; color: #4a5770 !important;
+      font-weight: 400 !important; margin-bottom: 0.8em !important;
+    }
     .title-slide .authors { font-size: 0.65em; color: #4a5770; margin-bottom: 0.3em; }
     .title-slide .authors a { color: #304ed8; text-decoration: none; }
-    .title-slide .venue { font-size: 0.6em; color: #172642; font-weight: 600; margin-top: 0.5em; }
+    .title-slide .venue {
+      font-size: 0.6em; color: #172642; font-weight: 600; margin-top: 0.5em;
+    }
 
-    /* Compact bullet lists */
+    /* ── Compact bullet lists ── */
     .reveal ul { font-size: 0.78em; line-height: 1.6; }
     .reveal li { margin-bottom: 0.3em; }
+    .reveal ul ul { font-size: 0.92em; margin-top: 0.2em; }
 
-    /* Interactive slide: fill with iframe */
+    /* ── Interactive slide: fill with iframe ── */
     .iframe-slide { padding: 0 !important; }
     .iframe-slide h3 {
       margin: 0; padding: 12px 20px;
@@ -52,42 +64,121 @@
       width: 100%; border: none; display: block;
     }
 
-    /* Figure slides */
-    .fig-row { display: flex; gap: 24px; justify-content: center; align-items: flex-start; margin-top: 20px; }
+    /* ── Figure slides ── */
+    .fig-row {
+      display: flex; gap: 24px; justify-content: center;
+      align-items: flex-start; margin-top: 20px;
+    }
     .fig-row figure { flex: 1; text-align: center; }
-    .fig-row img { max-height: 380px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .fig-row img {
+      max-height: 380px; border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
     .fig-row figcaption { font-size: 0.5em; color: #666; margin-top: 8px; }
 
-    /* Strategy cards */
-    .strategy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; }
+    .fig-row-3 .fig-col { flex: 1; text-align: center; }
+    .fig-row-3 img {
+      max-height: 310px; border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    /* ── Strategy cards ── */
+    .strategy-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 20px; margin-top: 24px;
+    }
     .strat-card {
       background: #f6f8ff; border-radius: 12px; padding: 20px;
       border-left: 4px solid var(--card-accent, #304ed8);
     }
-    .strat-card h4 { font-size: 0.7em; margin: 0 0 4px 0; text-align: left; color: #172642; }
+    .strat-card h4 {
+      font-size: 0.7em; margin: 0 0 4px 0;
+      text-align: left; color: #172642;
+    }
     .strat-card .tag { font-size: 0.5em; color: #888; margin-bottom: 8px; display: block; }
     .strat-card p { font-size: 0.55em; line-height: 1.5; margin: 0; }
+    .strat-card .math-row {
+      font-size: 0.52em; line-height: 1.6; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid #dde; color: #4a5770; text-align: center;
+    }
 
-    /* Key points list */
+    /* ── Key points list ── */
     .key-points { list-style: none; padding: 0; }
-    .key-points li { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-    .key-points .kp-icon { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
-      background: #304ed8; color: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 0.55em; }
+    .key-points li {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+    }
+    .key-points .kp-icon {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+      background: #304ed8; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.55em;
+    }
     .key-points .kp-text { font-size: 0.68em; line-height: 1.5; }
     .key-points .kp-label { font-weight: 700; color: #172642; }
 
-    /* Takeaway slide */
-    .takeaway-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-    .takeaway-stat { text-align: center; background: #f6f8ff; border-radius: 12px; padding: 24px; }
-    .takeaway-stat .number { font-size: 2em; font-weight: 700; color: #304ed8; }
-    .takeaway-stat .label { font-size: 0.6em; color: #666; margin-top: 4px; }
+    /* ── Takeaway cards ── */
+    .takeaway-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;
+    }
+    .takeaway-card {
+      background: #f6f8ff; border-radius: 12px; padding: 24px;
+      border-left: 4px solid #304ed8;
+    }
+    .takeaway-card h4 {
+      font-size: 0.72em; margin: 0 0 8px 0;
+      text-align: left; color: #172642;
+    }
+    .takeaway-card p {
+      font-size: 0.58em; line-height: 1.55; margin: 0; color: #4a5770;
+    }
 
-    /* Section label */
+    /* ── Stat boxes ── */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-top: 20px;
+    }
+    .stat-box { text-align: center; background: #f6f8ff; border-radius: 10px; padding: 16px 10px; }
+    .stat-box .number { font-size: 1.6em; font-weight: 700; color: #304ed8; }
+    .stat-box .label { font-size: 0.48em; color: #666; margin-top: 4px; }
+
+    /* ── Section label ── */
     .section-label {
       font-size: 0.45em; text-transform: uppercase; letter-spacing: 0.15em;
       color: #304ed8; font-weight: 600; margin-bottom: 4px; text-align: center;
     }
+
+    /* ── Callout box ── */
+    .callout {
+      background: #f0f4ff; border-left: 4px solid #304ed8;
+      border-radius: 8px; padding: 16px 20px; margin-top: 16px;
+    }
+    .callout p { font-size: 0.62em; line-height: 1.5; margin: 0; }
+    .callout .callout-label { font-weight: 700; color: #304ed8; }
+
+    /* ── Equation box ── */
+    .eq-box {
+      background: #fafbff; border: 1px solid #dde3f0; border-radius: 8px;
+      padding: 16px 24px; text-align: center; margin: 16px auto;
+      max-width: 90%;
+    }
+    .eq-box .katex { font-size: 1.1em; }
+    .eq-caption { font-size: 0.55em; color: #666; margin-top: 8px; text-align: center; }
+
+    /* ── Prior work chip list ── */
+    .chip-list { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+    .chip {
+      font-size: 0.5em; background: #eef1ff; color: #304ed8;
+      padding: 4px 12px; border-radius: 20px; font-weight: 500;
+    }
+
+    /* ── Two-col layout ── */
+    .two-col { display: flex; gap: 32px; align-items: flex-start; margin-top: 16px; }
+    .two-col .col { flex: 1; }
+    .two-col .col-narrow { flex: 0 0 38%; }
+    .two-col .col-wide { flex: 0 0 58%; }
+
+    /* ── Speaker notes ── */
+    .reveal .speaker-notes { font-family: 'Noto Sans', sans-serif; font-size: 0.9em; }
   </style>
 </head>
 
@@ -95,198 +186,561 @@
   <div class="reveal">
     <div class="slides">
 
-      <!-- 1. TITLE -->
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 1: TITLE + MOTIVATION  (1.5 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- 1a. Title -->
       <section class="title-slide">
         <h1>Shoot First, Ask Questions Later?</h1>
         <h2>Building Rational Agents That Explore and Act Like People</h2>
         <div class="authors">
-          <a href="https://gabegrand.com">Gabriel Grand</a><sup>1,2</sup> &middot;
-          <a href="https://vpepe.github.io/">Valerio Pepe</a><sup>3</sup> &middot;
+          <a href="https://gabegrand.com">Gabriel Grand</a><sup>1,2*</sup> &middot;
+          <a href="https://vpepe.github.io/">Valerio Pepe</a><sup>3*</sup> &middot;
           Joshua B. Tenenbaum<sup>1,2</sup> &middot;
           Jacob Andreas<sup>1</sup>
         </div>
         <div class="authors" style="font-size: 0.55em; margin-top: 4px;">
           <sup>1</sup>MIT CSAIL &nbsp; <sup>2</sup>MIT BCS &nbsp; <sup>3</sup>Harvard SEAS
+          &nbsp;&nbsp; <span style="color: #aaa;">*Equal contribution</span>
         </div>
-        <div class="venue">ICLR 2026 &middot; Oral</div>
+        <div class="venue">ICLR 2026</div>
+
+        <aside class="notes">
+          Thank you for the introduction. I'm Gabe Grand from MIT, and I'll be presenting
+          joint work with Valerio Pepe, Josh Tenenbaum, and Jacob Andreas.
+        </aside>
       </section>
 
-      <!-- 2. MOTIVATION -->
+      <!-- 1b. Motivation: The promise -->
       <section>
         <div class="section-label">Motivation</div>
-        <h3>The information-seeking gap</h3>
+        <h3>LM agents as scientists and diagnosticians</h3>
         <ul class="key-points">
           <li>
-            <span class="kp-icon"><i class="fas fa-compass"></i></span>
-            <span class="kp-text"><span class="kp-label">Problem:</span> High-stakes AI applications (science, diagnosis) require agents that ask smart questions before acting &mdash; yet we lack benchmarks for explore/exploit tradeoffs.</span>
+            <span class="kp-icon"><i class="fas fa-microscope"></i></span>
+            <span class="kp-text"><span class="kp-label">The promise:</span> LM agents are being deployed for scientific discovery, medical diagnosis, and agentic coding &mdash; domains that require forming hypotheses, gathering information, and acting under uncertainty.</span>
           </li>
           <li>
-            <span class="kp-icon"><i class="fas fa-anchor"></i></span>
-            <span class="kp-text"><span class="kp-label">Our benchmark:</span> Collaborative Battleship &mdash; a two-player dialogue task where a Captain balances asking questions (exploration) with taking shots (exploitation).</span>
-          </li>
-          <li>
-            <span class="kp-icon"><i class="fas fa-user-friends"></i></span>
-            <span class="kp-text"><span class="kp-label">Behavior gap:</span> LM agents ask less informative questions, give inaccurate answers, and waste turns on low-probability moves compared to human players (N=42).</span>
+            <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
+            <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark &mdash; LMs already have strong priors about many domains, and high-profile results are difficult to verify and reproduce.</span>
           </li>
           <li>
             <span class="kp-icon"><i class="fas fa-flask"></i></span>
-            <span class="kp-text"><span class="kp-label">Our approach:</span> Monte Carlo inference strategies based on Bayesian Experimental Design (BED) that guide <em>what</em> to ask, <em>where</em> to shoot, and <em>when</em> to explore vs. act.</span>
+            <span class="kp-text"><span class="kp-label">What we need:</span> Controlled settings where we can formalize what &ldquo;rational&rdquo; means and directly compare LM behavior against human and ideal baselines.</span>
+          </li>
+          <li>
+            <span class="kp-icon"><i class="fas fa-comment-dots"></i></span>
+            <span class="kp-text"><span class="kp-label">Core tension:</span> LMs are trained to <em>answer</em> questions &mdash; but discovery requires <em>asking</em> them. Can they do both?</span>
           </li>
         </ul>
+
+        <aside class="notes">
+          Many exciting applications of LM agents involve scientific discovery and diagnosis.
+          But evaluating these abilities is hard because LMs already know a lot about the real world.
+          We need controlled environments where we can formalize rationality.
+          And here's the key tension: LMs are trained to answer, not to ask.
+        </aside>
       </section>
 
-      <!-- 3. LIVE DEMO: Game Explorer -->
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 2: THE COLLABORATIVE BATTLESHIP TASK  (2 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- 2a. Task introduction -->
+      <section>
+        <div class="section-label">Task</div>
+        <h3>Collaborative Battleship</h3>
+        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 12px;">
+          Adapted from a well-studied paradigm in cognitive science
+          <span style="color: #888;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span>
+        </p>
+        <div class="two-col">
+          <div class="col">
+            <ul style="font-size: 0.68em;">
+              <li><strong>Captain</strong> sees a partially-revealed board and must sink all hidden ships</li>
+              <li>Each turn: <strong>ask a yes/no question</strong> (explore) or <strong>shoot at a tile</strong> (exploit)</li>
+              <li><strong>Spotter</strong> sees the full board but can only answer <em>Yes</em> or <em>No</em> &mdash; an <strong>information bottleneck</strong></li>
+              <li>Budget: 15 questions, 40 shots</li>
+            </ul>
+            <div class="callout" style="margin-top: 12px;">
+              <p><span class="callout-label">Like ARC:</span> A minimal, grid-based task with simple rules that proves deceptively challenging for AI &mdash; solving it requires genuine reasoning about spatial structure and uncertainty.</p>
+            </div>
+          </div>
+          <div class="col-narrow" style="text-align: center; padding-top: 8px;">
+            <img src="../static/images/battleship-splash-2.png"
+                 alt="Battleship game illustration"
+                 style="max-height: 340px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);" />
+          </div>
+        </div>
+
+        <aside class="notes">
+          We build on Collaborative Battleship, a paradigm from cognitive science designed to study
+          information-seeking. We credit Rothe, Lake, and Gureckis for originating this task.
+          It's like ARC: minimal and grid-based, but deceptively hard for AI.
+        </aside>
+      </section>
+
+      <!-- 2b. Live demo: Game Explorer -->
       <section class="iframe-slide" data-background-color="#0f1f3c">
-        <h3><i class="fas fa-gamepad"></i> &nbsp;Live Demo: Game Explorer</h3>
+        <h3><i class="fas fa-gamepad"></i> &nbsp;Game Explorer</h3>
         <iframe data-src="game-explorer.html" style="height: 660px;" data-preload></iframe>
+
+        <aside class="notes">
+          Let me show you what a game looks like. You can see the Captain's partial view on the left,
+          and the event log on the right. Watch how the Captain alternates between asking questions
+          and taking shots. The Spotter can only say Yes or No.
+        </aside>
       </section>
 
-      <!-- 4. CODE GROUNDING -->
+      <!-- 2c. Our extensions (brief visual) -->
+      <section>
+        <div class="section-label">Task</div>
+        <h3>Extending the Battleship paradigm</h3>
+        <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 16px;">
+          Key extensions over prior work
+          <span style="color: #aaa;">(Rothe et al., 2017; 2018; 2019; Grand et al., 2024)</span>
+        </p>
+        <div class="chip-list" style="margin-bottom: 20px;">
+          <span class="chip"><i class="fas fa-arrows-alt-h"></i> &nbsp;Full multi-turn games</span>
+          <span class="chip"><i class="fas fa-users"></i> &nbsp;Two-player dialogue</span>
+          <span class="chip"><i class="fab fa-python"></i> &nbsp;Python programs as questions</span>
+          <span class="chip"><i class="fas fa-th"></i> &nbsp;8&times;8 boards (up from 6&times;6)</span>
+          <span class="chip"><i class="fas fa-lock"></i> &nbsp;Yes/No information bottleneck</span>
+        </div>
+        <div class="two-col" style="gap: 24px;">
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/rothe_et_al_2018.png"
+                 alt="Prior work: Rothe et al."
+                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Prior work: single-turn, single-player</p>
+          </div>
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/battleship-splash-2.png"
+                 alt="Our work"
+                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Our work: multi-turn, two-player dialogue</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          These are the key ways we extend the original paradigm. I won't go through each one,
+          but the important bits are: full multi-turn games with a two-player dialogue structure,
+          questions represented as Python programs, and a binary information bottleneck.
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 3: FORMAL FRAMEWORK — EIG  (1 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- 3a. EIG equation + interactive -->
+      <section>
+        <div class="section-label">Framework</div>
+        <h3>Expected Information Gain</h3>
+        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 12px;">
+          How much does the answer to this question tell us about the hidden board?
+        </p>
+        <div class="eq-box">
+          $$\text{EIG}_\varepsilon(q \mid x, \mathcal{H}_{1:t}) \;=\; \text{H}_b\!\big(\varepsilon + (1-2\varepsilon)\,p_t\big) \;-\; \text{H}_b(\varepsilon)$$
+        </div>
+        <p class="eq-caption">
+          $p_t$ = probability the true answer is &ldquo;yes&rdquo; under current belief &nbsp;&middot;&nbsp;
+          $\varepsilon$ = Spotter noise rate &nbsp;&middot;&nbsp;
+          $\text{H}_b$ = binary entropy
+        </p>
+        <div class="callout">
+          <p><span class="callout-label">Intuition:</span> EIG is maximized when the question is most uncertain ($p_t \approx 0.5$) &mdash; i.e., when the answer will be most <em>surprising</em> and thus most informative. Questions with $p_t \approx 0$ or $p_t \approx 1$ have low EIG because we already know the answer.</p>
+        </div>
+
+        <aside class="notes">
+          Because questions are Python programs, we can execute them against sampled boards to compute EIG exactly.
+          The key intuition: the most informative questions are the most uncertain ones &mdash;
+          where samples split roughly 50/50 between yes and no.
+        </aside>
+      </section>
+
+      <!-- 3b. EIG interactive demo -->
+      <section class="iframe-slide" data-background-color="#0f1f3c">
+        <h3><i class="fas fa-chart-line"></i> &nbsp;Visualizing Expected Information Gain</h3>
+        <iframe data-src="eig-demo.html" style="height: 660px;" data-preload></iframe>
+
+        <aside class="notes">
+          Here you can see the sample-sorting visualization. Samples from our world model are sorted into
+          True/False buckets based on the question. The more balanced the split, the higher the EIG.
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 4: HUMAN BEHAVIORAL STUDY  (0.5–1 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section>
+        <div class="section-label">Human Study</div>
+        <h3>How do people play Collaborative Battleship?</h3>
+        <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 8px;">
+          N=42 participants &middot; 126 game trajectories &middot; <strong>BattleshipQA</strong> dataset
+        </p>
+        <div class="fig-row">
+          <figure>
+            <img src="../static/images/f1_score_vs_question_count.png"
+                 alt="F1 vs questions asked" />
+            <figcaption><strong>(a)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
+          </figure>
+          <figure>
+            <img src="../static/images/question_timing.png"
+                 alt="Question timing over game" />
+            <figcaption><strong>(b)</strong> Players show diverse explore/exploit strategies: some front-load questions, others interleave throughout.</figcaption>
+          </figure>
+        </div>
+        <div class="callout" style="margin-top: 12px;">
+          <p><span class="callout-label">Key insight:</span> Humans are <strong>resource-rational</strong>, not Bayes-optimal &mdash; they ask useful questions and make well-informed guesses, but don't exhaustively optimize. This is the right target for AI agents.</p>
+        </div>
+
+        <aside class="notes">
+          We ran a behavioral study with 42 participants. Two key findings:
+          asking more questions leads to better performance, and people show diverse
+          strategies. Importantly, humans are resource-rational, not Bayes-optimal.
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 5: SPOTTERQA — GROUNDED ANSWERING  (1.5 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- 5a. Setup + code demo -->
+      <section>
+        <div class="section-label">Experiment 1: SpotterQA</div>
+        <h3>Can LMs answer grounded questions?</h3>
+        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 12px;">
+          Humans achieve <strong>92.5% accuracy</strong> as Spotters. How do LMs compare?
+        </p>
+        <ul style="font-size: 0.68em; max-width: 85%; margin: 0 auto;">
+          <li>931 gold-labeled yes/no questions from the human study</li>
+          <li><strong>Hypothesis test:</strong> language-based reasoning (direct answering &plusmn; CoT)
+              vs.&nbsp;code-based reasoning (code generation &plusmn; CoT)</li>
+          <li>Evaluate 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
+        </ul>
+
+        <aside class="notes">
+          Accurate answering is crucial. Humans achieve 92.5% accuracy.
+          We test a clear hypothesis: does translating questions into executable code
+          improve grounding over pure language-based reasoning?
+        </aside>
+      </section>
+
+      <!-- 5b. Code demo interactive -->
       <section class="iframe-slide" data-background-color="#0f1f3c">
         <h3><i class="fas fa-code"></i> &nbsp;Grounding Questions by Generating Code</h3>
         <iframe data-src="code-demo.html" style="height: 660px;" data-preload></iframe>
+
+        <aside class="notes">
+          Here's an example. The Captain asks a natural language question. The Spotter translates it
+          into a Python program, executes it against the board, and returns the answer.
+          This grounds the reasoning in the actual board state.
+        </aside>
       </section>
 
-      <!-- 5. SPOTTER RESULTS -->
+      <!-- 5c. SpotterQA results -->
       <section>
         <div class="section-label">Results</div>
-        <h3>Code generation boosts Spotter accuracy</h3>
-        <div class="fig-row">
-          <figure>
-            <img src="../static/images/spotter_accuracy_by_model.png" alt="Spotter accuracy by model" />
-            <figcaption>Accuracy varies across 15 LMs. Dotted line = mean human performance (92.5%).</figcaption>
-          </figure>
-          <figure>
-            <img src="../static/images/spotter_accuracy_overall.png" alt="Spotter accuracy by strategy" />
-            <figcaption>CoT+Code gives +14.7% absolute over base LM.</figcaption>
-          </figure>
+        <h3>Code generation closes the gap to human performance</h3>
+        <div class="fig-row fig-row-3" style="gap: 16px;">
+          <div class="fig-col">
+            <img src="../static/images/spotter_accuracy_by_model.png"
+                 alt="Spotter accuracy by model" />
+            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
+              <strong>(a)</strong> Wide accuracy range across 15 LMs (52.5% &ndash; 92.8%).
+            </figcaption>
+          </div>
+          <div class="fig-col">
+            <img src="../static/images/spotter_accuracy_overall.png"
+                 alt="Spotter accuracy by strategy" />
+            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
+              <strong>(b)</strong> CoT + Code gives +14.7% absolute over base LM.
+            </figcaption>
+          </div>
+          <div class="fig-col">
+            <img src="../static/images/spotter_accuracy_simple_vs_complex.png"
+                 alt="Spotter accuracy: simple vs complex" />
+            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
+              <strong>(c)</strong> LMs degrade on complex questions; humans stay consistent.
+            </figcaption>
+          </div>
         </div>
+
+        <aside class="notes">
+          Three key findings. First, accuracy varies widely across models.
+          Second, code generation consistently improves accuracy by 14.7 points.
+          Third, and importantly, LMs struggle with context-dependent questions
+          where humans remain consistent. Code helps but doesn't fully solve pragmatic grounding.
+        </aside>
       </section>
 
-      <!-- 6. WORLD MODEL -->
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 6: CAPTAINQA + BAYESIAN STRATEGIES  (2.5 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- 6a. World model (brief) -->
       <section>
         <div class="section-label">Method</div>
         <h3>Monte Carlo inference with a world model</h3>
         <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 16px;">
-          Agents sample plausible boards consistent with evidence, then marginalize to get a tile-level probability map.
+          Sample plausible boards consistent with observations, then marginalize to get a tile-level belief.
         </p>
         <div class="fig-row" style="align-items: center;">
           <figure>
-            <img src="../static/images/world_model_samples/partial_board.png" alt="Partial board" style="max-height: 220px;" />
-            <figcaption>Observed partial board</figcaption>
+            <img src="../static/images/world_model_samples/partial_board.png" alt="Partial board" style="max-height: 200px;" />
+            <figcaption>Observed board</figcaption>
           </figure>
           <figure style="flex: 0 0 40px; text-align: center;">
             <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
           </figure>
           <figure>
             <div style="display: flex; gap: 4px; justify-content: center;">
-              <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="max-height: 110px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="max-height: 110px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="max-height: 110px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" style="max-height: 100px; border-radius: 4px;" />
             </div>
-            <figcaption>Hypothesis samples</figcaption>
+            <figcaption>Hypothesis samples via SMC</figcaption>
           </figure>
           <figure style="flex: 0 0 40px; text-align: center;">
             <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
           </figure>
           <figure>
-            <img src="../static/images/world_model_samples/heatmap.png" alt="Belief heatmap" style="max-height: 220px;" />
-            <figcaption>Approximate belief state</figcaption>
+            <img src="../static/images/world_model_samples/heatmap.png" alt="Belief heatmap" style="max-height: 200px;" />
+            <figcaption>Approximate belief $\pi_t$</figcaption>
           </figure>
         </div>
+
+        <aside class="notes">
+          Before I show the strategies, here's the key building block: a world model.
+          We sample plausible board configurations consistent with everything observed so far,
+          using Sequential Monte Carlo. Marginalizing over these samples gives us a belief state.
+        </aside>
       </section>
 
-      <!-- 7. EIG INTERACTIVE -->
-      <section class="iframe-slide" data-background-color="#0f1f3c">
-        <h3><i class="fas fa-chart-line"></i> &nbsp;Optimizing Questions via Expected Information Gain</h3>
-        <iframe data-src="eig-demo.html" style="height: 660px;" data-preload></iframe>
-      </section>
-
-      <!-- 8. BAYESIAN STRATEGIES -->
+      <!-- 6b. Three Bayesian strategies -->
       <section>
         <div class="section-label">Method</div>
-        <h3>Bayesian strategies for rational agents</h3>
+        <h3>Three Bayesian strategies for rational agents</h3>
         <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 8px;">
-          Belief-aware policies help agents decide <strong>what to ask</strong>, <strong>where to shoot</strong>, and <strong>when to explore vs. act</strong>.
+          Belief-aware policies: <strong>what to ask</strong>, <strong>where to shoot</strong>, and <strong>when to explore vs. act</strong>.
         </p>
         <div class="strategy-grid">
-          <div class="strat-card" style="--card-accent: #3273dc;">
-            <h4><i class="fas fa-bullseye" style="color: #3273dc;"></i> Precision Moves</h4>
-            <span class="tag">Bayes-M</span>
-            <p>Maintain a weighted particle belief over feasible boards and fire at the tile with the highest posterior probability of containing a ship.</p>
+          <div class="strat-card" style="--card-accent: #b5890a;">
+            <h4><i class="fas fa-question-circle" style="color: #b5890a;"></i> &nbsp;InfoMax Questions</h4>
+            <span class="tag">$Q_{\text{Bayes}}$</span>
+            <p>Sample candidate questions from the LM, translate each to code, and select the one with the highest EIG under the current belief.</p>
+            <div class="math-row">
+              $q_t^{\star} \in \arg\max_{q \in \mathcal{Q}} \text{EIG}_\varepsilon(q \mid x, \mathcal{H}_{1:t})$
+            </div>
           </div>
-          <div class="strat-card" style="--card-accent: #ffdd57;">
-            <h4><i class="fas fa-question-circle" style="color: #b5890a;"></i> InfoMax Questions</h4>
-            <span class="tag">Bayes-Q</span>
-            <p>Sample candidate questions, translate to executable checks, and choose the one whose expected information gain (EIG) is highest under the current belief.</p>
+          <div class="strat-card" style="--card-accent: #3273dc;">
+            <h4><i class="fas fa-bullseye" style="color: #3273dc;"></i> &nbsp;Precision Moves</h4>
+            <span class="tag">$M_{\text{Bayes}}$</span>
+            <p>Fire at the unrevealed tile with the highest posterior probability of containing a ship (MAP action over the belief).</p>
+            <div class="math-row">
+              $u_t^{\star} \in \arg\max_{u} \; p_t^{\text{hit}}(u \mid x, \mathcal{H}_{1:t})$
+            </div>
           </div>
           <div class="strat-card" style="--card-accent: #304ed8;">
-            <h4><i class="fas fa-balance-scale" style="color: #304ed8;"></i> Explore vs. Act</h4>
-            <span class="tag">Bayes-D</span>
-            <p>Compare post-question MAP hit rate against the current best shot; ask when the value of information exceeds immediate reward.</p>
+            <h4><i class="fas fa-balance-scale" style="color: #304ed8;"></i> &nbsp;Explore vs. Act</h4>
+            <span class="tag">$D_{\text{Bayes}}$</span>
+            <p>One-step lookahead: ask when the post-question hit probability exceeds the current best shot, discounted by $\gamma$.</p>
+            <div class="math-row">
+              Ask $q_t^{\star}$ if $\;\gamma \, \hat{p}_{t+1}^{\text{hit}}(q_t^{\star}) > p_t^{\text{hit}}(u_t^{\star})$
+            </div>
           </div>
         </div>
+
+        <aside class="notes">
+          We introduce three strategies that build on the belief state.
+          Q-Bayes selects the most informative question by sampling candidates and picking the highest EIG.
+          M-Bayes selects the best shot by computing the MAP hit probability.
+          D-Bayes decides whether to ask or shoot via a one-step lookahead.
+        </aside>
       </section>
 
-      <!-- 9. CAPTAIN RESULTS -->
+      <!-- 6c. CaptainQA results: F1 + EIG -->
       <section>
         <div class="section-label">Results</div>
-        <h3>Targeting performance by strategy</h3>
+        <h3>Bayesian strategies yield super-human performance</h3>
         <div class="fig-row">
           <figure>
             <img src="../static/images/captain_f1_boxplot.png" alt="Captain F1 by strategy" />
-            <figcaption>Bayesian strategies bring weaker LMs from near-random to super-human targeting.</figcaption>
+            <figcaption>
+              <strong>(a)</strong> Bayesian strategies bring weaker LMs from near-random to super-human targeting.
+              Llama-4-Scout: 0.367 &rarr; 0.764 F1.
+            </figcaption>
           </figure>
           <figure>
             <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of sampled questions" />
-            <figcaption>EIG scales with candidate questions; 10 programs yields +0.227 bits (94.2% of ceiling).</figcaption>
+            <figcaption>
+              <strong>(b)</strong> EIG scales with candidate questions: 10 samples yields 94.2% of the info-theoretic ceiling.
+            </figcaption>
           </figure>
         </div>
+
+        <aside class="notes">
+          The results are striking. On the left, you can see that adding Bayesian strategies
+          lifts even Llama-4-Scout to super-human performance. On the right, EIG improves smoothly
+          with more candidate questions &mdash; a form of inference-time scaling.
+        </aside>
       </section>
 
-      <!-- 10. KEY TAKEAWAYS -->
+      <!-- 6d. CaptainQA results: timing + headline numbers -->
       <section>
-        <h3>Key takeaways</h3>
-        <div class="takeaway-grid">
-          <div class="takeaway-stat">
-            <div class="number">82%</div>
-            <div class="label">Win rate vs. humans<br />(Llama-4-Scout + Bayes, up from 8%)</div>
+        <div class="section-label">Results</div>
+        <h3>Rational question-asking at a fraction of the cost</h3>
+        <div class="two-col">
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/question_timing.png" alt="Question frequency over game"
+                 style="max-height: 320px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.5em; color: #666; margin-top: 8px;">
+              $D_{\text{Bayes}}$ helps weaker models spread questions over time,
+              matching the human/GPT-5 pattern.
+            </p>
           </div>
-          <div class="takeaway-stat">
-            <div class="number">67%</div>
-            <div class="label">Win rate vs. GPT-5<br />(at ~1% of GPT-5's cost)</div>
-          </div>
-          <div class="takeaway-stat">
-            <div class="number">+0.374</div>
-            <div class="label">F1 improvement<br />(targeting score with Bayesian strategies)</div>
-          </div>
-          <div class="takeaway-stat">
-            <div class="number">+42.4 p.p.</div>
-            <div class="label">Guess Who? accuracy boost<br />(demonstrating generality)</div>
+          <div class="col">
+            <div class="stat-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="stat-box">
+                <div class="number">82%</div>
+                <div class="label">Win rate vs. humans<br />(up from 8%)</div>
+              </div>
+              <div class="stat-box">
+                <div class="number">67%</div>
+                <div class="label">Win rate vs. GPT-5<br />(at ~1% of cost)</div>
+              </div>
+              <div class="stat-box">
+                <div class="number">+0.397</div>
+                <div class="label">F1 improvement<br />(Llama-4-Scout)</div>
+              </div>
+              <div class="stat-box">
+                <div class="number">0%&rarr;0.2%</div>
+                <div class="label">Redundant questions<br />(EIG = 0 eliminated)</div>
+              </div>
+            </div>
+            <div class="callout" style="margin-top: 12px;">
+              <p><span class="callout-label">Redundant questions:</span> Weaker models ask 15&ndash;18% questions with zero information gain. $Q_{\text{Bayes}}$ effectively eliminates these.</p>
+            </div>
           </div>
         </div>
-        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-top: 24px;">
-          Bayesian inference at test time can dramatically improve information-seeking and decision-making in LM agents.
-        </p>
+
+        <aside class="notes">
+          D-Bayes also fixes the question-timing problem: weaker models tend to front-load
+          all their questions, but D-Bayes spreads them out like humans and GPT-5.
+          The headline numbers: 82% win rate against humans, 67% against GPT-5,
+          all at roughly 1% of GPT-5's cost. And redundant zero-EIG questions
+          are almost entirely eliminated.
+        </aside>
       </section>
 
-      <!-- 11. THANK YOU -->
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 7: GENERALIZATION — GUESS WHO?  (0.5 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section>
+        <div class="section-label">Generalization</div>
+        <h3>Beyond Battleship: Guess Who?</h3>
+        <div class="two-col" style="align-items: center;">
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/guess-who-results.png" alt="Guess Who? results"
+                 style="max-height: 360px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+          </div>
+          <div class="col">
+            <ul style="font-size: 0.68em;">
+              <li><strong>Guess Who?</strong> from TextArena: richer object-relational semantics (age, clothing, facial hair, etc.)</li>
+              <li>Same Bayesian strategies, different domain</li>
+              <li>GPT-4o: 0.617 &rarr; 0.900 success rate</li>
+              <li>Llama-4-Scout: 0.300 &rarr; 0.724</li>
+              <li><strong>Not Battleship-specific</strong> &mdash; generalizes to information-seeking games with combinatorial hypothesis spaces</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          To show these aren't Battleship-specific tricks, we replicate on Guess Who?
+          from TextArena. Same strategies, similar gains. This generalizes to any domain
+          where you need to narrow down a combinatorial hypothesis space through questions.
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 8: TAKEAWAYS + CLOSE  (1 min)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section>
+        <h3>Takeaways</h3>
+        <div class="takeaway-grid">
+          <div class="takeaway-card">
+            <h4><i class="fas fa-check-circle" style="color: #304ed8;"></i> &nbsp;Necessary but not sufficient</h4>
+            <p>Good performance on controlled tasks like Battleship is a <strong>prerequisite</strong> for real-world discovery. If an agent can't explore rationally here, we shouldn't trust it in the clinic or the lab.</p>
+          </div>
+          <div class="takeaway-card">
+            <h4><i class="fas fa-balance-scale" style="color: #304ed8;"></i> &nbsp;Formalizing rationality</h4>
+            <p>In science and medicine, we need to <strong>define and measure</strong> what rational exploration looks like. Environments like this let us compare LM behavior against human and ideal Bayesian baselines.</p>
+          </div>
+          <div class="takeaway-card">
+            <h4><i class="fas fa-brain" style="color: #304ed8;"></i> &nbsp;World models as tools</h4>
+            <p>Our symbolic world model is an <strong>interactive simulator</strong>: the agent tests hypotheses by running programs against sampled possible worlds. This connects to sandboxed coding environments, dynamic world models (e.g., Genie), and other forms of <em>thinking before acting</em>.</p>
+          </div>
+          <div class="takeaway-card">
+            <h4><i class="fas fa-rocket" style="color: #304ed8;"></i> &nbsp;From games to the real world</h4>
+            <p>The same principles &mdash; asking informative questions, acting on evidence, balancing exploration and exploitation &mdash; apply to <strong>agentic coding</strong>, <strong>medical diagnosis</strong>, <strong>scientific discovery</strong>, and beyond.</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Four takeaways. First, this is necessary but not sufficient for real-world discovery.
+          Second, we need environments that let us formalize and measure rationality.
+          Third, the world model here is essentially an interactive simulator, connecting to
+          broader trends like sandboxed coding environments and dynamic world models.
+          And fourth, these principles apply directly to agentic coding, diagnosis, and discovery.
+        </aside>
+      </section>
+
+      <!-- Thank you -->
       <section class="title-slide">
         <h1 style="font-size: 1.8em !important;">Thank you!</h1>
-        <h2 style="font-size: 0.9em !important;">
-          <i class="fas fa-globe"></i> &nbsp;gabegrand.com/battleship
-          &nbsp;&middot;&nbsp;
-          <i class="fab fa-github"></i> &nbsp;github.com/gabegrand/battleship
+        <h2 style="font-size: 0.85em !important; margin-bottom: 0.4em !important;">
+          <i class="fas fa-globe"></i> &nbsp;<a href="https://gabegrand.github.io/battleship">gabegrand.github.io/battleship</a>
         </h2>
-        <div class="venue" style="margin-top: 1em;">
-          <i class="fas fa-gamepad"></i> &nbsp;Try the interactive Game Explorer on the project website
+        <p style="font-size: 0.6em; color: #4a5770;">
+          <i class="fab fa-github"></i> &nbsp;Code, data, and interactive demos
+        </p>
+        <div style="margin-top: 1.2em;">
+          <div class="authors">
+            <a href="https://gabegrand.com">Gabriel Grand</a><sup>1,2*</sup> &middot;
+            <a href="https://vpepe.github.io/">Valerio Pepe</a><sup>3*</sup> &middot;
+            Joshua B. Tenenbaum<sup>1,2</sup> &middot;
+            Jacob Andreas<sup>1</sup>
+          </div>
+          <div class="authors" style="font-size: 0.55em; margin-top: 4px;">
+            <sup>1</sup>MIT CSAIL &nbsp; <sup>2</sup>MIT BCS &nbsp; <sup>3</sup>Harvard SEAS
+          </div>
         </div>
+
+        <aside class="notes">
+          Thank you! All code, data, and interactive demos are available on the project website.
+          Happy to take questions.
+        </aside>
       </section>
 
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
   <script>
     Reveal.initialize({
       hash: true,
@@ -297,6 +751,7 @@
       transitionSpeed: 'default',
       slideNumber: 'c/t',
       preloadIframes: false,
+      plugins: [ RevealNotes ],
     });
   </script>
 </body>
