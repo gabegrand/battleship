@@ -119,6 +119,23 @@
     .key-points .kp-text { font-size: 0.68em; line-height: 1.5; }
     .key-points .kp-label { font-weight: 700; color: #172642; }
 
+    /* ── EIG derivation ── */
+    .eig-deriv-steps { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .eig-step {
+      font-size: 0.58em; line-height: 1.5;
+      display: flex; align-items: baseline; gap: 12px;
+    }
+    .eig-step .eig-eq { font-weight: 500; color: #172642; white-space: nowrap; }
+    .eig-step .eig-gloss { color: #888; font-size: 0.9em; }
+    .eig-step.eig-highlight .eig-eq { color: #04af70; }
+    .eig-deriv-plot-layout {
+      display: grid; grid-template-columns: 2fr 3fr; gap: 28px; align-items: center; margin-top: 12px;
+    }
+    .eig-deriv-plot {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .eig-deriv-plot svg { max-height: 260px; width: 100%; }
+
     /* ── Takeaway cards ── */
     .takeaway-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;
@@ -501,8 +518,8 @@
       <section>
         <div class="section-label">Task</div>
         <h3>The Battleship Task</h3>
-        <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
-          A well-studied paradigm for information-seeking behavior
+        <p style="text-align: center; font-size: 0.5em; color: #4a5770; margin-bottom: 8px;">
+          A well-studied paradigm for information-seeking behavior in humans
           <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span>
         </p>
 
@@ -735,8 +752,35 @@
         </aside>
       </section>
 
-      <!-- 2c. Our extensions (brief visual) -->
+      <!-- 2c. Why Battleship? -->
       <section>
+        <div class="section-label">Task</div>
+        <h3>Why Battleship?</h3>
+        <ul class="key-points">
+          <li>
+            <span class="kp-icon"><i class="fas fa-bullseye"></i></span>
+            <span class="kp-text"><span class="kp-label">Fully formalized ground truth.</span> Unlike ARC or open-ended discovery, Battleship has a known state space and optimal baselines &mdash; we can measure <em>how rational</em> an agent is, not just whether it succeeds.</span>
+          </li>
+          <li>
+            <span class="kp-icon"><i class="fas fa-sync-alt"></i></span>
+            <span class="kp-text"><span class="kp-label">Minimal closed-loop BED.</span> Battleship is a minimal instantiation of Bayesian Experimental Design: agents form beliefs, design experiments (questions), observe outcomes, and update.</span>
+          </li>
+          <li>
+            <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+            <span class="kp-text"><span class="kp-label">Formalizing rationality.</span> We can quantify the value of each question using Expected Information Gain (EIG), enabling direct comparison between human and LM behavior.</span>
+          </li>
+        </ul>
+
+        <aside class="notes">
+          Why Battleship and not some other task? Three reasons. First, unlike ARC or open-ended benchmarks,
+          Battleship has a fully formalized state space with optimal baselines — we can measure degrees of
+          rationality, not just success or failure. Second, it's a minimal instance of closed-loop Bayesian
+          experimental design. Third, we can formalize what a "good question" is using information theory.
+        </aside>
+      </section>
+
+      <!-- 2d. Our extensions (hidden) -->
+      <section data-visibility="hidden">
         <div class="section-label">Task</div>
         <h3>Extending the Battleship paradigm</h3>
         <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 16px;">
@@ -777,42 +821,105 @@
            SECTION 3: FORMAL FRAMEWORK — EIG  (1 min)
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- 3a. EIG equation + interactive -->
+      <!-- 3a. EIG derivation — progressive build-up -->
       <section>
         <div class="section-label">Framework</div>
         <h3>Expected Information Gain</h3>
-        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 12px;">
-          How much does the answer to this question tell us about the hidden board?
+        <p style="text-align: center; font-size: 0.6em; color: #4a5770; margin-bottom: 4px;">
+          How much does the answer to a question tell us about the hidden board?
         </p>
-        <div class="eq-box">
-          $$\text{EIG}_\varepsilon(q \mid x, \mathcal{H}_{1:t}) \;=\; \text{H}_b\!\big(\varepsilon + (1-2\varepsilon)\,p_t\big) \;-\; \text{H}_b(\varepsilon)$$
-        </div>
-        <p class="eq-caption">
-          $p_t$ = probability the true answer is &ldquo;yes&rdquo; under current belief &nbsp;&middot;&nbsp;
-          $\varepsilon$ = Spotter noise rate &nbsp;&middot;&nbsp;
-          $\text{H}_b$ = binary entropy
-        </p>
-        <div class="callout">
-          <p><span class="callout-label">Intuition:</span> EIG is maximized when the question is most uncertain ($p_t \approx 0.5$) &mdash; i.e., when the answer will be most <em>surprising</em> and thus most informative. Questions with $p_t \approx 0$ or $p_t \approx 1$ have low EIG because we already know the answer.</p>
+        <div class="eig-deriv-steps">
+          <div class="eig-step">
+            <div class="eig-eq">$S \in \mathcal{S} \subset \{0, 1, 2, \ldots\}^{d \times d}$</div>
+            <div class="eig-gloss">Board state is a random variable over possible boards</div>
+          </div>
+          <div class="eig-step fragment" data-fragment-index="0">
+            <div class="eig-eq">Question $q$ produces answer $a \in \mathcal{A}$</div>
+          </div>
+          <div class="eig-step fragment" data-fragment-index="1">
+            <div class="eig-eq">$\text{IG}(S;\, a) \;=\; H(S) \;-\; H(S \mid a)$</div>
+            <div class="eig-gloss">How much does observing answer $a$ reduce uncertainty about the board?</div>
+          </div>
+          <div class="eig-step fragment" data-fragment-index="2">
+            <div class="eig-eq">$\text{EIG}(q) \;=\; \mathbb{E}_{a}\!\big[\text{IG}(S;\, a)\big] \;=\; I(S;\, A)$</div>
+            <div class="eig-gloss">Average over possible answers &rarr; mutual information</div>
+          </div>
+          <div class="eig-step eig-highlight fragment" data-fragment-index="3">
+            <div class="eig-eq">For $\mathcal{A} = \{0, 1\}$ with $p := P(a\!=\!1)$: &ensp; $\text{EIG}(q) = H_b(p)$</div>
+            <div class="eig-gloss">Binary entropy &mdash; maximized at $p = 0.5$</div>
+          </div>
         </div>
 
         <aside class="notes">
-          Because questions are Python programs, we can execute them against sampled boards to compute EIG exactly.
-          The key intuition: the most informative questions are the most uncertain ones &mdash;
-          where samples split roughly 50/50 between yes and no.
+          Let's build up EIG from standard information theory. S is a random variable over board states.
+          A question q produces a yes/no answer. Information Gain measures how much one answer reduces
+          our uncertainty. EIG averages this over possible answers — it's just mutual information.
+          For binary yes/no answers, this simplifies to binary entropy, which peaks at p = 0.5 —
+          the most uncertain questions are the most informative.
         </aside>
       </section>
 
-      <!-- 3b. EIG visualization (native slide) -->
+      <!-- 3b. EIG curve + noisy channel -->
       <section>
         <div class="section-label">Framework</div>
-        <h3>Computing EIG by executing code against samples</h3>
+        <h3>EIG peaks at maximum uncertainty</h3>
+        <div class="eig-deriv-plot-layout">
+          <div>
+            <div class="eig-deriv-steps">
+              <div class="eig-step eig-highlight">
+                <div class="eig-eq">$\text{EIG}(q) = H_b(p)$</div>
+                <div class="eig-gloss">Maximized at $p = 0.5$</div>
+              </div>
+              <div class="eig-step fragment" data-fragment-index="0">
+                <div class="eig-eq">With noise $\varepsilon$: &ensp; $\text{EIG}_\varepsilon(q) = H_b\!\big(\varepsilon + (1\!-\!2\varepsilon)\,p\big) - H_b(\varepsilon)$</div>
+                <div class="eig-gloss">Noisy channel reduces max information</div>
+              </div>
+            </div>
+          </div>
+          <div class="eig-deriv-plot">
+            <svg id="eig-deriv-svg" role="img" aria-label="EIG vs p curve"></svg>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Here's the key intuition: EIG is maximized when p = 0.5 — when we're most uncertain
+          about the answer. Questions where we already know the answer (p near 0 or 1) have low EIG.
+          In our setting, the Spotter can make occasional mistakes, modeled as a binary symmetric
+          channel with noise rate epsilon. This reduces the maximum achievable information.
+        </aside>
+      </section>
+
+      <!-- 3c. How do we compute p? -->
+      <section>
+        <div class="section-label">Framework</div>
+        <h3>How do we compute $p$?</h3>
         <p style="text-align: center; font-size: 0.6em; color: #4a5770; margin-bottom: 8px;">
-          <em>&ldquo;Is the purple ship vertical?&rdquo;</em> &nbsp;&rarr;&nbsp;
-          Execute against each sampled board &nbsp;&rarr;&nbsp; count True/False split
+          Translate natural-language questions to Python &rarr; execute against sampled boards &rarr; count True/False split
         </p>
-        <div class="eig-viz-layout">
-          <div class="eig-viz-samples">
+        <div class="two-col" style="gap: 20px; align-items: start;">
+          <!-- Left: code translation -->
+          <div class="col">
+            <div style="font-size: 0.52em; font-weight: 600; color: #172642; margin-bottom: 6px;">
+              <i class="fas fa-language" style="color: #304ed8;"></i> &nbsp;Language &rarr; Python
+            </div>
+            <div class="chat-bubble captain" style="font-size: 0.52em; padding: 8px 12px; margin-bottom: 6px;">
+              <span class="chat-role"><i class="fas fa-anchor"></i> Captain</span>
+              Is the purple ship vertical?
+            </div>
+            <pre style="margin: 0; border-radius: 8px; font-size: 0.44em;"><code class="language-python" data-trim>
+def answer(true_board, partial_board) -> bool:
+    purple = 3  # ship ID for purple
+    rows, cols = np.where(true_board == purple)
+    if len(cols) == 0:
+        return False
+    # Vertical if all in same column
+    return len(set(cols)) == 1
+
+# >>> answer(board) → False
+            </code></pre>
+          </div>
+          <!-- Right: sample sorting -->
+          <div class="col">
             <div class="sample-bucket">
               <h4><i class="fas fa-database" style="color: #888;"></i> &nbsp;Sampled boards from world model</h4>
               <div class="sample-thumbnails">
@@ -825,7 +932,7 @@
             </div>
             <div style="display: flex; gap: 12px;">
               <div class="sample-bucket" style="flex: 1;">
-                <h4><span class="bucket-label-false"><i class="fas fa-times-circle"></i> Returns False</span> &nbsp;(4 samples)</h4>
+                <h4><span class="bucket-label-false"><i class="fas fa-times-circle"></i> False</span> (4)</h4>
                 <div class="sample-thumbnails">
                   <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" class="sample-false" />
                   <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" class="sample-false" />
@@ -834,31 +941,24 @@
                 </div>
               </div>
               <div class="sample-bucket" style="flex: 1;">
-                <h4><span class="bucket-label-true"><i class="fas fa-check-circle"></i> Returns True</span> &nbsp;(1 sample)</h4>
+                <h4><span class="bucket-label-true"><i class="fas fa-check-circle"></i> True</span> (1)</h4>
                 <div class="sample-thumbnails">
                   <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" class="sample-true" />
                 </div>
               </div>
             </div>
             <div class="eig-result-box">
-              <div class="eig-detail">$p_t = 1/5 = 0.2$ &nbsp;&nbsp;&mdash;&nbsp;&nbsp; Imbalanced split &rarr; lower EIG</div>
-              <div class="eig-value" style="font-size: 1.1em;">EIG = 0.217 bits</div>
-              <div class="eig-detail">A more balanced question ($p_t \approx 0.5$) would yield up to 0.531 bits</div>
+              <div class="eig-detail">$p = 1/5 = 0.2$ &nbsp;&mdash;&nbsp; Imbalanced split &rarr; low EIG</div>
             </div>
-          </div>
-          <div class="eig-viz-plot">
-            <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of candidate questions"
-                 style="max-height: 260px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
-            <p style="font-size: 0.48em; color: #666; margin-top: 6px;">
-              Sampling more candidate questions &rarr; higher max EIG
-            </p>
           </div>
         </div>
 
         <aside class="notes">
-          Here's a concrete example. We ask "is the purple ship vertical?" and execute against
-          5 sampled boards. 4 return False, 1 returns True. This imbalanced 4:1 split gives
-          relatively low EIG. A question that splits samples more evenly would be more informative.
+          So how do we compute p in practice? We translate the Captain's natural-language question
+          into a Python program, then execute it against each sampled board from our world model.
+          Here, "is the purple ship vertical?" returns False for 4 of 5 samples and True for 1,
+          giving p = 0.2 — an imbalanced split means lower EIG. A question that splits samples
+          more evenly would be more informative.
         </aside>
       </section>
 
@@ -871,7 +971,7 @@
         <div class="section-label">Human Study</div>
         <h3>How do people play Collaborative Battleship?</h3>
         <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 8px;">
-          N=42 participants &middot; 126 game trajectories &middot; <strong>BattleshipQA</strong> dataset
+          N=42 participants &middot; 126 game trajectories &middot; 15 questions max &middot; 40 shots &middot; <strong>BattleshipQA</strong> dataset
         </p>
         <div class="fig-row">
           <figure>
@@ -966,10 +1066,11 @@ def answer(true_board, partial_board) -> bool:
         </div>
 
         <aside class="notes">
-          Here's a concrete example. The Captain asks whether at least two ships are in columns 1-4.
-          The Spotter translates this into Python, executes it against the true board, and returns Yes.
-          You can step through the code: first we set up, then iterate over ships checking column bounds,
-          and finally return the boolean. This grounds reasoning in the actual board state.
+          We saw earlier how questions get translated to code to compute EIG. The same pipeline
+          is used by the Spotter to answer questions accurately. Here's a more complex example:
+          the Captain asks whether at least two ships are in columns 1-4. The Spotter translates
+          this into Python, executes it against the true board, and returns Yes. This code grounding
+          avoids hallucination and misinterpretation.
         </aside>
       </section>
 
@@ -1282,6 +1383,65 @@ def answer(true_board, partial_board) -> bool:
       preloadIframes: false,
       plugins: [ RevealNotes, RevealHighlight ],
     });
+
+    // Render EIG vs p curve on the derivation slide
+    (function() {
+      var svg = document.getElementById('eig-deriv-svg');
+      if (!svg) return;
+      var W = 380, H = 240, m = { t: 20, r: 20, b: 44, l: 52 };
+      var iw = W - m.l - m.r, ih = H - m.t - m.b;
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      var eps = 0.1, steps = 200;
+      function hb(p) { return (p <= 0 || p >= 1) ? 0 : -(p * Math.log2(p) + (1 - p) * Math.log2(1 - p)); }
+      function eig(p) { return hb(eps + (1 - 2 * eps) * p) - hb(eps); }
+      var maxV = eig(0.5);
+      var ns = 'http://www.w3.org/2000/svg';
+      function el(tag, attrs) {
+        var n = document.createElementNS(ns, tag);
+        for (var k in attrs) n.setAttribute(k, attrs[k]);
+        return n;
+      }
+      var x = function(p) { return m.l + p * iw; };
+      var y = function(v) { return m.t + ih - (v / maxV) * ih; };
+      // Axes
+      svg.appendChild(el('line', { x1: m.l, y1: m.t + ih, x2: m.l + iw, y2: m.t + ih, stroke: '#999', 'stroke-width': '1' }));
+      svg.appendChild(el('line', { x1: m.l, y1: m.t, x2: m.l, y2: m.t + ih, stroke: '#999', 'stroke-width': '1' }));
+      // X ticks
+      [0, 0.25, 0.5, 0.75, 1].forEach(function(t) {
+        svg.appendChild(el('line', { x1: x(t), y1: m.t + ih, x2: x(t), y2: m.t + ih + 6, stroke: '#999', 'stroke-width': '1' }));
+        var lbl = el('text', { x: x(t), y: m.t + ih + 20, 'text-anchor': 'middle', fill: '#666', 'font-size': '11px', 'font-family': 'Google Sans, sans-serif' });
+        lbl.textContent = t === 0 ? '0' : t === 1 ? '1' : String(t);
+        svg.appendChild(lbl);
+      });
+      // Y ticks
+      [0, maxV].forEach(function(t) {
+        var lbl = el('text', { x: m.l - 8, y: y(t) + 4, 'text-anchor': 'end', fill: '#666', 'font-size': '11px', 'font-family': 'Google Sans, sans-serif' });
+        lbl.textContent = t.toFixed(2);
+        svg.appendChild(lbl);
+      });
+      // Axis labels
+      var xLbl = el('text', { x: m.l + iw / 2, y: H - 6, 'text-anchor': 'middle', fill: '#444', 'font-size': '13px', 'font-family': 'Google Sans, sans-serif', 'font-weight': '500' });
+      xLbl.textContent = 'p';
+      svg.appendChild(xLbl);
+      var yLbl = el('text', { x: 16, y: m.t + ih / 2, 'text-anchor': 'middle', fill: '#444', 'font-size': '13px', 'font-family': 'Google Sans, sans-serif', 'font-weight': '500', transform: 'rotate(-90 16 ' + (m.t + ih / 2) + ')' });
+      yLbl.textContent = 'EIG (bits)';
+      svg.appendChild(yLbl);
+      // Curve
+      var path = '';
+      for (var i = 0; i <= steps; i++) {
+        var p = i / steps, v = eig(p);
+        path += (i === 0 ? 'M ' : ' L ') + x(p).toFixed(1) + ' ' + y(v).toFixed(1);
+      }
+      svg.appendChild(el('path', { d: path + ' L ' + x(1) + ' ' + y(0) + ' L ' + x(0) + ' ' + y(0) + ' Z', fill: 'rgba(48,78,216,0.08)', stroke: 'none' }));
+      svg.appendChild(el('path', { d: path, fill: 'none', stroke: '#304ed8', 'stroke-width': '2.5' }));
+      // Peak marker
+      svg.appendChild(el('line', { x1: x(0.5), y1: y(maxV), x2: x(0.5), y2: y(0), stroke: '#304ed8', 'stroke-width': '1', 'stroke-dasharray': '4 3', opacity: '0.5' }));
+      svg.appendChild(el('circle', { cx: x(0.5), cy: y(maxV), r: '4', fill: '#304ed8' }));
+      var peakLbl = el('text', { x: x(0.5) + 8, y: y(maxV) - 8, fill: '#304ed8', 'font-size': '11px', 'font-family': 'Google Sans, sans-serif', 'font-weight': '500' });
+      peakLbl.textContent = 'p = 0.5';
+      svg.appendChild(peakLbl);
+    })();
 
     // Sync board cells with fragment steps on game-action slide
     // Fragment index 0 → data-step="1", index 1 → data-step="2", etc.

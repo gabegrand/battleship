@@ -2946,7 +2946,7 @@ function renderEIGPlot(svg, { epsilon = 0.1, steps = 240 } = {}) {
     y: yScale(peakValue) - 14,
     class: 'eig-highlight-label',
   });
-  highlightLabel.textContent = `p(True) = 0.50 → EIG ≈ ${peakValue.toFixed(2)} bits`;
+  highlightLabel.textContent = `p = 0.50 → EIG ≈ ${peakValue.toFixed(2)} bits`;
   highlightGroup.appendChild(highlightLabel);
   svg.appendChild(highlightGroup);
 
@@ -2957,7 +2957,7 @@ function renderEIGPlot(svg, { epsilon = 0.1, steps = 240 } = {}) {
     class: 'axis-title',
   });
   xLabel.setAttribute('text-anchor', 'middle');
-  xLabel.textContent = 'p(True)';
+  xLabel.textContent = 'p';
   axisLabels.appendChild(xLabel);
   const yLabel = createElement('text', {
     x: 26,
