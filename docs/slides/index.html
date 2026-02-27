@@ -120,14 +120,46 @@
     .key-points .kp-label { font-weight: 700; color: #172642; }
 
     /* ── EIG derivation ── */
-    .eig-deriv-steps { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .eig-deriv-layout { display: grid; grid-template-columns: 3fr 2fr; gap: 32px; align-items: start; margin-top: 8px; }
+    .eig-deriv-steps { display: flex; flex-direction: column; gap: 14px; }
     .eig-step {
       font-size: 0.58em; line-height: 1.5;
       display: flex; align-items: baseline; gap: 12px;
     }
-    .eig-step .eig-eq { font-weight: 500; color: #172642; white-space: nowrap; }
+    .eig-step .eig-eq { font-weight: 500; color: #172642; }
     .eig-step .eig-gloss { color: #888; font-size: 0.9em; }
+    .eig-step .eig-annot { color: #999; font-size: 0.85em; font-style: italic; margin-left: 4px; }
+    .eig-step .eig-cont { padding-left: 2.2em; }
     .eig-step.eig-highlight .eig-eq { color: #04af70; }
+    /* EIG notation diagram */
+    .eig-diagram {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 16px; background: #f6f8ff; border-radius: 12px;
+    }
+    .eig-diagram .eig-dia-row {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      justify-content: center;
+    }
+    .eig-diagram .eig-dia-label {
+      font-size: 0.6em; font-weight: 600; color: #304ed8;
+      min-width: 28px; text-align: right;
+    }
+    .eig-diagram .eig-dia-arrow {
+      font-size: 0.7em; color: #aaa;
+    }
+    .eig-diagram .eig-dia-bubble {
+      font-size: 0.48em; line-height: 1.4; padding: 6px 12px;
+      background: #fff; border-radius: 8px; border: 1px solid #dde;
+      color: #2c3e50; font-style: italic;
+    }
+    .eig-diagram .eig-dia-answer {
+      display: flex; gap: 8px; font-size: 0.52em; font-weight: 600;
+    }
+    .eig-diagram .eig-dia-answer span {
+      padding: 3px 10px; border-radius: 6px;
+    }
+    .eig-diagram .eig-dia-yes { background: rgba(4,175,112,0.12); color: #04af70; }
+    .eig-diagram .eig-dia-no { background: rgba(231,76,60,0.10); color: #e74c3c; }
     .eig-deriv-plot-layout {
       display: grid; grid-template-columns: 2fr 3fr; gap: 28px; align-items: center; margin-top: 12px;
     }
@@ -825,37 +857,56 @@
       <section>
         <div class="section-label">Framework</div>
         <h3>Expected Information Gain</h3>
-        <p style="text-align: center; font-size: 0.6em; color: #4a5770; margin-bottom: 4px;">
-          How much does the answer to a question tell us about the hidden board?
-        </p>
-        <div class="eig-deriv-steps">
-          <div class="eig-step">
-            <div class="eig-eq">$S \in \mathcal{S} \subset \{0, 1, 2, \ldots\}^{d \times d}$</div>
-            <div class="eig-gloss">Board state is a random variable over possible boards</div>
+        <div class="eig-deriv-layout">
+          <div class="eig-deriv-steps">
+            <div class="eig-step">
+              <div class="eig-eq">Given board $S \in \mathcal{S}$ and question $q$ with answer $a \in \mathcal{A}$:</div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="0">
+              <div class="eig-eq">$\text{IG}(S;\, a) \;=\; H(S) \;-\; H(S \mid a)$ <span class="eig-annot">information gain</span></div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="1">
+              <div class="eig-eq">$\text{EIG}(S;\, q) \;=\; \mathbb{E}_{a}\!\big[\text{IG}(S;\, a)\big]$ <span class="eig-annot">expectation over answer</span></div>
+            </div>
+            <div class="eig-step eig-highlight fragment" data-fragment-index="2">
+              <div class="eig-eq">$\phantom{\text{EIG}(S;\, q)} \;=\; H_b(p)$ <span class="eig-annot">when $\mathcal{A} = \{0, 1\}$</span></div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="3" style="margin-top: 2px;">
+              <div class="eig-gloss">where $p := P(a\!=\!1)$ &mdash; maximized at $p = 0.5$</div>
+            </div>
           </div>
-          <div class="eig-step fragment" data-fragment-index="0">
-            <div class="eig-eq">Question $q$ produces answer $a \in \mathcal{A}$</div>
-          </div>
-          <div class="eig-step fragment" data-fragment-index="1">
-            <div class="eig-eq">$\text{IG}(S;\, a) \;=\; H(S) \;-\; H(S \mid a)$</div>
-            <div class="eig-gloss">How much does observing answer $a$ reduce uncertainty about the board?</div>
-          </div>
-          <div class="eig-step fragment" data-fragment-index="2">
-            <div class="eig-eq">$\text{EIG}(q) \;=\; \mathbb{E}_{a}\!\big[\text{IG}(S;\, a)\big] \;=\; I(S;\, A)$</div>
-            <div class="eig-gloss">Average over possible answers &rarr; mutual information</div>
-          </div>
-          <div class="eig-step eig-highlight fragment" data-fragment-index="3">
-            <div class="eig-eq">For $\mathcal{A} = \{0, 1\}$ with $p := P(a\!=\!1)$: &ensp; $\text{EIG}(q) = H_b(p)$</div>
-            <div class="eig-gloss">Binary entropy &mdash; maximized at $p = 0.5$</div>
+          <div class="eig-diagram">
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$S$</span>
+              <img src="../static/images/world_model_samples/partial_board.png" alt="Board state"
+                   style="height: 100px; border-radius: 6px; border: 2px solid #b0bfe6;" />
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$q$</span>
+              <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$a$</span>
+              <div class="eig-dia-answer">
+                <span class="eig-dia-yes">Yes</span>
+                <span class="eig-dia-no">No</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <aside class="notes">
-          Let's build up EIG from standard information theory. S is a random variable over board states.
-          A question q produces a yes/no answer. Information Gain measures how much one answer reduces
-          our uncertainty. EIG averages this over possible answers — it's just mutual information.
-          For binary yes/no answers, this simplifies to binary entropy, which peaks at p = 0.5 —
-          the most uncertain questions are the most informative.
+          Let's build up EIG from standard information theory. S is a random variable over board states —
+          here's one partial board the Captain might see. The Captain asks a question q, like
+          "is the purple ship vertical?", and gets a yes/no answer. Information Gain measures how much
+          one answer reduces uncertainty. EIG averages over possible answers — it's mutual information.
+          For binary answers, this simplifies to binary entropy, maximized at p = 0.5.
         </aside>
       </section>
 
@@ -867,11 +918,11 @@
           <div>
             <div class="eig-deriv-steps">
               <div class="eig-step eig-highlight">
-                <div class="eig-eq">$\text{EIG}(q) = H_b(p)$</div>
+                <div class="eig-eq">$\text{EIG}(S;\, q) = H_b(p)$</div>
                 <div class="eig-gloss">Maximized at $p = 0.5$</div>
               </div>
               <div class="eig-step fragment" data-fragment-index="0">
-                <div class="eig-eq">With noise $\varepsilon$: &ensp; $\text{EIG}_\varepsilon(q) = H_b\!\big(\varepsilon + (1\!-\!2\varepsilon)\,p\big) - H_b(\varepsilon)$</div>
+                <div class="eig-eq">With noise $\varepsilon$: &ensp; $\text{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1\!-\!2\varepsilon)\,p\big) - H_b(\varepsilon)$</div>
                 <div class="eig-gloss">Noisy channel reduces max information</div>
               </div>
             </div>
