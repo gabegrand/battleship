@@ -355,6 +355,45 @@
       font-size: 0.55em; font-weight: 600; color: #172642;
     }
 
+    /* ── EIG ranking slide ── */
+    .eig-ranking { margin-top: 12px; }
+    .eig-rank-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; margin-bottom: 6px;
+      background: #fafbff; border-radius: 8px;
+      border-left: 3px solid #dde;
+    }
+    .eig-rank-row.rank-high { border-left-color: #2ecc71; }
+    .eig-rank-row.rank-low { border-left-color: #e74c3c; }
+    .eig-rank-question {
+      flex: 1; font-size: 0.5em; color: #2c3e50; font-style: italic;
+    }
+    .eig-rank-badge {
+      font-style: normal; font-weight: 700; margin-right: 6px;
+    }
+    .eig-rank-result {
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: flex-end; gap: 3px;
+    }
+    .eig-rank-metrics {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .eig-rank-bar-wrap {
+      width: 100px; height: 14px; background: #eee;
+      border-radius: 3px; overflow: hidden;
+    }
+    .eig-rank-bar {
+      height: 100%; border-radius: 3px;
+    }
+    .eig-rank-bar.bar-high { background: linear-gradient(90deg, #2ecc71, #27ae60); }
+    .eig-rank-bar.bar-low { background: #ccc; }
+    .eig-rank-eig {
+      font-size: 0.5em; font-weight: 700; min-width: 36px; text-align: right;
+    }
+    .eig-rank-eig.high { color: #27ae60; }
+    .eig-rank-eig.low { color: #999; }
+    .eig-rank-p { font-size: 0.4em; color: #888; text-align: right; }
+
     /* ── Game-in-action slide (mirrors game-explorer styling) ── */
     .game-action-layout {
       display: grid;
@@ -1167,6 +1206,128 @@ def answer(true_board, partial_board) -> bool:
           For a: we execute f_q on each sampled board to get simulated answers — here shown as
           No, No, No, No, Yes. This gives p-hat = 1/5 = 0.2, an imbalanced split indicating
           low EIG. A question splitting samples more evenly would be more informative.
+        </aside>
+      </section>
+
+
+      <!-- 3e. EIG in action — circling back to the four questions -->
+      <section>
+        <div class="section-label">Framework</div>
+        <h3>Many possible questions&hellip; but only some are <em>informative</em></h3>
+        <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 12px;">
+          Now we can quantify this intuition with EIG
+        </p>
+
+        <!-- NOTE: EIG values are placeholders — replace with real computed values -->
+        <div class="eig-ranking">
+          <!-- Q1: redundant -->
+          <div class="eig-rank-row rank-low">
+            <div class="eig-rank-question">
+              <span class="eig-rank-badge" style="color: #e74c3c;">&#x2717;</span>
+              &ldquo;Are there more than 2 purple tiles remaining?&rdquo;
+            </div>
+            <div class="eig-rank-result fragment" data-fragment-index="1">
+              <div class="exec-results" style="margin-bottom: 2px;">
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+              </div>
+              <div class="eig-rank-metrics">
+                <div class="eig-rank-bar-wrap">
+                  <div class="eig-rank-bar bar-low" style="width: 0%;"></div>
+                </div>
+                <span class="eig-rank-eig low">0.00</span>
+              </div>
+              <div class="eig-rank-p">$\hat{p} = 0/5$</div>
+            </div>
+          </div>
+
+          <!-- Q2: informative -->
+          <div class="eig-rank-row rank-high">
+            <div class="eig-rank-question">
+              <span class="eig-rank-badge" style="color: #27ae60;">&#x2713;</span>
+              &ldquo;Is the red ship near the purple ship?&rdquo;
+            </div>
+            <div class="eig-rank-result fragment" data-fragment-index="1">
+              <div class="exec-results" style="margin-bottom: 2px;">
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+              </div>
+              <div class="eig-rank-metrics">
+                <div class="eig-rank-bar-wrap">
+                  <div class="eig-rank-bar bar-high" style="width: 97%;"></div>
+                </div>
+                <span class="eig-rank-eig high">0.97</span>
+              </div>
+              <div class="eig-rank-p">$\hat{p} = 3/5$</div>
+            </div>
+          </div>
+
+          <!-- Q3: redundant -->
+          <div class="eig-rank-row rank-low">
+            <div class="eig-rank-question">
+              <span class="eig-rank-badge" style="color: #e74c3c;">&#x2717;</span>
+              &ldquo;Any more ships in column 7?&rdquo;
+            </div>
+            <div class="eig-rank-result fragment" data-fragment-index="1">
+              <div class="exec-results" style="margin-bottom: 2px;">
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+              </div>
+              <div class="eig-rank-metrics">
+                <div class="eig-rank-bar-wrap">
+                  <div class="eig-rank-bar bar-low" style="width: 72%;"></div>
+                </div>
+                <span class="eig-rank-eig low">0.72</span>
+              </div>
+              <div class="eig-rank-p">$\hat{p} = 1/5$</div>
+            </div>
+          </div>
+
+          <!-- Q4: informative -->
+          <div class="eig-rank-row rank-high">
+            <div class="eig-rank-question">
+              <span class="eig-rank-badge" style="color: #27ae60;">&#x2713;</span>
+              &ldquo;Are any ships along the edge?&rdquo;
+            </div>
+            <div class="eig-rank-result fragment" data-fragment-index="1">
+              <div class="exec-results" style="margin-bottom: 2px;">
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-yes">Y</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+                <span class="exec-pill exec-no">N</span>
+              </div>
+              <div class="eig-rank-metrics">
+                <div class="eig-rank-bar-wrap">
+                  <div class="eig-rank-bar bar-high" style="width: 97%;"></div>
+                </div>
+                <span class="eig-rank-eig high">0.97</span>
+              </div>
+              <div class="eig-rank-p">$\hat{p} = 2/5$</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout fragment" data-fragment-index="2" style="margin-top: 14px;">
+          <p><span class="callout-label">Key insight:</span> EIG formalizes the intuition &mdash; informative questions split the hypothesis space evenly ($p$ near 0.5), while redundant questions have predetermined answers ($p$ near 0 or 1).</p>
+        </div>
+
+        <aside class="notes">
+          Let's circle back to those four questions from earlier. Now we can actually compute
+          an EIG for each one. The redundant questions — "more than 2 purple tiles?" and
+          "ships in column 7?" — get low EIG because their answers are already mostly determined.
+          The informative questions — "red near purple?" and "ships along edge?" — split the
+          hypothesis space more evenly, giving high EIG. This is exactly the intuition we had
+          before, but now formalized.
         </aside>
       </section>
 
