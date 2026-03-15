@@ -1713,79 +1713,72 @@ def answer(true_board, partial_board) -> bool:
         </aside>
       </section>
 
-      <!-- 6c. CaptainQA results: F1 + EIG -->
+      <!-- 6c. CaptainQA results: F1 boxplot + stats -->
       <section>
         <div class="section-label">Experiment 2: CaptainQA</div>
-        <h3>Bayesian strategies yield super-human performance</h3>
-        <div class="fig-row">
-          <figure>
-            <img src="../static/images/captain_f1_boxplot.png" alt="Captain F1 by strategy" />
-            <figcaption>
-              <strong>(a)</strong> Bayesian strategies bring weaker LMs from near-random to super-human targeting.
-              Llama-4-Scout: 0.367 &rarr; 0.764 F1.
-            </figcaption>
-          </figure>
-          <figure>
-            <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of sampled questions" />
-            <figcaption>
-              <strong>(b)</strong> EIG scales with candidate questions: 10 samples yields 94.2% of the info-theoretic ceiling.
-            </figcaption>
-          </figure>
-        </div>
-
-        <aside class="notes">
-          The results are striking. On the left, you can see that adding Bayesian strategies
-          lifts even Llama-4-Scout to super-human performance. On the right, EIG improves smoothly
-          with more candidate questions &mdash; a form of inference-time scaling.
-        </aside>
-      </section>
-
-      <!-- 6d. CaptainQA results: timing + headline numbers -->
-      <section>
-        <div class="section-label">Experiment 2: CaptainQA</div>
-        <h3>Rational question-asking at a fraction of the cost</h3>
-        <div class="two-col">
+        <h3>Bayesian strategies boost performance</h3>
+        <div class="two-col" style="align-items: center;">
           <div class="col" style="text-align: center;">
-            <img src="../static/images/question_timing.png" alt="Question frequency over game"
-                 style="max-height: 320px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
-            <p style="font-size: 0.5em; color: #666; margin-top: 8px;">
-              $D_{\text{Bayes}}$ helps weaker models spread questions over time,
-              matching the human/GPT-5 pattern.
-            </p>
+            <img src="../static/images/captain_f1_boxplot.png" alt="Captain F1 by strategy"
+                 style="max-height: 300px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <div style="margin-top: 8px;">
+              <div style="display: inline-grid; grid-template-columns: auto auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #008f69; vertical-align: middle; margin-right: 4px;"></span> Human</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #848482; vertical-align: middle; margin-right: 4px;"></span> Baseline</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #000080; vertical-align: middle; margin-right: 4px;"></span> GPT-5</span>
+              </div>
+            </div>
           </div>
           <div class="col">
-            <div class="stat-grid" style="grid-template-columns: 1fr 1fr;">
-              <div class="stat-box">
-                <div class="number">82%</div>
-                <div class="label">Win rate vs. humans<br />(up from 8%)</div>
-              </div>
-              <div class="stat-box">
-                <div class="number">67%</div>
-                <div class="label">Win rate vs. GPT-5<br />(at ~1% of cost)</div>
-              </div>
-              <div class="stat-box">
-                <div class="number">+0.397</div>
-                <div class="label">F1 improvement<br />(Llama-4-Scout)</div>
-              </div>
-              <div class="stat-box">
-                <div class="number">0%&rarr;0.2%</div>
-                <div class="label">Redundant questions<br />(EIG = 0 eliminated)</div>
-              </div>
-            </div>
-            <div class="callout" style="margin-top: 12px;">
-              <p><span class="callout-label">Redundant questions:</span> Weaker models ask 15&ndash;18% questions with zero information gain. $Q_{\text{Bayes}}$ effectively eliminates these.</p>
-            </div>
+            <p style="font-size: 0.65em; color: #4a5770; margin-bottom: 12px;"><strong style="color: #71a0c1;">Llama-4-Scout</strong> + Bayesian strategies:</p>
+            <ul style="font-size: 0.7em; line-height: 1.8;">
+              <li class="fragment fade-in"><strong>+0.397</strong> F1 improvement</li>
+              <li class="fragment fade-in"><strong>8% &rarr; 82%</strong> win rate vs. <strong style="color: #008f69;">humans</strong></li>
+              <li class="fragment fade-in"><strong>0% &rarr; 67%</strong> win rate vs. <strong style="color: #000080;">GPT-5</strong>
+                <ul style="font-size: 0.85em; margin-top: 4px;">
+                  <li class="fragment fade-in"><strong>100&times;</strong> cost savings</li>
+                </ul>
+              </li>
+            </ul>
           </div>
         </div>
 
         <aside class="notes">
-          D-Bayes also fixes the question-timing problem: weaker models tend to front-load
-          all their questions, but D-Bayes spreads them out like humans and GPT-5.
-          The headline numbers: 82% win rate against humans, 67% against GPT-5,
-          all at roughly 1% of GPT-5's cost. And redundant zero-EIG questions
-          are almost entirely eliminated.
+          The results are striking. Adding Bayesian strategies lifts even Llama-4-Scout
+          to super-human performance, with massive F1 gains and win rates that beat humans
+          and even GPT-5 at a fraction of the cost. Where do these gains come from? Let's look at the scaling behavior of EIG.
         </aside>
       </section>
+
+      <!-- 6c-2. CaptainQA results: EIG scaling -->
+      <section>
+        <div class="section-label">Experiment 2: CaptainQA</div>
+        <h3>EIG scales with sample budget</h3>
+        <div class="two-col" style="align-items: center;">
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of sampled questions"
+                 style="max-height: 300px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+          </div>
+          <div class="col">
+            <ul style="font-size: 0.7em;">
+              <li class="fragment fade-in">For all 3 LMs, EIG improves smoothly with more candidate questions</li>
+              <li class="fragment fade-in"><strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</li>
+              <li class="fragment fade-in">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</li>
+              <li class="fragment fade-in">$Q_{\text{Bayes}}$ eliminates these</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          EIG improves smoothly with more candidate questions. Just 10 samples gets you
+          most of the way to the theoretical ceiling &mdash; a kind of inference-time scaling.
+          Weaker models normally ask 15-18% redundant questions with zero EIG, but Q-Bayes
+          effectively eliminates these.
+        </aside>
+      </section>
+
 
 
       <!-- ═══════════════════════════════════════════════════════════════
