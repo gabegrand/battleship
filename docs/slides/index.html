@@ -1428,20 +1428,17 @@ def answer(true_board, partial_board) -> bool:
         </aside>
       </section>
 
-      <!-- 4b. Human study results -->
+      <!-- 4b. Human study results — figures -->
       <section data-auto-animate>
-        <div class="section-label">Human Study</div>
-        <h3>How do people play?</h3>
-        <div class="callout fragment fade-in" data-fragment-index="2" data-id="human-accuracy" style="margin-top: 40px;">
-          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/><span class="fragment fade-in" data-fragment-index="3">&rarr; Can LMs match this?</span></p>
-        </div>
-        <div class="fig-row" style="margin-top: 0px;">
-          <figure class="fragment" data-fragment-index="0">
+        <div class="section-label" data-id="human-label">Human Study</div>
+        <h3 data-id="human-title">How do people play?</h3>
+        <div class="fig-row" style="margin-top: 12px;">
+          <figure class="fragment">
             <img src="../static/images/board_timeline_B02.png"
                  alt="Timeline of multiple human games on board B02" style="max-height: 280px;" />
             <figcaption><strong>(a)</strong> Different players show diverse explore/exploit strategies on the same board; colors indicate different players.</figcaption>
           </figure>
-          <figure class="fragment" data-fragment-index="1">
+          <figure class="fragment">
             <img src="../static/images/f1_score_vs_question_count.png"
                  alt="F1 vs questions asked" style="max-height: 280px;" />
             <figcaption><strong>(b)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
@@ -1451,9 +1448,20 @@ def answer(true_board, partial_board) -> bool:
         <aside class="notes">
           Two key findings from the study. First, asking more questions correlates with
           better targeting accuracy. Second, players adopt diverse strategies on the same board.
+        </aside>
+      </section>
+
+      <!-- 4c. Human study results — accuracy callout -->
+      <section data-auto-animate>
+        <div class="section-label" data-id="human-label">Human Study</div>
+        <h3 data-id="human-title">How do people play?</h3>
+        <div class="callout" data-id="human-accuracy" style="margin-top: 40px;">
+          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/><span class="fragment fade-in">&rarr; Can LMs match this?</span></p>
+        </div>
+
+        <aside class="notes">
           Importantly, human Spotters answer questions with 92.5% accuracy against the gold labels,
           and this stays consistent across simple and complex questions.
-          Humans are resource-rational, not Bayes-optimal — that's the right target for AI agents.
           This 92.5% accuracy now becomes our baseline: can LMs match it?
         </aside>
       </section>
@@ -1465,16 +1473,20 @@ def answer(true_board, partial_board) -> bool:
 
       <!-- 5a. Setup + code demo -->
       <section data-auto-animate>
-        <div class="section-label">Experiment 1: SpotterQA</div>
-        <h3>Can LMs answer grounded questions?</h3>
+        <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
+        <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 10px; margin-bottom: 12px;">
           <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/>&rarr; Can LMs match this?</p>
         </div>
         <ul style="font-size: 0.68em; max-width: 85%; margin: 0 auto;">
-          <li><strong>Dataset:</strong> 931 gold-labeled yes/no questions from BattleshipQA</li>
-          <li><strong>Models:</strong> 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
-          <li><strong>Hypothesis test:</strong> language-based reasoning (direct answering &plusmn; CoT)
-              vs.&nbsp;code-based reasoning (code generation &plusmn; CoT)</li>
+          <li class="fragment"><strong>Dataset:</strong> 931 gold-labeled yes/no questions from BattleshipQA</li>
+          <li class="fragment"><strong>Models:</strong> 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
+          <li class="fragment"><strong>Hypothesis test:</strong> 2x2 design to compare reasoning strategies
+            <ul>
+              <li class="fragment">Language-based reasoning vs.&nbsp;code-based reasoning</li>
+              <li class="fragment">Direct answering vs.&nbsp;chain-of-thought (CoT)</li>
+            </ul>
+          </li>
 
         </ul>
 
@@ -1538,38 +1550,29 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- 5c. SpotterQA results -->
-      <section>
-        <div class="section-label">Results</div>
-        <h3>Code generation closes the gap to human performance</h3>
-        <div class="fig-row fig-row-3" style="gap: 16px;">
-          <div class="fig-col">
+      <section data-auto-animate>
+        <div class="section-label" data-id="section-label">Results</div>
+        <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
+        <div class="fig-row" style="gap: 16px; align-items: stretch;">
+          <div class="fig-col fragment" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
             <img src="../static/images/spotter_accuracy_by_model.png"
                  alt="Spotter accuracy by model" />
             <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
               <strong>(a)</strong> Wide accuracy range across 15 LMs (52.5% &ndash; 92.8%).
             </figcaption>
           </div>
-          <div class="fig-col">
+          <div class="fig-col fragment" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
             <img src="../static/images/spotter_accuracy_overall.png"
                  alt="Spotter accuracy by strategy" />
             <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
               <strong>(b)</strong> CoT + Code gives +14.7% absolute over base LM.
             </figcaption>
           </div>
-          <div class="fig-col">
-            <img src="../static/images/spotter_accuracy_simple_vs_complex.png"
-                 alt="Spotter accuracy: simple vs complex" />
-            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
-              <strong>(c)</strong> LMs degrade on complex questions; humans stay consistent.
-            </figcaption>
-          </div>
         </div>
 
         <aside class="notes">
-          Three key findings. First, accuracy varies widely across models.
+          Two key findings. First, accuracy varies widely across models.
           Second, code generation consistently improves accuracy by 14.7 points.
-          Third, and importantly, LMs struggle with context-dependent questions
-          where humans remain consistent. Code helps but doesn't fully solve pragmatic grounding.
         </aside>
       </section>
 
