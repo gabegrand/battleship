@@ -1791,15 +1791,26 @@ def answer(true_board, partial_board) -> bool:
         <div class="two-col" style="align-items: center;">
           <div class="col" style="text-align: center;">
             <img src="../static/images/guess-who-results.png" alt="Guess Who? results"
-                 style="max-height: 360px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+                 style="max-height: 300px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <div style="margin-top: 8px;">
+              <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
+              </div>
+            </div>
           </div>
           <div class="col">
-            <ul style="font-size: 0.68em;">
-              <li><strong>Guess Who?</strong> from TextArena: richer object-relational semantics (age, clothing, facial hair, etc.)</li>
-              <li>Same Bayesian strategies, different domain</li>
-              <li>GPT-4o: 0.617 &rarr; 0.900 success rate</li>
-              <li>Llama-4-Scout: 0.300 &rarr; 0.724</li>
-              <li><strong>Not Battleship-specific</strong> &mdash; generalizes to information-seeking games with combinatorial hypothesis spaces</li>
+            <ul style="font-size: 0.65em;">
+                <li class="fragment fade-in"><strong>Guess Who?</strong> from TextArena (Guertler et al., 2025):</li>
+                <ul style="margin-top: 4px; margin-bottom: 0;">
+                  <li class="fragment fade-in">Richer object-relational semantics (age, clothing, facial hair, etc.)</li>
+                </ul>
+              <li class="fragment fade-in">Same Bayesian strategies work well:</li>
+              <ul style="margin-top: 6px; margin-bottom: 0;">
+                <li class="fragment fade-in"><strong style="color: #0e79b2;">GPT-4o</strong>: 61.7% &rarr; 90.0% success rate</li>
+                <li class="fragment fade-in"><strong style="color: #71a0c1;">Llama-4-Scout</strong>: 30.0% &rarr; 72.4%</li>
+              </ul>
+              <li class="fragment fade-in"><strong>Not Battleship-specific</strong> &mdash; generalizes to information-seeking games with combinatorial hypothesis spaces</li>
             </ul>
           </div>
         </div>
