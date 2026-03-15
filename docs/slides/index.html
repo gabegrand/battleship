@@ -1481,14 +1481,21 @@ def answer(true_board, partial_board) -> bool:
         <ul style="font-size: 0.68em; max-width: 85%; margin: 0 auto;">
           <li class="fragment"><strong>Dataset:</strong> 931 gold-labeled yes/no questions from BattleshipQA</li>
           <li class="fragment"><strong>Models:</strong> 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
-          <li class="fragment"><strong>Hypothesis test:</strong> 2x2 design to compare reasoning strategies
+          <li class="fragment"><strong>Hypothesis test:</strong> 2&times;2 design
             <ul>
               <li class="fragment">Language-based reasoning vs.&nbsp;code-based reasoning</li>
               <li class="fragment">Direct answering vs.&nbsp;chain-of-thought (CoT)</li>
             </ul>
           </li>
-
         </ul>
+        <div class="fragment" style="text-align: center; margin-top: 12px;">
+          <div data-id="legend-box" style="display: inline-grid; grid-template-columns: auto auto; gap: 8px 32px; font-size: 0.6em; padding: 10px 24px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6); justify-items: start;">
+            <span data-id="legend-base"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+            <span data-id="legend-code"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+            <span data-id="legend-cot"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+            <span data-id="legend-cotcode"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+          </div>
+        </div>
 
         <aside class="notes">
           We just saw that human Spotters achieve 92.5% accuracy on the gold questions.
@@ -1553,14 +1560,6 @@ def answer(true_board, partial_board) -> bool:
       <section data-auto-animate>
         <div class="section-label" data-id="section-label">Results</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
-        <div style="text-align: center; margin-top: 8px;">
-          <div style="display: inline-flex; gap: 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
-          </div>
-        </div>
         <div class="fig-row" style="gap: 16px; align-items: stretch;">
           <div class="fig-col fragment" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
             <img src="../static/images/spotter_accuracy_by_model.png"
@@ -1575,6 +1574,14 @@ def answer(true_board, partial_board) -> bool:
             <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
               <strong>(b)</strong> CoT + Code gives +14.7% absolute over base LM.
             </figcaption>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 8px;">
+          <div data-id="legend-box" style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+            <span data-id="legend-base"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+            <span data-id="legend-cot"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+            <span data-id="legend-code"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+            <span data-id="legend-cotcode"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
           </div>
         </div>
 
