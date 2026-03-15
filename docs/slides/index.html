@@ -1429,23 +1429,23 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- 4b. Human study results -->
-      <section>
+      <section data-auto-animate>
         <div class="section-label">Human Study</div>
         <h3>How do people play?</h3>
-        <div class="fig-row" style="margin-top: 12px;">
-          <figure class="fragment">
-            <img src="../static/images/f1_score_vs_question_count.png"
-                 alt="F1 vs questions asked" style="max-height: 280px;" />
-            <figcaption><strong>(a)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
-          </figure>
-          <figure class="fragment">
+        <div class="callout fragment fade-in" data-fragment-index="2" data-id="human-accuracy" style="margin-top: 40px;">
+          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/><span class="fragment fade-in" data-fragment-index="3">&rarr; Can LMs match this?</span></p>
+        </div>
+        <div class="fig-row" style="margin-top: 0px;">
+          <figure class="fragment" data-fragment-index="0">
             <img src="../static/images/board_timeline_B02.png"
                  alt="Timeline of multiple human games on board B02" style="max-height: 280px;" />
-            <figcaption><strong>(b)</strong> Different players show diverse explore/exploit strategies on the same board; colors indicate different players.</figcaption>
+            <figcaption><strong>(a)</strong> Different players show diverse explore/exploit strategies on the same board; colors indicate different players.</figcaption>
           </figure>
-        </div>
-        <div class="callout fragment" style="margin-top: 10px;">
-          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels (92.8% simple, 91.9% complex). Humans are <strong>resource-rational</strong>, not Bayes-optimal &mdash; they ask useful questions and make well-informed guesses, but don't exhaustively optimize.</p>
+          <figure class="fragment" data-fragment-index="1">
+            <img src="../static/images/f1_score_vs_question_count.png"
+                 alt="F1 vs questions asked" style="max-height: 280px;" />
+            <figcaption><strong>(b)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
+          </figure>
         </div>
 
         <aside class="notes">
@@ -1464,17 +1464,18 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- 5a. Setup + code demo -->
-      <section>
+      <section data-auto-animate>
         <div class="section-label">Experiment 1: SpotterQA</div>
         <h3>Can LMs answer grounded questions?</h3>
-        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 12px;">
-          Human Spotters achieve <strong>92.5% accuracy</strong> on the 931 gold questions. Can LMs match this?
-        </p>
+        <div class="callout" data-id="human-accuracy" style="margin-top: 10px; margin-bottom: 12px;">
+          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/>&rarr; Can LMs match this?</p>
+        </div>
         <ul style="font-size: 0.68em; max-width: 85%; margin: 0 auto;">
-          <li><strong>Dataset:</strong> 931 gold-labeled yes/no questions from BattleshipQA (100% annotator agreement)</li>
+          <li><strong>Dataset:</strong> 931 gold-labeled yes/no questions from BattleshipQA</li>
+          <li><strong>Models:</strong> 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
           <li><strong>Hypothesis test:</strong> language-based reasoning (direct answering &plusmn; CoT)
               vs.&nbsp;code-based reasoning (code generation &plusmn; CoT)</li>
-          <li>Evaluate 15 LMs from Anthropic, Google, Meta, and OpenAI</li>
+
         </ul>
 
         <aside class="notes">
