@@ -1553,6 +1553,14 @@ def answer(true_board, partial_board) -> bool:
       <section data-auto-animate>
         <div class="section-label" data-id="section-label">Results</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
+        <div style="text-align: center; margin-top: 8px;">
+          <div style="display: inline-flex; gap: 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+          </div>
+        </div>
         <div class="fig-row" style="gap: 16px; align-items: stretch;">
           <div class="fig-col fragment" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
             <img src="../static/images/spotter_accuracy_by_model.png"
