@@ -234,6 +234,13 @@
       padding: 4px 12px; border-radius: 20px; font-weight: 500;
     }
 
+    /* ── Chemistry experiment chips ── */
+    .chem-experiments { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chem-experiments .chip {
+      font-size: 0.48em; background: #f0f4ff; color: #304ed8;
+      padding: 4px 12px; border-radius: 16px; border: 1px solid #dde3f0;
+    }
+
     /* ── Two-col layout ── */
     .two-col { display: flex; gap: 32px; align-items: flex-start; margin-top: 16px; }
     .two-col .col { flex: 1; }
@@ -615,14 +622,14 @@
       <!-- 1b. Motivation: The promise -->
       <section>
         <div class="section-label">Motivation</div>
-        <h3>LM agents as scientists and diagnosticians</h3>
+        <h3>AI agents for discovery</h3>
 
         <div class="two-col" style="align-items: center; gap: 36px;">
           <div class="col">
             <ul class="key-points" style="margin: 0;">
               <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
                 <span class="kp-icon"><i class="fas fa-microscope"></i></span>
-                <span class="kp-text"><span class="kp-label">The promise:</span> LM agents are being deployed for scientific discovery, medical diagnosis, and agentic coding &mdash; domains that require forming hypotheses, gathering information, and acting under uncertainty.</span>
+                <span class="kp-text"><span class="kp-label">The promise:</span> Many high-stakes applications of AI require forming hypotheses, gathering information, and acting under uncertainty.</span>
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
@@ -641,11 +648,226 @@
         </div>
 
         <aside class="notes">
-          Many emerging applications of AI require agents to seek information strategically: forming hypotheses, asking targeted questions, and making decisions
-          under uncertainty.
+          Many emerging applications of AI require agents to seek information strategically: forming hypotheses, asking targeted questions, and making decisions under uncertainty.
           But evaluating these abilities is hard because LMs already know a lot about the real world.
           We need controlled environments where we can formalize rationality and compare model behavior against human and ideal baselines.
         </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SECTION 1b: BAYESIAN EXPERIMENTAL DESIGN — domain-general motivation
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- Slide A: Bayesian Experimental Design -->
+      <section>
+        <div class="section-label">Background</div>
+        <h3>Bayesian Experimental Design</h3>
+
+        <div class="two-col">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-flask"></i></span>
+                <span class="kp-text"><span class="kp-label">Scenario:</span> An analytical chemist encounters an unknown compound. Goal: identify its molecular structure $S$.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-vials"></i></span>
+                <span class="kp-text">
+                  <span class="kp-label">Experiments</span> $x \in X$ probe properties of $S$:
+                  <div class="chem-experiments">
+                    <span class="chip">Acid or base?</span>
+                    <span class="chip">Oxidation?</span>
+                    <span class="chip">Water-soluble?</span>
+                    <span class="chip">Melting point?</span>
+                  </div>
+                </span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-sync-alt"></i></span>
+                <span class="kp-text"><span class="kp-label">Update:</span> Each observation $y$ narrows the hypothesis space via Bayes&rsquo; rule.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col">
+            <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$S$</span>
+                <span style="font-size: 2em;">&#x1F9EA;</span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$x$</span>
+                <div class="eig-dia-bubble">&ldquo;Is it water-soluble?&rdquo;</div>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$y$</span>
+                <div class="eig-dia-answer">
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-no">No</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="eq-box fragment fade-in" data-fragment-index="3" style="margin-top: 20px;">
+          $\underbrace{p(S \mid x, y)}_{\text{posterior}} \;\propto\; \underbrace{p(y \mid S,\, x)}_{\text{likelihood}} \;\; \underbrace{p(S)}_{\text{prior}}$
+        </div>
+
+        <aside class="notes">
+          We introduce BED through a concrete example. An analytical chemist encounters an unknown compound
+          and wants to identify its structure. They can run experiments — each one gives an observation that
+          updates their beliefs via Bayes' rule. The goal is to choose experiments that are maximally informative.
+        </aside>
+      </section>
+
+      <!-- Slide B: Choosing Experiments Efficiently (EIG) -->
+      <section>
+        <div class="section-label">Background</div>
+        <h3>Choosing Experiments Efficiently</h3>
+
+        <div class="eig-deriv-steps" style="margin-top: 24px; max-width: 85%; margin-left: auto; margin-right: auto;">
+          <div class="eig-step fragment fade-in" data-fragment-index="0">
+            <div class="eig-eq">Goal: choose experiments that let us learn about $S$ as efficiently as possible.</div>
+          </div>
+          <div class="eig-step fragment fade-in" data-fragment-index="1">
+            <div class="eig-eq">$\text{IG}(x,\, y) \;=\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big]$ <span class="eig-annot">reduction in uncertainty</span></div>
+          </div>
+          <div class="eig-step fragment fade-in" data-fragment-index="2">
+            <div class="eig-eq">$\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!\big[\text{IG}(x,\, y)\big]$ <span class="eig-annot">average over possible outcomes</span></div>
+          </div>
+          <div class="eig-step eig-highlight fragment fade-in" data-fragment-index="3">
+            <div class="eig-eq">$x^{\star} \;=\; \arg\max_{x \,\in\, X}\; \text{EIG}(x)$ <span class="eig-annot" style="color: #04af70;">most informative experiment</span></div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Information Gain measures how much a single outcome reduces uncertainty.
+          Expected Information Gain averages over all possible outcomes.
+          The optimal experiment maximizes EIG — it's the one whose outcome, on average, is most informative.
+        </aside>
+      </section>
+
+      <!-- Slide C: Challenges of Optimizing EIG -->
+      <section>
+        <div class="section-label">Background</div>
+        <h3>Challenges of Optimizing EIG</h3>
+
+        <div class="eq-box" style="margin-top: 20px; max-width: 95%;">
+          <div style="font-size: 0.9em;">
+            $\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!
+              \Big[\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big] \;\Big]$
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 32px; justify-content: center; margin-top: 28px;">
+          <div class="fragment fade-in" data-fragment-index="1" style="text-align: center; max-width: 380px;">
+            <div class="challenge-annotation challenge-space">
+              <i class="fas fa-cogs"></i> &nbsp;
+              <strong>Challenge 1 &mdash; Simulation:</strong> Computing $p(y \mid x, s)$ requires
+              simulating the outcome of experiment $x$ for a given structure $s$.
+            </div>
+          </div>
+          <div class="fragment fade-in" data-fragment-index="2" style="text-align: center; max-width: 380px;">
+            <div class="challenge-annotation challenge-semantics">
+              <i class="fas fa-cubes"></i> &nbsp;
+              <strong>Challenge 2 &mdash; Marginalization:</strong> Computing
+              $\mathbb{E}_{y \,\sim\, p(y \mid x)}$ requires summing over all $s \in \mathcal{S}$,
+              which is combinatorially intractable.
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Two key challenges make EIG hard to compute exactly.
+          First, evaluating the likelihood requires a simulator — we need to know what outcome
+          an experiment would produce for a given structure.
+          Second, we need to marginalize over the full hypothesis space, which is exponentially large.
+        </aside>
+      </section>
+
+      <!-- Slide D: Our Approach — World Model -->
+      <section>
+        <div class="section-label">Approach</div>
+        <h3>Approximate Inference via a World Model</h3>
+
+        <div class="two-col">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-globe"></i></span>
+                <span class="kp-text"><span class="kp-label">World model:</span> A code-based simulator that encodes domain knowledge about the structure space $\mathcal{S}$.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-random"></i></span>
+                <span class="kp-text"><span class="kp-label">Sample hypotheses:</span> Generate candidates $s_1, \ldots, s_N \sim p\!\big(S \mid (x_1, y_1), (x_2, y_2), \ldots\big)$ consistent with observed evidence.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-play"></i></span>
+                <span class="kp-text"><span class="kp-label">Simulate experiments:</span> For each hypothesis $s_i$, execute experiment $x$ to predict outcome $y_i = f(x,\, s_i)$.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col">
+            <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+              <div class="eig-dia-row">
+                <span class="eig-dia-label" style="font-size: 0.5em;">sample</span>
+              </div>
+              <div class="eig-dia-row" style="gap: 14px;">
+                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+              </div>
+              <div class="eig-dia-row" style="font-size: 0.42em; color: #888;">
+                $s_1 \quad s_2 \quad s_3 \quad s_4 \quad s_5$
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label" style="font-size: 0.5em;">simulate</span>
+              </div>
+              <div class="eig-dia-row">
+                <div class="eig-dia-answer">
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-no">No</span>
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-no">No</span>
+                </div>
+              </div>
+              <div class="eig-dia-row" style="margin-top: 6px; font-size: 0.48em; color: #304ed8; font-weight: 600;">
+                $\hat{p}(y\!=\!\text{Yes}) = 3/5$
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Our approach: use a world model — a code-based simulator — to approximate EIG.
+          We sample hypotheses consistent with our evidence, then simulate the experiment on each one.
+          The fraction of outcomes gives us a Monte Carlo estimate of the likelihood,
+          which we can plug into the EIG formula.
+        </aside>
+      </section>
+
+      <!-- Slide E: Placeholder bridge into Battleship -->
+      <section>
+        <div class="section-label">Approach</div>
+        <h3>Instantiating the Framework</h3>
+        <p style="text-align: center; font-size: 0.6em; color: #888; margin-top: 40px;">
+          <em>(Bridge to Battleship &mdash; to be developed)</em>
+        </p>
       </section>
 
 
