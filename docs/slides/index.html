@@ -2113,6 +2113,10 @@ def answer(true_board, partial_board) -> bool:
       if (flip) {
         flip.classList.remove('flipped');
       }
+      // Reset revealed cells so data-step tiles start hidden
+      event.currentSlide.querySelectorAll('.mini-board .b-cell[data-step]').forEach(function(cell) {
+        cell.classList.remove('revealed');
+      });
       // Also reset any other stateful elements in case we navigated away mid-sequence
       var events = event.currentSlide.querySelector('#game-events');
       if (events) events.classList.remove('q-expanded');
