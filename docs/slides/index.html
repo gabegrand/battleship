@@ -130,7 +130,14 @@
     .eig-step .eig-gloss { color: #888; font-size: 0.9em; }
     .eig-step .eig-annot { color: #999; font-size: 0.85em; font-style: italic; margin-left: 4px; }
     .eig-step .eig-cont { padding-left: 2.2em; }
-    .eig-step.eig-highlight .eig-eq { color: #04af70; }
+    .eig-step.eig-highlight .eig-eq { }
+    /* BED experiment candidate cards */
+    .bed-candidate { text-align: center; min-width: 70px; padding: 6px 4px; border-radius: 10px; border: 2px solid transparent; transition: border-color 0.4s ease; }
+    .bed-eig-bar { width: 72px; height: 5px; background: #e8e8e8; border-radius: 3px; margin: 5px auto 0; }
+    .bed-eig-fill { height: 100%; background: #304ed8; border-radius: 3px; }
+    .bed-eig-fill.bed-eig-best { background: #04af70; }
+    .bed-eig-val { font-size: 0.36em; color: #999; margin-top: 2px; }
+    .bed-xstar { font-size: 0.38em; color: #04af70; font-weight: 700; margin-top: 3px; }
     /* EIG notation diagram */
     .eig-diagram {
       display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -143,6 +150,14 @@
     .eig-diagram .eig-dia-label {
       font-size: 0.6em; font-weight: 600; color: #304ed8;
       min-width: 28px; text-align: right;
+    }
+    /* Two-column grid layout for BED slide (label | illustration) */
+    .eig-diagram.eig-labeled .eig-dia-row {
+      display: grid; grid-template-columns: 28px 1fr; align-items: center;
+      justify-content: initial;
+    }
+    .eig-diagram.eig-labeled .eig-dia-label + * {
+      justify-self: center;
     }
     .eig-diagram .eig-dia-arrow {
       font-size: 0.7em; color: #aaa;
@@ -594,6 +609,17 @@
     <div class="slides">
 
       <!-- ═══════════════════════════════════════════════════════════════
+           AUTO-ANIMATE GOTCHA: When using data-auto-animate between slides,
+           only put data-id on the OUTERMOST container you want to animate.
+           Do NOT put data-id on both a parent and its children — Reveal.js
+           will match and animate them independently, causing children to
+           fly around separately instead of moving with the parent.
+
+           GOOD:  <div data-id="box">  <span>child</span>  </div>
+           BAD:   <div data-id="box">  <span data-id="child">...</span>  </div>
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- ═══════════════════════════════════════════════════════════════
            SECTION 1: TITLE + MOTIVATION  (1.5 min)
            ═══════════════════════════════════════════════════════════════ -->
 
@@ -660,9 +686,9 @@
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- Slide A: Bayesian Experimental Design -->
-      <section>
-        <div class="section-label">Background</div>
-        <h3>Bayesian Experimental Design</h3>
+      <section data-auto-animate>
+        <div class="section-label" data-id="bed-label">Background</div>
+        <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col">
           <div class="col">
@@ -671,7 +697,7 @@
                 <span class="kp-icon"><i class="fas fa-flask"></i></span>
                 <span class="kp-text"><span class="kp-label">Scenario:</span> An analytical chemist encounters an unknown compound. Goal: identify its molecular structure $S$.</span>
               </li>
-              <li class="fragment fade-in" data-fragment-index="1">
+              <li class="fragment fade-in" data-fragment-index="1" data-id="bed-kp-exp">
                 <span class="kp-icon"><i class="fas fa-vials"></i></span>
                 <span class="kp-text">
                   <span class="kp-label">Experiments</span> $x \in X$ probe properties of $S$:
@@ -691,19 +717,44 @@
           </div>
 
           <div class="col">
-            <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+            <div class="eig-diagram eig-labeled fragment fade-in" data-fragment-index="0" data-id="bed-diagram">
+              <div>
               <div class="eig-dia-row">
                 <span class="eig-dia-label">$S$</span>
-                <span style="font-size: 2em;">&#x1F9EA;</span>
+                <!-- Unknown molecule: benzene ring + branches, grayed out with ? -->
+                <svg width="76" height="72" viewBox="0 0 68 64" style="vertical-align: middle;">
+                  <!-- Benzene ring -->
+                  <polygon points="32,6 47,14.5 47,31.5 32,40 17,31.5 17,14.5"
+                           fill="none" stroke="#ccc" stroke-width="2.2" stroke-linejoin="round"/>
+                  <!-- Aromatic circle -->
+                  <circle cx="32" cy="23" r="7.5" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.5"/>
+                  <!-- Branch: upper-right -->
+                  <line x1="47" y1="14.5" x2="57" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="57" cy="6" r="2.8" fill="#ccc"/>
+                  <!-- Branch: bottom -->
+                  <line x1="32" y1="40" x2="32" y2="54" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="32" cy="54" r="2.8" fill="#ccc"/>
+                  <!-- Branch: upper-left -->
+                  <line x1="17" y1="14.5" x2="7" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="7" cy="6" r="2.8" fill="#ccc"/>
+                  <!-- Question mark overlay -->
+                  <text x="32" y="60" text-anchor="middle" font-size="22" font-weight="700" fill="#304ed8" font-family="sans-serif">?</text>
+                </svg>
               </div>
+              </div><!-- /fragment 0: S -->
+              <div class="fragment fade-in" data-fragment-index="1">
               <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
                 <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
               </div>
               <div class="eig-dia-row">
                 <span class="eig-dia-label">$x$</span>
                 <div class="eig-dia-bubble">&ldquo;Is it water-soluble?&rdquo;</div>
               </div>
+              </div><!-- /fragment 1: x -->
+              <div class="fragment fade-in" data-fragment-index="2">
               <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
                 <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
               </div>
               <div class="eig-dia-row">
@@ -713,6 +764,7 @@
                   <span class="eig-dia-no">No</span>
                 </div>
               </div>
+              </div><!-- /fragment 2: y -->
             </div>
           </div>
         </div>
@@ -729,67 +781,191 @@
       </section>
 
       <!-- Slide B: Choosing Experiments Efficiently (EIG) -->
-      <section>
-        <div class="section-label">Background</div>
-        <h3>Choosing Experiments Efficiently</h3>
+      <section data-auto-animate>
+        <div class="section-label" data-id="bed-label">Background</div>
+        <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
-        <div class="eig-deriv-steps" style="margin-top: 24px; max-width: 85%; margin-left: auto; margin-right: auto;">
-          <div class="eig-step fragment fade-in" data-fragment-index="0">
-            <div class="eig-eq">Goal: choose experiments that let us learn about $S$ as efficiently as possible.</div>
+        <div class="two-col" style="align-items: start; margin-top: 16px;">
+          <!-- Left: preserved elements from Slide A -->
+          <div class="col" style="flex: 1;">
+            <!-- Experiments key-point (auto-animated from Slide A fragment-index 1) -->
+            <ul class="key-points" data-id="bed-kp" style="margin: 0 0 16px 0;">
+              <li data-id="bed-kp-exp">
+                <span class="kp-icon"><i class="fas fa-vials"></i></span>
+                <span class="kp-text">
+                  <span class="kp-label">Experiments</span> $x \in X$ probe properties of $S$:
+                  <div class="chem-experiments">
+                    <span class="chip">Acid or base?</span>
+                    <span class="chip">Oxidation?</span>
+                    <span class="chip">Water-soluble?</span>
+                    <span class="chip">Melting point?</span>
+                  </div>
+                </span>
+              </li>
+            </ul>
+
+            <!-- S → x → y diagram (auto-animated from Slide A) -->
+            <div class="eig-diagram eig-labeled" data-id="bed-diagram">
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$S$</span>
+                <svg width="76" height="72" viewBox="0 0 68 64" style="vertical-align: middle;">
+                  <polygon points="32,6 47,14.5 47,31.5 32,40 17,31.5 17,14.5"
+                           fill="none" stroke="#ccc" stroke-width="2.2" stroke-linejoin="round"/>
+                  <circle cx="32" cy="23" r="7.5" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.5"/>
+                  <line x1="47" y1="14.5" x2="57" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="57" cy="6" r="2.8" fill="#ccc"/>
+                  <line x1="32" y1="40" x2="32" y2="54" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="32" cy="54" r="2.8" fill="#ccc"/>
+                  <line x1="17" y1="14.5" x2="7" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
+                  <circle cx="7" cy="6" r="2.8" fill="#ccc"/>
+                  <text x="32" y="60" text-anchor="middle" font-size="22" font-weight="700" fill="#304ed8" font-family="sans-serif">?</text>
+                </svg>
+              </div>
+              </div>
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$x$</span>
+                <div class="eig-dia-bubble">&ldquo;Is it water-soluble?&rdquo;</div>
+              </div>
+              </div>
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$y$</span>
+                <div class="eig-dia-answer">
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-no">No</span>
+                </div>
+              </div>
+              </div>
+            </div>
           </div>
-          <div class="eig-step fragment fade-in" data-fragment-index="1">
-            <div class="eig-eq">$\text{IG}(x,\, y) \;=\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big]$ <span class="eig-annot">reduction in uncertainty</span></div>
-          </div>
-          <div class="eig-step fragment fade-in" data-fragment-index="2">
-            <div class="eig-eq">$\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!\big[\text{IG}(x,\, y)\big]$ <span class="eig-annot">average over possible outcomes</span></div>
-          </div>
-          <div class="eig-step eig-highlight fragment fade-in" data-fragment-index="3">
-            <div class="eig-eq">$x^{\star} \;=\; \arg\max_{x \,\in\, X}\; \text{EIG}(x)$ <span class="eig-annot" style="color: #04af70;">most informative experiment</span></div>
+
+          <!-- Right: EIG derivation (new content) -->
+          <div class="col" style="flex: 1;">
+            <div class="eig-deriv-steps" data-id="eig-steps" style="margin-top: 0; max-width: 100%;">
+              <div class="fragment fade-in" data-fragment-index="0" style="background: #f0f4ff; border: 1px solid #dde3f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+                <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
+                  <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
+                </div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
+              </div>
+              <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start;">
+                <div class="eig-eq">$\text{IG}(x,\, y) \;=\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big]$</div>
+                <div class="eig-annot">Information gain: reduction in uncertainty</div>
+              </div>
+              <div class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start;">
+                <div class="eig-eq">$\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!\big[\text{IG}(x,\, y)\big]$</div>
+                <div class="eig-annot">Expectation over possible outcomes</div>
+              </div>
+              <div class="eig-step eig-highlight fragment fade-in" data-fragment-index="3" style="flex-direction: column; align-items: flex-start;">
+                <div class="eig-eq">$x^{\star} \;=\; \arg\max_{x \,\in\, X}\; \text{EIG}(x)$</div>
+                <div class="eig-annot">Most informative experiment</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <aside class="notes">
-          Information Gain measures how much a single outcome reduces uncertainty.
-          Expected Information Gain averages over all possible outcomes.
-          The optimal experiment maximizes EIG — it's the one whose outcome, on average, is most informative.
+          The diagram and experiment chips persist from Slide A via auto-animate.
+          Fragment 0: Goal statement. Fragment 1: IG formula.
+          Fragment 2: EIG formula. Fragment 3: x* = argmax highlighted.
         </aside>
       </section>
 
       <!-- Slide C: Challenges of Optimizing EIG -->
-      <section>
-        <div class="section-label">Background</div>
-        <h3>Challenges of Optimizing EIG</h3>
+      <section data-auto-animate>
+        <div class="section-label" data-id="bed-label">Background</div>
+        <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
-        <div class="eq-box" style="margin-top: 20px; max-width: 95%;">
-          <div style="font-size: 0.9em;">
-            $\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!
-              \Big[\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big] \;\Big]$
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 32px; justify-content: center; margin-top: 28px;">
-          <div class="fragment fade-in" data-fragment-index="1" style="text-align: center; max-width: 380px;">
-            <div class="challenge-annotation challenge-space">
-              <i class="fas fa-cogs"></i> &nbsp;
-              <strong>Challenge 1 &mdash; Simulation:</strong> Computing $p(y \mid x, s)$ requires
-              simulating the outcome of experiment $x$ for a given structure $s$.
+        <div class="two-col" style="align-items: start; margin-top: 16px;">
+          <!-- Left: EIG derivation (auto-animated from Slide B right col) -->
+          <div class="col" style="flex: 1;">
+            <div class="eig-deriv-steps" data-id="eig-steps" style="margin-top: 0; max-width: 100%;">
+              <div style="background: #f0f4ff; border: 1px solid #dde3f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+                <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
+                  <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
+                </div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
+              </div>
+              <!-- IG: red highlight on H[p(S|x,y)] appears with fragment 0 -->
+              <div class="eig-step" style="flex-direction: column; align-items: flex-start; position: relative;">
+                <div class="eig-eq">
+                  <span class="fragment fade-out" data-fragment-index="0">$\text{IG}(x,\, y) \;=\; \color{#172642}{H\!\big[}\color{#172642}{p(S)}\color{#172642}{\big]} \;-\; \color{#172642}{H\!\big[}\color{#172642}{p(S \mid x, y)}\color{#172642}{\big]}$</span>
+                  <span class="fragment fade-in" data-fragment-index="0" style="position: absolute; left: 0; top: 0;">$\text{IG}(x,\, y) \;=\; \color{#ac2028}{H\!\big[}\color{#172642}{p(S)}\color{#ac2028}{\big]} \;-\; \color{#ac2028}{H\!\big[}\color{#172642}{p(S \mid x, y)}\color{#ac2028}{\big]}$</span>
+                </div>
+                <div class="eig-annot">Information gain: reduction in uncertainty</div>
+              </div>
+              <!-- EIG: red highlight on E_{y~p(y|x)} appears with fragment 1 -->
+              <div class="eig-step" style="flex-direction: column; align-items: flex-start; position: relative;">
+                <div class="eig-eq">
+                  <span class="fragment fade-out" data-fragment-index="1">$\text{EIG}(x) \;=\; \color{#172642}{\mathbb{E}_{y \,\sim\, p(y \mid x)}}\color{#172642}{\!\big[\text{IG}(x,\, y)\big]}$</span>
+                  <span class="fragment fade-in" data-fragment-index="1" style="position: absolute; left: 0; top: 0;">$\text{EIG}(x) \;=\; \color{#ac2028}{\mathbb{E}_{y \,\sim\, p(y \mid x)}}\color{#172642}{\!\big[\text{IG}(x,\, y)\big]}$</span>
+                </div>
+                <div class="eig-annot">Expectation over possible outcomes</div>
+              </div>
+              <!-- x*: red highlight on argmax appears with fragment 2 -->
+              <div class="eig-step eig-highlight" style="flex-direction: column; align-items: flex-start; position: relative;">
+                <div class="eig-eq">
+                  <span class="fragment fade-out" data-fragment-index="2">$x^{\star} \;=\; \color{#172642}{\arg\max_{x \,\in\, X}}\;\color{#172642}{\text{EIG}(x)}$</span>
+                  <span class="fragment fade-in" data-fragment-index="2" style="position: absolute; left: 0; top: 0;">$x^{\star} \;=\; \color{#ac2028}{\arg\max_{x \,\in\, X}}\;\color{#172642}{\text{EIG}(x)}$</span>
+                </div>
+                <div class="eig-annot">Most informative experiment</div>
+              </div>
             </div>
           </div>
-          <div class="fragment fade-in" data-fragment-index="2" style="text-align: center; max-width: 380px;">
-            <div class="challenge-annotation challenge-semantics">
-              <i class="fas fa-cubes"></i> &nbsp;
-              <strong>Challenge 2 &mdash; Marginalization:</strong> Computing
-              $\mathbb{E}_{y \,\sim\, p(y \mid x)}$ requires summing over all $s \in \mathcal{S}$,
-              which is combinatorially intractable.
+
+          <!-- Right: Challenges (new content, 1:1 with left) -->
+          <div class="col" style="flex: 1;">
+            <div class="eig-deriv-steps" style="margin-top: 0; max-width: 100%;">
+              <!-- Challenges header (maps to Goal) -->
+              <div style="background: #fff4f0; border: 1px solid #f0ddd8; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+                <div style="font-size: 0.55em; font-weight: 600; color: #ac2028;">
+                  <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Challenges
+                </div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Computing EIG exactly is intractable &mdash; three key difficulties:</div>
+              </div>
+              <!-- Challenge 1: Marginalization (maps to IG) -->
+              <div class="eig-step fragment fade-in" data-fragment-index="0" style="flex-direction: column; align-items: flex-start; width: 100%;">
+                <div style="font-weight: 600; color: #ac2028;">
+                  <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
+                  <i class="fas fa-cubes" style="margin-right: 4px;"></i> Marginalization
+                </div>
+                <div class="eig-annot">Entropy requires marginalizing over combinatorial $s \in \mathcal{S}$.</div>
+              </div>
+              <!-- Challenge 2: Simulation (maps to EIG) -->
+              <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start; width: 100%;">
+                <div style="font-weight: 600; color: #ac2028;">
+                  <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
+                  <i class="fas fa-cogs" style="margin-right: 4px;"></i> Simulation
+                </div>
+                <div class="eig-annot">Estimating likelihood of outcome $y$ requires simulating experiment $x$.</div>
+              </div>
+              <!-- Challenge 3: Proposing experiments (maps to x*) -->
+              <div class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start; width: 100%;">
+                <div style="font-weight: 600; color: #ac2028;">
+                  <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
+                  <i class="fas fa-search" style="margin-right: 4px;"></i> Proposing experiments
+                </div>
+                <div class="eig-annot">Experiment space $X$ may be vast or open-ended.</div>
+              </div>
             </div>
           </div>
         </div>
 
         <aside class="notes">
-          Two key challenges make EIG hard to compute exactly.
-          First, evaluating the likelihood requires a simulator — we need to know what outcome
-          an experiment would produce for a given structure.
-          Second, we need to marginalize over the full hypothesis space, which is exponentially large.
+          Three key challenges make EIG hard to compute exactly.
+          First, marginalization: evaluating the posterior requires summing over all possible structures.
+          Second, simulation: the likelihood requires running experiments on hypothesized structures.
+          Third, proposing experiments: the space of possible experiments may be too large to enumerate.
         </aside>
       </section>
 
@@ -817,20 +993,65 @@
           </div>
 
           <div class="col">
-            <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+            <div class="eig-diagram">
+              <div class="fragment fade-in" data-fragment-index="1">
               <div class="eig-dia-row">
                 <span class="eig-dia-label" style="font-size: 0.5em;">sample</span>
               </div>
-              <div class="eig-dia-row" style="gap: 14px;">
-                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
-                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
-                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
-                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
-                <span style="font-size: 1.4em; opacity: 0.7;">&#x1F9EA;</span>
+              <div class="eig-dia-row" style="gap: 8px;">
+                <!-- s1 (red): fused bicyclic ring system (naphthalene-like) -->
+                <svg width="50" height="44" viewBox="0 0 56 38">
+                  <polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="1.8" stroke-linejoin="round"/>
+                  <circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.2" opacity="0.4"/>
+                  <polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="1.8" stroke-linejoin="round"/>
+                  <circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.2" opacity="0.4"/>
+                  <line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="1.8" stroke-linecap="round"/><circle cx="53" cy="4" r="2" fill="#ac2028"/>
+                </svg>
+                <!-- s2 (green): ketone — zigzag chain with C=O double bond -->
+                <svg width="50" height="44" viewBox="0 0 56 44">
+                  <line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <circle cx="4" cy="30" r="2" fill="#04af70"/><circle cx="52" cy="30" r="2" fill="#04af70"/>
+                  <!-- C=O double bond from middle carbon -->
+                  <line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="1.8" stroke-linecap="round"/>
+                  <circle cx="28" cy="43" r="2" fill="#04af70"/>
+                </svg>
+                <!-- s3 (purple): longer branched chain -->
+                <svg width="50" height="44" viewBox="0 0 60 42">
+                  <line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <circle cx="3" cy="28" r="2" fill="#6d467b"/><circle cx="56" cy="12" r="2" fill="#6d467b"/>
+                  <!-- branch from middle -->
+                  <line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="1.8" stroke-linecap="round"/>
+                  <circle cx="34" cy="3" r="2" fill="#6d467b"/>
+                </svg>
+                <!-- s4 (orange): macrocycle (octagonal ring) -->
+                <svg width="48" height="48" viewBox="0 0 48 48">
+                  <polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10"
+                           fill="none" stroke="#ffa500" stroke-width="1.8" stroke-linejoin="round"/>
+                  <line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="1.8" stroke-linecap="round"/>
+                  <circle cx="24" cy="0" r="2" fill="#ffa500"/>
+                </svg>
+                <!-- s5 (blue): benzene + functional groups -->
+                <svg width="48" height="48" viewBox="0 0 56 52">
+                  <polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="1.8" stroke-linejoin="round"/>
+                  <circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.2" opacity="0.4"/>
+                  <line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="1.8" stroke-linecap="round"/><circle cx="47" cy="5" r="2" fill="#304ed8"/>
+                  <line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="1.8" stroke-linecap="round"/><circle cx="26" cy="45" r="2" fill="#304ed8"/>
+                  <line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="1.8" stroke-linecap="round"/><circle cx="5" cy="5" r="2" fill="#304ed8"/>
+                </svg>
               </div>
               <div class="eig-dia-row" style="font-size: 0.42em; color: #888;">
                 $s_1 \quad s_2 \quad s_3 \quad s_4 \quad s_5$
               </div>
+              </div><!-- /fragment 1 -->
+              <div class="fragment fade-in" data-fragment-index="2">
               <div class="eig-dia-row">
                 <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
               </div>
@@ -849,6 +1070,7 @@
               <div class="eig-dia-row" style="margin-top: 6px; font-size: 0.48em; color: #304ed8; font-weight: 600;">
                 $\hat{p}(y\!=\!\text{Yes}) = 3/5$
               </div>
+              </div><!-- /fragment 2 -->
             </div>
           </div>
         </div>
@@ -1192,8 +1414,8 @@
            SECTION 3: FORMAL FRAMEWORK — EIG  (1 min)
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- 3a. EIG derivation — progressive build-up -->
-      <section>
+      <!-- 3a. EIG derivation — progressive build-up (HIDDEN — covered by new BED slides) -->
+      <section data-visibility="hidden">
         <div class="section-label">Framework</div>
         <h3>Expected Information Gain</h3>
         <div class="eig-deriv-layout">
@@ -1249,8 +1471,8 @@
         </aside>
       </section>
 
-      <!-- 3b. Properties of EIG -->
-      <section>
+      <!-- 3b. Properties of EIG (HIDDEN — covered by new BED slides) -->
+      <section data-visibility="hidden">
         <div class="section-label">Framework</div>
         <h3>Properties of EIG</h3>
         <div class="eig-deriv-plot-layout">
@@ -1284,8 +1506,8 @@
         </aside>
       </section>
 
-      <!-- 3c. How do we estimate EIG? — challenges -->
-      <section>
+      <!-- 3c. How do we estimate EIG? — challenges (HIDDEN — covered by new BED slides) -->
+      <section data-visibility="hidden">
         <div class="section-label">Framework</div>
         <h3>How do we estimate EIG?</h3>
 
@@ -1740,10 +1962,10 @@ def answer(true_board, partial_board) -> bool:
         </ul>
         <div class="fragment" style="text-align: center; margin-top: 12px;">
           <div data-id="legend-box" style="display: inline-grid; grid-template-columns: auto auto; gap: 8px 32px; font-size: 0.6em; padding: 10px 24px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6); justify-items: start;">
-            <span data-id="legend-base"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
-            <span data-id="legend-code"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
-            <span data-id="legend-cot"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
-            <span data-id="legend-cotcode"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
           </div>
         </div>
 
@@ -1828,10 +2050,10 @@ def answer(true_board, partial_board) -> bool:
         </div>
         <div style="text-align: center; margin-top: 8px;">
           <div data-id="legend-box" style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-            <span data-id="legend-base"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
-            <span data-id="legend-cot"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
-            <span data-id="legend-code"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
-            <span data-id="legend-cotcode"><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
           </div>
         </div>
 
