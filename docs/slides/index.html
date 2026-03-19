@@ -170,7 +170,7 @@
     .eig-diagram .eig-dia-answer {
       display: flex; gap: 8px; font-size: 0.52em; font-weight: 600;
     }
-    .eig-diagram .eig-dia-answer span {
+    .eig-diagram .eig-dia-answer > span {
       padding: 3px 10px; border-radius: 6px;
     }
     .eig-diagram .eig-dia-yes { background: rgba(4,175,112,0.12); color: #04af70; }
@@ -983,7 +983,7 @@
               </li>
               <li class="fragment fade-in" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-random"></i></span>
-                <span class="kp-text"><span class="kp-label">Sample hypotheses:</span> Generate candidates $s_1, \ldots, s_N \sim p\!\big(S \mid (x_1, y_1), (x_2, y_2), \ldots\big)$ consistent with observed evidence.</span>
+                <span class="kp-text"><span class="kp-label">Sample hypotheses:</span> Generate candidates $s_1, \ldots, s_N \sim p(S \mid (x_1, y_1), (x_2, y_2), \ldots)$ consistent with observed evidence.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-play"></i></span>
@@ -993,7 +993,15 @@
           </div>
 
           <div class="col">
-            <div class="eig-diagram">
+            <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+              <!-- World model icon (appears with the world model bullet) -->
+              <div class="eig-dia-row" style="justify-content: center; margin-bottom: 8px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 8px 16px;">
+                  <i class="fas fa-globe" style="color: #304ed8; font-size: 0.7em;"></i>
+                  <span style="font-size: 0.48em; font-weight: 600; color: #304ed8;">World Model</span>
+                  <i class="fas fa-code" style="color: #304ed8; font-size: 0.55em; opacity: 0.6;"></i>
+                </div>
+              </div>
               <div class="fragment fade-in" data-fragment-index="1">
               <div class="eig-dia-row">
                 <span class="eig-dia-label" style="font-size: 0.5em;">sample</span>
@@ -1060,15 +1068,12 @@
               </div>
               <div class="eig-dia-row">
                 <div class="eig-dia-answer">
-                  <span class="eig-dia-yes">Yes</span>
-                  <span class="eig-dia-no">No</span>
-                  <span class="eig-dia-yes">Yes</span>
-                  <span class="eig-dia-yes">Yes</span>
-                  <span class="eig-dia-no">No</span>
+                  <span class="eig-dia-yes">$y_1$</span>
+                  <span class="eig-dia-no">$y_2$</span>
+                  <span class="eig-dia-yes">$y_3$</span>
+                  <span class="eig-dia-yes">$y_4$</span>
+                  <span class="eig-dia-no">$y_5$</span>
                 </div>
-              </div>
-              <div class="eig-dia-row" style="margin-top: 6px; font-size: 0.48em; color: #304ed8; font-weight: 600;">
-                $\hat{p}(y\!=\!\text{Yes}) = 3/5$
               </div>
               </div><!-- /fragment 2 -->
             </div>
