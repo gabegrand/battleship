@@ -1336,13 +1336,50 @@
         </aside>
       </section>
 
-      <!-- B.3 Instantiating the Framework (placeholder) -->
+      <!-- B.3 Building a sandbox for discovery -->
       <section> <!-- B.3 #8 -->
         <div class="section-label">Approach</div>
-        <h3>Instantiating the Framework</h3>
-        <p style="text-align: center; font-size: 0.6em; color: #888; margin-top: 40px;">
-          <em>(Bridge to Battleship &mdash; to be developed)</em>
-        </p>
+        <h3>Building a sandbox for discovery</h3>
+
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-cube"></i></span>
+                <span class="kp-text"><span class="kp-label">Minimal but complete.</span> Simple state representation and dynamics, yet instantiates the full BED loop. No domain expertise required.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-users"></i></span>
+                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI agents can play, enabling direct behavioral comparison.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
+                <span class="kp-text"><span class="kp-label">Simulatable.</span> Experiments take seconds, not days &mdash; outcomes can be generated automatically.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="3">
+                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+                <span class="kp-text"><span class="kp-label">Measurable.</span> We can quantify not just outcomes, but intermediate decisions: explore vs.&nbsp;exploit, and the value of information (EIG).</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col fragment fade-in" data-fragment-index="0" style="flex: 0 0 42%; text-align: center;">
+            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): A challenging domain with a minimal state representation</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          We set out to build a suitable environment for evaluating discovery agents. We had several
+          key desiderata. First, minimal but complete: the task should instantiate the full BED loop,
+          with simple state representation and dynamics, no complex prompting to explain the rules.
+          We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply
+          challenging. Second, human-interactive: both humans and AI agents should be able to interact
+          with the environment so we can compare behavior directly. Third, simulatable: experiments
+          should take seconds, not days. Finally, measurable: we want to quantify not just final
+          outcomes, but intermediate decisions — explore vs. exploit, and the information value of
+          each question.
+        </aside>
       </section>
 
 
@@ -1576,51 +1613,13 @@
         </aside>
       </section>
 
-      <!-- C.1 Why Battleship? -->
-      <section> <!-- C.1 #10 -->
-        <div class="section-label">Task</div>
-        <h3>Why Battleship?</h3>
-
-        <div class="two-col" style="align-items: center; gap: 36px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-bullseye"></i></span>
-                <span class="kp-text"><span class="kp-label">Combinatorial complexity.</span> Battleship has a simple representation but a large state space, similar to other challenging text- and grid-based tasks like ARC.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-sync-alt"></i></span>
-                <span class="kp-text"><span class="kp-label">Minimal closed-loop BED.</span> Battleship instantiates the full Bayesian Experimental Design loop: agents form beliefs, design experiments (questions), observe outcomes, and update.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
-                <span class="kp-text"><span class="kp-label">Formalizing rationality.</span> We can quantify the value of each question using Expected Information Gain (EIG), enabling direct comparison between human and LM behavior.</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col fragment fade-in" data-fragment-index="0" style="flex: 0 0 42%; text-align: center;">
-            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
-                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2, Chollet et al., 2025</p>
-          </div>
-        </div>
-
-        <aside class="notes">
-          Why Battleship and not some other task? Three reasons. First, unlike ARC or open-ended benchmarks,
-          Battleship has a fully formalized state space with optimal baselines — we can measure degrees of
-          rationality, not just success or failure. Second, it's a minimal instance of closed-loop Bayesian
-          experimental design. Third, we can formalize what a "good question" is using information theory.
-        </aside>
-      </section>
-
-
 
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION D: FRAMEWORK
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- D.0 How do we estimate EIG? -->
-      <section> <!-- D.0 #11 -->
+      <section> <!-- D.0 #10 -->
         <div class="section-label">Framework</div>
         <h3>How do we estimate EIG?</h3>
 
@@ -1742,7 +1741,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- D.1 EIG in action -->
-      <section> <!-- D.1 #12 -->
+      <section> <!-- D.1 #11 -->
         <div class="section-label">Framework</div>
         <h3>Many possible questions&hellip; but only some are <em>informative</em></h3>
         <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 12px;">
@@ -1864,7 +1863,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- D.2 What can we study with this framework? -->
-      <section> <!-- D.2 #13 -->
+      <section> <!-- D.2 #12 -->
         <div class="section-label">Framework</div>
         <h3>What can we study with this framework?</h3>
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
@@ -1901,12 +1900,12 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- E.0 Section divider: Experiments -->
-      <section data-background-color="#1e3270"> <!-- E.0 #14 -->
+      <section data-background-color="#1e3270"> <!-- E.0 #13 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiments and Results</h2>
       </section>
 
       <!-- E.1 Roadmap -->
-      <section> <!-- E.1 #15 -->
+      <section> <!-- E.1 #14 -->
         <h3>Roadmap</h3>
         <div class="strategy-grid" style="margin-top: 36px;">
           <div class="strat-card fragment fade-in-then-semi-out" style="--card-accent: #04af70;">
@@ -1938,7 +1937,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- F.0 Human study setup -->
-      <section> <!-- F.0 #16 -->
+      <section> <!-- F.0 #15 -->
         <div class="section-label">Human Study</div>
         <h3>Collecting the BattleshipQA dataset</h3>
         <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 12px;">
@@ -1977,7 +1976,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.1 Human study results — figures -->
-      <section data-auto-animate> <!-- F.1 #17 -->
+      <section data-auto-animate> <!-- F.1 #16 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="fig-row" style="margin-top: 12px;">
@@ -2000,7 +1999,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.2 Human study results — accuracy -->
-      <section data-auto-animate> <!-- F.2 #18 -->
+      <section data-auto-animate> <!-- F.2 #17 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 40px;">
@@ -2020,7 +2019,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- G.0 SpotterQA setup -->
-      <section data-auto-animate> <!-- G.0 #19 -->
+      <section data-auto-animate> <!-- G.0 #18 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 10px; margin-bottom: 12px;">
@@ -2053,7 +2052,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- G.1 SpotterQA results -->
-      <section data-auto-animate> <!-- G.1 #20 -->
+      <section data-auto-animate> <!-- G.1 #19 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="fig-row" style="gap: 16px; align-items: stretch;">
@@ -2089,7 +2088,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- H.0 Section divider: CaptainQA -->
-      <section data-background-color="#1e3270"> <!-- H.0 #21 -->
+      <section data-background-color="#1e3270"> <!-- H.0 #20 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiment 2: CaptainQA</h2>
         <p style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 12px;">Can LMs ask the right questions and play rationally?</p>
       </section>
@@ -2099,7 +2098,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- H.1 Three Bayesian strategies -->
-      <section> <!-- H.1 #22 -->
+      <section> <!-- H.1 #21 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Three Bayesian strategies for rational agents</h3>
         <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 8px;">
@@ -2141,7 +2140,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.2 CaptainQA results — F1 -->
-      <section> <!-- H.2 #23 -->
+      <section> <!-- H.2 #22 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Bayesian strategies boost performance</h3>
         <div class="two-col" style="align-items: center;">
@@ -2180,7 +2179,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.3 CaptainQA results — EIG scaling -->
-      <section> <!-- H.3 #24 -->
+      <section> <!-- H.3 #23 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>EIG scales with sample budget</h3>
         <div class="two-col" style="align-items: center;">
@@ -2213,7 +2212,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- I.0 Beyond Battleship: Guess Who? -->
-      <section> <!-- I.0 #25 -->
+      <section> <!-- I.0 #24 -->
         <div class="section-label">Generalization</div>
         <h3>Beyond Battleship: Guess Who?</h3>
         <div class="two-col" style="align-items: center;">
@@ -2256,7 +2255,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- J.0 Takeaways -->
-      <section> <!-- J.0 #26 -->
+      <section> <!-- J.0 #25 -->
         <h3>Takeaways</h3>
         <div class="takeaway-grid">
           <div class="takeaway-card">
@@ -2287,7 +2286,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- J.1 Thank you -->
-      <section class="title-slide"> <!-- J.1 #27 -->
+      <section class="title-slide"> <!-- J.1 #26 -->
         <h1 style="font-size: 1.8em !important;">Thank you!</h1>
         <h2 style="font-size: 0.85em !important; margin-bottom: 0.4em !important;">
           <i class="fas fa-globe"></i> &nbsp;<a href="https://gabegrand.github.io/battleship">gabegrand.github.io/battleship</a>
@@ -2317,6 +2316,43 @@ def answer(true_board, partial_board) -> bool:
       <!-- ═══════════════════════════════════════════════════════════════
            HIDDEN SLIDES (kept for reference, not shown in presentation)
            ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- [Hidden] Why Battleship? -->
+      <section data-visibility="hidden">
+        <div class="section-label">Task</div>
+        <h3>Why Battleship?</h3>
+
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-bullseye"></i></span>
+                <span class="kp-text"><span class="kp-label">Combinatorial complexity.</span> Battleship has a simple representation but a large state space, similar to other challenging text- and grid-based tasks like ARC.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-sync-alt"></i></span>
+                <span class="kp-text"><span class="kp-label">Minimal closed-loop BED.</span> Battleship instantiates the full Bayesian Experimental Design loop: agents form beliefs, design experiments (questions), observe outcomes, and update.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+                <span class="kp-text"><span class="kp-label">Formalizing rationality.</span> We can quantify the value of each question using Expected Information Gain (EIG), enabling direct comparison between human and LM behavior.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col fragment fade-in" data-fragment-index="0" style="flex: 0 0 42%; text-align: center;">
+            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2, Chollet et al., 2025</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Why Battleship and not some other task? Three reasons. First, unlike ARC or open-ended benchmarks,
+          Battleship has a fully formalized state space with optimal baselines — we can measure degrees of
+          rationality, not just success or failure. Second, it's a minimal instance of closed-loop Bayesian
+          experimental design. Third, we can formalize what a "good question" is using information theory.
+        </aside>
+      </section>
 
       <!-- [Hidden] Game Explorer live demo -->
       <section class="iframe-slide" data-background-color="#0f1f3c" data-visibility="hidden">
