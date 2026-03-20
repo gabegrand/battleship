@@ -454,10 +454,7 @@
     .mini-board .b-cell.ship-4  { background: #ffa500; }
     .mini-board .b-cell.current { box-shadow: 0 0 0 2px rgba(23,38,66,0.9), 0 0 0 4px rgba(255,255,255,0.6); z-index: 1; }
 
-    /* Cells hidden until their fragment reveals them */
-    .mini-board .b-cell[data-step] { background: #eaeae4; color: transparent; }
-    .mini-board .b-cell[data-step].revealed { color: #fff; }
-    .mini-board .b-cell[data-step="5"].revealed { background: #6d467b; }
+
 
     /* ── Board flip animation (Spotter POV reveal) ── */
     .game-action-board-wrap.board-flipper {
@@ -484,23 +481,6 @@
     }
     .board-back h4 { color: #04af70 !important; }
     .board-back .mini-board { flex: 1; }
-
-    /* ── Task slide: progressive 3-panel reveal ── */
-    #task-layout {
-      display: flex; justify-content: center; gap: 14px;
-      align-items: start; margin-top: 12px;
-    }
-    .task-panel {
-      max-width: 0; opacity: 0; overflow: hidden;
-      transition: max-width 0.6s ease, opacity 0.5s ease 0.1s;
-    }
-    .task-panel.tp-visible {
-      opacity: 1; overflow: visible;
-    }
-    #task-captain-panel.tp-visible { max-width: 260px; }
-    #task-spotter-panel.tp-visible { max-width: 260px; }
-    #task-chat-panel.tp-visible { max-width: 420px; flex: 1; }
-    #task-spotter-panel .game-action-board-wrap h4 { color: #04af70; }
 
     .game-action-events {
       display: flex; flex-direction: column; gap: 8px;
@@ -1717,469 +1697,196 @@
         </aside>
       </section>
 
-      <!-- C.3 A game in action -->
-      <section> <!-- C.3 #12 -->
-        <div class="section-label">Task</div>
-        <h3>A game in action</h3>
-
-        <!-- Trigger fragments for panel reveals (handled by JS) -->
-        <div class="fragment" data-fragment-index="1"></div>
-        <div class="fragment" data-fragment-index="2"></div>
-        <div class="fragment" data-fragment-index="3"></div>
-
-        <div id="task-layout">
-          <!-- Captain's board (left) -->
-          <div id="task-captain-panel" class="task-panel">
-            <div class="game-action-board-wrap">
-              <h4><i class="fas fa-anchor"></i> &nbsp;Captain&rsquo;s View</h4>
-              <div class="mini-board" id="task-intro-board">
-                <div class="b-label"></div>
-                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                <div class="b-label">7</div><div class="b-label">8</div>
-                <!-- Row A -->
-                <div class="b-label">A</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <!-- Row B: B4 = water -->
-                <div class="b-label">B</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell water"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <!-- Row C: C7 = orange -->
-                <div class="b-label">C</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <!-- Row D: D1 = water, D7 = orange -->
-                <div class="b-label">D</div>
-                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <!-- Row E: E7 = orange -->
-                <div class="b-label">E</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <!-- Row F: F7 = orange -->
-                <div class="b-label">F</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <!-- Row G: G2 = reveal on shot, G4/G6 = water, G7 = orange -->
-                <div class="b-label">G</div>
-                <div class="b-cell"></div>
-                <div class="b-cell" data-step="5"></div>
-                <div class="b-cell"></div>
-                <div class="b-cell water"></div>
-                <div class="b-cell"></div>
-                <div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <!-- Row H: H7 = water -->
-                <div class="b-label">H</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chat events (center) -->
-          <div id="task-chat-panel" class="task-panel">
-            <div class="game-action-events" id="game-events" style="gap: 6px;">
-              <!-- Wrap prior messages so they can collapse when question space appears -->
-              <div class="ge-msg-wrap" id="prior-msgs">
-                <!-- Fragment 4: Captain shoots G2 → Hit Purple ship -->
-                <div class="fragment" data-fragment-index="4">
-                  <div class="ge-msg is-captain visible">
-                    <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
-                    <div class="ge-bubble">
-                      <span class="ge-speaker">Captain</span>
-                      Fire at G2
-                      <div class="ge-result is-hit">
-                        <i class="result-icon fas fa-bullseye"></i>
-                        <span>Hit Purple ship</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Fragment 5: Captain asks question -->
-                <div class="fragment" data-fragment-index="5">
-                  <div class="ge-msg is-captain visible">
-                    <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
-                    <div class="ge-bubble">
-                      <span class="ge-speaker">Captain</span>
-                      Is the purple ship vertical?
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Fragment 6: Spotter answers No -->
-                <div class="fragment" data-fragment-index="6">
-                  <div class="ge-msg is-spotter visible">
-                    <div class="ge-avatar"><i class="fas fa-binoculars"></i></div>
-                    <div class="ge-bubble">
-                      <span class="ge-speaker">Spotter</span>
-                      No
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Fragment 7: Captain thinking + collapse prior messages + question space -->
-              <div class="fragment" data-fragment-index="7">
-                <div class="ge-msg is-captain visible">
-                  <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
-                  <div class="ge-bubble">
-                    <span class="ge-speaker">Captain</span>
-                    <span style="color: #888;">&hellip;</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fragment" data-fragment-index="7">
-                <p style="font-size: 0.52em; font-weight: 600; color: #172642; margin: 6px 0 4px;">
-                  <i class="fas fa-lightbulb" style="color: #f0c040;"></i>
-                  &nbsp;Many possible questions<span id="q-header-ext" style="display:none;">&hellip; but only some are <em>informative</em></span><span id="q-header-ellipsis">&hellip;</span>
-                </p>
-                <div class="q-space" id="question-space">
-                  <div class="q-chip" data-q="redundant">
-                    <span class="q-text">&ldquo;Are there more than 2 purple tiles remaining?&rdquo;
-                      <span class="q-explain">Purple is horizontal &mdash; only 2 tiles (G1 and G3) are possible</span></span>
-                    <span class="q-badge">&#x2717;</span>
-                  </div>
-                  <div class="q-chip" data-q="informative">
-                    <span class="q-text">&ldquo;Is the red ship near the purple ship?&rdquo;
-                      <span class="q-explain">Red ship location is completely unknown</span></span>
-                    <span class="q-badge">&#x2713;</span>
-                  </div>
-                  <div class="q-chip" data-q="redundant">
-                    <span class="q-text">&ldquo;Any more ships in column 7?&rdquo;
-                      <span class="q-explain">Given placement of orange, this is possible, but unlikely</span></span>
-                    <span class="q-badge">&#x2717;</span>
-                  </div>
-                  <div class="q-chip" data-q="informative">
-                    <span class="q-text">&ldquo;Are any ships along the edge?&rdquo;
-                      <span class="q-explain">Many unknown edge tiles remain</span></span>
-                    <span class="q-badge">&#x2713;</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Fragment 8: Rate questions as informative / redundant -->
-              <div class="fragment" data-fragment-index="8"></div>
-            </div>
-          </div>
-
-          <!-- Spotter's board (right) -->
-          <div id="task-spotter-panel" class="task-panel">
-            <div class="game-action-board-wrap">
-              <h4><i class="fas fa-binoculars"></i> &nbsp;Spotter&rsquo;s View</h4>
-              <div class="mini-board">
-                <div class="b-label"></div>
-                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                <div class="b-label">7</div><div class="b-label">8</div>
-                <!-- Row A: green at A3 -->
-                <div class="b-label">A</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <!-- Row B: green at B3 -->
-                <div class="b-label">B</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <!-- Row C: green at C3, orange at C7 -->
-                <div class="b-label">C</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <!-- Row D: green at D3, orange at D7 -->
-                <div class="b-label">D</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <!-- Row E: orange at E7 -->
-                <div class="b-label">E</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <!-- Row F: orange at F7 -->
-                <div class="b-label">F</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <!-- Row G: purple G1-G3, orange G7 -->
-                <div class="b-label">G</div>
-                <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <!-- Row H: red H4-H5 -->
-                <div class="b-label">H</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          Let's see this in action. Here's a game mid-way through.
-          [click] The Spotter sees the full board. [click] The Captain sees a partial view.
-          [click] They communicate through a chat interface.
-          [click] The Captain fires at G2 — a hit on the purple ship.
-          [click] The Captain asks: "Is the purple ship vertical?"
-          [click] The Spotter answers No.
-          [click] At any point, there's a large space of possible questions. But only some
-          are informative — questions that split the hypothesis space evenly. Others are
-          redundant because their answers are already determined.
-          [click] This is the key insight that motivates our formal framework.
-        </aside>
-      </section>
-
-
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION D: FRAMEWORK
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- D.0 How do we estimate EIG? -->
-      <section> <!-- D.0 #13 -->
+      <!-- D.0 EIG in Battleship — B.2-style layout with four questions -->
+      <section> <!-- D.0 #12 -->
         <div class="section-label">Framework</div>
-        <h3>How do we estimate EIG?</h3>
+        <h3>Computing EIG in Battleship</h3>
 
-        <div class="approach-layout">
-          <!-- Col 1: eig-diagram (always visible) -->
-          <div style="display: flex; align-items: center;">
-            <div class="eig-diagram" style="padding: 14px; gap: 8px;">
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$S$</span>
-                <img src="../static/images/world_model_samples/partial_board.png" alt="Board state"
-                     style="height: 64px; border-radius: 6px; border: 2px solid #b0bfe6;" />
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
+
+          <!-- Hypothesis space (board samples) -->
+          <div style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
               </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-              </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$q$</span>
-                <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
-              </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-              </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$a$</span>
-                <div class="eig-dia-answer">
-                  <span class="eig-dia-yes">Yes</span>
-                  <span class="eig-dia-no">No</span>
-                </div>
+              <div style="display: flex; gap: 6px; align-items: flex-end;">
+                <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="height: 40px; border-radius: 4px; border: 1px solid #e0e0e0;" />
+                <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="height: 40px; border-radius: 4px; border: 1px solid #e0e0e0;" />
+                <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="height: 40px; border-radius: 4px; border: 1px solid #e0e0e0;" />
+                <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" style="height: 40px; border-radius: 4px; border: 1px solid #e0e0e0;" />
+                <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" style="height: 40px; border-radius: 4px; border: 1px solid #e0e0e0;" />
+                <span style="font-size: 0.4em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
               </div>
             </div>
           </div>
 
-          <!-- Cols 2+3: method icons and step content -->
-          <div class="approach-right">
-            <!-- Row 1: World model → hypothesis space -->
-            <div class="method-cell fragment" data-fragment-index="1">
-              <i class="fas fa-globe" style="color: #304ed8;"></i>
-              <span class="method-label">World model</span>
+          <!-- Column headers -->
+          <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 4px;">
+            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose &amp; Translate
             </div>
-            <div class="fragment" data-fragment-index="2">
-              <div class="pipeline-step">
-                <span class="step-badge">1</span>
-                <span class="step-title">Sample from world model</span>
+            <div style="width: 24px;"></div>
+            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-play" style="margin-right: 4px;"></i> Simulate &amp; Score
+            </div>
+          </div>
+
+          <!-- Question rows -->
+          <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+
+            <!-- Row 1: "More than 2 purple tiles remaining?" — redundant, EIG ≈ 0 -->
+            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 8px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Are there more than 2 purple tiles remaining?&rdquo;</div>
+                </div>
               </div>
-              <div class="sample-bucket" style="padding: 6px 8px;">
-                <h4 style="margin-bottom: 4px; font-size: 0.48em;">
-                  <i class="fas fa-layer-group" style="color: #888;"></i> Hypothesis space
-                </h4>
-                <div class="sample-thumbnails">
-                  <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="height: 48px;" />
-                  <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="height: 48px;" />
-                  <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="height: 48px;" />
-                  <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" style="height: 48px;" />
-                  <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" style="height: 48px;" />
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; margin-top: 3px;">$\hat{p} = 0/5$</div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.00</div>
                 </div>
               </div>
             </div>
 
-            <!-- Row 2: LLM → code -->
-            <div class="method-cell fragment" data-fragment-index="3">
-              <i class="fas fa-robot" style="color: #8e44ad;"></i>
-              <span class="method-label">LLM</span>
-            </div>
-            <div class="fragment" data-fragment-index="3">
-              <div class="pipeline-step">
-                <span class="step-badge">2</span>
-                <span class="step-title">Translate to code ($f_q$)</span>
+            <!-- Row 2: "Is the red ship near the purple ship?" — informative, EIG ≈ 0.97 -->
+            <div class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: stretch; gap: 8px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is the red ship near the purple ship?&rdquo;</div>
+                </div>
               </div>
-              <pre style="margin: 0; border-radius: 8px; font-size: 0.38em; overflow-x: hidden; line-height: 1.5;"><code class="language-python" data-trim>
-def answer(true_board, partial_board) -> bool:
-    purple = 3  # ship ID for purple
-    rows, cols = np.where(true_board == purple)
-    if len(cols) == 0:
-        return False
-    return len(set(cols)) == 1  # same col
-              </code></pre>
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; margin-top: 3px;">$\hat{p} = 3/5$</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 6px; padding: 5px 10px; color: white; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; opacity: 0.85;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700;">0.97</div>
+                </div>
+              </div>
             </div>
 
-            <!-- Row 3: Execute → results -->
-            <div class="method-cell fragment" data-fragment-index="4">
-              <i class="fas fa-terminal" style="color: #27ae60;"></i>
-              <span class="method-label">Execute</span>
+            <!-- Row 3: "Any more ships in column 7?" — low EIG -->
+            <div class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: stretch; gap: 8px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Any more ships in column 7?&rdquo;</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; margin-top: 3px;">$\hat{p} = 1/5$</div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.72</div>
+                </div>
+              </div>
             </div>
-            <div class="fragment" data-fragment-index="4">
-              <div class="pipeline-step">
-                <span class="step-badge">3</span>
-                <span class="step-title">Execute $f_q$ on each sample</span>
+
+            <!-- Row 4: "Are any ships along the edge?" — informative, EIG ≈ 0.97 -->
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 8px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_4$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Are any ships along the edge?&rdquo;</div>
+                </div>
               </div>
-              <div class="exec-results">
-                <span class="exec-pill exec-no">No</span>
-                <span class="exec-pill exec-no">No</span>
-                <span class="exec-pill exec-no">No</span>
-                <span class="exec-pill exec-no">No</span>
-                <span class="exec-pill exec-yes">Yes</span>
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
               </div>
-              <div class="eig-result-box" style="padding: 6px 12px;">
-                <div class="eig-detail">$\hat{p} = 1/5 = 0.2$ &nbsp;&mdash;&nbsp; Imbalanced split &rarr; low EIG</div>
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-yes">Y</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                    <span class="exec-pill exec-no">N</span>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; margin-top: 3px;">$\hat{p} = 2/5$</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 6px; padding: 5px 10px; color: white; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; opacity: 0.85;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700;">0.97</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /question rows -->
+
+          <!-- Key insight -->
+          <div class="fragment fade-in" data-fragment-index="5" style="width: 100%; margin-top: 8px;">
+            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600; margin-bottom: 4px;">
+              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 10px;">&ldquo;Is the red ship near the purple ship?&rdquo; &nbsp; (EIG = 0.97)</span>
+            </div>
+            <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
+              <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
+                <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
+                <strong>Key insight:</strong> Questions that split the hypothesis space evenly ($\hat{p}$ near 0.5) are most informative. Redundant questions ($\hat{p}$ near 0 or 1) waste a turn.
               </div>
             </div>
           </div>
+
         </div>
 
         <aside class="notes">
-          Here's our approach, corresponding directly to the S, q, a variables from EIG.
-
-          For S: the board space is too large to enumerate, so we use sample-based inference.
-          We define a world model that generates complete boards consistent with partial
-          observations, forming a hypothesis space.
-
-          For q: to interpret question semantics, we use an LLM to translate natural language
-          questions into executable Python code, which we call f_q. Prior work required manual
-          translation into a restricted DSL; we automate it.
-
-          For a: we execute f_q on each sampled board to get simulated answers — here shown as
-          No, No, No, No, Yes. This gives p-hat = 1/5 = 0.2, an imbalanced split indicating
-          low EIG. A question splitting samples more evenly would be more informative.
+          Let's see how this works in Battleship. We sample board hypotheses consistent with
+          what the Captain has observed, then score four candidate questions.
+          "More than 2 purple tiles?" — every sample says No, so EIG is zero. That question
+          is redundant. "Red ship near purple?" — a 3/5 split, high EIG. "Ships in column 7?"
+          — mostly No, low EIG. "Ships along the edge?" — another even split, high EIG.
+          The agent picks the question with highest EIG. More samples means better estimates,
+          an inference-scaling approach to experiment design.
         </aside>
       </section>
 
 
-      <!-- D.1 EIG in action -->
-      <section> <!-- D.1 #14 -->
-        <div class="section-label">Framework</div>
-        <h3>Many possible questions&hellip; but only some are <em>informative</em></h3>
-        <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 12px;">
-          Now we can quantify this intuition with EIG
-        </p>
 
-        <!-- NOTE: EIG values are placeholders — replace with real computed values -->
-        <div class="eig-ranking">
-          <!-- Q1: redundant -->
-          <div class="eig-rank-row rank-low">
-            <div class="eig-rank-question">
-              <span class="eig-rank-badge" style="color: #e74c3c;">&#x2717;</span>
-              &ldquo;Are there more than 2 purple tiles remaining?&rdquo;
-            </div>
-            <div class="eig-rank-result fragment" data-fragment-index="1">
-              <div class="exec-results" style="margin-bottom: 2px;">
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-              </div>
-              <div class="eig-rank-metrics">
-                <div class="eig-rank-bar-wrap">
-                  <div class="eig-rank-bar bar-low" style="width: 0%;"></div>
-                </div>
-                <span class="eig-rank-eig low">0.00</span>
-              </div>
-              <div class="eig-rank-p">$\hat{p} = 0/5$</div>
-            </div>
-          </div>
-
-          <!-- Q2: informative -->
-          <div class="eig-rank-row rank-high">
-            <div class="eig-rank-question">
-              <span class="eig-rank-badge" style="color: #27ae60;">&#x2713;</span>
-              &ldquo;Is the red ship near the purple ship?&rdquo;
-            </div>
-            <div class="eig-rank-result fragment" data-fragment-index="1">
-              <div class="exec-results" style="margin-bottom: 2px;">
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-              </div>
-              <div class="eig-rank-metrics">
-                <div class="eig-rank-bar-wrap">
-                  <div class="eig-rank-bar bar-high" style="width: 97%;"></div>
-                </div>
-                <span class="eig-rank-eig high">0.97</span>
-              </div>
-              <div class="eig-rank-p">$\hat{p} = 3/5$</div>
-            </div>
-          </div>
-
-          <!-- Q3: redundant -->
-          <div class="eig-rank-row rank-low">
-            <div class="eig-rank-question">
-              <span class="eig-rank-badge" style="color: #e74c3c;">&#x2717;</span>
-              &ldquo;Any more ships in column 7?&rdquo;
-            </div>
-            <div class="eig-rank-result fragment" data-fragment-index="1">
-              <div class="exec-results" style="margin-bottom: 2px;">
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-              </div>
-              <div class="eig-rank-metrics">
-                <div class="eig-rank-bar-wrap">
-                  <div class="eig-rank-bar bar-low" style="width: 72%;"></div>
-                </div>
-                <span class="eig-rank-eig low">0.72</span>
-              </div>
-              <div class="eig-rank-p">$\hat{p} = 1/5$</div>
-            </div>
-          </div>
-
-          <!-- Q4: informative -->
-          <div class="eig-rank-row rank-high">
-            <div class="eig-rank-question">
-              <span class="eig-rank-badge" style="color: #27ae60;">&#x2713;</span>
-              &ldquo;Are any ships along the edge?&rdquo;
-            </div>
-            <div class="eig-rank-result fragment" data-fragment-index="1">
-              <div class="exec-results" style="margin-bottom: 2px;">
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-yes">Y</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-                <span class="exec-pill exec-no">N</span>
-              </div>
-              <div class="eig-rank-metrics">
-                <div class="eig-rank-bar-wrap">
-                  <div class="eig-rank-bar bar-high" style="width: 97%;"></div>
-                </div>
-                <span class="eig-rank-eig high">0.97</span>
-              </div>
-              <div class="eig-rank-p">$\hat{p} = 2/5$</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="callout fragment" data-fragment-index="2" style="margin-top: 14px;">
-          <p><span class="callout-label">Key insight:</span> EIG formalizes the intuition &mdash; informative questions split the hypothesis space evenly ($p$ near 0.5), while redundant questions have predetermined answers ($p$ near 0 or 1).</p>
-        </div>
-
-        <aside class="notes">
-          Let's circle back to those four questions from earlier. Now we can actually compute
-          an EIG for each one. The redundant questions — "more than 2 purple tiles?" and
-          "ships in column 7?" — get low EIG because their answers are already mostly determined.
-          The informative questions — "red near purple?" and "ships along edge?" — split the
-          hypothesis space more evenly, giving high EIG. This is exactly the intuition we had
-          before, but now formalized.
-        </aside>
-      </section>
-
-
-      <!-- D.2 What can we study with this framework? -->
-      <section> <!-- D.2 #15 -->
+      <!-- D.1 What can we study with this framework? -->
+      <section> <!-- D.1 #13 -->
         <div class="section-label">Framework</div>
         <h3>What can we study with this framework?</h3>
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
@@ -2216,12 +1923,12 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- E.0 Section divider: Experiments -->
-      <section data-background-color="#1e3270"> <!-- E.0 #16 -->
+      <section data-background-color="#1e3270"> <!-- E.0 #14 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiments and Results</h2>
       </section>
 
       <!-- E.1 Roadmap -->
-      <section> <!-- E.1 #17 -->
+      <section> <!-- E.1 #15 -->
         <h3>Roadmap</h3>
         <div class="strategy-grid" style="margin-top: 36px;">
           <div class="strat-card fragment fade-in-then-semi-out" style="--card-accent: #04af70;">
@@ -2253,7 +1960,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- F.0 Human study setup -->
-      <section> <!-- F.0 #18 -->
+      <section> <!-- F.0 #16 -->
         <div class="section-label">Human Study</div>
         <h3>Collecting the BattleshipQA dataset</h3>
         <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 12px;">
@@ -2292,7 +1999,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.1 Human study results — figures -->
-      <section data-auto-animate> <!-- F.1 #19 -->
+      <section data-auto-animate> <!-- F.1 #17 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="fig-row" style="margin-top: 12px;">
@@ -2315,7 +2022,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.2 Human study results — accuracy -->
-      <section data-auto-animate> <!-- F.2 #20 -->
+      <section data-auto-animate> <!-- F.2 #18 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 40px;">
@@ -2335,7 +2042,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- G.0 SpotterQA setup -->
-      <section data-auto-animate> <!-- G.0 #21 -->
+      <section data-auto-animate> <!-- G.0 #19 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 10px; margin-bottom: 12px;">
@@ -2368,7 +2075,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- G.1 SpotterQA results -->
-      <section data-auto-animate> <!-- G.1 #22 -->
+      <section data-auto-animate> <!-- G.1 #20 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="fig-row" style="gap: 16px; align-items: stretch;">
@@ -2404,7 +2111,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- H.0 Section divider: CaptainQA -->
-      <section data-background-color="#1e3270"> <!-- H.0 #23 -->
+      <section data-background-color="#1e3270"> <!-- H.0 #21 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiment 2: CaptainQA</h2>
         <p style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 12px;">Can LMs ask the right questions and play rationally?</p>
       </section>
@@ -2414,7 +2121,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- H.1 Three Bayesian strategies -->
-      <section> <!-- H.1 #24 -->
+      <section> <!-- H.1 #22 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Three Bayesian strategies for rational agents</h3>
         <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 8px;">
@@ -2456,7 +2163,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.2 CaptainQA results — F1 -->
-      <section> <!-- H.2 #25 -->
+      <section> <!-- H.2 #23 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Bayesian strategies boost performance</h3>
         <div class="two-col" style="align-items: center;">
@@ -2495,7 +2202,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.3 CaptainQA results — EIG scaling -->
-      <section> <!-- H.3 #26 -->
+      <section> <!-- H.3 #24 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>EIG scales with sample budget</h3>
         <div class="two-col" style="align-items: center;">
@@ -2528,7 +2235,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- I.0 Beyond Battleship: Guess Who? -->
-      <section> <!-- I.0 #27 -->
+      <section> <!-- I.0 #25 -->
         <div class="section-label">Generalization</div>
         <h3>Beyond Battleship: Guess Who?</h3>
         <div class="two-col" style="align-items: center;">
@@ -2571,7 +2278,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- J.0 Takeaways -->
-      <section> <!-- J.0 #28 -->
+      <section> <!-- J.0 #26 -->
         <h3>Takeaways</h3>
         <div class="takeaway-grid">
           <div class="takeaway-card">
@@ -2602,7 +2309,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- J.1 Thank you -->
-      <section class="title-slide"> <!-- J.1 #29 -->
+      <section class="title-slide"> <!-- J.1 #27 -->
         <h1 style="font-size: 1.8em !important;">Thank you!</h1>
         <h2 style="font-size: 0.85em !important; margin-bottom: 0.4em !important;">
           <i class="fas fa-globe"></i> &nbsp;<a href="https://gabegrand.github.io/battleship">gabegrand.github.io/battleship</a>
@@ -2632,6 +2339,20 @@ def answer(true_board, partial_board) -> bool:
       <!-- ═══════════════════════════════════════════════════════════════
            HIDDEN SLIDES (kept for reference, not shown in presentation)
            ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- [Hidden] Computing EIG in Battleship (old D.0) -->
+      <section data-visibility="hidden">
+        <div class="section-label">Framework</div>
+        <h3>Computing EIG in Battleship</h3>
+        <aside class="notes">Old D.0 — replaced by new Battleship-specific B.2-style slide</aside>
+      </section>
+
+      <!-- [Hidden] Which questions are worth asking? (old D.1) -->
+      <section data-visibility="hidden">
+        <div class="section-label">Framework</div>
+        <h3>Which questions are worth asking?</h3>
+        <aside class="notes">Old D.1 — content merged into new D.0</aside>
+      </section>
 
       <!-- [Hidden] Why Battleship? -->
       <section data-visibility="hidden">
@@ -3103,126 +2824,31 @@ def answer(true_board, partial_board) -> bool:
       if (partial) partial.style.opacity = show ? '1' : '0';
     }
 
-    // ── Task slide (C.3): progressive panel reveal + chat sequence ──
-    var taskPanels = { '1': 'task-spotter-panel', '2': 'task-captain-panel', '3': 'task-chat-panel' };
-
+    // ── C.0: board cross-fade fragment handler ──
     Reveal.on('fragmentshown', function(event) {
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
-
-      // C.0: cross-fade boards on fragment 1
       var slide = event.fragment.closest('section');
       if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
         c0BoardSwap(true);
-      }
-
-      // Fragments 1-3: reveal panels
-      if (taskPanels[idx]) {
-        var panel = document.getElementById(taskPanels[idx]);
-        if (panel) panel.classList.add('tp-visible');
-      }
-      // Fragment 4: reveal G2 cell on captain's board
-      if (idx === '4') {
-        var step = parseInt(idx) + 1;
-        document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
-          cell.classList.add('revealed');
-        });
-      }
-      // Fragment 7: collapse prior messages
-      if (idx === '7') {
-        var events = document.getElementById('game-events');
-        if (events) events.classList.add('q-expanded');
-      }
-      // Fragment 8: rate question chips + extend header
-      if (idx === '8') {
-        document.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
-          chip.classList.add(chip.getAttribute('data-q'));
-        });
-        var ext = document.getElementById('q-header-ext');
-        var ell = document.getElementById('q-header-ellipsis');
-        if (ext) ext.style.display = 'inline';
-        if (ell) ell.style.display = 'none';
       }
     });
 
     Reveal.on('fragmenthidden', function(event) {
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
-
-      // C.0: undo board cross-fade
       var slide = event.fragment.closest('section');
       if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
         c0BoardSwap(false);
       }
-
-      // Undo panel reveals
-      if (taskPanels[idx]) {
-        var panel = document.getElementById(taskPanels[idx]);
-        if (panel) panel.classList.remove('tp-visible');
-      }
-      // Undo G2 cell reveal
-      if (idx === '4') {
-        var step = parseInt(idx) + 1;
-        document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
-          cell.classList.remove('revealed');
-        });
-      }
-      // Undo collapse
-      if (idx === '7') {
-        var events = document.getElementById('game-events');
-        if (events) events.classList.remove('q-expanded');
-      }
-      // Undo question chip rating
-      if (idx === '8') {
-        document.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
-          chip.classList.remove('informative', 'redundant');
-        });
-        var ext = document.getElementById('q-header-ext');
-        var ell = document.getElementById('q-header-ellipsis');
-        if (ext) ext.style.display = 'none';
-        if (ell) ell.style.display = 'inline';
-      }
     });
 
-    // Reset task slide state when entering fresh
+    // Sync C.0 board state when entering the slide
     Reveal.on('slidechanged', function(event) {
-      // Sync C.0 board cross-fade with fragment state
       if (event.currentSlide.querySelector('#c0-full-board')) {
-        // Check if fragment 1 (hidden info) is already shown
         var frag1 = event.currentSlide.querySelector('[data-fragment-index="1"]');
         var showPartial = frag1 && frag1.classList.contains('visible');
         c0BoardSwap(showPartial);
-      }
-      // Reset task panels
-      ['task-spotter-panel', 'task-captain-panel', 'task-chat-panel'].forEach(function(id) {
-        var panel = event.currentSlide.querySelector('#' + id);
-        if (panel) panel.classList.remove('tp-visible');
-      });
-      // Reset revealed cells
-      event.currentSlide.querySelectorAll('.mini-board .b-cell[data-step]').forEach(function(cell) {
-        cell.classList.remove('revealed');
-      });
-      // Reset chat state
-      var events = event.currentSlide.querySelector('#game-events');
-      if (events) events.classList.remove('q-expanded');
-      event.currentSlide.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
-        chip.classList.remove('informative', 'redundant');
-      });
-      var ext = event.currentSlide.querySelector('#q-header-ext');
-      var ell = event.currentSlide.querySelector('#q-header-ellipsis');
-      if (ext) ext.style.display = 'none';
-      if (ell) ell.style.display = 'inline';
-
-      // Auto-play the game explorer when its slide becomes active
-      var iframe = event.currentSlide.querySelector('#game-explorer-frame');
-      if (iframe && iframe.contentWindow) {
-        // Try to click the play button inside the iframe after a short delay
-        setTimeout(function() {
-          try {
-            var playBtn = iframe.contentWindow.document.getElementById('timeline-play');
-            if (playBtn) playBtn.click();
-          } catch(e) { /* cross-origin safety */ }
-        }, 800);
       }
     });
   </script>
