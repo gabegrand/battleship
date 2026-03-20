@@ -674,9 +674,10 @@
         </div>
 
         <aside class="notes">
-          Many emerging applications of AI require agents to seek information strategically: forming hypotheses, asking targeted questions, and making decisions under uncertainty.
-          But evaluating these abilities is hard because LMs already know a lot about the real world.
-          We need controlled environments where we can formalize rationality and compare model behavior against human and ideal baselines.
+          Some of the most exciting applications of AI today require agents to seek information strategically.
+          Given limited resources, do language models behave like rational agents? And how do they compare to human scientists, doctors, or engineers?
+          Studying these questions is difficult because LMs already know a lot about the real world. Moreover, running experiments is often time-consuming and expensive, so high-profile results can be difficult to verify and reproduce.
+          <!-- In this work, we introduce a new framework for building and evaluating rational agents in controlled settings, where we can formalize what &ldquo;rational&rdquo; means and directly compare LM behavior against human and ideal baselines. -->
         </aside>
       </section>
 
@@ -687,7 +688,7 @@
 
       <!-- Slide A: Bayesian Experimental Design -->
       <section data-auto-animate>
-        <div class="section-label" data-id="bed-label">Background</div>
+        <div class="section-label" data-id="bed-label">Motivation</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col">
@@ -782,7 +783,7 @@
 
       <!-- Slide B: Choosing Experiments Efficiently (EIG) -->
       <section data-auto-animate>
-        <div class="section-label" data-id="bed-label">Background</div>
+        <div class="section-label" data-id="bed-label">Motivation</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; margin-top: 16px;">
@@ -883,7 +884,7 @@
 
       <!-- Slide C: Challenges of Optimizing EIG -->
       <section data-auto-animate>
-        <div class="section-label" data-id="bed-label">Background</div>
+        <div class="section-label" data-id="bed-label">Motivation</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; margin-top: 16px;">
@@ -969,27 +970,37 @@
         </aside>
       </section>
 
-      <!-- Slide D1: Our Approach — Agent ↔ World Model (large, centered) -->
+      <!-- Slide D1: Approach — Agent ↔ World Model (large, centered) -->
       <section data-auto-animate>
         <div class="section-label">Approach</div>
-        <h3>Our Approach</h3>
+        <h3>Approach</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 80px;">
-          <div data-id="agent-wm-row" style="display: flex; align-items: center; gap: 24px;">
-            <div data-id="agent-badge" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px;">
-              <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
-              <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+          <!-- NOTE: No data-id on children inside agent-wm-row — see AUTO-ANIMATE GOTCHA above -->
+          <div data-id="agent-wm-row" style="display: flex; align-items: flex-start; gap: 24px;">
+            <!-- Agent badge + caption -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px;">
+                <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
+                <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+              </div>
+              <p style="margin: 0; font-size: 0.45em; color: #4a5770; text-align: center; line-height: 1.4;">
+                LLM with code &amp; reasoning capabilities
+              </p>
             </div>
-            <span data-id="agent-wm-arrow" style="font-size: 1em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div data-id="wm-badge" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px;">
-              <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
-              <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
-              <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+            <span style="font-size: 1em; color: #aaa; margin-top: 14px;"><i class="fas fa-arrows-alt-h"></i></span>
+            <!-- World Model badge + caption -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px;">
+                <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
+                <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
+                <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+              </div>
+              <p style="margin: 0; font-size: 0.45em; color: #304ed8; text-align: center; line-height: 1.4;">
+                A code-based simulator that encodes domain knowledge
+              </p>
             </div>
           </div>
-          <p style="margin-top: 24px; font-size: 0.55em; color: #4a5770; max-width: 600px; text-align: center; line-height: 1.5;">
-            A code-based simulator that encodes knowledge about the dynamics of the domain
-          </p>
         </div>
 
         <aside class="notes">
@@ -999,176 +1010,298 @@
         </aside>
       </section>
 
-      <!-- Slide D2: Our Approach — Process diagram (auto-animated from D1) -->
+      <!-- Slide D2: Approach — Hypothesis Space appears large (auto-animated from D1) -->
       <section data-auto-animate>
         <div class="section-label">Approach</div>
-        <h3>Our Approach</h3>
+        <h3>Approach</h3>
 
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 8px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
 
-          <!-- Top: Agent ↔ World Model (shrunk from D1) -->
+          <!-- Agent ↔ World Model (shrunk) — matches D1's data-id -->
           <div data-id="agent-wm-row" style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
-            <div data-id="agent-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
             </div>
-            <span data-id="agent-wm-arrow" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div data-id="wm-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+            <span style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
               <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
             </div>
           </div>
 
-          <!-- Three-column process -->
-          <div style="display: flex; align-items: start; gap: 16px; width: 100%;">
-
-            <!-- ① Sample: Hypothesis Space (World Model color) -->
-            <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; background: rgba(48,78,216,0.06); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 12px; padding: 12px; text-align: center;">
-              <div style="font-size: 0.42em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                <i class="fas fa-random" style="margin-right: 4px;"></i> ① Sample
+          <!-- ① Sample: Hypothesis Space — large, prominent -->
+          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 18px 24px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <div style="font-size: 0.44em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
               </div>
-              <div style="background: white; border: 1.5px dashed rgba(48,78,216,0.3); border-radius: 8px; padding: 10px 6px 6px;">
-                <div style="font-size: 0.36em; font-weight: 600; color: #888; margin-bottom: 6px;">Hypothesis Space</div>
-                <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
-                  <svg width="38" height="32" viewBox="0 0 56 38">
-                    <polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2" stroke-linejoin="round"/>
-                    <circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.3" opacity="0.4"/>
-                    <polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2" stroke-linejoin="round"/>
-                    <circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.3" opacity="0.4"/>
-                    <line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/>
-                  </svg>
-                  <svg width="38" height="32" viewBox="0 0 56 44">
-                    <line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/>
-                    <line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="28" cy="43" r="2.2" fill="#04af70"/>
-                  </svg>
-                  <svg width="38" height="32" viewBox="0 0 60 42">
-                    <line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/>
-                    <line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="34" cy="3" r="2.2" fill="#6d467b"/>
-                  </svg>
-                  <svg width="32" height="32" viewBox="0 0 48 48">
-                    <polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2" stroke-linejoin="round"/>
-                    <line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="24" cy="0" r="2.2" fill="#ffa500"/>
-                  </svg>
-                  <svg width="36" height="36" viewBox="0 0 56 52">
-                    <polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2" stroke-linejoin="round"/>
-                    <circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.3" opacity="0.4"/>
-                    <line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/>
-                    <line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/>
-                    <line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/>
-                  </svg>
+              <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <!-- s1: fused bicyclic (red) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="36" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_1$</div>
                 </div>
-                <div style="font-size: 0.34em; color: #888; margin-top: 4px;">$s_1 \;\; s_2 \;\; s_3 \;\; s_4 \;\; s_5$</div>
-              </div>
-            </div>
-
-            <!-- Arrow ①→② -->
-            <div style="display: flex; align-items: center; padding-top: 40px; font-size: 0.7em; color: #bbb;">
-              <i class="fas fa-arrow-right"></i>
-            </div>
-
-            <!-- ② Propose & Translate (Agent color) -->
-            <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; background: rgba(75,90,120,0.06); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 12px; padding: 12px; text-align: center;">
-              <div style="font-size: 0.42em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> ② Propose
-              </div>
-              <!-- Natural language experiment -->
-              <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 10px; text-align: left; margin-bottom: 6px;">
-                <div style="font-size: 0.36em; color: #888; font-weight: 600; margin-bottom: 3px;">$x$: experiment</div>
-                <div style="font-size: 0.4em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
-              </div>
-              <!-- Code translation (separate fragment) -->
-              <div class="fragment fade-in" data-fragment-index="2">
-                <div style="font-size: 0.55em; color: #bbb; margin: 2px 0;"><i class="fas fa-arrow-down"></i></div>
-                <div style="background: #1e1e2e; border-radius: 8px; padding: 8px 10px; text-align: left;">
-                  <div style="font-size: 0.36em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_x(\cdot)$: code</div>
-                  <div style="font-size: 0.34em; font-family: 'Fira Code', monospace; line-height: 1.5; text-align: left;">
-                    <div><span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span></div>
-                    <div style="padding-left: 1.2em;"><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span></div>
+                <!-- s2: ketone chain (green) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="38" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_2$</div>
+                </div>
+                <!-- s3: branched chain (purple) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="50" height="36" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_3$</div>
+                </div>
+                <!-- s4: macrocycle (orange) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="40" height="40" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_4$</div>
+                </div>
+                <!-- s5: benzene+branches (blue) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="46" height="42" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_5$</div>
+                </div>
+                <!-- ellipsis -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 40px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 0.5em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Arrow ②→③ -->
-            <div style="display: flex; align-items: center; padding-top: 40px; font-size: 0.7em; color: #bbb;">
-              <i class="fas fa-arrow-right"></i>
+          <p style="margin-top: 12px; font-size: 0.48em; color: #666; text-align: center; line-height: 1.5;">
+            The world model defines a generative process $p(S)$. Sample candidate hypotheses to form a hypothesis space.
+          </p>
+        </div>
+
+        <aside class="notes">
+          The world model defines a generative process p(S). The agent uses it to
+          sample candidate hypotheses consistent with observed evidence, forming a hypothesis space.
+        </aside>
+      </section>
+
+      <!-- Slide D3: Approach — Full process diagram (auto-animated from D2) -->
+      <section data-auto-animate>
+        <div class="section-label">Approach</div>
+        <h3>Approach</h3>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
+
+          <!-- Agent ↔ World Model (same size as D2) -->
+          <div data-id="agent-wm-row" style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px;">
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
             </div>
+            <span style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
+              <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
+            </div>
+          </div>
 
-            <!-- ③ Simulate & Score (World Model color) -->
-            <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; background: rgba(48,78,216,0.06); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 12px; padding: 12px; text-align: center;">
-              <div style="font-size: 0.42em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                <i class="fas fa-play" style="margin-right: 4px;"></i> ③ Simulate
+          <!-- ① Sample: Hypothesis Space — shrunk from D2 -->
+          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
               </div>
-              <!-- Run f_x on each hypothesis -->
-              <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 6px; margin-bottom: 6px;">
-                <div style="font-size: 0.34em; color: #888; font-weight: 600; margin-bottom: 4px;">$f_x(s_i) \rightarrow y_i$</div>
-                <div style="display: flex; gap: 6px; justify-content: center;">
-                  <span style="padding: 2px 7px; border-radius: 5px; font-size: 0.38em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
-                  <span style="padding: 2px 7px; border-radius: 5px; font-size: 0.38em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_2$</span>
-                  <span style="padding: 2px 7px; border-radius: 5px; font-size: 0.38em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
-                  <span style="padding: 2px 7px; border-radius: 5px; font-size: 0.38em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
-                  <span style="padding: 2px 7px; border-radius: 5px; font-size: 0.38em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+              <div style="display: flex; gap: 6px; align-items: flex-end;">
+                <!-- s1 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="26" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_1$</div>
                 </div>
-              </div>
-              <!-- EIG Score — prominent -->
-              <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 8px; padding: 10px; color: white;">
-                <div style="font-size: 0.36em; font-weight: 600; opacity: 0.85; margin-bottom: 2px;">Score</div>
-                <div style="font-size: 0.52em; font-weight: 700;">$\text{EIG}(x) = 0.73$ bits</div>
-              </div>
-            </div>
-
-          </div><!-- /three-column process -->
-
-          <!-- F4: Candidate experiments scoreboard -->
-          <div class="fragment fade-in" data-fragment-index="4" style="width: 100%; margin-top: 10px;">
-            <div style="text-align: center; font-size: 0.42em; color: #aaa; margin-bottom: 6px;">
-              <i class="fas fa-redo-alt" style="margin-right: 4px;"></i> Repeat for each candidate experiment:
-            </div>
-            <div style="display: flex; gap: 10px; width: 100%;">
-              <!-- Candidate 1: Acid/base -->
-              <div style="flex: 1; background: #f9f9f9; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 8px 10px; text-align: center; transition: all 0.4s;">
-                <div style="font-size: 0.36em; color: #333; font-style: italic; margin-bottom: 4px;">&ldquo;Acid or base?&rdquo;</div>
-                <div class="fragment fade-in" data-fragment-index="5" style="font-size: 0.38em; font-weight: 700; color: #888;">EIG = 0.41</div>
-              </div>
-              <!-- Candidate 2: Oxidation -->
-              <div style="flex: 1; background: #f9f9f9; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 8px 10px; text-align: center; transition: all 0.4s;">
-                <div style="font-size: 0.36em; color: #333; font-style: italic; margin-bottom: 4px;">&ldquo;Undergoes oxidation?&rdquo;</div>
-                <div class="fragment fade-in" data-fragment-index="5" style="font-size: 0.38em; font-weight: 700; color: #888;">EIG = 0.58</div>
-              </div>
-              <!-- Candidate 3: Water-soluble (BEST — connected to pipeline above) -->
-              <div id="best-experiment-card" style="flex: 1; background: rgba(48,78,216,0.06); border: 2px solid #304ed8; border-radius: 10px; padding: 8px 10px; text-align: center; box-shadow: 0 2px 8px rgba(48,78,216,0.15);">
-                <div style="font-size: 0.36em; color: #304ed8; font-style: italic; font-weight: 600; margin-bottom: 4px;">&ldquo;Water-soluble?&rdquo;</div>
-                <div style="font-size: 0.38em; font-weight: 700; color: #304ed8;">EIG = 0.73</div>
-              </div>
-              <!-- Candidate 4: Melting point -->
-              <div style="flex: 1; background: #f9f9f9; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 8px 10px; text-align: center; transition: all 0.4s;">
-                <div style="font-size: 0.36em; color: #333; font-style: italic; margin-bottom: 4px;">&ldquo;Melting point?&rdquo;</div>
-                <div class="fragment fade-in" data-fragment-index="5" style="font-size: 0.38em; font-weight: 700; color: #888;">EIG = 0.29</div>
+                <!-- s2 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="28" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_2$</div>
+                </div>
+                <!-- s3 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="36" height="26" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_3$</div>
+                </div>
+                <!-- s4 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="30" height="30" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_4$</div>
+                </div>
+                <!-- s5 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="32" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_5$</div>
+                </div>
+                <!-- ellipsis -->
+                <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 36px;">
+                  <span style="font-size: 0.4em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- F6: Selection + key insight -->
+          <!-- ② Column headers: Propose & Translate | → | Simulate & Score -->
+          <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 4px;">
+            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose &amp; Translate
+            </div>
+            <div style="width: 24px;"></div>
+            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-play" style="margin-right: 4px;"></i> Simulate &amp; Score
+            </div>
+          </div>
+
+          <!-- ③ Experiment rows: each row = [Propose box] → [Simulate box] -->
+          <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+
+            <!-- Row 1: Water-soluble -->
+            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 8px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
+                </div>
+                <div class="fragment fade-in" data-fragment-index="2" style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
+                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Arrow -->
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <!-- Simulate -->
+              <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_1}(s_i) \rightarrow y_i$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 6px; padding: 5px 10px; color: white; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; opacity: 0.85;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700;">0.73</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Acid/base -->
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 8px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it an acid or a base?&rdquo;</div>
+                </div>
+                <div style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
+                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_pH</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.pH() &lt; </span><span style="color: #ab9df2;">7</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Arrow -->
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <!-- Simulate -->
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_2}(s_i) \rightarrow y_i$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.41</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Oxidation -->
+            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 8px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$:</div>
+                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Does it undergo oxidation?&rdquo;</div>
+                </div>
+                <div style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
+                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_oxidation</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.reacts_with(</span><span style="color: #ffd866;">"O2"</span><span style="color: #a9dc76;">)</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Arrow -->
+              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <!-- Simulate -->
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_3}(s_i) \rightarrow y_i$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.58</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /experiment rows -->
+
+          <!-- F6: Highlight x1 as argmax + key insight -->
           <div class="fragment fade-in" data-fragment-index="6" style="width: 100%; margin-top: 8px;">
-            <div style="text-align: center; font-size: 0.46em; color: #304ed8; font-weight: 600; margin-bottom: 6px;">
-              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; &ldquo;Water-soluble?&rdquo;
+            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600; margin-bottom: 4px;">
+              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 10px;">&ldquo;Is it water-soluble?&rdquo; &nbsp; (EIG = 0.73)</span>
             </div>
             <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
-              <div style="font-size: 0.44em; color: #304ed8; line-height: 1.5;">
+              <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
                 <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
                 <strong>Inference-scaling for experiment design:</strong> more compute at decision time &rarr; better experiments &rarr; more efficient discovery.
               </div>
