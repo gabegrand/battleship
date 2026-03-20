@@ -1567,18 +1567,6 @@
         </aside>
       </section>
 
-      <!-- 2c. Live demo: Game Explorer (hidden — kept for reference) -->
-      <section class="iframe-slide" data-background-color="#0f1f3c" data-visibility="hidden">
-        <h3><i class="fas fa-gamepad"></i> &nbsp;Game Explorer</h3>
-        <iframe id="game-explorer-frame" data-src="game-explorer.html" style="height: 656px;" data-preload></iframe>
-
-        <aside class="notes">
-          Let me show you what a game looks like. You can see the Captain's partial view on the left,
-          and the event log on the right. Watch how the Captain alternates between asking questions
-          and taking shots. The Spotter can only say Yes or No.
-        </aside>
-      </section>
-
       <!-- 2c. Why Battleship? -->
       <section>
         <div class="section-label">Task</div>
@@ -1616,180 +1604,11 @@
         </aside>
       </section>
 
-      <!-- 2d. Our extensions (hidden) -->
-      <section data-visibility="hidden">
-        <div class="section-label">Task</div>
-        <h3>Extending the Battleship paradigm</h3>
-        <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 16px;">
-          Key extensions over prior work
-          <span style="color: #aaa;">(Rothe et al., 2017; 2018; 2019; Grand et al., 2024)</span>
-        </p>
-        <div class="chip-list" style="margin-bottom: 20px;">
-          <span class="chip"><i class="fas fa-arrows-alt-h"></i> &nbsp;Full multi-turn games</span>
-          <span class="chip"><i class="fas fa-users"></i> &nbsp;Two-player dialogue</span>
-          <span class="chip"><i class="fab fa-python"></i> &nbsp;Python programs as questions</span>
-          <span class="chip"><i class="fas fa-th"></i> &nbsp;8&times;8 boards (up from 6&times;6)</span>
-          <span class="chip"><i class="fas fa-lock"></i> &nbsp;Yes/No information bottleneck</span>
-        </div>
-        <div class="two-col" style="gap: 24px;">
-          <div class="col" style="text-align: center;">
-            <img src="../static/images/rothe_et_al_2018.png"
-                 alt="Prior work: Rothe et al."
-                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
-            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Prior work: single-turn, single-player</p>
-          </div>
-          <div class="col" style="text-align: center;">
-            <img src="../static/images/battleship-splash-2.png"
-                 alt="Our work"
-                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
-            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Our work: multi-turn, two-player dialogue</p>
-          </div>
-        </div>
-
-        <aside class="notes">
-          These are the key ways we extend the original paradigm. I won't go through each one,
-          but the important bits are: full multi-turn games with a two-player dialogue structure,
-          questions represented as Python programs, and a binary information bottleneck.
-        </aside>
-      </section>
 
 
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION 3: FORMAL FRAMEWORK — EIG  (1 min)
            ═══════════════════════════════════════════════════════════════ -->
-
-      <!-- 3a. EIG derivation — progressive build-up (HIDDEN — covered by new BED slides) -->
-      <section data-visibility="hidden">
-        <div class="section-label">Framework</div>
-        <h3>Expected Information Gain</h3>
-        <div class="eig-deriv-layout">
-          <div class="eig-deriv-steps">
-            <div class="eig-step fragment fade-in" data-fragment-index="0">
-              <div class="eig-eq">Given board $S \in \mathcal{S}$ and question $q$ with answer $a \in \mathcal{A}$:</div>
-            </div>
-            <div class="eig-step fragment" data-fragment-index="1">
-              <div class="eig-eq">$\text{IG}(S;\, a) \;=\; H(S) \;-\; H(S \mid a)$ <span class="eig-annot">information gain</span></div>
-            </div>
-            <div class="eig-step fragment" data-fragment-index="2">
-              <div class="eig-eq">$\text{EIG}(S;\, q) \;=\; \mathbb{E}_{a}\!\big[\text{IG}(S;\, a)\big]$ <span class="eig-annot">expectation over answer</span></div>
-            </div>
-            <div class="eig-step eig-highlight fragment" data-fragment-index="3">
-              <div class="eig-eq">$\phantom{\text{EIG}(S;\, q)} \;=\; H_b(p)$ <span class="eig-annot">when $\mathcal{A} = \{0, 1\}$</span></div>
-            </div>
-            <div class="eig-step fragment" data-fragment-index="4" style="margin-top: 2px;">
-              <div class="eig-gloss">where $p := P(a\!=\!1)$</div>
-            </div>
-          </div>
-          <div class="eig-diagram fragment fade-in" data-fragment-index="0">
-            <div class="eig-dia-row">
-              <span class="eig-dia-label">$S$</span>
-              <img src="../static/images/world_model_samples/partial_board.png" alt="Board state"
-                   style="height: 100px; border-radius: 6px; border: 2px solid #b0bfe6;" />
-            </div>
-            <div class="eig-dia-row">
-              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-            </div>
-            <div class="eig-dia-row">
-              <span class="eig-dia-label">$q$</span>
-              <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
-            </div>
-            <div class="eig-dia-row">
-              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-            </div>
-            <div class="eig-dia-row">
-              <span class="eig-dia-label">$a$</span>
-              <div class="eig-dia-answer">
-                <span class="eig-dia-yes">Yes</span>
-                <span class="eig-dia-no">No</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          Let's build up EIG from standard information theory. S is a random variable over board states —
-          here's one partial board the Captain might see. The Captain asks a question q, like
-          "is the purple ship vertical?", and gets a yes/no answer. Information Gain measures how much
-          one answer reduces uncertainty. EIG averages over possible answers — it's mutual information.
-          For binary answers, this simplifies to binary entropy, maximized at p = 0.5.
-        </aside>
-      </section>
-
-      <!-- 3b. Properties of EIG (HIDDEN — covered by new BED slides) -->
-      <section data-visibility="hidden">
-        <div class="section-label">Framework</div>
-        <h3>Properties of EIG</h3>
-        <div class="eig-deriv-plot-layout">
-          <div>
-            <div class="eig-deriv-steps">
-              <div class="eig-step eig-highlight">
-                <div class="eig-eq">$\text{EIG}(S;\, q) = H_b(p)$</div>
-                <div class="eig-gloss">Assumes a perfect Spotter</div>
-              </div>
-              <div class="eig-step fragment" data-fragment-index="0">
-                <div class="eig-eq">Spotter as a BSC with noise $\varepsilon$:</div>
-                <div class="eig-eq" style="margin-top: 4px;">$\text{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1\!-\!2\varepsilon)\,p\big) - H_b(\varepsilon)$</div>
-              </div>
-            </div>
-          </div>
-          <div class="eig-deriv-plot">
-            <svg id="eig-deriv-svg" role="img" aria-label="EIG vs p curve"></svg>
-            <div class="eig-epsilon-control">
-              <label class="eig-eps-label">$\varepsilon$ = <span id="eig-eps-val">0.00</span></label>
-              <input type="range" id="eig-eps-range" min="0" max="0.45" step="0.01" value="0" />
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          Here's the key intuition: EIG is maximized when p = 0.5 — when we're most uncertain
-          about the answer. Questions where we already know the answer (p near 0 or 1) have low EIG.
-          In our setting, the Spotter can make occasional mistakes, modeled as a binary symmetric
-          channel with noise rate epsilon. This reduces the maximum achievable information, but
-          questions with p near 0.5 are still optimal.
-        </aside>
-      </section>
-
-      <!-- 3c. How do we estimate EIG? — challenges (HIDDEN — covered by new BED slides) -->
-      <section data-visibility="hidden">
-        <div class="section-label">Framework</div>
-        <h3>How do we estimate EIG?</h3>
-
-        <div class="eq-box" style="margin-top: 20px; max-width: 95%;">
-          <div style="font-size: 0.9em;">
-            $p \;:=\; P(a\!=\!1)
-              \;=\; \underbrace{\mathbb{E}_{s \,\sim\, P(S)}}_{\text{board space}}
-              \!\Big[\;\underbrace{P(a \mid q;\, s)}_{\text{semantics}}\;\Big]$
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 32px; justify-content: center; margin-top: 28px;">
-          <!-- Challenge 1 -->
-          <div class="fragment" data-fragment-index="1" style="text-align: center; max-width: 340px;">
-            <div class="challenge-annotation challenge-space">
-              <i class="fas fa-cubes"></i> &nbsp;
-              <strong>Challenge 1:</strong> The space of possible boards is very large &mdash;
-              marginalization over $P(S)$ is intractable
-            </div>
-          </div>
-          <!-- Challenge 2 -->
-          <div class="fragment" data-fragment-index="2" style="text-align: center; max-width: 340px;">
-            <div class="challenge-annotation challenge-semantics">
-              <i class="fas fa-comment-dots"></i> &nbsp;
-              <strong>Challenge 2:</strong> Evaluating $P(a \mid q;\, s)$ requires interpreting
-              the semantics of natural language
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          We need to compute p — the probability that question q gets answer a=1. Expanding this,
-          we need to marginalize over the board space P(S) and evaluate the conditional P(a|q;s)
-          for each board. Two key challenges: first, the board space is combinatorially large,
-          making exact marginalization intractable. Second, evaluating P(a|q;s) requires
-          interpreting what the natural language question actually means with respect to the board.
-        </aside>
-      </section>
 
       <!-- 3d. Our approach — three steps -->
       <section>
@@ -2220,58 +2039,6 @@ def answer(true_board, partial_board) -> bool:
         </aside>
       </section>
 
-      <!-- 5b. Code demo (native reveal.js slide) — hidden: covered earlier -->
-      <section data-visibility="hidden">
-        <div class="section-label">SpotterQA</div>
-        <h3>Grounding questions by generating code</h3>
-        <div class="code-demo-layout">
-          <div class="code-demo-chat">
-            <div class="chat-bubble captain">
-              <span class="chat-role"><i class="fas fa-anchor"></i> Captain</span>
-              Are at least two of the four ships located entirely within columns 1&ndash;4?
-            </div>
-            <div class="chat-bubble spotter">
-              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter (thinking)</span>
-              Let me translate this to code and execute it against the board&hellip;
-            </div>
-            <div class="chat-bubble spotter">
-              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter</span>
-              <span class="chat-answer"><i class="fas fa-check"></i> Yes</span>
-            </div>
-            <div class="callout" style="margin-top: 12px;">
-              <p><span class="callout-label">Key idea:</span> Translating to code <strong>grounds</strong> the answer in the actual board state, avoiding hallucination and misinterpretation.</p>
-            </div>
-          </div>
-          <div class="code-demo-code">
-            <pre><code class="language-python" data-trim data-line-numbers="1-4|6-12|14">
-def answer(true_board, partial_board) -> bool:
-    # Columns 1-4 = zero-based indices 0-3
-    max_allowed_col = 3
-    ship_ids = [s for s in np.unique(true_board) if s > 0]
-
-    count_within = 0
-    for sid in ship_ids:
-        cols = np.where(true_board == sid)[1]
-        if cols.size > 0 and cols.max() <= max_allowed_col:
-            count_within += 1
-
-    return count_within >= 2
-
-# >>> answer(true_board, partial_board)
-# True
-            </code></pre>
-          </div>
-        </div>
-
-        <aside class="notes">
-          We saw earlier how questions get translated to code to compute EIG. The same pipeline
-          is used by the Spotter to answer questions accurately. Here's a more complex example:
-          the Captain asks whether at least two ships are in columns 1-4. The Spotter translates
-          this into Python, executes it against the true board, and returns Yes. This code grounding
-          avoids hallucination and misinterpretation.
-        </aside>
-      </section>
-
       <!-- 5c. SpotterQA results -->
       <section data-auto-animate>
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
@@ -2317,47 +2084,6 @@ def answer(true_board, partial_board) -> bool:
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION 6: CAPTAINQA + BAYESIAN STRATEGIES  (2.5 min)
            ═══════════════════════════════════════════════════════════════ -->
-
-      <!-- 6a. World model (brief) — hidden: covered earlier -->
-      <section data-visibility="hidden">
-        <div class="section-label">Method</div>
-        <h3>Monte Carlo inference with a world model</h3>
-        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 16px;">
-          Sample plausible boards consistent with observations, then marginalize to get a tile-level belief.
-        </p>
-        <div class="fig-row" style="align-items: center;">
-          <figure>
-            <img src="../static/images/world_model_samples/partial_board.png" alt="Partial board" style="max-height: 200px;" />
-            <figcaption>Observed board</figcaption>
-          </figure>
-          <figure style="flex: 0 0 40px; text-align: center;">
-            <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
-          </figure>
-          <figure>
-            <div style="display: flex; gap: 4px; justify-content: center;">
-              <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="max-height: 100px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="max-height: 100px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="max-height: 100px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" style="max-height: 100px; border-radius: 4px;" />
-              <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" style="max-height: 100px; border-radius: 4px;" />
-            </div>
-            <figcaption>Hypothesis samples via SMC</figcaption>
-          </figure>
-          <figure style="flex: 0 0 40px; text-align: center;">
-            <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
-          </figure>
-          <figure>
-            <img src="../static/images/world_model_samples/heatmap.png" alt="Belief heatmap" style="max-height: 200px;" />
-            <figcaption>Approximate belief $\pi_t$</figcaption>
-          </figure>
-        </div>
-
-        <aside class="notes">
-          Before I show the strategies, here's the key building block: a world model.
-          We sample plausible board configurations consistent with everything observed so far,
-          using Sequential Monte Carlo. Marginalizing over these samples gives us a belief state.
-        </aside>
-      </section>
 
       <!-- 6b. Three Bayesian strategies -->
       <section>
@@ -2569,6 +2295,286 @@ def answer(true_board, partial_board) -> bool:
         <aside class="notes">
           Thank you! All code, data, and interactive demos are available on the project website.
           Happy to take questions.
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           HIDDEN SLIDES (kept for reference, not shown in presentation)
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- [Hidden] Game Explorer live demo -->
+      <section class="iframe-slide" data-background-color="#0f1f3c" data-visibility="hidden">
+        <h3><i class="fas fa-gamepad"></i> &nbsp;Game Explorer</h3>
+        <iframe id="game-explorer-frame" data-src="game-explorer.html" style="height: 656px;" data-preload></iframe>
+
+        <aside class="notes">
+          Let me show you what a game looks like. You can see the Captain's partial view on the left,
+          and the event log on the right. Watch how the Captain alternates between asking questions
+          and taking shots. The Spotter can only say Yes or No.
+        </aside>
+      </section>
+
+      <!-- [Hidden] Extending the Battleship paradigm -->
+      <section data-visibility="hidden">
+        <div class="section-label">Task</div>
+        <h3>Extending the Battleship paradigm</h3>
+        <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 16px;">
+          Key extensions over prior work
+          <span style="color: #aaa;">(Rothe et al., 2017; 2018; 2019; Grand et al., 2024)</span>
+        </p>
+        <div class="chip-list" style="margin-bottom: 20px;">
+          <span class="chip"><i class="fas fa-arrows-alt-h"></i> &nbsp;Full multi-turn games</span>
+          <span class="chip"><i class="fas fa-users"></i> &nbsp;Two-player dialogue</span>
+          <span class="chip"><i class="fab fa-python"></i> &nbsp;Python programs as questions</span>
+          <span class="chip"><i class="fas fa-th"></i> &nbsp;8&times;8 boards (up from 6&times;6)</span>
+          <span class="chip"><i class="fas fa-lock"></i> &nbsp;Yes/No information bottleneck</span>
+        </div>
+        <div class="two-col" style="gap: 24px;">
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/rothe_et_al_2018.png"
+                 alt="Prior work: Rothe et al."
+                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Prior work: single-turn, single-player</p>
+          </div>
+          <div class="col" style="text-align: center;">
+            <img src="../static/images/battleship-splash-2.png"
+                 alt="Our work"
+                 style="max-height: 250px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <p style="font-size: 0.5em; color: #888; margin-top: 6px;">Our work: multi-turn, two-player dialogue</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          These are the key ways we extend the original paradigm. I won't go through each one,
+          but the important bits are: full multi-turn games with a two-player dialogue structure,
+          questions represented as Python programs, and a binary information bottleneck.
+        </aside>
+      </section>
+
+      <!-- [Hidden] EIG derivation — progressive build-up (covered by BED slides) -->
+      <section data-visibility="hidden">
+        <div class="section-label">Framework</div>
+        <h3>Expected Information Gain</h3>
+        <div class="eig-deriv-layout">
+          <div class="eig-deriv-steps">
+            <div class="eig-step fragment fade-in" data-fragment-index="0">
+              <div class="eig-eq">Given board $S \in \mathcal{S}$ and question $q$ with answer $a \in \mathcal{A}$:</div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="1">
+              <div class="eig-eq">$\text{IG}(S;\, a) \;=\; H(S) \;-\; H(S \mid a)$ <span class="eig-annot">information gain</span></div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="2">
+              <div class="eig-eq">$\text{EIG}(S;\, q) \;=\; \mathbb{E}_{a}\!\big[\text{IG}(S;\, a)\big]$ <span class="eig-annot">expectation over answer</span></div>
+            </div>
+            <div class="eig-step eig-highlight fragment" data-fragment-index="3">
+              <div class="eig-eq">$\phantom{\text{EIG}(S;\, q)} \;=\; H_b(p)$ <span class="eig-annot">when $\mathcal{A} = \{0, 1\}$</span></div>
+            </div>
+            <div class="eig-step fragment" data-fragment-index="4" style="margin-top: 2px;">
+              <div class="eig-gloss">where $p := P(a\!=\!1)$</div>
+            </div>
+          </div>
+          <div class="eig-diagram fragment fade-in" data-fragment-index="0">
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$S$</span>
+              <img src="../static/images/world_model_samples/partial_board.png" alt="Board state"
+                   style="height: 100px; border-radius: 6px; border: 2px solid #b0bfe6;" />
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$q$</span>
+              <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+            </div>
+            <div class="eig-dia-row">
+              <span class="eig-dia-label">$a$</span>
+              <div class="eig-dia-answer">
+                <span class="eig-dia-yes">Yes</span>
+                <span class="eig-dia-no">No</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Let's build up EIG from standard information theory. S is a random variable over board states —
+          here's one partial board the Captain might see. The Captain asks a question q, like
+          "is the purple ship vertical?", and gets a yes/no answer. Information Gain measures how much
+          one answer reduces uncertainty. EIG averages over possible answers — it's mutual information.
+          For binary answers, this simplifies to binary entropy, maximized at p = 0.5.
+        </aside>
+      </section>
+
+      <!-- [Hidden] Properties of EIG (covered by BED slides) -->
+      <section data-visibility="hidden">
+        <div class="section-label">Framework</div>
+        <h3>Properties of EIG</h3>
+        <div class="eig-deriv-plot-layout">
+          <div>
+            <div class="eig-deriv-steps">
+              <div class="eig-step eig-highlight">
+                <div class="eig-eq">$\text{EIG}(S;\, q) = H_b(p)$</div>
+                <div class="eig-gloss">Assumes a perfect Spotter</div>
+              </div>
+              <div class="eig-step fragment" data-fragment-index="0">
+                <div class="eig-eq">Spotter as a BSC with noise $\varepsilon$:</div>
+                <div class="eig-eq" style="margin-top: 4px;">$\text{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1\!-\!2\varepsilon)\,p\big) - H_b(\varepsilon)$</div>
+              </div>
+            </div>
+          </div>
+          <div class="eig-deriv-plot">
+            <svg id="eig-deriv-svg" role="img" aria-label="EIG vs p curve"></svg>
+            <div class="eig-epsilon-control">
+              <label class="eig-eps-label">$\varepsilon$ = <span id="eig-eps-val">0.00</span></label>
+              <input type="range" id="eig-eps-range" min="0" max="0.45" step="0.01" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Here's the key intuition: EIG is maximized when p = 0.5 — when we're most uncertain
+          about the answer. Questions where we already know the answer (p near 0 or 1) have low EIG.
+          In our setting, the Spotter can make occasional mistakes, modeled as a binary symmetric
+          channel with noise rate epsilon. This reduces the maximum achievable information, but
+          questions with p near 0.5 are still optimal.
+        </aside>
+      </section>
+
+      <!-- [Hidden] How do we estimate EIG? — challenges (covered by BED slides) -->
+      <section data-visibility="hidden">
+        <div class="section-label">Framework</div>
+        <h3>How do we estimate EIG?</h3>
+
+        <div class="eq-box" style="margin-top: 20px; max-width: 95%;">
+          <div style="font-size: 0.9em;">
+            $p \;:=\; P(a\!=\!1)
+              \;=\; \underbrace{\mathbb{E}_{s \,\sim\, P(S)}}_{\text{board space}}
+              \!\Big[\;\underbrace{P(a \mid q;\, s)}_{\text{semantics}}\;\Big]$
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 32px; justify-content: center; margin-top: 28px;">
+          <!-- Challenge 1 -->
+          <div class="fragment" data-fragment-index="1" style="text-align: center; max-width: 340px;">
+            <div class="challenge-annotation challenge-space">
+              <i class="fas fa-cubes"></i> &nbsp;
+              <strong>Challenge 1:</strong> The space of possible boards is very large &mdash;
+              marginalization over $P(S)$ is intractable
+            </div>
+          </div>
+          <!-- Challenge 2 -->
+          <div class="fragment" data-fragment-index="2" style="text-align: center; max-width: 340px;">
+            <div class="challenge-annotation challenge-semantics">
+              <i class="fas fa-comment-dots"></i> &nbsp;
+              <strong>Challenge 2:</strong> Evaluating $P(a \mid q;\, s)$ requires interpreting
+              the semantics of natural language
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          We need to compute p — the probability that question q gets answer a=1. Expanding this,
+          we need to marginalize over the board space P(S) and evaluate the conditional P(a|q;s)
+          for each board. Two key challenges: first, the board space is combinatorially large,
+          making exact marginalization intractable. Second, evaluating P(a|q;s) requires
+          interpreting what the natural language question actually means with respect to the board.
+        </aside>
+      </section>
+
+      <!-- [Hidden] SpotterQA code demo -->
+      <section data-visibility="hidden">
+        <div class="section-label">SpotterQA</div>
+        <h3>Grounding questions by generating code</h3>
+        <div class="code-demo-layout">
+          <div class="code-demo-chat">
+            <div class="chat-bubble captain">
+              <span class="chat-role"><i class="fas fa-anchor"></i> Captain</span>
+              Are at least two of the four ships located entirely within columns 1&ndash;4?
+            </div>
+            <div class="chat-bubble spotter">
+              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter (thinking)</span>
+              Let me translate this to code and execute it against the board&hellip;
+            </div>
+            <div class="chat-bubble spotter">
+              <span class="chat-role"><i class="fas fa-binoculars"></i> Spotter</span>
+              <span class="chat-answer"><i class="fas fa-check"></i> Yes</span>
+            </div>
+            <div class="callout" style="margin-top: 12px;">
+              <p><span class="callout-label">Key idea:</span> Translating to code <strong>grounds</strong> the answer in the actual board state, avoiding hallucination and misinterpretation.</p>
+            </div>
+          </div>
+          <div class="code-demo-code">
+            <pre><code class="language-python" data-trim data-line-numbers="1-4|6-12|14">
+def answer(true_board, partial_board) -> bool:
+    # Columns 1-4 = zero-based indices 0-3
+    max_allowed_col = 3
+    ship_ids = [s for s in np.unique(true_board) if s > 0]
+
+    count_within = 0
+    for sid in ship_ids:
+        cols = np.where(true_board == sid)[1]
+        if cols.size > 0 and cols.max() <= max_allowed_col:
+            count_within += 1
+
+    return count_within >= 2
+
+# >>> answer(true_board, partial_board)
+# True
+            </code></pre>
+          </div>
+        </div>
+
+        <aside class="notes">
+          We saw earlier how questions get translated to code to compute EIG. The same pipeline
+          is used by the Spotter to answer questions accurately. Here's a more complex example:
+          the Captain asks whether at least two ships are in columns 1-4. The Spotter translates
+          this into Python, executes it against the true board, and returns Yes. This code grounding
+          avoids hallucination and misinterpretation.
+        </aside>
+      </section>
+
+      <!-- [Hidden] Monte Carlo inference with a world model -->
+      <section data-visibility="hidden">
+        <div class="section-label">Method</div>
+        <h3>Monte Carlo inference with a world model</h3>
+        <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 16px;">
+          Sample plausible boards consistent with observations, then marginalize to get a tile-level belief.
+        </p>
+        <div class="fig-row" style="align-items: center;">
+          <figure>
+            <img src="../static/images/world_model_samples/partial_board.png" alt="Partial board" style="max-height: 200px;" />
+            <figcaption>Observed board</figcaption>
+          </figure>
+          <figure style="flex: 0 0 40px; text-align: center;">
+            <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
+          </figure>
+          <figure>
+            <div style="display: flex; gap: 4px; justify-content: center;">
+              <img src="../static/images/world_model_samples/sample_0.png" alt="Sample 0" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_1.png" alt="Sample 1" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_2.png" alt="Sample 2" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_3.png" alt="Sample 3" style="max-height: 100px; border-radius: 4px;" />
+              <img src="../static/images/world_model_samples/sample_4.png" alt="Sample 4" style="max-height: 100px; border-radius: 4px;" />
+            </div>
+            <figcaption>Hypothesis samples via SMC</figcaption>
+          </figure>
+          <figure style="flex: 0 0 40px; text-align: center;">
+            <span style="font-size: 2em; color: #304ed8;">&rarr;</span>
+          </figure>
+          <figure>
+            <img src="../static/images/world_model_samples/heatmap.png" alt="Belief heatmap" style="max-height: 200px;" />
+            <figcaption>Approximate belief $\pi_t$</figcaption>
+          </figure>
+        </div>
+
+        <aside class="notes">
+          Before I show the strategies, here's the key building block: a world model.
+          We sample plausible board configurations consistent with everything observed so far,
+          using Sequential Monte Carlo. Marginalizing over these samples gives us a belief state.
         </aside>
       </section>
 
