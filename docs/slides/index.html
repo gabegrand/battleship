@@ -655,15 +655,22 @@
             <ul class="key-points" style="margin: 0;">
               <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
                 <span class="kp-icon"><i class="fas fa-microscope"></i></span>
-                <span class="kp-text"><span class="kp-label">The promise:</span> Many high-stakes applications of AI require forming hypotheses, gathering information, and acting under uncertainty.</span>
+                <span class="kp-text"><span class="kp-label">The promise:</span> Many high-stakes applications of AI require seeking information.</span>
               </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+              <li class="fragment fade-in" data-fragment-index="1">
+                <span class="fragment semi-fade-out" data-fragment-index="4" style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
                 <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
-                <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark &mdash; LMs already have strong priors about many domains, and high-profile results are difficult to verify and reproduce.</span>
+                <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark.
+                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
+                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
+                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
+                  </ul>
+                </span>
+                </span>
               </li>
-              <li class="fragment fade-in" data-fragment-index="2">
+              <li class="fragment fade-in" data-fragment-index="4">
                 <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">What we need:</span> Controlled settings where we can formalize what &ldquo;rational&rdquo; means and directly compare LM behavior against human and ideal baselines.</span>
+                <span class="kp-text"><span class="kp-label">This work:</span> Introduces a new framework for building and evaluating rational agents in controlled settings.</span>
               </li>
             </ul>
           </div>
