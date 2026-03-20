@@ -457,10 +457,7 @@
     /* Cells hidden until their fragment reveals them */
     .mini-board .b-cell[data-step] { background: #eaeae4; color: transparent; }
     .mini-board .b-cell[data-step].revealed { color: #fff; }
-    .mini-board .b-cell[data-step="1"].revealed { background: #6d467b; }
-    .mini-board .b-cell[data-step="2"].revealed { background: #9b9c97; color: transparent; }
-    .mini-board .b-cell[data-step="3"].revealed { background: #ffa500; }
-    .mini-board .b-cell[data-step="4"].revealed { background: #9b9c97; color: transparent; }
+    .mini-board .b-cell[data-step="5"].revealed { background: #6d467b; }
 
     /* ── Board flip animation (Spotter POV reveal) ── */
     .game-action-board-wrap.board-flipper {
@@ -487,6 +484,23 @@
     }
     .board-back h4 { color: #04af70 !important; }
     .board-back .mini-board { flex: 1; }
+
+    /* ── Task slide: progressive 3-panel reveal ── */
+    #task-layout {
+      display: flex; justify-content: center; gap: 14px;
+      align-items: start; margin-top: 12px;
+    }
+    .task-panel {
+      max-width: 0; opacity: 0; overflow: hidden;
+      transition: max-width 0.6s ease, opacity 0.5s ease 0.1s;
+    }
+    .task-panel.tp-visible {
+      opacity: 1; overflow: visible;
+    }
+    #task-captain-panel.tp-visible { max-width: 260px; }
+    #task-spotter-panel.tp-visible { max-width: 260px; }
+    #task-chat-panel.tp-visible { max-width: 420px; flex: 1; }
+    #task-spotter-panel .game-action-board-wrap h4 { color: #04af70; }
 
     .game-action-events {
       display: flex; flex-direction: column; gap: 8px;
@@ -1365,7 +1379,7 @@
           <div class="col fragment fade-in" data-fragment-index="0" style="flex: 0 0 42%; text-align: center;">
             <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
                  style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): A challenging domain with a minimal state representation</p>
+            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): Inspiration for a challenging domain with a minimal state representation</p>
           </div>
         </div>
 
@@ -1387,229 +1401,531 @@
            SECTION C: TASK
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- C.0 The Battleship Task -->
-      <section> <!-- C.0 #9 -->
-        <div class="section-label">Task</div>
-        <h3>The Battleship Task</h3>
-        <p style="text-align: center; font-size: 0.5em; color: #4a5770; margin-bottom: 8px;">
-          A well-studied paradigm for information-seeking behavior in humans
-          <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span>
-        </p>
+      <!-- C.0 Battleship basics -->
+      <section data-auto-animate> <!-- C.0 #9 -->
+        <div class="section-label" data-id="c-label">Task</div>
+        <h3 data-id="c-title">Battleship</h3>
 
-        <div class="game-action-layout">
-          <!-- ── Board with flip (Captain ↔ Spotter) ── -->
-          <div class="game-action-board-wrap board-flipper">
-            <div class="board-flip-inner" id="board-flip">
-              <!-- Front: Captain's partial view -->
-              <div class="board-face board-front">
-                <h4><i class="fas fa-anchor"></i> &nbsp;Captain&rsquo;s View</h4>
-                <div class="mini-board" id="task-intro-board">
+        <div class="two-col" style="align-items: start; gap: 36px;">
+          <div class="col" data-id="c-bullets">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-ship"></i></span>
+                <span class="kp-text"><span class="kp-label">Ships on a board.</span> Four ships of varying sizes placed on an 8&times;8 grid, either horizontally or vertically.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-eye-slash"></i></span>
+                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board &mdash; most tiles are unknown.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-crosshairs"></i></span>
+                <span class="kp-text"><span class="kp-label">Goal:</span> Uncover all ships in as few moves as possible.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
+            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
+              <div style="position: relative;">
+                <!-- Full board (fades out on fragment 1) -->
+                <div id="c0-full-board" class="mini-board" style="transition: opacity 0.6s;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
                   <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
                   <div class="b-label">7</div><div class="b-label">8</div>
-                  <!-- Row A: all unknown -->
-                  <div class="b-label">A</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <!-- Row B: B4 = water -->
-                  <div class="b-label">B</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell water"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <!-- Row C: C7 = orange hit -->
-                  <div class="b-label">C</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <!-- Row D: D1 = water, D7 = orange hit -->
-                  <div class="b-label">D</div>
-                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <!-- Row E: E7 = orange hit -->
-                  <div class="b-label">E</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <!-- Row F: F7 = orange hit -->
-                  <div class="b-label">F</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <!-- Row G: G2 = fragment reveal (purple), G4 = water, G6 = water, G7 = orange hit -->
-                  <div class="b-label">G</div>
-                  <div class="b-cell"></div>
-                  <div class="b-cell" data-step="1"></div>
-                  <div class="b-cell"></div>
-                  <div class="b-cell water"></div>
-                  <div class="b-cell"></div>
-                  <div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <!-- Row H: H7 = water -->
-                  <div class="b-label">H</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                </div>
-              </div>
-              <!-- Back: Spotter's true board -->
-              <div class="board-face board-back">
-                <h4><i class="fas fa-binoculars"></i> &nbsp;Spotter&rsquo;s View</h4>
-                <div class="mini-board">
-                  <div class="b-label"></div>
-                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                  <div class="b-label">7</div><div class="b-label">8</div>
-                  <!-- Row A: green at A3 -->
                   <div class="b-label">A</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <!-- Row B: green at B3 -->
                   <div class="b-label">B</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <!-- Row C: green at C3, orange at C7 -->
                   <div class="b-label">C</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <!-- Row D: green at D3, orange at D7 -->
                   <div class="b-label">D</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <!-- Row E: orange at E7 -->
                   <div class="b-label">E</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <!-- Row F: orange at F7 -->
                   <div class="b-label">F</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <!-- Row G: purple G1-G3, orange G7 -->
                   <div class="b-label">G</div>
                   <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                   <div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <!-- Row H: red H4-H5 -->
                   <div class="b-label">H</div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                   <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
                   <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                 </div>
+                <!-- Partial board (fades in on fragment 1, stacked behind) -->
+                <div id="c0-partial-board" class="mini-board" style="position: absolute; top: 0; left: 0; right: 0; opacity: 0; transition: opacity 0.6s;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
+                  <div class="b-cell water"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
+                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
+                  <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Classic Battleship: four ships are hidden on an 8×8 grid.
+          [click] Here's a full board — four colored ships of sizes 2 through 5.
+          [click] But the player only sees a partial view — most tiles are unknown.
+          The faded tiles show where hidden ships actually are.
+          [click] The goal is to uncover all ships in as few moves as possible.
+        </aside>
+      </section>
+
+      <!-- C.1 Battleship as a QA task (auto-animated: board shrinks into eig-diagram) -->
+      <section data-auto-animate> <!-- C.1 #10 -->
+        <div class="section-label" data-id="c-label">Task</div>
+        <h3 data-id="c-title">Battleship as a QA task</h3>
+
+        <div class="two-col" style="align-items: start; gap: 32px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-comments"></i></span>
+                <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-flask"></i></span>
+                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question $x$ probes the hidden board state $S$ and produces an observation $y$ &mdash; exactly the BED setup.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-brain"></i></span>
+                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> Humans readily <em>discriminate</em> between informative and uninformative questions, but cannot always <em>generate</em> optimal questions.
+                  <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right: board shrinks into eig-diagram -->
+          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; display: flex; justify-content: center;">
+            <div class="eig-diagram eig-labeled" style="padding: 14px; gap: 8px;">
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$S$</span>
+                <div data-id="c-board" class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                  <div class="mini-board" style="font-size: 0.55em;">
+                    <div class="b-label"></div>
+                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                    <div class="b-label">7</div><div class="b-label">8</div>
+                    <div class="b-label">A</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">B</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
+                    <div class="b-cell water"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">C</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">D</div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">E</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">F</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">G</div>
+                    <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                    <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">H</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
+                    <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="fragment fade-in" data-fragment-index="1">
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label"></span>
+                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label">$x$</span>
+                  <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label"></span>
+                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label">$y$</span>
+                  <div class="eig-dia-answer">
+                    <span class="eig-dia-yes">Yes</span>
+                    <span class="eig-dia-no">No</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Prior work by Rothe, Lake, and Gureckis established Battleship as a paradigm
+          for studying information-seeking. The key extension: players can ask
+          natural-language questions and receive yes/no answers. Each question is an
+          experiment that probes the hidden board state — exactly the BED framework.
+          Notice how the board state S, question x, and answer y map directly to our
+          earlier notation.
+        </aside>
+      </section>
+
+      <!-- C.2 Collaborative Battleship -->
+      <section> <!-- C.2 #11 -->
+        <div class="section-label">Task</div>
+        <h3>Collaborative Battleship</h3>
+        <p style="text-align: center; font-size: 0.55em; color: #304ed8; font-weight: 500; margin-bottom: 12px;">
+          Our contribution: a two-player synchronous task
+        </p>
+
+        <div style="display: flex; gap: 28px; align-items: start; justify-content: center; margin-top: 8px;">
+          <!-- Captain -->
+          <div class="fragment fade-in" data-fragment-index="0" style="flex: 0 0 240px; text-align: center;">
+            <div class="game-action-board-wrap">
+              <h4><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+              <div class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell"></div><div class="b-cell ship-3"></div><div class="b-cell"></div>
+                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+              </div>
+            </div>
+            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees partial board<br/>Asks questions &amp; shoots</p>
+          </div>
+
+          <!-- Arrow + Yes/No channel -->
+          <div class="fragment fade-in" data-fragment-index="2" style="flex: 0 0 auto; text-align: center; align-self: center;">
+            <div style="font-size: 0.5em; color: #304ed8; font-weight: 600; margin-bottom: 6px;">Questions</div>
+            <div style="font-size: 1.4em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></div>
+            <div style="font-size: 0.5em; color: #04af70; font-weight: 600; margin-top: 6px;">Yes / No</div>
+          </div>
+
+          <!-- Spotter -->
+          <div class="fragment fade-in" data-fragment-index="1" style="flex: 0 0 240px; text-align: center;">
+            <div class="game-action-board-wrap">
+              <h4 style="color: #04af70;"><i class="fas fa-binoculars"></i> &nbsp;Spotter</h4>
+              <div class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+              </div>
+            </div>
+            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees full board<br/>Answers Yes or No</p>
+          </div>
+        </div>
+
+        <div class="callout fragment fade-in" data-fragment-index="3" style="margin-top: 12px;">
+          <p><span class="callout-label">Key idea:</span> The Spotter acts as an <strong>experiment oracle</strong> &mdash; providing instant, automated feedback about experiment outcomes.</p>
+        </div>
+
+        <aside class="notes">
+          We extend this paradigm to a two-player synchronous task we call Collaborative
+          Battleship. The Captain sees a partial board and must decide what to do — shoot
+          or ask a question. The Spotter sees the full board but can only answer Yes or No.
+          The Spotter effectively acts as an experiment oracle — providing instant feedback
+          about experiment outcomes. This is what makes the domain simulatable.
+        </aside>
+      </section>
+
+      <!-- C.3 A game in action -->
+      <section> <!-- C.3 #12 -->
+        <div class="section-label">Task</div>
+        <h3>A game in action</h3>
+
+        <!-- Trigger fragments for panel reveals (handled by JS) -->
+        <div class="fragment" data-fragment-index="1"></div>
+        <div class="fragment" data-fragment-index="2"></div>
+        <div class="fragment" data-fragment-index="3"></div>
+
+        <div id="task-layout">
+          <!-- Captain's board (left) -->
+          <div id="task-captain-panel" class="task-panel">
+            <div class="game-action-board-wrap">
+              <h4><i class="fas fa-anchor"></i> &nbsp;Captain&rsquo;s View</h4>
+              <div class="mini-board" id="task-intro-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <!-- Row A -->
+                <div class="b-label">A</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <!-- Row B: B4 = water -->
+                <div class="b-label">B</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <!-- Row C: C7 = orange -->
+                <div class="b-label">C</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <!-- Row D: D1 = water, D7 = orange -->
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <!-- Row E: E7 = orange -->
+                <div class="b-label">E</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <!-- Row F: F7 = orange -->
+                <div class="b-label">F</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <!-- Row G: G2 = reveal on shot, G4/G6 = water, G7 = orange -->
+                <div class="b-label">G</div>
+                <div class="b-cell"></div>
+                <div class="b-cell" data-step="5"></div>
+                <div class="b-cell"></div>
+                <div class="b-cell water"></div>
+                <div class="b-cell"></div>
+                <div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <!-- Row H: H7 = water -->
+                <div class="b-label">H</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
               </div>
             </div>
           </div>
 
-          <!-- ── Right column: progressive narrative ── -->
-          <div class="game-action-events" id="game-events" style="gap: 6px;">
+          <!-- Chat events (center) -->
+          <div id="task-chat-panel" class="task-panel">
+            <div class="game-action-events" id="game-events" style="gap: 6px;">
+              <!-- Wrap prior messages so they can collapse when question space appears -->
+              <div class="ge-msg-wrap" id="prior-msgs">
+                <!-- Fragment 4: Captain shoots G2 → Hit Purple ship -->
+                <div class="fragment" data-fragment-index="4">
+                  <div class="ge-msg is-captain visible">
+                    <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                    <div class="ge-bubble">
+                      <span class="ge-speaker">Captain</span>
+                      Fire at G2
+                      <div class="ge-result is-hit">
+                        <i class="result-icon fas fa-bullseye"></i>
+                        <span>Hit Purple ship</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-            <!-- Wrap prior messages so they can collapse when question space appears -->
-            <div class="ge-msg-wrap" id="prior-msgs">
-              <!-- Fragment 0: Captain shoots G2 → Hit Purple ship -->
-              <div class="fragment" data-fragment-index="0">
-                <div class="ge-msg is-captain visible">
-                  <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
-                  <div class="ge-bubble">
-                    <span class="ge-speaker">Captain</span>
-                    Fire at G2
-                    <div class="ge-result is-hit">
-                      <i class="result-icon fas fa-bullseye"></i>
-                      <span>Hit Purple ship</span>
+                <!-- Fragment 5: Captain asks question -->
+                <div class="fragment" data-fragment-index="5">
+                  <div class="ge-msg is-captain visible">
+                    <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
+                    <div class="ge-bubble">
+                      <span class="ge-speaker">Captain</span>
+                      Is the purple ship vertical?
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fragment 6: Spotter answers No -->
+                <div class="fragment" data-fragment-index="6">
+                  <div class="ge-msg is-spotter visible">
+                    <div class="ge-avatar"><i class="fas fa-binoculars"></i></div>
+                    <div class="ge-bubble">
+                      <span class="ge-speaker">Spotter</span>
+                      No
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Fragment 1: Captain asks question -->
-              <div class="fragment" data-fragment-index="1">
+              <!-- Fragment 7: Captain thinking + collapse prior messages + question space -->
+              <div class="fragment" data-fragment-index="7">
                 <div class="ge-msg is-captain visible">
                   <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
                   <div class="ge-bubble">
                     <span class="ge-speaker">Captain</span>
-                    Is the purple ship vertical?
+                    <span style="color: #888;">&hellip;</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Fragment 2: Board flips to Spotter's view (trigger only) -->
-              <div class="fragment" data-fragment-index="2"></div>
-
-              <!-- Fragment 3: Spotter answers No -->
-              <div class="fragment" data-fragment-index="3">
-                <div class="ge-msg is-spotter visible">
-                  <div class="ge-avatar"><i class="fas fa-binoculars"></i></div>
-                  <div class="ge-bubble">
-                    <span class="ge-speaker">Spotter</span>
-                    No
+              <div class="fragment" data-fragment-index="7">
+                <p style="font-size: 0.52em; font-weight: 600; color: #172642; margin: 6px 0 4px;">
+                  <i class="fas fa-lightbulb" style="color: #f0c040;"></i>
+                  &nbsp;Many possible questions<span id="q-header-ext" style="display:none;">&hellip; but only some are <em>informative</em></span><span id="q-header-ellipsis">&hellip;</span>
+                </p>
+                <div class="q-space" id="question-space">
+                  <div class="q-chip" data-q="redundant">
+                    <span class="q-text">&ldquo;Are there more than 2 purple tiles remaining?&rdquo;
+                      <span class="q-explain">Purple is horizontal &mdash; only 2 tiles (G1 and G3) are possible</span></span>
+                    <span class="q-badge">&#x2717;</span>
+                  </div>
+                  <div class="q-chip" data-q="informative">
+                    <span class="q-text">&ldquo;Is the red ship near the purple ship?&rdquo;
+                      <span class="q-explain">Red ship location is completely unknown</span></span>
+                    <span class="q-badge">&#x2713;</span>
+                  </div>
+                  <div class="q-chip" data-q="redundant">
+                    <span class="q-text">&ldquo;Any more ships in column 7?&rdquo;
+                      <span class="q-explain">Given placement of orange, this is possible, but unlikely</span></span>
+                    <span class="q-badge">&#x2717;</span>
+                  </div>
+                  <div class="q-chip" data-q="informative">
+                    <span class="q-text">&ldquo;Are any ships along the edge?&rdquo;
+                      <span class="q-explain">Many unknown edge tiles remain</span></span>
+                    <span class="q-badge">&#x2713;</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Fragment 4: Board flips back to Captain's view (trigger only) -->
-              <div class="fragment" data-fragment-index="4"></div>
+              <!-- Fragment 8: Rate questions as informative / redundant -->
+              <div class="fragment" data-fragment-index="8"></div>
             </div>
+          </div>
 
-            <!-- Fragment 5: Captain thinking (collapses prior messages) -->
-            <div class="fragment" data-fragment-index="5">
-              <div class="ge-msg is-captain visible">
-                <div class="ge-avatar"><i class="fas fa-anchor"></i></div>
-                <div class="ge-bubble">
-                  <span class="ge-speaker">Captain</span>
-                  <span style="color: #888;">&hellip;</span>
-                </div>
+          <!-- Spotter's board (right) -->
+          <div id="task-spotter-panel" class="task-panel">
+            <div class="game-action-board-wrap">
+              <h4><i class="fas fa-binoculars"></i> &nbsp;Spotter&rsquo;s View</h4>
+              <div class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <!-- Row A: green at A3 -->
+                <div class="b-label">A</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <!-- Row B: green at B3 -->
+                <div class="b-label">B</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <!-- Row C: green at C3, orange at C7 -->
+                <div class="b-label">C</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <!-- Row D: green at D3, orange at D7 -->
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <!-- Row E: orange at E7 -->
+                <div class="b-label">E</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <!-- Row F: orange at F7 -->
+                <div class="b-label">F</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <!-- Row G: purple G1-G3, orange G7 -->
+                <div class="b-label">G</div>
+                <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <!-- Row H: red H4-H5 -->
+                <div class="b-label">H</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
               </div>
             </div>
-
-            <!-- Fragment 6: Question space — many possible questions (stack) -->
-            <div class="fragment" data-fragment-index="6">
-              <p style="font-size: 0.52em; font-weight: 600; color: #172642; margin: 6px 0 4px;">
-                <i class="fas fa-lightbulb" style="color: #f0c040;"></i>
-                &nbsp;Many possible questions<span id="q-header-ext" style="display:none;">&hellip; but only some are <em>informative</em></span><span id="q-header-ellipsis">&hellip;</span>
-              </p>
-              <div class="q-space" id="question-space">
-                <div class="q-chip" data-q="redundant">
-                  <span class="q-text">&ldquo;Are there more than 2 purple tiles remaining?&rdquo;
-                    <span class="q-explain">Purple is horizontal &mdash; only 2 tiles (G1 and G3) are possible</span></span>
-                  <span class="q-badge">&#x2717;</span>
-                </div>
-                <div class="q-chip" data-q="informative">
-                  <span class="q-text">&ldquo;Is the red ship near the purple ship?&rdquo;
-                    <span class="q-explain">Red ship location is completely unknown</span></span>
-                  <span class="q-badge">&#x2713;</span>
-                </div>
-                <div class="q-chip" data-q="redundant">
-                  <span class="q-text">&ldquo;Any more ships in column 7?&rdquo;
-                    <span class="q-explain">Given placement of orange, this is possible, but unlikely</span></span>
-                  <span class="q-badge">&#x2717;</span>
-                </div>
-                <div class="q-chip" data-q="informative">
-                  <span class="q-text">&ldquo;Are any ships along the edge?&rdquo;
-                    <span class="q-explain">Many unknown edge tiles remain</span></span>
-                  <span class="q-badge">&#x2713;</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fragment 7: Rate questions as informative / redundant -->
-            <div class="fragment" data-fragment-index="7"></div>
           </div>
         </div>
 
         <aside class="notes">
-          To study these questions, we turn to the cognitive science literature.
-          There's a well-established line of work that uses the game Battleship
-          to study information-seeking in humans.
-
-          In these tasks, participants see a partially-revealed game board with
-          colored tiles representing ships, and must decide what tiles to reveal.
-          [click] The captain can shoot at tiles to reveal them — here, G2 is a hit
-          on the purple ship.
-          [click] But crucially, participants can also ask natural language questions
-          to get information. The captain asks: is the purple ship vertical?
-          [click] The Spotter sees the FULL board — notice the green and red ships
-          the captain can't see — but can only communicate Yes or No.
-          [click] The Spotter answers No — the purple ship is horizontal.
-          [click] Back to the captain's view.
-          [click] At any time, there's a large space of possible questions the player could ask.
-          [click] But only some of these are useful — "Is the red ship near the purple ship?"
-          could go either way and tells us something new. Others, like "Are there more than
-          2 purple tiles remaining?" are redundant because the answer is already determined.
-          This is the key insight that motivates our formal framework.
+          Let's see this in action. Here's a game mid-way through.
+          [click] The Spotter sees the full board. [click] The Captain sees a partial view.
+          [click] They communicate through a chat interface.
+          [click] The Captain fires at G2 — a hit on the purple ship.
+          [click] The Captain asks: "Is the purple ship vertical?"
+          [click] The Spotter answers No.
+          [click] At any point, there's a large space of possible questions. But only some
+          are informative — questions that split the hypothesis space evenly. Others are
+          redundant because their answers are already determined.
+          [click] This is the key insight that motivates our formal framework.
         </aside>
       </section>
 
@@ -1619,7 +1935,7 @@
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- D.0 How do we estimate EIG? -->
-      <section> <!-- D.0 #10 -->
+      <section> <!-- D.0 #13 -->
         <div class="section-label">Framework</div>
         <h3>How do we estimate EIG?</h3>
 
@@ -1741,7 +2057,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- D.1 EIG in action -->
-      <section> <!-- D.1 #11 -->
+      <section> <!-- D.1 #14 -->
         <div class="section-label">Framework</div>
         <h3>Many possible questions&hellip; but only some are <em>informative</em></h3>
         <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 12px;">
@@ -1863,7 +2179,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- D.2 What can we study with this framework? -->
-      <section> <!-- D.2 #12 -->
+      <section> <!-- D.2 #15 -->
         <div class="section-label">Framework</div>
         <h3>What can we study with this framework?</h3>
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
@@ -1900,12 +2216,12 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- E.0 Section divider: Experiments -->
-      <section data-background-color="#1e3270"> <!-- E.0 #13 -->
+      <section data-background-color="#1e3270"> <!-- E.0 #16 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiments and Results</h2>
       </section>
 
       <!-- E.1 Roadmap -->
-      <section> <!-- E.1 #14 -->
+      <section> <!-- E.1 #17 -->
         <h3>Roadmap</h3>
         <div class="strategy-grid" style="margin-top: 36px;">
           <div class="strat-card fragment fade-in-then-semi-out" style="--card-accent: #04af70;">
@@ -1937,7 +2253,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- F.0 Human study setup -->
-      <section> <!-- F.0 #15 -->
+      <section> <!-- F.0 #18 -->
         <div class="section-label">Human Study</div>
         <h3>Collecting the BattleshipQA dataset</h3>
         <p style="text-align: center; font-size: 0.62em; color: #4a5770; margin-bottom: 12px;">
@@ -1976,7 +2292,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.1 Human study results — figures -->
-      <section data-auto-animate> <!-- F.1 #16 -->
+      <section data-auto-animate> <!-- F.1 #19 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="fig-row" style="margin-top: 12px;">
@@ -1999,7 +2315,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- F.2 Human study results — accuracy -->
-      <section data-auto-animate> <!-- F.2 #17 -->
+      <section data-auto-animate> <!-- F.2 #20 -->
         <div class="section-label" data-id="human-label">Human Study</div>
         <h3 data-id="human-title">How do people play?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 40px;">
@@ -2019,7 +2335,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- G.0 SpotterQA setup -->
-      <section data-auto-animate> <!-- G.0 #18 -->
+      <section data-auto-animate> <!-- G.0 #21 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="callout" data-id="human-accuracy" style="margin-top: 10px; margin-bottom: 12px;">
@@ -2052,7 +2368,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- G.1 SpotterQA results -->
-      <section data-auto-animate> <!-- G.1 #19 -->
+      <section data-auto-animate> <!-- G.1 #22 -->
         <div class="section-label" data-id="section-label">Experiment 1: SpotterQA</div>
         <h3 data-id="slide-title">Can LMs answer grounded questions?</h3>
         <div class="fig-row" style="gap: 16px; align-items: stretch;">
@@ -2088,7 +2404,7 @@ def answer(true_board, partial_board) -> bool:
 
 
       <!-- H.0 Section divider: CaptainQA -->
-      <section data-background-color="#1e3270"> <!-- H.0 #20 -->
+      <section data-background-color="#1e3270"> <!-- H.0 #23 -->
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiment 2: CaptainQA</h2>
         <p style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 12px;">Can LMs ask the right questions and play rationally?</p>
       </section>
@@ -2098,7 +2414,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- H.1 Three Bayesian strategies -->
-      <section> <!-- H.1 #21 -->
+      <section> <!-- H.1 #24 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Three Bayesian strategies for rational agents</h3>
         <p style="text-align: center; font-size: 0.65em; color: #4a5770; margin-bottom: 8px;">
@@ -2140,7 +2456,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.2 CaptainQA results — F1 -->
-      <section> <!-- H.2 #22 -->
+      <section> <!-- H.2 #25 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>Bayesian strategies boost performance</h3>
         <div class="two-col" style="align-items: center;">
@@ -2179,7 +2495,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- H.3 CaptainQA results — EIG scaling -->
-      <section> <!-- H.3 #23 -->
+      <section> <!-- H.3 #26 -->
         <div class="section-label">Experiment 2: CaptainQA</div>
         <h3>EIG scales with sample budget</h3>
         <div class="two-col" style="align-items: center;">
@@ -2212,7 +2528,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- I.0 Beyond Battleship: Guess Who? -->
-      <section> <!-- I.0 #24 -->
+      <section> <!-- I.0 #27 -->
         <div class="section-label">Generalization</div>
         <h3>Beyond Battleship: Guess Who?</h3>
         <div class="two-col" style="align-items: center;">
@@ -2255,7 +2571,7 @@ def answer(true_board, partial_board) -> bool:
            ═══════════════════════════════════════════════════════════════ -->
 
       <!-- J.0 Takeaways -->
-      <section> <!-- J.0 #25 -->
+      <section> <!-- J.0 #28 -->
         <h3>Takeaways</h3>
         <div class="takeaway-grid">
           <div class="takeaway-card">
@@ -2286,7 +2602,7 @@ def answer(true_board, partial_board) -> bool:
       </section>
 
       <!-- J.1 Thank you -->
-      <section class="title-slide"> <!-- J.1 #26 -->
+      <section class="title-slide"> <!-- J.1 #29 -->
         <h1 style="font-size: 1.8em !important;">Thank you!</h1>
         <h2 style="font-size: 0.85em !important; margin-bottom: 0.4em !important;">
           <i class="fas fa-globe"></i> &nbsp;<a href="https://gabegrand.github.io/battleship">gabegrand.github.io/battleship</a>
@@ -2779,36 +3095,48 @@ def answer(true_board, partial_board) -> bool:
       }
     })();
 
-    // Sync board cells with fragment steps on game-action slide
-    // Fragment index 0 → data-step="1", index 1 → data-step="2", etc.
+    // ── C.0: board cross-fade on fragment 1 ──
+    function c0BoardSwap(show) {
+      var full = document.getElementById('c0-full-board');
+      var partial = document.getElementById('c0-partial-board');
+      if (full) full.style.opacity = show ? '0' : '1';
+      if (partial) partial.style.opacity = show ? '1' : '0';
+    }
+
+    // ── Task slide (C.3): progressive panel reveal + chat sequence ──
+    var taskPanels = { '1': 'task-spotter-panel', '2': 'task-captain-panel', '3': 'task-chat-panel' };
+
     Reveal.on('fragmentshown', function(event) {
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
-      var step = parseInt(idx) + 1;
-      document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
-        cell.classList.add('revealed');
-      });
 
-      // Fragment 2: flip board to Spotter's view
-      if (idx === '2') {
-        var flip = document.getElementById('board-flip');
-        if (flip) flip.classList.add('flipped');
+      // C.0: cross-fade boards on fragment 1
+      var slide = event.fragment.closest('section');
+      if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
+        c0BoardSwap(true);
       }
-      // Fragment 4: flip board back to Captain's view
+
+      // Fragments 1-3: reveal panels
+      if (taskPanels[idx]) {
+        var panel = document.getElementById(taskPanels[idx]);
+        if (panel) panel.classList.add('tp-visible');
+      }
+      // Fragment 4: reveal G2 cell on captain's board
       if (idx === '4') {
-        var flip = document.getElementById('board-flip');
-        if (flip) flip.classList.remove('flipped');
+        var step = parseInt(idx) + 1;
+        document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
+          cell.classList.add('revealed');
+        });
       }
-      // Fragment 6: collapse prior messages + show question space
-      if (idx === '6') {
+      // Fragment 7: collapse prior messages
+      if (idx === '7') {
         var events = document.getElementById('game-events');
         if (events) events.classList.add('q-expanded');
       }
-      // Fragment 7: rate question chips + extend header
-      if (idx === '7') {
+      // Fragment 8: rate question chips + extend header
+      if (idx === '8') {
         document.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
-          var rating = chip.getAttribute('data-q');
-          chip.classList.add(rating);
+          chip.classList.add(chip.getAttribute('data-q'));
         });
         var ext = document.getElementById('q-header-ext');
         var ell = document.getElementById('q-header-ellipsis');
@@ -2816,31 +3144,36 @@ def answer(true_board, partial_board) -> bool:
         if (ell) ell.style.display = 'none';
       }
     });
+
     Reveal.on('fragmenthidden', function(event) {
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
-      var step = parseInt(idx) + 1;
-      document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
-        cell.classList.remove('revealed');
-      });
 
-      // Undo flip to Spotter
-      if (idx === '2') {
-        var flip = document.getElementById('board-flip');
-        if (flip) flip.classList.remove('flipped');
+      // C.0: undo board cross-fade
+      var slide = event.fragment.closest('section');
+      if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
+        c0BoardSwap(false);
       }
-      // Undo flip back to Captain (re-flip to Spotter)
+
+      // Undo panel reveals
+      if (taskPanels[idx]) {
+        var panel = document.getElementById(taskPanels[idx]);
+        if (panel) panel.classList.remove('tp-visible');
+      }
+      // Undo G2 cell reveal
       if (idx === '4') {
-        var flip = document.getElementById('board-flip');
-        if (flip) flip.classList.add('flipped');
+        var step = parseInt(idx) + 1;
+        document.querySelectorAll('.mini-board .b-cell[data-step="' + step + '"]').forEach(function(cell) {
+          cell.classList.remove('revealed');
+        });
       }
-      // Undo collapse of prior messages
-      if (idx === '6') {
+      // Undo collapse
+      if (idx === '7') {
         var events = document.getElementById('game-events');
         if (events) events.classList.remove('q-expanded');
       }
-      // Undo question chip rating + revert header
-      if (idx === '7') {
+      // Undo question chip rating
+      if (idx === '8') {
         document.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
           chip.classList.remove('informative', 'redundant');
         });
@@ -2851,18 +3184,25 @@ def answer(true_board, partial_board) -> bool:
       }
     });
 
-    // Reset board-flip and other game-action state when entering the slide fresh
+    // Reset task slide state when entering fresh
     Reveal.on('slidechanged', function(event) {
-      // Reset board to Captain's View whenever this slide becomes active
-      var flip = event.currentSlide.querySelector('#board-flip');
-      if (flip) {
-        flip.classList.remove('flipped');
+      // Sync C.0 board cross-fade with fragment state
+      if (event.currentSlide.querySelector('#c0-full-board')) {
+        // Check if fragment 1 (hidden info) is already shown
+        var frag1 = event.currentSlide.querySelector('[data-fragment-index="1"]');
+        var showPartial = frag1 && frag1.classList.contains('visible');
+        c0BoardSwap(showPartial);
       }
-      // Reset revealed cells so data-step tiles start hidden
+      // Reset task panels
+      ['task-spotter-panel', 'task-captain-panel', 'task-chat-panel'].forEach(function(id) {
+        var panel = event.currentSlide.querySelector('#' + id);
+        if (panel) panel.classList.remove('tp-visible');
+      });
+      // Reset revealed cells
       event.currentSlide.querySelectorAll('.mini-board .b-cell[data-step]').forEach(function(cell) {
         cell.classList.remove('revealed');
       });
-      // Also reset any other stateful elements in case we navigated away mid-sequence
+      // Reset chat state
       var events = event.currentSlide.querySelector('#game-events');
       if (events) events.classList.remove('q-expanded');
       event.currentSlide.querySelectorAll('#question-space .q-chip').forEach(function(chip) {
