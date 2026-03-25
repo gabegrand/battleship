@@ -1951,34 +1951,27 @@
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiments and Results</h2>
       </section>
 
-      <!-- E.1 Roadmap -->
-      <section> <!-- E.1 #15 -->
-        <h3>Roadmap</h3>
-        <div style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
+      <!-- E.1 Roadmap (v1: goals only) -->
+      <section data-auto-animate data-auto-animate-id="roadmap"> <!-- E.1 #15 -->
+        <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
+        <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
           <!-- Left: Humans -->
-          <div class="fragment" style="flex: 1; background: rgba(4,175,112,0.05); border: 2px solid rgba(4,175,112,0.25); border-radius: 12px; padding: 20px 24px;">
-            <h4 style="font-size: 0.75em; color: #04af70; margin-bottom: 12px;"><i class="fas fa-users"></i> &nbsp;Humans</h4>
-            <p style="font-size: 0.6em; color: #4a5770; font-weight: 600; margin-bottom: 10px;">Characterizing human information-seeking</p>
-            <p style="font-size: 0.58em; color: #555; line-height: 1.5;">People are not optimal, but <strong>resource-rational</strong>: they rarely ask redundant questions, performance scales with QA frequency, and answers are highly accurate.</p>
+          <div class="fragment fade-in" data-fragment-index="0" data-roadmap="humans-v1" style="flex: 1; background: rgba(4,175,112,0.05); border: 2px solid rgba(4,175,112,0.25); border-radius: 12px; padding: 20px 24px; transition: opacity 0.4s, box-shadow 0.4s;">
+            <h4 style="font-size: 0.75em; color: #04af70; margin-bottom: 8px;"><i class="fas fa-users"></i> &nbsp;Humans</h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 0;">Goal: Collect behavioral data &amp; establish baselines</p>
           </div>
           <!-- Right: Agents -->
-          <div class="fragment" style="flex: 1.5; background: rgba(48,78,216,0.05); border: 2px solid rgba(48,78,216,0.25); border-radius: 12px; padding: 20px 24px;">
-            <h4 style="font-size: 0.75em; color: #304ed8; margin-bottom: 12px;"><i class="fas fa-robot"></i> &nbsp;Agents</h4>
-            <p style="font-size: 0.6em; color: #4a5770; font-weight: 600; margin-bottom: 10px;">Interacting with a world model&hellip;</p>
-            <ol style="font-size: 0.58em; color: #555; line-height: 2; margin: 0; padding-left: 18px;">
-              <li>Enables <strong>grounded simulation</strong> (more accurate answers)</li>
-              <li>Yields more <strong>informative experiments</strong> (higher-EIG questions)</li>
-              <li>Leads to more <strong>efficient discovery</strong> (higher targeting scores)</li>
-            </ol>
+          <div class="fragment fade-in" data-fragment-index="1" data-roadmap="agents-v1" style="flex: 1; background: rgba(48,78,216,0.05); border: 2px solid rgba(48,78,216,0.25); border-radius: 12px; padding: 20px 24px; transition: opacity 0.4s, box-shadow 0.4s;">
+            <h4 style="font-size: 0.75em; color: #304ed8; margin-bottom: 8px;"><i class="fas fa-robot"></i> &nbsp;Agents</h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 0;">Goal: Understand how agents perform out-of-box and with a world model</p>
           </div>
         </div>
+        <span class="fragment" data-fragment-index="2" style="display:none;"></span>
 
         <aside class="notes">
-          Our results are in two parts. First, we characterize human information-seeking:
-          people are resource-rational — they rarely waste questions, and asking more leads
-          to better performance. Then, three key findings about agents: interacting with a
-          world model enables grounded simulation, yields more informative questions, and
-          leads to more efficient discovery.
+          Here's our roadmap. Two sets of experiments: first humans, then agents.
+          On the human side, we want to collect behavioral data and establish baselines.
+          On the agent side, we want to understand what happens when agents interact with a world model.
         </aside>
       </section>
 
@@ -1993,20 +1986,23 @@
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 12px;">
           42 participants &middot; 126 games &middot; 931 gold-labeled questions (BattleshipQA dataset)
         </p>
-        <div class="two-col" style="align-items: center;">
+        <div class="two-col" style="align-items: flex-start;">
           <div class="col" style="text-align: center;">
             <img src="../static/images/f1_score_vs_question_count.png"
                  alt="F1 vs questions asked" style="max-height: 280px;" />
           </div>
           <div class="col">
-            <ul style="font-size: 0.68em; line-height: 1.9;">
-              <li class="fragment fade-in">Human answers are very <strong>accurate &amp; consistent</strong><br />
-                <span style="font-size: 0.85em; color: #888;">(92.5% vs. gold labels)</span>
-              </li>
-              <li class="fragment fade-in">Humans very <strong>rarely ask redundant</strong> questions</li>
-              <li class="fragment fade-in">Performance <strong>correlates with QA frequency</strong><br/>
-                <span style="font-size: 0.85em; color: #888;">($\rho = 0.684$, $p &lt; 0.002$)</span></li>
-            </ul>
+            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Human answers are very <strong>accurate &amp; consistent</strong></p>
+            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 92.5% agreement with gold labels</p>
+
+            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans ask <strong>good, but not optimal</strong> questions</p>
+            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Mean EIG = 0.351 bits (theoretical max = 0.531)</p>
+
+            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans very <strong>rarely ask redundant</strong> questions</p>
+            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Only 2.8% of human questions have EIG = 0</p>
+
+            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Performance <strong>correlates with QA frequency</strong></p>
+            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $\rho = 0.684$, $p &lt; 0.002$</p>
           </div>
         </div>
 
@@ -2063,10 +2059,32 @@
            SECTION G: AGENTS — Results 1 (grounded simulation)
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- G.0 Agent section divider -->
-      <section data-background-color="#1e3270"> <!-- G.0 #19 -->
-        <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;"><i class="fas fa-robot"></i> &nbsp;Agents</h2>
-        <p style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 12px;">Interacting with a world model</p>
+      <!-- G.0 Roadmap (v2: human findings filled in) -->
+      <section data-auto-animate data-auto-animate-id="roadmap"> <!-- G.0 #19 -->
+        <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
+        <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
+          <!-- Left: Humans — filled in, starts highlighted -->
+          <div data-roadmap="humans-v2" style="flex: 1; background: rgba(4,175,112,0.05); border: 2px solid rgba(4,175,112,0.25); border-radius: 12px; padding: 20px 24px; transition: opacity 0.4s, box-shadow 0.4s;">
+            <h4 style="font-size: 0.75em; color: #04af70; margin-bottom: 8px;"><i class="fas fa-users"></i> &nbsp;Humans <span style="font-size: 0.7em; color: #04af70;">&#10003;</span></h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 12px;">Goal: Collect behavioral data &amp; establish baselines</p>
+            <ul style="font-size: 0.55em; color: #555; line-height: 1.4; margin: 0; padding-left: 18px;">
+              <li>Casual players are surprisingly good at both asking and answering questions</li>
+              <li>Asking more questions leads to better downstream performance</li>
+            </ul>
+          </div>
+          <!-- Right: Agents — still just goal, starts dimmed -->
+          <div data-roadmap="agents-v2" style="flex: 1; background: rgba(48,78,216,0.05); border: 2px solid rgba(48,78,216,0.25); border-radius: 12px; padding: 20px 24px; transition: opacity 0.4s, box-shadow 0.4s;">
+            <h4 style="font-size: 0.75em; color: #304ed8; margin-bottom: 8px;"><i class="fas fa-robot"></i> &nbsp;Agents</h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 0;">Goal: Understand how agents perform out-of-box and with a world model</p>
+          </div>
+        </div>
+        <span class="fragment" data-fragment-index="0" style="display:none;"></span>
+
+        <aside class="notes">
+          So we've established our human baselines. Casual players are surprisingly competent —
+          accurate answers, no redundant questions, and performance scales with how many questions they ask.
+          Now let's see how agents compare, and whether a world model helps.
+        </aside>
       </section>
 
       <!-- G.1 Result 1: World model grounds reasoning -->
@@ -2118,9 +2136,9 @@
             <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
 
             <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</p>
-            <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $Q_{\text{Bayes}}$ <strong>eliminates</strong> redundant questions entirely</p>
+            <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Sampling + scoring by EIG reduces redundant questions to &le;1.2%</p>
 
-            <p class="fragment fade-in" data-fragment-index="7" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Benefits both weak and strong models alike</p>
+            <p class="fragment fade-in" data-fragment-index="7" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Benefits LLMs with a range of different sizes and capabilities</p>
           </div>
         </div>
 
@@ -2245,6 +2263,38 @@
       </section>
 
 
+
+      <!-- Roadmap (v3: all findings filled in) -->
+      <section data-auto-animate data-auto-animate-id="roadmap">
+        <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
+        <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
+          <!-- Left: Humans — filled in, dimmed -->
+          <div data-roadmap="humans-v3" style="flex: 1; background: rgba(4,175,112,0.05); border: 2px solid rgba(4,175,112,0.25); border-radius: 12px; padding: 20px 24px; opacity: 0.4;">
+            <h4 style="font-size: 0.75em; color: #04af70; margin-bottom: 8px;"><i class="fas fa-users"></i> &nbsp;Humans <span style="font-size: 0.7em; color: #04af70;">&#10003;</span></h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 12px;">Goal: Collect behavioral data &amp; establish baselines</p>
+            <ul style="font-size: 0.55em; color: #555; line-height: 1.4; margin: 0; padding-left: 18px;">
+              <li>Casual players are surprisingly good at both asking and answering questions</li>
+              <li>Asking more questions leads to better downstream performance</li>
+            </ul>
+          </div>
+          <!-- Right: Agents — filled in, highlighted -->
+          <div data-roadmap="agents-v3" style="flex: 1; background: rgba(48,78,216,0.05); border: 2px solid rgba(48,78,216,0.25); border-radius: 12px; padding: 20px 24px; box-shadow: 0 0 16px rgba(48,78,216,0.3);">
+            <h4 style="font-size: 0.75em; color: #304ed8; margin-bottom: 8px;"><i class="fas fa-robot"></i> &nbsp;Agents <span style="font-size: 0.7em; color: #304ed8;">&#10003;</span></h4>
+            <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 12px;">Goal: Understand how agents perform out-of-box and with a world model</p>
+            <ul style="font-size: 0.55em; color: #555; line-height: 1.4; margin: 0; padding-left: 18px;">
+              <li>A world model enables <strong>grounded simulation</strong>, producing more accurate answers</li>
+              <li>Sampling + scoring questions yields more <strong>informative experiments</strong></li>
+              <li>Together, these lead to more <strong>efficient discovery</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          So here's the full picture. Humans give us strong baselines, and agents with world models
+          match or exceed human performance across all three dimensions. Now let's see if this
+          generalizes beyond Battleship.
+        </aside>
+      </section>
 
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION I: GENERALIZATION
@@ -3691,6 +3741,65 @@ def answer(true_board, partial_board) -> bool:
         c0BoardSwap(showPartial);
       }
     });
+
+    // ── Roadmap highlight logic ──
+    // E.1: fragment 0 highlights humans, dims agents
+    // G.0: starts with humans highlighted; fragment 0 swaps to agents highlighted
+    (function() {
+      var GLOW_H = '0 0 16px rgba(4,175,112,0.3)';
+      var GLOW_A = '0 0 16px rgba(48,78,216,0.3)';
+
+      function setHighlight(card, glow) {
+        if (!card) return;
+        card.style.opacity = '1';
+        card.style.boxShadow = glow;
+      }
+      function setDim(card) {
+        if (!card) return;
+        card.style.opacity = '0.4';
+        card.style.boxShadow = 'none';
+      }
+      function setNormal(card) {
+        if (!card) return;
+        card.style.opacity = '1';
+        card.style.boxShadow = 'none';
+      }
+
+      function syncRoadmap(slide) {
+        var hCard = slide.querySelector('[data-roadmap^="humans"]');
+        var aCard = slide.querySelector('[data-roadmap^="agents"]');
+        if (!hCard || !aCard) return;
+
+        var version = hCard.getAttribute('data-roadmap');
+
+        if (version === 'humans-v1') {
+          // E.1: boxes fade in at 0,1; fragment 2 highlights humans
+          var frag2 = slide.querySelector('.fragment[data-fragment-index="2"]');
+          var highlightVisible = frag2 && frag2.classList.contains('visible');
+          if (highlightVisible) { setHighlight(hCard, GLOW_H); setDim(aCard); }
+          else { setNormal(hCard); setNormal(aCard); }
+        } else if (version === 'humans-v2') {
+          // G.0: humans highlighted initially, fragment 0 swaps to agents
+          var frag0 = slide.querySelector('.fragment[data-fragment-index="0"]');
+          var fragVisible = frag0 && frag0.classList.contains('visible');
+          if (fragVisible) { setDim(hCard); setHighlight(aCard, GLOW_A); }
+          else { setHighlight(hCard, GLOW_H); setDim(aCard); }
+        }
+        // v3 is static (set in HTML), no JS needed
+      }
+
+      Reveal.on('fragmentshown', function(e) {
+        var slide = e.fragment.closest('section');
+        if (slide && slide.querySelector('[data-roadmap]')) syncRoadmap(slide);
+      });
+      Reveal.on('fragmenthidden', function(e) {
+        var slide = e.fragment.closest('section');
+        if (slide && slide.querySelector('[data-roadmap]')) syncRoadmap(slide);
+      });
+      Reveal.on('slidechanged', function(e) {
+        if (e.currentSlide.querySelector('[data-roadmap]')) syncRoadmap(e.currentSlide);
+      });
+    })();
   </script>
 </body>
 </html>
