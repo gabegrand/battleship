@@ -1987,22 +1987,30 @@
           42 participants &middot; 126 games &middot; 931 gold-labeled questions (BattleshipQA dataset)
         </p>
         <div class="two-col" style="align-items: flex-start;">
-          <div class="col" style="text-align: center;">
-            <img src="../static/images/f1_score_vs_question_count.png"
-                 alt="F1 vs questions asked" style="max-height: 280px;" />
+          <div class="col" style="text-align: center; position: relative; min-height: 280px;">
+            <!-- Chart container: each chart fades in/out with fragments -->
+            <div id="human-chart-container" style="width: 400px; height: 280px; margin: 0 auto; position: relative;">
+              <div id="human-chart-accuracy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
+              <div id="human-chart-eig" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
+              <div id="human-chart-redundant" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
+              <div id="human-chart-scatter" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;">
+                <img src="../static/images/f1_score_vs_question_count.png"
+                     alt="F1 vs questions asked" style="max-height: 280px;" />
+              </div>
+            </div>
           </div>
           <div class="col">
-            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Human answers are very <strong>accurate &amp; consistent</strong></p>
-            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 92.5% agreement with gold labels</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Human answers are very <strong>accurate &amp; consistent</strong></p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 92.5% agreement with gold labels</p>
 
-            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans ask <strong>good, but not optimal</strong> questions</p>
-            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Mean EIG = 0.351 bits (theoretical max = 0.531)</p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans ask <strong>good, but not optimal</strong> questions</p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Mean EIG = 0.351 bits (theoretical max = 0.531)</p>
 
-            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans very <strong>rarely ask redundant</strong> questions</p>
-            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Only 2.8% of human questions have EIG = 0</p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans very <strong>rarely ask redundant</strong> questions</p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Only 2.8% of human questions have EIG = 0</p>
 
-            <p class="fragment fade-in" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Performance <strong>correlates with QA frequency</strong></p>
-            <p class="fragment fade-in" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $\rho = 0.684$, $p &lt; 0.002$</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Performance <strong>correlates with QA frequency</strong></p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $\rho = 0.684$, $p &lt; 0.002$</p>
           </div>
         </div>
 
@@ -2748,6 +2756,262 @@ def answer(true_board, partial_board) -> bool:
       preloadIframes: false,
       plugins: [ RevealNotes, RevealHighlight ],
     });
+
+    // ── D3: Human characterization mini-charts (slide F.0) ──
+    (function() {
+      if (typeof d3 === 'undefined') return;
+      var W = 400, H = 280;
+      var green = '#04af70';
+      var greenLight = '#b2e8d4';
+      var gray = '#ccc';
+
+      // Animated bar references (populated by chart builders, used by sync)
+      var animBars = {};
+
+      // ── Chart 1: Accuracy bar (92.5%) ──
+      (function() {
+        var container = document.getElementById('human-chart-accuracy');
+        if (!container) return;
+        var margin = { top: 24, right: 24, bottom: 40, left: 56 };
+        var w = W - margin.left - margin.right;
+        var h = H - margin.top - margin.bottom;
+        var svg = d3.select(container).append('svg')
+          .attr('width', W).attr('height', H)
+          .attr('viewBox', '0 0 ' + W + ' ' + H);
+        var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+        var val = 0.925;
+        var y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
+        var x = d3.scaleBand().domain(['Human']).range([0, w]).padding(0.6);
+
+        // Y axis
+        g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
+          .selectAll('text').attr('font-size', '11px');
+        g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -40)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555').text('Accuracy');
+
+        // X axis
+        g.append('g').attr('transform', 'translate(0,' + h + ')')
+          .call(d3.axisBottom(x)).selectAll('text').attr('font-size', '13px');
+
+        // Bar (starts at baseline)
+        var bar = g.append('rect').attr('x', x('Human')).attr('y', y(0))
+          .attr('width', x.bandwidth()).attr('height', 0)
+          .attr('fill', greenLight).attr('stroke', green).attr('stroke-width', 2).attr('rx', 4);
+
+        // Value label (hidden initially)
+        var label = g.append('text').attr('x', x('Human') + x.bandwidth() / 2).attr('y', y(val) - 8)
+          .attr('text-anchor', 'middle').attr('font-size', '15px').attr('font-weight', '600').attr('fill', '#333')
+          .text('92.5%').attr('opacity', 0);
+
+        animBars.accuracy = { bar: bar, label: label, val: val, y: y, h: h };
+      })();
+
+      // ── Chart 2: EIG dual-axis bar ──
+      (function() {
+        var container = document.getElementById('human-chart-eig');
+        if (!container) return;
+        var margin = { top: 24, right: 56, bottom: 40, left: 56 };
+        var w = W - margin.left - margin.right;
+        var h = H - margin.top - margin.bottom;
+        var svg = d3.select(container).append('svg')
+          .attr('width', W).attr('height', H)
+          .attr('viewBox', '0 0 ' + W + ' ' + H);
+        var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+        var humanEIG = 0.351, maxEIG = 0.531;
+
+        var yBits = d3.scaleLinear().domain([0, 0.6]).range([h, 0]);
+        var yPct = d3.scaleLinear().domain([0, 0.6 / maxEIG * 100]).range([h, 0]);
+
+        // Left axis (bits)
+        g.append('g').call(d3.axisLeft(yBits).ticks(4).tickFormat(function(d) { return d.toFixed(1); }))
+          .selectAll('text').attr('font-size', '11px');
+        g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -40)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555').text('EIG (bits)');
+
+        // Right axis (% of ceiling)
+        g.append('g').attr('transform', 'translate(' + w + ',0)')
+          .call(d3.axisRight(yPct).ticks(4).tickFormat(function(d) { return Math.round(d) + '%'; }))
+          .selectAll('text').attr('font-size', '11px');
+        g.append('text').attr('transform', 'rotate(90)').attr('x', h / 2).attr('y', -w - 42)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555').text('% of theoretical ceiling');
+
+        // Theoretical max reference line
+        g.append('line').attr('x1', 0).attr('x2', w)
+          .attr('y1', yBits(maxEIG)).attr('y2', yBits(maxEIG))
+          .attr('stroke', '#999').attr('stroke-dasharray', '6,4').attr('stroke-width', 1.5);
+        g.append('text').attr('x', w + 4).attr('y', yBits(maxEIG) - 6)
+          .attr('font-size', '10px').attr('fill', '#999').attr('text-anchor', 'start').text('theoretical max');
+
+        // Human bar (starts at baseline)
+        var barW = 80;
+        var barX = w / 2 - barW / 2;
+        var bar = g.append('rect').attr('x', barX).attr('y', yBits(0))
+          .attr('width', barW).attr('height', 0)
+          .attr('fill', greenLight).attr('stroke', green).attr('stroke-width', 2).attr('rx', 4);
+
+        // Value label (hidden initially)
+        var label = g.append('text').attr('x', w / 2).attr('y', yBits(humanEIG) - 8)
+          .attr('text-anchor', 'middle').attr('font-size', '14px').attr('font-weight', '600').attr('fill', '#333')
+          .text('0.351 bits (66%)').attr('opacity', 0);
+
+        // X label
+        g.append('text').attr('x', w / 2).attr('y', h + 30)
+          .attr('text-anchor', 'middle').attr('font-size', '13px').attr('fill', '#555').text('Human mean EIG');
+
+        animBars.eig = { bar: bar, label: label, val: humanEIG, y: yBits, h: h };
+      })();
+
+      // ── Chart 3: Redundant questions donut ──
+      (function() {
+        var container = document.getElementById('human-chart-redundant');
+        if (!container) return;
+        var svg = d3.select(container).append('svg')
+          .attr('width', W).attr('height', H)
+          .attr('viewBox', '0 0 ' + W + ' ' + H);
+        var cx = W / 2, cy = H / 2 + 10, r = 80;
+        var redundant = 0.028;
+        var arcGen = d3.arc().innerRadius(r - 24).outerRadius(r);
+
+        // Informative arc (starts at 0)
+        var infoArc = svg.append('path')
+          .datum({ startAngle: 0, endAngle: 0 })
+          .attr('d', arcGen)
+          .attr('transform', 'translate(' + cx + ',' + cy + ')')
+          .attr('fill', green);
+
+        // Redundant arc (starts at 0)
+        var redArc = svg.append('path')
+          .datum({ startAngle: 0, endAngle: 0 })
+          .attr('d', arcGen)
+          .attr('transform', 'translate(' + cx + ',' + cy + ')')
+          .attr('fill', '#e74c3c');
+
+        // Center text (hidden initially)
+        var centerText1 = svg.append('text').attr('x', cx).attr('y', cy - 4)
+          .attr('text-anchor', 'middle').attr('font-size', '32px').attr('font-weight', '700').attr('fill', '#333')
+          .text('2.8%').attr('opacity', 0);
+        var centerText2 = svg.append('text').attr('x', cx).attr('y', cy + 20)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#888')
+          .text('Redundancy Rate').attr('opacity', 0);
+
+        // Legend (hidden initially)
+        var ly = cy + r + 24;
+        var legendEls = [];
+        var r1 = svg.append('rect').attr('x', cx - 70).attr('y', ly - 8).attr('width', 12).attr('height', 12).attr('rx', 2).attr('fill', green).attr('opacity', 0);
+        var t1 = svg.append('text').attr('x', cx - 54).attr('y', ly + 2).attr('font-size', '11px').attr('fill', '#555').text('Informative').attr('opacity', 0);
+        var r2 = svg.append('rect').attr('x', cx + 14).attr('y', ly - 8).attr('width', 12).attr('height', 12).attr('rx', 2).attr('fill', '#e74c3c').attr('opacity', 0);
+        var t2 = svg.append('text').attr('x', cx + 30).attr('y', ly + 2).attr('font-size', '11px').attr('fill', '#555').text('Redundant').attr('opacity', 0);
+        legendEls = [r1, t1, r2, t2];
+
+        var infoEnd = (1 - redundant) * 2 * Math.PI;
+        var fullEnd = 2 * Math.PI;
+
+        function arcTween(newAngle, startAngle) {
+          return function(d) {
+            var interp = d3.interpolate(d.endAngle, newAngle);
+            var interpS = d3.interpolate(d.startAngle, startAngle);
+            return function(t) {
+              d.endAngle = interp(t);
+              d.startAngle = interpS(t);
+              return arcGen(d);
+            };
+          };
+        }
+
+        animBars.donut = {
+          animateIn: function() {
+            infoArc.transition().duration(600).ease(d3.easeCubicOut)
+              .attrTween('d', arcTween(infoEnd, 0));
+            redArc.transition().delay(500).duration(400).ease(d3.easeCubicOut)
+              .attrTween('d', arcTween(fullEnd, infoEnd));
+            centerText1.transition().delay(600).duration(300).attr('opacity', 1);
+            centerText2.transition().delay(600).duration(300).attr('opacity', 1);
+            legendEls.forEach(function(el) { el.transition().delay(700).duration(300).attr('opacity', 1); });
+          },
+          reset: function() {
+            infoArc.interrupt().datum({ startAngle: 0, endAngle: 0 }).attr('d', arcGen);
+            redArc.interrupt().datum({ startAngle: 0, endAngle: 0 }).attr('d', arcGen);
+            centerText1.interrupt().attr('opacity', 0);
+            centerText2.interrupt().attr('opacity', 0);
+            legendEls.forEach(function(el) { el.interrupt().attr('opacity', 0); });
+          }
+        };
+      })();
+
+      // ── Chart visibility sync ──
+      var chartIds = ['human-chart-accuracy', 'human-chart-eig', 'human-chart-redundant', 'human-chart-scatter'];
+      var animKeys = ['accuracy', 'eig', 'donut', null]; // map chart index to animBars key
+      var prevActiveChart = -1;
+
+      function syncHumanCharts(slide) {
+        var maxVisible = -1;
+        slide.querySelectorAll('.fragment.visible').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'));
+          if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
+        });
+        chartIds.forEach(function(id, i) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          var isActive = (i === maxVisible);
+          el.style.opacity = isActive ? '1' : '0';
+
+          var key = animKeys[i];
+          if (key && animBars[key]) {
+            var ab = animBars[key];
+            if (isActive && prevActiveChart !== i) {
+              if (ab.animateIn) {
+                ab.animateIn();
+              } else {
+                ab.bar.attr('y', ab.y(0)).attr('height', 0)
+                  .transition().duration(600).ease(d3.easeCubicOut)
+                  .attr('y', ab.y(ab.val))
+                  .attr('height', ab.h - ab.y(ab.val));
+                ab.label.attr('opacity', 0)
+                  .transition().delay(400).duration(300).attr('opacity', 1);
+              }
+            } else if (!isActive) {
+              if (ab.reset) {
+                ab.reset();
+              } else {
+                ab.bar.interrupt().attr('y', ab.y(0)).attr('height', 0);
+                ab.label.interrupt().attr('opacity', 0);
+              }
+            }
+          }
+        });
+        prevActiveChart = maxVisible;
+      }
+      Reveal.on('fragmentshown', function(e) {
+        var slide = e.fragment.closest('section');
+        if (slide && slide.querySelector('#human-chart-container')) syncHumanCharts(slide);
+      });
+      Reveal.on('fragmenthidden', function(e) {
+        var slide = e.fragment.closest('section');
+        if (slide && slide.querySelector('#human-chart-container')) syncHumanCharts(slide);
+      });
+      Reveal.on('slidechanged', function(e) {
+        if (e.currentSlide.querySelector('#human-chart-container')) {
+          prevActiveChart = -1; // reset so bars animate on re-entry
+          syncHumanCharts(e.currentSlide);
+        }
+        if (e.previousSlide && e.previousSlide.querySelector('#human-chart-container')) {
+          prevActiveChart = -1;
+          chartIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.opacity = '0'; });
+          // Reset all animated charts
+          Object.keys(animBars).forEach(function(key) {
+            var ab = animBars[key];
+            if (ab.reset) {
+              ab.reset();
+            } else {
+              ab.bar.interrupt().attr('y', ab.y(0)).attr('height', 0);
+              ab.label.interrupt().attr('opacity', 0);
+            }
+          });
+        }
+      });
+    })();
 
     // ── D3: Spotter accuracy overall bar chart (fragment-driven) ──
     (function() {
