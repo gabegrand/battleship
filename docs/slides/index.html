@@ -1993,10 +1993,7 @@
               <div id="human-chart-accuracy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
               <div id="human-chart-eig" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
               <div id="human-chart-redundant" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
-              <div id="human-chart-scatter" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;">
-                <img src="../static/images/f1_score_vs_question_count.png"
-                     alt="F1 vs questions asked" style="max-height: 280px;" />
-              </div>
+              <div id="human-chart-scatter" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
             </div>
           </div>
           <div class="col">
@@ -2799,12 +2796,23 @@ def answer(true_board, partial_board) -> bool:
           .attr('width', x.bandwidth()).attr('height', 0)
           .attr('fill', greenLight).attr('stroke', green).attr('stroke-width', 2).attr('rx', 4);
 
+        // Human baseline dashed line (starts at bottom)
+        var baseline = g.append('line').attr('x1', 0).attr('x2', w)
+          .attr('y1', y(0)).attr('y2', y(0))
+          .attr('stroke', green).attr('stroke-dasharray', '6,4').attr('stroke-width', 1.5).attr('opacity', 0);
+        var baseLabel = g.append('text').attr('x', w - 8).attr('y', y(0) - 6)
+          .attr('text-anchor', 'end').attr('font-size', '10px').attr('fill', green)
+          .text('Human baseline').attr('opacity', 0);
+
         // Value label (hidden initially)
         var label = g.append('text').attr('x', x('Human') + x.bandwidth() / 2).attr('y', y(val) - 8)
           .attr('text-anchor', 'middle').attr('font-size', '15px').attr('font-weight', '600').attr('fill', '#333')
           .text('92.5%').attr('opacity', 0);
 
-        animBars.accuracy = { bar: bar, label: label, val: val, y: y, h: h };
+        animBars.accuracy = {
+          bar: bar, label: label, val: val, y: y, h: h,
+          baseline: baseline, baseLabel: baseLabel
+        };
       })();
 
       // ── Chart 2: EIG dual-axis bar ──
@@ -2841,8 +2849,8 @@ def answer(true_board, partial_board) -> bool:
         g.append('line').attr('x1', 0).attr('x2', w)
           .attr('y1', yBits(maxEIG)).attr('y2', yBits(maxEIG))
           .attr('stroke', '#999').attr('stroke-dasharray', '6,4').attr('stroke-width', 1.5);
-        g.append('text').attr('x', w + 4).attr('y', yBits(maxEIG) - 6)
-          .attr('font-size', '10px').attr('fill', '#999').attr('text-anchor', 'start').text('theoretical max');
+        g.append('text').attr('x', w - 8).attr('y', yBits(maxEIG) - 6)
+          .attr('font-size', '10px').attr('fill', '#999').attr('text-anchor', 'end').text('Theoretical max');
 
         // Human bar (starts at baseline)
         var barW = 80;
@@ -2850,6 +2858,14 @@ def answer(true_board, partial_board) -> bool:
         var bar = g.append('rect').attr('x', barX).attr('y', yBits(0))
           .attr('width', barW).attr('height', 0)
           .attr('fill', greenLight).attr('stroke', green).attr('stroke-width', 2).attr('rx', 4);
+
+        // Human baseline dashed line (starts at bottom)
+        var baseline = g.append('line').attr('x1', 0).attr('x2', w)
+          .attr('y1', yBits(0)).attr('y2', yBits(0))
+          .attr('stroke', green).attr('stroke-dasharray', '6,4').attr('stroke-width', 1.5).attr('opacity', 0);
+        var baseLabel = g.append('text').attr('x', w - 8).attr('y', yBits(0) - 6)
+          .attr('text-anchor', 'end').attr('font-size', '10px').attr('fill', green)
+          .text('Human baseline').attr('opacity', 0);
 
         // Value label (hidden initially)
         var label = g.append('text').attr('x', w / 2).attr('y', yBits(humanEIG) - 8)
@@ -2860,7 +2876,11 @@ def answer(true_board, partial_board) -> bool:
         g.append('text').attr('x', w / 2).attr('y', h + 30)
           .attr('text-anchor', 'middle').attr('font-size', '13px').attr('fill', '#555').text('Human mean EIG');
 
-        animBars.eig = { bar: bar, label: label, val: humanEIG, y: yBits, h: h };
+        animBars.eig = {
+          bar: bar, label: label, val: humanEIG, y: yBits, h: h,
+          baseline: baseline, baseLabel: baseLabel,
+          fmt: function(v) { return v.toFixed(3) + ' bits (' + Math.round(v / maxEIG * 100) + '%)'; }
+        };
       })();
 
       // ── Chart 3: Redundant questions donut ──
@@ -2922,10 +2942,22 @@ def answer(true_board, partial_board) -> bool:
 
         animBars.donut = {
           animateIn: function() {
-            infoArc.transition().duration(600).ease(d3.easeCubicOut)
-              .attrTween('d', arcTween(infoEnd, 0));
-            redArc.transition().delay(500).duration(400).ease(d3.easeCubicOut)
-              .attrTween('d', arcTween(fullEnd, infoEnd));
+            // Single smooth sweep: cursor goes 0 → 2π, both arcs update each frame
+            d3.transition().duration(800).ease(d3.easeCubicOut)
+              .tween('donut-sweep', function() {
+                var interp = d3.interpolate(0, fullEnd);
+                return function(t) {
+                  var cursor = interp(t);
+                  // Green arc: 0 → min(cursor, infoEnd)
+                  infoArc.datum({ startAngle: 0, endAngle: Math.min(cursor, infoEnd) }).attr('d', arcGen);
+                  // Red arc: appears only after cursor passes infoEnd
+                  if (cursor > infoEnd) {
+                    redArc.datum({ startAngle: infoEnd, endAngle: cursor }).attr('d', arcGen);
+                  } else {
+                    redArc.datum({ startAngle: 0, endAngle: 0 }).attr('d', arcGen);
+                  }
+                };
+              });
             centerText1.transition().delay(600).duration(300).attr('opacity', 1);
             centerText2.transition().delay(600).duration(300).attr('opacity', 1);
             legendEls.forEach(function(el) { el.transition().delay(700).duration(300).attr('opacity', 1); });
@@ -2940,9 +2972,96 @@ def answer(true_board, partial_board) -> bool:
         };
       })();
 
+      // ── Chart 4: F1 vs question count scatter ──
+      (function() {
+        var container = document.getElementById('human-chart-scatter');
+        if (!container) return;
+        var margin = { top: 16, right: 20, bottom: 40, left: 52 };
+        var w = W - margin.left - margin.right;
+        var h = H - margin.top - margin.bottom;
+        var svg = d3.select(container).append('svg')
+          .attr('width', W).attr('height', H)
+          .attr('viewBox', '0 0 ' + W + ' ' + H);
+        var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+        // Per-pair mean data (21 pairs)
+        var data = [
+          {q:11.667,f:0.622},{q:1.667,f:0.502},{q:9.333,f:0.743},{q:12.500,f:0.704},
+          {q:6.833,f:0.563},{q:11.833,f:0.611},{q:8.833,f:0.765},{q:9.167,f:0.721},
+          {q:9.167,f:0.612},{q:11.833,f:0.729},{q:8.667,f:0.689},{q:4.833,f:0.539},
+          {q:5.667,f:0.457},{q:5.500,f:0.425},{q:6.000,f:0.509},{q:4.833,f:0.587},
+          {q:3.500,f:0.558},{q:10.667,f:0.627},{q:14.333,f:0.618},{q:13.833,f:0.745},
+          {q:1.500,f:0.601}
+        ];
+
+        var x = d3.scaleLinear().domain([0, 16]).range([0, w]);
+        var y = d3.scaleLinear().domain([0.3, 0.85]).range([h, 0]);
+
+        // Gridlines
+        g.append('g').selectAll('line').data(y.ticks(5)).enter().append('line')
+          .attr('x1', 0).attr('x2', w)
+          .attr('y1', function(d) { return y(d); }).attr('y2', function(d) { return y(d); })
+          .attr('stroke', '#e8e8e8').attr('stroke-width', 1);
+
+        // Axes
+        g.append('g').attr('transform', 'translate(0,' + h + ')')
+          .call(d3.axisBottom(x).ticks(8)).selectAll('text').attr('font-size', '10px');
+        g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2f')))
+          .selectAll('text').attr('font-size', '10px');
+
+        // Axis labels
+        g.append('text').attr('x', w / 2).attr('y', h + 32)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555')
+          .text('Questions Asked');
+        g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -38)
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555')
+          .text('Targeting Score (F1)');
+
+        // Linear regression for trend line
+        var n = data.length;
+        var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        data.forEach(function(d) { sumX += d.q; sumY += d.f; sumXY += d.q * d.f; sumX2 += d.q * d.q; });
+        var slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        var intercept = (sumY - slope * sumX) / n;
+
+        // Trend line (hidden initially)
+        var trendLine = g.append('line')
+          .attr('x1', x(0)).attr('y1', y(intercept))
+          .attr('x2', x(16)).attr('y2', y(slope * 16 + intercept))
+          .attr('stroke', green).attr('stroke-width', 2)
+          .attr('stroke-dasharray', '6,4').attr('opacity', 0);
+
+        // Scatter points (hidden initially)
+        var dots = g.selectAll('.dot').data(data).enter().append('circle')
+          .attr('cx', function(d) { return x(d.q); })
+          .attr('cy', function(d) { return y(d.f); })
+          .attr('r', 0)
+          .attr('fill', green).attr('fill-opacity', 0.6)
+          .attr('stroke', green).attr('stroke-width', 1.5);
+
+        // Correlation annotation (hidden initially)
+        var corrText = g.append('text').attr('x', w - 4).attr('y', 16)
+          .attr('text-anchor', 'end').attr('font-size', '11px').attr('fill', '#555')
+          .text('ρ = 0.684, p < 0.002').attr('opacity', 0);
+
+        animBars.scatter = {
+          animateIn: function() {
+            dots.transition().delay(function(d, i) { return i * 30; }).duration(400).ease(d3.easeCubicOut)
+              .attr('r', 6);
+            trendLine.transition().delay(500).duration(500).attr('opacity', 1);
+            corrText.transition().delay(800).duration(300).attr('opacity', 1);
+          },
+          reset: function() {
+            dots.interrupt().attr('r', 0);
+            trendLine.interrupt().attr('opacity', 0);
+            corrText.interrupt().attr('opacity', 0);
+          }
+        };
+      })();
+
       // ── Chart visibility sync ──
       var chartIds = ['human-chart-accuracy', 'human-chart-eig', 'human-chart-redundant', 'human-chart-scatter'];
-      var animKeys = ['accuracy', 'eig', 'donut', null]; // map chart index to animBars key
+      var animKeys = ['accuracy', 'eig', 'donut', 'scatter']; // map chart index to animBars key
       var prevActiveChart = -1;
 
       function syncHumanCharts(slide) {
@@ -2965,20 +3084,51 @@ def answer(true_board, partial_board) -> bool:
                 ab.animateIn();
               } else {
                 ab.bar.attr('y', ab.y(0)).attr('height', 0)
-                  .transition().duration(600).ease(d3.easeCubicOut)
+                  .transition().duration(1000).ease(d3.easeCubicOut)
                   .attr('y', ab.y(ab.val))
                   .attr('height', ab.h - ab.y(ab.val));
-                ab.label.attr('opacity', 0)
-                  .transition().delay(400).duration(300).attr('opacity', 1);
+                // Label counts up and travels with bar
+                ab.label.attr('opacity', 1).attr('y', ab.y(0) - 8);
+                ab.label.transition().duration(1000).ease(d3.easeCubicOut)
+                  .attr('y', ab.y(ab.val) - 8)
+                  .tween('text', function() {
+                    var node = this;
+                    var fmt = ab.fmt || function(v) { return (v * 100).toFixed(1) + '%'; };
+                    var interp = d3.interpolate(0, ab.val);
+                    return function(t) { node.textContent = fmt(interp(t)); };
+                  });
+                if (ab.baseline) {
+                  ab.baseline.attr('y1', ab.y(0)).attr('y2', ab.y(0)).attr('opacity', 1)
+                    .transition().duration(1000).ease(d3.easeCubicOut)
+                    .attr('y1', ab.y(ab.val)).attr('y2', ab.y(ab.val));
+                  ab.baseLabel.attr('y', ab.y(0) - 6).attr('opacity', 1)
+                    .transition().duration(1000).ease(d3.easeCubicOut)
+                    .attr('y', ab.y(ab.val) - 6);
+                }
               }
             } else if (!isActive) {
               if (ab.reset) {
                 ab.reset();
               } else {
                 ab.bar.interrupt().attr('y', ab.y(0)).attr('height', 0);
-                ab.label.interrupt().attr('opacity', 0);
+                ab.label.interrupt().attr('opacity', 0).attr('y', ab.y(0) - 8);
+                if (ab.baseline) {
+                  ab.baseline.interrupt().attr('y1', ab.y(0)).attr('y2', ab.y(0)).attr('opacity', 0);
+                  ab.baseLabel.interrupt().attr('y', ab.y(0) - 6).attr('opacity', 0);
+                }
               }
             }
+          }
+        });
+        // Focus fading: dim previous text points, highlight current
+        slide.querySelectorAll('.fragment[data-fragment-index]').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'));
+          if (isNaN(idx) || f.style.display === 'none') return; // skip hidden trigger spans
+          if (f.classList.contains('visible')) {
+            f.style.transition = 'opacity 0.4s';
+            f.style.opacity = (idx === maxVisible) ? '1' : '0.3';
+          } else {
+            f.style.opacity = '';
           }
         });
         prevActiveChart = maxVisible;
@@ -3006,7 +3156,11 @@ def answer(true_board, partial_board) -> bool:
               ab.reset();
             } else {
               ab.bar.interrupt().attr('y', ab.y(0)).attr('height', 0);
-              ab.label.interrupt().attr('opacity', 0);
+              ab.label.interrupt().attr('opacity', 0).attr('y', ab.y(0) - 8);
+              if (ab.baseline) {
+                ab.baseline.interrupt().attr('y1', ab.y(0)).attr('y2', ab.y(0)).attr('opacity', 0);
+                ab.baseLabel.interrupt().attr('y', ab.y(0) - 6).attr('opacity', 0);
+              }
             }
           });
         }
