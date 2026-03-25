@@ -14,6 +14,7 @@
 
   <!-- KaTeX for math rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
@@ -2068,30 +2069,17 @@
         <p style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 12px;">Interacting with a world model</p>
       </section>
 
-      <!-- G.1 Result 1: Grounded simulation → more accurate answers -->
+      <!-- G.1 Result 1: World model grounds reasoning -->
       <section> <!-- G.1 #20 -->
         <div class="section-label" style="color: #304ed8;"><span style="background: rgba(48,78,216,0.1); border-radius: 4px; padding: 2px 8px;">Result 1</span></div>
-        <h3>Grounded simulation &rarr; more accurate answers</h3>
+        <h3>World model grounds reasoning</h3>
         <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 8px;">
           SpotterQA: 15 LMs &times; 931 gold-labeled questions &middot; 2&times;2 design: language vs.&nbsp;code &times; direct vs.&nbsp;CoT
         </p>
-        <div class="fig-row" style="gap: 16px; align-items: stretch;">
-          <div class="fig-col" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
-            <img src="../static/images/spotter_accuracy_by_model.png"
-                 alt="Spotter accuracy by model" />
-            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
-              <strong>(a)</strong> Wide accuracy range across 15 LMs (52.5% &ndash; 92.8%).
-            </figcaption>
-          </div>
-          <div class="fig-col fragment" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
-            <img src="../static/images/spotter_accuracy_overall.png"
-                 alt="Spotter accuracy by strategy" />
-            <figcaption style="font-size: 0.5em; color: #666; margin-top: 8px;">
-              <strong>(b)</strong> CoT + Code gives <strong>+14.7%</strong> absolute over base LM.
-            </figcaption>
-          </div>
+        <div style="display: flex; justify-content: center; margin-top: 8px;">
+          <div id="spotter-accuracy-overall" style="width: 480px; height: 380px;"></div>
         </div>
-        <div style="text-align: center; margin-top: 8px;">
+        <div style="text-align: center; margin-top: 4px;">
           <div style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
             <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
             <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
@@ -2704,6 +2692,219 @@ def answer(true_board, partial_board) -> bool:
       preloadIframes: false,
       plugins: [ RevealNotes, RevealHighlight ],
     });
+
+    // ── D3: Spotter accuracy overall bar chart (fragment-driven) ──
+    (function() {
+      var container = document.getElementById('spotter-accuracy-overall');
+      if (!container || typeof d3 === 'undefined') return;
+
+      var W = 480, H = 380;
+      var margin = { top: 28, right: 24, bottom: 44, left: 56 };
+      var width = W - margin.left - margin.right;
+      var height = H - margin.top - margin.bottom;
+
+      var svg = d3.select(container).append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('viewBox', '0 0 ' + W + ' ' + H);
+
+      var g = svg.append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+      // Data: per-model overall accuracy from spotter_master_table.tex
+      var perModel = {
+        'Base':       [0.868, 0.834, 0.231, 0.701, 0.622, 0.690, 0.622, 0.752, 0.686, 0.589, 0.677, 0.525, 0.924, 0.928, 0.927],
+        'CoT':        [0.906, 0.904, 0.516, 0.711, 0.608, 0.789, 0.690, 0.750, 0.783, 0.690, 0.808, 0.591, 0.926, 0.924, 0.925],
+        'Code':       [0.937, 0.939, 0.440, 0.814, 0.778, 0.797, 0.767, 0.904, 0.899, 0.808, 0.878, 0.799, 0.939, 0.925, 0.930],
+        'CoT + Code': [0.944, 0.937, 0.497, 0.823, 0.795, 0.845, 0.784, 0.909, 0.896, 0.851, 0.888, 0.828, 0.940, 0.914, 0.930],
+      };
+      var humanAccuracy = 0.925;
+
+      var colors = {
+        'Base': '#66C2A5', 'CoT': '#FC8D62',
+        'Code': '#8DA0CB', 'CoT + Code': '#E78AC3',
+      };
+      var categories = ['Base', 'CoT', 'Code', 'CoT + Code'];
+
+      // Bootstrapped 95% CIs (10k resamples, matching seaborn's errorbar=("ci", 95))
+      var bootstrapCI = {
+        'Base':       { ciLo: 0.6092, ciHi: 0.7917 },
+        'CoT':        { ciLo: 0.7013, ciHi: 0.8310 },
+        'Code':       { ciLo: 0.7675, ciHi: 0.8893 },
+        'CoT + Code': { ciLo: 0.7903, ciHi: 0.8978 },
+      };
+
+      var data = categories.map(function(cat) {
+        return { category: cat, mean: d3.mean(perModel[cat]), ciLo: bootstrapCI[cat].ciLo, ciHi: bootstrapCI[cat].ciHi };
+      });
+
+      // Scales
+      var x = d3.scaleBand().domain(categories).range([0, width]).padding(0.35);
+      var y = d3.scaleLinear().domain([0.5, 1.0]).range([height, 0]);
+
+      // Gridlines
+      g.append('g').attr('class', 'grid')
+        .selectAll('line').data(y.ticks(5)).enter().append('line')
+        .attr('x1', 0).attr('x2', width)
+        .attr('y1', function(d) { return y(d); })
+        .attr('y2', function(d) { return y(d); })
+        .attr('stroke', '#e8e8e8').attr('stroke-width', 1);
+
+      // Y axis
+      g.append('g')
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
+        .selectAll('text')
+        .style('font-size', '11px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
+      g.select('.domain').attr('stroke', '#999');
+
+      // Y axis label
+      g.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2).attr('y', -38)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '13px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
+        .text('Accuracy');
+
+      // X axis
+      g.append('g').attr('transform', 'translate(0,' + height + ')')
+        .call(d3.axisBottom(x).tickSize(0))
+        .select('.domain').attr('stroke', '#999');
+      g.selectAll('.tick text')
+        .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
+
+      // ── Animated elements (all start hidden) ──
+
+      // Human baseline dashed line + label
+      var humanY = y(humanAccuracy);
+      var humanLine = g.append('line')
+        .attr('x1', 0).attr('x2', width)
+        .attr('y1', humanY).attr('y2', humanY)
+        .attr('stroke', '#4b4f73').attr('stroke-width', 2)
+        .attr('stroke-dasharray', '8,5')
+        .attr('opacity', 0);
+      var humanLabel = g.append('text')
+        .attr('x', width / 2).attr('y', humanY - 6)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '11px').style('font-family', 'Noto Sans, sans-serif')
+        .style('fill', '#4b4f73').style('font-weight', '600')
+        .text('Human Performance')
+        .attr('opacity', 0);
+
+      // Bars (initially zero height)
+      var barGroups = data.map(function(d) {
+        var bar = g.append('rect')
+          .attr('x', x(d.category))
+          .attr('width', x.bandwidth())
+          .attr('y', y(0.5)).attr('height', 0)
+          .attr('rx', 3)
+          .attr('fill', colors[d.category]);
+
+        var capW = x.bandwidth() * 0.3;
+        var cx = x(d.category) + x.bandwidth() / 2;
+        var err = g.append('g').attr('opacity', 0);
+        err.append('line')
+          .attr('x1', cx).attr('x2', cx)
+          .attr('y1', y(d.ciLo)).attr('y2', y(d.ciHi))
+          .attr('stroke', '#333').attr('stroke-width', 2);
+        err.append('line')
+          .attr('x1', cx - capW / 2).attr('x2', cx + capW / 2)
+          .attr('y1', y(d.ciHi)).attr('y2', y(d.ciHi))
+          .attr('stroke', '#333').attr('stroke-width', 2);
+        err.append('line')
+          .attr('x1', cx - capW / 2).attr('x2', cx + capW / 2)
+          .attr('y1', y(d.ciLo)).attr('y2', y(d.ciLo))
+          .attr('stroke', '#333').attr('stroke-width', 2);
+
+        return { bar: bar, err: err, d: d };
+      });
+
+      // ── Step-based animation state ──
+      // Steps: 0 = axes only, 1 = human line, 2–5 = bars (Base, CoT, Code, CoT+Code)
+      var step = 0;
+      var TOTAL_STEPS = 6; // 0..5
+
+      function showStep(n) {
+        // Step 1: human line
+        if (n >= 1) {
+          humanLine.transition().duration(400).attr('opacity', 1);
+          humanLabel.transition().duration(400).attr('opacity', 1);
+        } else {
+          humanLine.attr('opacity', 0);
+          humanLabel.attr('opacity', 0);
+        }
+        // Steps 2–5: bars
+        barGroups.forEach(function(bg, i) {
+          if (n >= i + 2) {
+            bg.bar.transition().duration(600).ease(d3.easeCubicOut)
+              .attr('y', y(bg.d.mean))
+              .attr('height', height - y(bg.d.mean));
+            bg.err.transition().delay(400).duration(300).attr('opacity', 1);
+          } else {
+            bg.bar.transition().duration(300)
+              .attr('y', y(0.5)).attr('height', 0);
+            bg.err.transition().duration(200).attr('opacity', 0);
+          }
+        });
+      }
+
+      function stepForward() {
+        if (step < TOTAL_STEPS - 1) { step++; showStep(step); }
+      }
+      function stepBackward() {
+        if (step > 0) { step--; showStep(step); }
+      }
+      function resetAll() {
+        step = 0;
+        humanLine.attr('opacity', 0);
+        humanLabel.attr('opacity', 0);
+        barGroups.forEach(function(bg) {
+          bg.bar.attr('y', y(0.5)).attr('height', 0);
+          bg.err.attr('opacity', 0);
+        });
+      }
+      function showAll() {
+        step = TOTAL_STEPS - 1;
+        showStep(step);
+      }
+
+      // ── Reveal.js integration via hidden fragments ──
+      // Find the slide containing this chart and inject invisible fragment spans
+      var slide = container.closest('section');
+      if (slide) {
+        for (var i = 0; i < TOTAL_STEPS - 1; i++) {
+          var frag = document.createElement('span');
+          frag.className = 'fragment';
+          frag.setAttribute('data-fragment-index', i);
+          frag.setAttribute('data-spotter-chart-step', i + 1);
+          frag.style.display = 'none';
+          slide.appendChild(frag);
+        }
+      }
+
+      Reveal.on('fragmentshown', function(event) {
+        if (event.fragment.hasAttribute('data-spotter-chart-step')) {
+          stepForward();
+        }
+      });
+      Reveal.on('fragmenthidden', function(event) {
+        if (event.fragment.hasAttribute('data-spotter-chart-step')) {
+          stepBackward();
+        }
+      });
+      // Reset when leaving the slide, show all when arriving back
+      Reveal.on('slidechanged', function(event) {
+        if (event.previousSlide && event.previousSlide.querySelector('#spotter-accuracy-overall')) {
+          resetAll();
+        }
+        if (event.currentSlide && event.currentSlide.querySelector('#spotter-accuracy-overall')) {
+          // Show up to the current fragment index
+          var frags = event.currentSlide.querySelectorAll('[data-spotter-chart-step]');
+          var visCount = 0;
+          frags.forEach(function(f) { if (f.classList.contains('visible')) visCount++; });
+          step = visCount;
+          showStep(step);
+        }
+      });
+    })();
 
     // Render animated EIG vs p curve on the "Properties of EIG" slide
     (function() {
