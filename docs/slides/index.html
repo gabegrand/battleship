@@ -2114,12 +2114,13 @@
             </div>
           </div>
           <div class="col">
-            <ul style="font-size: 0.7em;">
-              <li class="fragment fade-in" data-fragment-index="3">EIG improves smoothly with more candidate questions</li>
-              <li class="fragment fade-in" data-fragment-index="4"><strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</li>
-              <li class="fragment fade-in" data-fragment-index="5">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</li>
-              <li class="fragment fade-in" data-fragment-index="6">$Q_{\text{Bayes}}$ <strong>eliminates</strong> redundant questions entirely</li>
-            </ul>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">EIG improves smoothly with more candidates</p>
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
+
+            <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</p>
+            <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $Q_{\text{Bayes}}$ <strong>eliminates</strong> redundant questions entirely</p>
+
+            <p class="fragment fade-in" data-fragment-index="7" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Benefits both weak and strong models alike</p>
           </div>
         </div>
 
@@ -2155,10 +2156,10 @@
           </div>
           <div class="col">
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does using a world model improve downstream performance?</p>
-            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-bottom: 10px;">&rarr; Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
 
             <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Just optimizing EIG (<strong>InfoMax</strong>) does not help</p>
-            <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.42em; color: #888; margin-bottom: 8px;">&rarr; Weaker models (Llama&nbsp;4, GPT-4o) don&rsquo;t know <em>how to act</em> on information gained</p>
+            <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 8px;">&rarr; Weaker models (Llama&nbsp;4, GPT-4o) don&rsquo;t know <em>how to act</em> on information gained</p>
 
             <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to select <em>when and where to shoot</em>:</p>
             <ul style="font-size: 0.5em; line-height: 1.6; margin: 0;">
@@ -2255,9 +2256,8 @@
         <h3>Beyond Battleship: Guess Who?</h3>
         <div class="two-col" style="align-items: center;">
           <div class="col" style="text-align: center;">
-            <img src="../static/images/guess-who-results.png" alt="Guess Who? results"
-                 style="max-height: 300px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
-            <div style="margin-top: 8px;">
+            <div id="guess-who-barplot" style="width: 380px; height: 320px; margin: 0 auto;"></div>
+            <div style="margin-top: 4px;">
               <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
@@ -2265,18 +2265,17 @@
             </div>
           </div>
           <div class="col">
-            <ul style="font-size: 0.65em;">
-                <li class="fragment fade-in"><strong>Guess Who?</strong> from TextArena (Guertler et al., 2025):</li>
-                <ul style="margin-top: 4px; margin-bottom: 0;">
-                  <li class="fragment fade-in">Richer object-relational semantics (age, clothing, facial hair, etc.)</li>
-                </ul>
-              <li class="fragment fade-in">Same Bayesian strategies work well:</li>
-              <ul style="margin-top: 6px; margin-bottom: 0;">
-                <li class="fragment fade-in"><strong style="color: #0e79b2;">GPT-4o</strong>: 61.7% &rarr; 90.0% success rate</li>
-                <li class="fragment fade-in"><strong style="color: #71a0c1;">Llama-4-Scout</strong>: 30.0% &rarr; 72.4%</li>
-              </ul>
-              <li class="fragment fade-in"><strong>Not Battleship-specific</strong> &mdash; generalizes to information-seeking games with combinatorial hypothesis spaces</li>
+            <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;"><strong>Guess Who?</strong> from TextArena (Guertler et al., 2025)</p>
+            <p style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Richer object-relational semantics (age, clothing, facial hair, etc.)</p>
+
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Same strategies work:</p>
+            <ul style="font-size: 0.42em; color: #888; margin: 0 0 10px 0; line-height: 1.6;">
+              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #0e79b2;">GPT-4o</strong>: 61.7% &rarr; 90.0% success rate</li>
+              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #71a0c1;">Llama-4-Scout</strong>: 30.0% &rarr; 72.4%</li>
             </ul>
+
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 0;"><strong>Not Battleship-specific</strong></p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.42em; color: #888; margin-top: 0;">&rarr; Generalizes to information-seeking games with combinatorial hypothesis spaces</p>
           </div>
         </div>
 
@@ -2910,6 +2909,165 @@ def answer(true_board, partial_board) -> bool:
           step = visCount;
           showStep(step);
         }
+      });
+    })();
+
+    // ── D3: Guess Who? grouped bar chart (fragment-driven) ──
+    (function() {
+      var container = document.getElementById('guess-who-barplot');
+      if (!container || typeof d3 === 'undefined') return;
+
+      var W = 380, H = 320;
+      var margin = { top: 20, right: 8, bottom: 48, left: 52 };
+      var width = W - margin.left - margin.right;
+      var height = H - margin.top - margin.bottom;
+
+      var svg = d3.select(container).append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('viewBox', '0 0 ' + W + ' ' + H);
+      var g = svg.append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+      // Data from guess_who_table.tex (Success Rate)
+      var conditions = ['Agent-only', '+ World Model\n(InfoMax)', '+ World Model\n(Full)'];
+      var condKeys = ['LM', '+Bayes-Q', '+Bayes-QM'];
+      var llms = ['Llama-4-Scout', 'GPT-4o'];
+      var llmColors = { 'Llama-4-Scout': '#71a0c1', 'GPT-4o': '#0e79b2' };
+
+      function lighten(hex, amt) {
+        var c = d3.color(hex);
+        return d3.interpolateRgb(c, '#ffffff')(amt).toString();
+      }
+
+      var data = {
+        'LM':        { 'Llama-4-Scout': 0.300, 'GPT-4o': 0.617 },
+        '+Bayes-Q':  { 'Llama-4-Scout': 0.450, 'GPT-4o': 0.729 },
+        '+Bayes-QM': { 'Llama-4-Scout': 0.724, 'GPT-4o': 0.900 },
+      };
+
+      // Scales
+      var x0 = d3.scaleBand().domain(conditions).range([0, width]).paddingInner(0.3).paddingOuter(0.15);
+      var x1 = d3.scaleBand().domain(llms).range([0, x0.bandwidth()]).padding(0.1);
+      var y = d3.scaleLinear().domain([0, 1.0]).range([height, 0]);
+
+      // Gridlines
+      g.append('g')
+        .selectAll('line').data(y.ticks(5)).enter().append('line')
+        .attr('x1', 0).attr('x2', width)
+        .attr('y1', function(d) { return y(d); })
+        .attr('y2', function(d) { return y(d); })
+        .attr('stroke', '#e8e8e8').attr('stroke-width', 1);
+
+      // Y axis
+      g.append('g')
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
+        .selectAll('text')
+        .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
+      g.select('.domain').attr('stroke', '#999');
+
+      // Y axis label
+      g.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2).attr('y', -36)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
+        .text('Success Rate');
+
+      // X axis (empty ticks, custom multi-line labels)
+      var xAxisG = g.append('g').attr('transform', 'translate(0,' + height + ')')
+        .call(d3.axisBottom(x0).tickSize(0).tickFormat(function() { return ''; }));
+      xAxisG.select('.domain').attr('stroke', '#999');
+      conditions.forEach(function(cond) {
+        var lines = cond.split('\n');
+        var tick = xAxisG.append('text')
+          .attr('x', x0(cond) + x0.bandwidth() / 2)
+          .attr('y', 12)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
+        lines.forEach(function(line, i) {
+          tick.append('tspan')
+            .attr('x', x0(cond) + x0.bandwidth() / 2)
+            .attr('dy', i === 0 ? 0 : '1.1em')
+            .text(line);
+        });
+      });
+
+      // ── Bars (hidden initially, all on animGroup 0, staggered by condition) ──
+      var barElems = [];
+      conditions.forEach(function(cond, ci) {
+        var key = condKeys[ci];
+        llms.forEach(function(llm) {
+          var val = data[key][llm];
+          var color = llmColors[llm];
+          var bar = g.append('rect')
+            .attr('x', x0(cond) + x1(llm))
+            .attr('width', x1.bandwidth())
+            .attr('y', y(0)).attr('height', 0)
+            .attr('rx', 2)
+            .attr('fill', lighten(color, 0.3))
+            .attr('stroke', color).attr('stroke-width', 1.5);
+          // Value label above bar
+          var label = g.append('text')
+            .attr('x', x0(cond) + x1(llm) + x1.bandwidth() / 2)
+            .attr('y', y(val) - 5)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif')
+            .style('fill', '#333').style('font-weight', '600')
+            .text(d3.format('.0%')(val))
+            .attr('opacity', 0);
+          barElems.push({ bar: bar, label: label, val: val, animGroup: 0, delay: ci * 200 });
+        });
+      });
+
+      // ── Declarative sync (same pattern as captain chart) ──
+      var slide = container.closest('section');
+
+      function syncChart() {
+        if (!slide) return;
+        var maxVisible = -1;
+        slide.querySelectorAll('.fragment.visible').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'));
+          if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
+        });
+        barElems.forEach(function(be) {
+          if (maxVisible >= be.animGroup) {
+            be.bar.transition().delay(be.delay).duration(600).ease(d3.easeCubicOut)
+              .attr('y', y(be.val))
+              .attr('height', height - y(be.val));
+            be.label.transition().delay(be.delay + 400).duration(300).attr('opacity', 1);
+          } else {
+            be.bar.transition().duration(300)
+              .attr('y', y(0)).attr('height', 0);
+            be.label.transition().duration(200).attr('opacity', 0);
+          }
+        });
+      }
+
+      function resetAll() {
+        barElems.forEach(function(be) {
+          be.bar.attr('y', y(0)).attr('height', 0);
+          be.label.attr('opacity', 0);
+        });
+      }
+
+      // Inject hidden fragment for chart (index 0); text fragments cover indices 1,2
+      if (slide) {
+        var frag = document.createElement('span');
+        frag.className = 'fragment';
+        frag.setAttribute('data-fragment-index', '0');
+        frag.style.display = 'none';
+        slide.appendChild(frag);
+      }
+
+      Reveal.on('fragmentshown', function(event) {
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
+      });
+      Reveal.on('fragmenthidden', function(event) {
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
+      });
+      Reveal.on('slidechanged', function(event) {
+        if (event.previousSlide && event.previousSlide.querySelector('#guess-who-barplot')) { resetAll(); }
+        if (event.currentSlide && event.currentSlide.querySelector('#guess-who-barplot')) { syncChart(); }
       });
     })();
 
