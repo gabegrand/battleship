@@ -2104,15 +2104,21 @@
         <h3>World model yields more informative questions</h3>
         <div class="two-col" style="align-items: center;">
           <div class="col" style="text-align: center;">
-            <img src="../static/images/eig_max_vs_k.png" alt="EIG vs number of sampled questions"
-                 style="max-height: 300px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+            <div id="eig-max-vs-k" style="width: 520px; height: 340px;"></div>
+            <div style="margin-top: 4px;">
+              <div style="display: inline-grid; grid-template-columns: auto auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+                <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
+                <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #000080; vertical-align: middle; margin-right: 4px;"></span> GPT-5</span>
+              </div>
+            </div>
           </div>
           <div class="col">
             <ul style="font-size: 0.7em;">
-              <li class="fragment fade-in">EIG improves smoothly with more candidate questions</li>
-              <li class="fragment fade-in"><strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</li>
-              <li class="fragment fade-in">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</li>
-              <li class="fragment fade-in">$Q_{\text{Bayes}}$ <strong>eliminates</strong> redundant questions entirely</li>
+              <li class="fragment fade-in" data-fragment-index="3">EIG improves smoothly with more candidate questions</li>
+              <li class="fragment fade-in" data-fragment-index="4"><strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</li>
+              <li class="fragment fade-in" data-fragment-index="5">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</li>
+              <li class="fragment fade-in" data-fragment-index="6">$Q_{\text{Bayes}}$ <strong>eliminates</strong> redundant questions entirely</li>
             </ul>
           </div>
         </div>
@@ -2898,6 +2904,238 @@ def answer(true_board, partial_board) -> bool:
         if (event.currentSlide && event.currentSlide.querySelector('#spotter-accuracy-overall')) {
           // Show up to the current fragment index
           var frags = event.currentSlide.querySelectorAll('[data-spotter-chart-step]');
+          var visCount = 0;
+          frags.forEach(function(f) { if (f.classList.contains('visible')) visCount++; });
+          step = visCount;
+          showStep(step);
+        }
+      });
+    })();
+
+    // ── D3: EIG max vs k line chart (fragment-driven) ──
+    (function() {
+      var container = document.getElementById('eig-max-vs-k');
+      if (!container || typeof d3 === 'undefined') return;
+
+      var W = 520, H = 340;
+      var margin = { top: 24, right: 20, bottom: 44, left: 60 };
+      var width = W - margin.left - margin.right;
+      var height = H - margin.top - margin.bottom;
+
+      var svg = d3.select(container).append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('viewBox', '0 0 ' + W + ' ' + H);
+
+      var g = svg.append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+      // Data from eig_max_vs_k_data.csv
+      var models = [
+        { name: 'Llama-4-Scout', color: '#71a0c1', data: [
+          {k:1, mean:0.2636, se:0.00713}, {k:2, mean:0.3516, se:0.00636},
+          {k:3, mean:0.3856, se:0.00591}, {k:4, mean:0.4133, se:0.00532},
+          {k:5, mean:0.4262, se:0.00508}, {k:6, mean:0.4396, se:0.00466},
+          {k:7, mean:0.4500, se:0.00439}, {k:8, mean:0.4589, se:0.00416},
+          {k:9, mean:0.4657, se:0.00402}, {k:10, mean:0.4717, se:0.00413},
+        ]},
+        { name: 'GPT-4o', color: '#0e79b2', data: [
+          {k:1, mean:0.2987, se:0.00710}, {k:2, mean:0.3740, se:0.00631},
+          {k:3, mean:0.4093, se:0.00575}, {k:4, mean:0.4278, se:0.00543},
+          {k:5, mean:0.4447, se:0.00494}, {k:6, mean:0.4537, se:0.00466},
+          {k:7, mean:0.4624, se:0.00445}, {k:8, mean:0.4673, se:0.00435},
+          {k:9, mean:0.4724, se:0.00410}, {k:10, mean:0.4779, se:0.00393},
+        ]},
+        { name: 'GPT-5', color: '#000080', data: [
+          {k:1, mean:0.4017, se:0.00706}, {k:2, mean:0.4495, se:0.00533},
+          {k:3, mean:0.4656, se:0.00480}, {k:4, mean:0.4741, se:0.00442},
+          {k:5, mean:0.4801, se:0.00427}, {k:6, mean:0.4859, se:0.00407},
+          {k:7, mean:0.4892, se:0.00392}, {k:8, mean:0.4939, se:0.00364},
+          {k:9, mean:0.4966, se:0.00352}, {k:10, mean:0.4983, se:0.00339},
+        ]},
+      ];
+
+      var refLines = {
+        theoreticalMax: { val: 0.531, label: 'Theoretical Max EIG (ε=0.1)', style: 'dotted', color: '#888' },
+        humanMedian:    { val: 0.411, label: 'Human Median EIG', style: 'dashed', color: '#008f69' },
+        humanMean:      { val: 0.351, label: 'Human Mean EIG', style: 'dashed', color: '#888' },
+      };
+
+      // Scales
+      var x = d3.scaleLinear().domain([1, 10]).range([0, width]);
+      var y = d3.scaleLinear().domain([0.20, 0.56]).range([height, 0]);
+
+      // Gridlines
+      g.append('g')
+        .selectAll('line').data(y.ticks(6)).enter().append('line')
+        .attr('x1', 0).attr('x2', width)
+        .attr('y1', function(d) { return y(d); })
+        .attr('y2', function(d) { return y(d); })
+        .attr('stroke', '#e8e8e8').attr('stroke-width', 1);
+
+      // Y axis
+      g.append('g')
+        .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format('.2f')))
+        .selectAll('text')
+        .style('font-size', '11px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
+      g.select('.domain').attr('stroke', '#999');
+
+      // Y axis label
+      g.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2).attr('y', -44)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
+        .text('Max EIG (best of k)');
+
+      // X axis
+      g.append('g').attr('transform', 'translate(0,' + height + ')')
+        .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format('d')))
+        .selectAll('text')
+        .style('font-size', '11px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
+      g.selectAll('.domain').attr('stroke', '#999');
+
+      // X axis label
+      g.append('text')
+        .attr('x', width / 2).attr('y', height + 36)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
+        .text('# Questions Sampled');
+
+      // ── Animated elements ──
+
+      // Reference lines (hidden initially)
+      var refElems = {};
+      Object.keys(refLines).forEach(function(key) {
+        var ref = refLines[key];
+        var dasharray = ref.style === 'dotted' ? '3,3' : '8,5';
+        var line = g.append('line')
+          .attr('x1', 0).attr('x2', width)
+          .attr('y1', y(ref.val)).attr('y2', y(ref.val))
+          .attr('stroke', ref.color).attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', dasharray)
+          .attr('opacity', 0);
+        var label = g.append('text')
+          .attr('x', width / 2).attr('y', y(ref.val) - 5)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '9px').style('font-family', 'Noto Sans, sans-serif')
+          .style('fill', ref.color).style('font-weight', '600')
+          .text(ref.label)
+          .attr('opacity', 0);
+        refElems[key] = { line: line, label: label };
+      });
+
+      // Line + area generators
+      var lineGen = d3.line()
+        .x(function(d) { return x(d.k); })
+        .y(function(d) { return y(d.mean); })
+        .curve(d3.curveMonotoneX);
+
+      var areaGen = d3.area()
+        .x(function(d) { return x(d.k); })
+        .y0(function(d) { return y(d.mean - d.se); })
+        .y1(function(d) { return y(d.mean + d.se); })
+        .curve(d3.curveMonotoneX);
+
+      // Create model elements (hidden initially)
+      var modelElems = models.map(function(m) {
+        var area = g.append('path')
+          .datum(m.data)
+          .attr('d', areaGen)
+          .attr('fill', m.color).attr('opacity', 0);
+        var path = g.append('path')
+          .datum(m.data)
+          .attr('d', lineGen)
+          .attr('fill', 'none')
+          .attr('stroke', m.color).attr('stroke-width', 2.5)
+          .attr('opacity', 0);
+        // Animate line drawing via stroke-dashoffset
+        var totalLen = path.node().getTotalLength();
+        path.attr('stroke-dasharray', totalLen)
+            .attr('stroke-dashoffset', totalLen);
+        return { name: m.name, path: path, area: area, totalLen: totalLen };
+      });
+
+      // ── Step-based animation ──
+      // Step 0: axes only
+      // Step 1: theoretical max line
+      // Step 2: human mean + median lines
+      // Step 3: all 3 model curves (wipe left-to-right)
+      var step = 0;
+      var TOTAL_STEPS = 4;
+
+      function showStep(n) {
+        // Step 1: theoretical max
+        var tm = refElems.theoreticalMax;
+        if (n >= 1) {
+          tm.line.transition().duration(400).attr('opacity', 1);
+          tm.label.transition().duration(400).attr('opacity', 1);
+        } else {
+          tm.line.attr('opacity', 0);
+          tm.label.attr('opacity', 0);
+        }
+        // Step 2: human mean + median
+        ['humanMean', 'humanMedian'].forEach(function(key) {
+          var el = refElems[key];
+          if (n >= 2) {
+            el.line.transition().duration(400).attr('opacity', 1);
+            el.label.transition().duration(400).attr('opacity', 1);
+          } else {
+            el.line.attr('opacity', 0);
+            el.label.attr('opacity', 0);
+          }
+        });
+        // Step 3: all model curves wipe in together
+        modelElems.forEach(function(m, i) {
+          if (n >= 3) {
+            m.path.transition().duration(1000).delay(i * 100).ease(d3.easeLinear)
+              .attr('opacity', 1)
+              .attr('stroke-dashoffset', 0);
+            m.area.transition().delay(600 + i * 100).duration(400)
+              .attr('opacity', 0.18);
+          } else {
+            m.path.attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
+            m.area.attr('opacity', 0);
+          }
+        });
+      }
+
+      function stepForward() { if (step < TOTAL_STEPS - 1) { step++; showStep(step); } }
+      function stepBackward() { if (step > 0) { step--; showStep(step); } }
+      function resetAll() {
+        step = 0;
+        Object.keys(refElems).forEach(function(key) {
+          refElems[key].line.attr('opacity', 0);
+          refElems[key].label.attr('opacity', 0);
+        });
+        modelElems.forEach(function(m) {
+          m.path.attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
+          m.area.attr('opacity', 0);
+        });
+      }
+
+      // Inject hidden fragments
+      var slide = container.closest('section');
+      if (slide) {
+        for (var i = 0; i < TOTAL_STEPS - 1; i++) {
+          var frag = document.createElement('span');
+          frag.className = 'fragment';
+          frag.setAttribute('data-fragment-index', i);
+          frag.setAttribute('data-eig-chart-step', i + 1);
+          frag.style.display = 'none';
+          slide.appendChild(frag);
+        }
+      }
+
+      Reveal.on('fragmentshown', function(event) {
+        if (event.fragment.hasAttribute('data-eig-chart-step')) { stepForward(); }
+      });
+      Reveal.on('fragmenthidden', function(event) {
+        if (event.fragment.hasAttribute('data-eig-chart-step')) { stepBackward(); }
+      });
+      Reveal.on('slidechanged', function(event) {
+        if (event.previousSlide && event.previousSlide.querySelector('#eig-max-vs-k')) { resetAll(); }
+        if (event.currentSlide && event.currentSlide.querySelector('#eig-max-vs-k')) {
+          var frags = event.currentSlide.querySelectorAll('[data-eig-chart-step]');
           var visCount = 0;
           frags.forEach(function(f) { if (f.classList.contains('visible')) visCount++; });
           step = visCount;
