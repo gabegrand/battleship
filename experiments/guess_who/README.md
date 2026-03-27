@@ -1,6 +1,6 @@
 Guess Who graphing assets live here.
 
-The notebook expects local-only data and does not require those experiment dumps to be tracked in git.
+This directory now includes the tracked experiment outputs needed to reproduce the graph.
 
 Tracked repo assets:
 
@@ -9,20 +9,25 @@ Tracked repo assets:
 - `data/characters_50.json`
 - `data/characters_100.json`
 - `data/characters_original.json`
+- `data/experiments/game_*.json`
+- `data/posthoc_eig_results.csv`
 
-Default local data layout:
+Default tracked data layout:
 
 ```text
-experiments/guess_who/local_data/
+experiments/guess_who/data/
+  characters.json
+  characters_50.json
+  characters_100.json
+  characters_original.json
   experiments/
     game_*.json
-    experiment_summary_*.json
   posthoc_eig_results.csv
 ```
 
 Optional overrides:
 
-- `GUESS_WHO_LOCAL_DATA_DIR`
+- `GUESS_WHO_DATA_DIR`
 - `GUESS_WHO_EXPERIMENTS_DIR`
 - `GUESS_WHO_POSTHOC_CSV`
 - `GUESS_WHO_EXPORT_DIR`

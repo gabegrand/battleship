@@ -1,0 +1,144 @@
+{
+  "game_id": 210,
+  "run_id": 30,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "[Alex]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Alex]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Alex]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Alex]"
+    }
+  ],
+  "character": "Peter",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 1146.5316524505615,
+  "timestamp": "2025-09-24T13:54:43.009897"
+}

@@ -1,0 +1,144 @@
+{
+  "game_id": 53,
+  "run_id": 23,
+  "model_name": "openai/gpt-4o",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's nose shape pointed?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's nose shape pointed?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have casual clothing style?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have casual clothing style?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have medium-sized ear?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have medium-sized ear?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Bernard]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Bernard]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Bernard]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Bernard]"
+    }
+  ],
+  "character": "Damien",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 1188.628933429718,
+  "timestamp": "2025-09-23T22:29:30.219054"
+}

@@ -1,0 +1,144 @@
+{
+  "game_id": 38,
+  "run_id": 8,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "LLM",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the secret word 1 of the 5 words that the character can say?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the secret word 1 of the 5 words that the character can say?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Can the character say one of the five secret words related to emotions?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Can the character say one of the five secret words related to emotions?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Is the character middle-aged?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character middle-aged?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Eric]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Eric]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Eric]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Eric]"
+    }
+  ],
+  "character": "Rowan",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 96.88981509208679,
+  "timestamp": "2025-09-23T22:00:43.279027"
+}

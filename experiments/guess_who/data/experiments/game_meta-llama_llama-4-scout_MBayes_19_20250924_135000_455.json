@@ -1,0 +1,132 @@
+{
+  "game_id": 229,
+  "run_id": 19,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "MBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have brown hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have brown hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have short hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Max]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Max]"
+    }
+  ],
+  "character": "Max",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 363.0735592842102,
+  "timestamp": "2025-09-24T13:50:00.455697"
+}

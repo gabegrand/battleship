@@ -1,0 +1,132 @@
+{
+  "game_id": 148,
+  "run_id": 28,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's eye color brown?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's eye color brown?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's skin tone fair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's skin tone fair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's eye color green?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's eye color green?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's clothing style formal?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's clothing style formal?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "[Beatrice]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Beatrice]"
+    }
+  ],
+  "character": "Beatrice",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 818.5001833438873,
+  "timestamp": "2025-09-23T22:33:56.460680"
+}

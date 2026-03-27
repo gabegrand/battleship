@@ -1,0 +1,132 @@
+{
+  "game_id": 221,
+  "run_id": 11,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "MBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's age range young?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's age range young?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color red?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color red?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "[Amelia]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Amelia]"
+    }
+  ],
+  "character": "Amelia",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 353.5860857963562,
+  "timestamp": "2025-09-24T13:48:04.567256"
+}

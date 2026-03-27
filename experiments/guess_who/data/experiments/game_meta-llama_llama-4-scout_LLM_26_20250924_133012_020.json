@@ -1,0 +1,144 @@
+{
+  "game_id": 146,
+  "run_id": 26,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "LLM",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a fair complexion?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a fair complexion?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have an olive skin tone?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have an olive skin tone?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have curly hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "[Anita]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Anita]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Anita]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Anita]"
+    }
+  ],
+  "character": "Ava",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 93.94645118713379,
+  "timestamp": "2025-09-24T13:30:12.018328"
+}
