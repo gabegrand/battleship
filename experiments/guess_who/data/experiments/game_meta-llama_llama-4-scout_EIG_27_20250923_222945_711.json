@@ -1,0 +1,132 @@
+{
+  "game_id": 117,
+  "run_id": 27,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "EIG",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair short?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair short?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a formal clothing style?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a formal clothing style?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a hat?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a hat?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's nose shape broad?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's nose shape broad?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "[Oscar]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Oscar]"
+    }
+  ],
+  "character": "Oscar",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 1203.665842294693,
+  "timestamp": "2025-09-23T22:29:45.711324"
+}

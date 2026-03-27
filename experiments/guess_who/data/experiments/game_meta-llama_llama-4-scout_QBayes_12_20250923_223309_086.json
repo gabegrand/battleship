@@ -1,0 +1,144 @@
+{
+  "game_id": 132,
+  "run_id": 12,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's smile type closed-lip?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's smile type closed-lip?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's ear size large?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's ear size large?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's clothing style formal?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's clothing style formal?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Alfred]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Alfred]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Alfred]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Alfred]"
+    }
+  ],
+  "character": "Richard",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 855.9143426418304,
+  "timestamp": "2025-09-23T22:33:09.086841"
+}

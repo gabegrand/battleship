@@ -1,0 +1,132 @@
+{
+  "game_id": 35,
+  "run_id": 5,
+  "model_name": "openai/gpt-4o",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "EIG",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character middle-aged or elderly?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character middle-aged or elderly?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a pointed nose?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a pointed nose?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's smile type wide?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's smile type wide?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character wearing glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character wearing glasses?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's skin tone light?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's skin tone light?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Lucas]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Lucas]"
+    }
+  ],
+  "character": "Lucas",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 1429.2053899765015,
+  "timestamp": "2025-09-24T13:49:11.071747"
+}

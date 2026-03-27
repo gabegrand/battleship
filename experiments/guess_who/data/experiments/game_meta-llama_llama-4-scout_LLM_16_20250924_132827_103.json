@@ -1,0 +1,144 @@
+{
+  "game_id": 136,
+  "run_id": 16,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "LLM",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character female?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character female?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have long hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Are you wearing glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Are you wearing glasses?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Ava]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Ava]"
+    },
+    {
+      "player": -1,
+      "message": "You attempted an invalid move. Reason: Invalid guess. Player 0 guessed incorrectly. Please resubmit a valid move and remember to follow the game rules to avoid penalties."
+    },
+    {
+      "player": 0,
+      "message": "[Uma]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Uma]"
+    }
+  ],
+  "character": "Elena",
+  "rewards": {
+    "0": -1.0
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": true,
+      "turn_count": 9,
+      "reason": "Invalid Move: Invalid guess. Player 0 guessed incorrectly."
+    }
+  },
+  "turn_count": 10,
+  "game_duration": 70.64745712280273,
+  "timestamp": "2025-09-24T13:28:27.103604"
+}

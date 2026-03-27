@@ -1,0 +1,132 @@
+{
+  "game_id": 182,
+  "run_id": 2,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have glasses?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character fair-skinned?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character fair-skinned?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character wearing a hat?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character wearing a hat?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair style short?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character wearing formal clothing?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character wearing formal clothing?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "[Ethan]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Ethan]"
+    }
+  ],
+  "character": "Ethan",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 1042.78932929039,
+  "timestamp": "2025-09-24T13:47:26.003039"
+}

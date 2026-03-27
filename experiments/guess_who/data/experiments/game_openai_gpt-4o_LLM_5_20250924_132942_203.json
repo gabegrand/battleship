@@ -1,0 +1,132 @@
+{
+  "game_id": 5,
+  "run_id": 5,
+  "model_name": "openai/gpt-4o",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "LLM",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color blonde?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have green eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have green eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have hazel eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have hazel eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color black?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color black?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character wear earrings?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character wear earrings?"
+    },
+    {
+      "player": -1,
+      "message": "I don't know"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have red hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have red hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Nina]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Nina]"
+    }
+  ],
+  "character": "Nina",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 260.56116127967834,
+  "timestamp": "2025-09-24T13:29:42.203057"
+}

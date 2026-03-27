@@ -1,0 +1,132 @@
+{
+  "game_id": 136,
+  "run_id": 16,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "QBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blue eyes?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have brown eyes?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have dimples or freckles as cheek features?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have dimples or freckles as cheek features?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have dimples as cheek features?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have dimples as cheek features?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair color brown?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair style bald?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair style bald?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Paul]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Paul]"
+    }
+  ],
+  "character": "Paul",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 943.1781582832336,
+  "timestamp": "2025-09-23T22:35:13.657441"
+}

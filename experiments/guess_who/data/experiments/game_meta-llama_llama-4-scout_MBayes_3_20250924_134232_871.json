@@ -1,0 +1,132 @@
+{
+  "game_id": 213,
+  "run_id": 3,
+  "model_name": "meta-llama/llama-4-scout",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "MBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's hair brown?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's hair brown?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have facial hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character middle-aged?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character middle-aged?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character young?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character wear glasses?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[Arthur]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [Arthur]"
+    }
+  ],
+  "character": "Arthur",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 343.35050106048584,
+  "timestamp": "2025-09-24T13:42:32.868972"
+}

@@ -1,0 +1,132 @@
+{
+  "game_id": 66,
+  "run_id": 6,
+  "model_name": "openai/gpt-4o",
+  "gamemaster_model": "openai/gpt-5",
+  "agent_type": "MBayes",
+  "observations": [
+    {
+      "player": -1,
+      "message": "The game has started. You are playing Guess Who."
+    },
+    {
+      "player": 0,
+      "message": "Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character male?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have brown hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have brown hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a beard?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have blonde hair?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have a mustache?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Does the character have white hair?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Does the character have white hair?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character elderly?"
+    },
+    {
+      "player": -1,
+      "message": "No"
+    },
+    {
+      "player": 0,
+      "message": "Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "You asked: Is the character's eye color blue?"
+    },
+    {
+      "player": -1,
+      "message": "Yes"
+    },
+    {
+      "player": 0,
+      "message": "[George]"
+    },
+    {
+      "player": -1,
+      "message": "You asked: [George]"
+    }
+  ],
+  "character": "George",
+  "rewards": {
+    "0": 1
+  },
+  "game_info": {
+    "0": {
+      "role": "Player 0",
+      "invalid_move": false,
+      "turn_count": 9,
+      "reason": "Congratulations! Player 0 guessed the target character."
+    }
+  },
+  "turn_count": 9,
+  "game_duration": 630.0226998329163,
+  "timestamp": "2025-09-23T22:20:11.619621"
+}
