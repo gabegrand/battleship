@@ -181,3 +181,5 @@ experiments/collaborative/question_embeddings_cache.pkl
 experiments/collaborative/human_eig_df.csv
 
 cache/
+experiments/guess_who/local_data/
+experiments/guess_who/*.pdf
