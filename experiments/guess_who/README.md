@@ -2,6 +2,14 @@ Guess Who graphing assets live here.
 
 The notebook expects local-only data and does not require those experiment dumps to be tracked in git.
 
+Tracked repo assets:
+
+- `guesswho_graphing.ipynb`
+- `data/characters.json`
+- `data/characters_50.json`
+- `data/characters_100.json`
+- `data/characters_original.json`
+
 Default local data layout:
 
 ```text
