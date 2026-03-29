@@ -23,6 +23,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
 
   <style>
+    /* Slow crossfade for stacked slide images */
+    .img-crossfade .fragment,
+    .img-crossfade .fragment.visible {
+      transition: opacity 1s ease !important;
+      visibility: inherit !important;
+    }
+
     :root {
       --r-heading-font: 'Google Sans', 'Noto Sans', sans-serif;
       --r-main-font: 'Noto Sans', sans-serif;
@@ -53,7 +60,7 @@
     }
 
     /* ── Compact bullet lists ── */
-    .reveal ul { font-size: 0.78em; line-height: 1.6; }
+    .reveal ul { font-size: 0.78em; line-height: 1.2; }
     .reveal li { margin-bottom: 0.3em; }
     .reveal ul ul { font-size: 0.92em; margin-top: 0.2em; }
 
@@ -641,9 +648,9 @@
       </section>
 
       <!-- A.1 AI agents for discovery -->
-      <section> <!-- A.1 #1 -->
-        <div class="section-label">Motivation</div>
-        <h3>AI agents for discovery</h3>
+      <section data-auto-animate> <!-- A.1 #1 -->
+        <div class="section-label" data-id="a1-label">Motivation</div>
+        <h3 data-id="a1-title">AI agents for discovery</h3>
 
         <div class="two-col" style="align-items: center; gap: 36px;">
           <div class="col">
@@ -653,19 +660,13 @@
                 <span class="kp-text"><span class="kp-label">The promise:</span> Many high-stakes applications of AI require seeking information.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="1">
-                <span class="fragment semi-fade-out" data-fragment-index="4" style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
                 <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
                 <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark.
                   <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
-                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
-                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
+                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
+                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
                   </ul>
                 </span>
-                </span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="4">
-                <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">This work:</span> Introduces a new framework for building and evaluating rational agents in controlled settings.</span>
               </li>
             </ul>
           </div>
@@ -680,6 +681,50 @@
           Given limited resources, do language models behave like rational agents? And how do they compare to human scientists, doctors, or engineers?
           Studying these questions is difficult because LMs already know a lot about the real world. Moreover, running experiments is often time-consuming and expensive, so high-profile results can be difficult to verify and reproduce.
           <!-- In this work, we introduce a new framework for building and evaluating rational agents in controlled settings, where we can formalize what &ldquo;rational&rdquo; means and directly compare LM behavior against human and ideal baselines. -->
+        </aside>
+      </section>
+
+      <!-- A.1b This work -->
+      <section data-auto-animate> <!-- A.1b -->
+        <div class="section-label" data-id="a1-label">Motivation</div>
+        <h3 data-id="a1-title">AI agents for discovery</h3>
+
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li>
+                <span class="kp-icon"><i class="fas fa-flask"></i></span>
+                <span class="kp-text"><span class="kp-label">This work:</span> A framework based on Bayesian Experimental Design (BED) for <strong>building</strong> and <strong>evaluating</strong> agents in discovery settings:
+                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
+                    <li class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-crosshairs" style="color: #888;"></i> A sandbox environment for controlled evaluation of information-seeking.</li>
+                    <li class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-globe" style="color: #888;"></i> Inference techniques that combine agents with a code-based world model.</li>
+                  </ul>
+                </span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-rocket"></i></span>
+                <span class="kp-text"><span class="kp-label">Accelerating discovery:</span>
+                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
+                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-rocket" style="color: #888;"></i> Agents that initially perform no better than random achieve super-human performance.</li>
+                    <li class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-chart-line" style="color: #888;"></i> These agents outperform frontier models (e.g., GPT-5) at orders of magnitude lower cost.</li>
+                  </ul>
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div class="col img-crossfade" style="flex: 0 0 42%; display: grid;">
+            <img src="images/Agent-Battleship-A.png" alt="Agent confused, random exploration"
+                 style="grid-area: 1/1; width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+            <img src="images/Agent-Battleship-B.png" alt="Agent with mastery, precise Bayesian inference"
+                 class="fragment fade-in" data-fragment-index="2"
+                 style="grid-area: 1/1; width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+          </div>
+        </div>
+
+        <aside class="notes">
+          To address these challenges, we introduce a framework grounded in the principles of Bayesian Experimental Design for building and evaluating discovery agents.
+          We make two contributions. First, a new sandbox environment that gives us a controlled setting for evaluating how well agents seek information. Second, a family of inference techniques that pair language model agents with a code-based world model.
+          And when we put this together, we find something striking: agents that initially act no better than random baselines can be elevated to super-human performance. And these same agents can outperform frontier models like GPT-5, at orders of magnitude lower cost.
         </aside>
       </section>
 
