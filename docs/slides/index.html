@@ -204,18 +204,18 @@
 
     /* ── Takeaway cards ── */
     .takeaway-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px;
     }
     .takeaway-card {
-      background: #f6f8ff; border-radius: 12px; padding: 24px;
+      background: #f6f8ff; border-radius: 10px; padding: 14px 16px;
       border-left: 4px solid #304ed8;
     }
     .takeaway-card h4 {
-      font-size: 0.72em; margin: 0 0 8px 0;
+      font-size: 0.6em; margin: 0 0 4px 0;
       text-align: left; color: #172642;
     }
     .takeaway-card p {
-      font-size: 0.58em; line-height: 1.55; margin: 0; color: #4a5770;
+      font-size: 0.48em; line-height: 1.45; margin: 0; color: #4a5770;
     }
 
     /* ── Stat boxes ── */
@@ -2394,22 +2394,30 @@
       <!-- J.0 Takeaways -->
       <section> <!-- J.0 #26 -->
         <h3>Takeaways</h3>
-        <div class="takeaway-grid">
-          <div class="takeaway-card">
-            <h4><i class="fas fa-check-circle" style="color: #304ed8;"></i> &nbsp;Necessary but not sufficient</h4>
-            <p>Controlled tasks are a <strong>prerequisite</strong> for trusting agents in real-world discovery</p>
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-balance-scale"></i></span>
+                <span class="kp-text"><span class="kp-label">Formalizing rationality:</span> <em>Define and measure</em> rational exploration against human and Bayesian baselines.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-brain"></i></span>
+                <span class="kp-text"><span class="kp-label">World models as tools:</span> An <em>interactive simulator</em> lets agents test hypotheses before acting.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-check-circle"></i></span>
+                <span class="kp-text"><span class="kp-label">Necessary but not sufficient:</span> Controlled tasks are a <em>prerequisite</em> for trusting agents in real-world discovery.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="3">
+                <span class="kp-icon"><i class="fas fa-rocket"></i></span>
+                <span class="kp-text"><span class="kp-label">From games to the real world:</span> Same principles apply to <em>agentic coding</em>, <em>medical diagnosis</em>, and <em>scientific discovery</em>.</span>
+              </li>
+            </ul>
           </div>
-          <div class="takeaway-card">
-            <h4><i class="fas fa-balance-scale" style="color: #304ed8;"></i> &nbsp;Formalizing rationality</h4>
-            <p><strong>Define and measure</strong> rational exploration against human and Bayesian baselines</p>
-          </div>
-          <div class="takeaway-card">
-            <h4><i class="fas fa-brain" style="color: #304ed8;"></i> &nbsp;World models as tools</h4>
-            <p>An <strong>interactive simulator</strong> lets agents test hypotheses before acting</p>
-          </div>
-          <div class="takeaway-card">
-            <h4><i class="fas fa-rocket" style="color: #304ed8;"></i> &nbsp;From games to the real world</h4>
-            <p>Same principles apply to <strong>agentic coding</strong>, <strong>medical diagnosis</strong>, and <strong>scientific discovery</strong></p>
+          <div class="col" style="flex: 0 0 36%; text-align: center;">
+            <img src="images/agent-battleship.png" alt="AI agent playing Battleship with Bayesian inference"
+                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
           </div>
         </div>
 
