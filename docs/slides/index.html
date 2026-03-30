@@ -642,8 +642,7 @@
         <div class="venue">ICLR 2026</div>
 
         <aside class="notes">
-          Thank you for the introduction. I'm Gabe Grand from MIT, and I'll be presenting
-          joint work with Valerio Pepe, Josh Tenenbaum, and Jacob Andreas.
+          <p>Thank you for the introduction. I'm Gabe Grand from MIT, and I'll be presenting joint work with Valerio Pepe, Josh Tenenbaum, and Jacob Andreas.</p>
         </aside>
       </section>
 
@@ -677,10 +676,12 @@
         </div>
 
         <aside class="notes">
-          Some of the most exciting applications of AI today require agents to seek information strategically.
-          Given limited resources, do language models behave like rational agents? And how do they compare to human scientists, doctors, or engineers?
-          Studying these questions is difficult because LMs already know a lot about the real world. Moreover, running experiments is often time-consuming and expensive, so high-profile results can be difficult to verify and reproduce.
-          <!-- In this work, we introduce a new framework for building and evaluating rational agents in controlled settings, where we can formalize what &ldquo;rational&rdquo; means and directly compare LM behavior against human and ideal baselines. -->
+          <ul>
+            <li>Many of the most exciting applications of AI involve agents that need to seek information strategically — think of a scientist designing experiments, or a doctor ordering diagnostic tests.</li>
+            <li>But evaluating these capabilities turns out to be surprisingly hard.</li>
+            <li>Language models already have strong priors about many real-world domains, so it's difficult to tell whether they're genuinely reasoning or just recalling.</li>
+            <li>And running real experiments is often time-consuming and expensive, which makes results hard to verify and reproduce. So we need a different approach.</li>
+          </ul>
         </aside>
       </section>
 
@@ -722,9 +723,14 @@
         </div>
 
         <aside class="notes">
-          To address these challenges, we introduce a framework grounded in the principles of Bayesian Experimental Design for building and evaluating discovery agents.
-          We make two contributions. First, a new sandbox environment that gives us a controlled setting for evaluating how well agents seek information. Second, a family of inference techniques that pair language model agents with a code-based world model.
-          And when we put this together, we find something striking: agents that initially act no better than random baselines can be elevated to super-human performance. And these same agents can outperform frontier models like GPT-5, at orders of magnitude lower cost.
+          <p>To address these challenges, we developed a framework grounded in Bayesian Experimental Design for building and evaluating discovery agents. We made two contributions.</p>
+          <ul>
+            <li>First, a sandbox environment that gives us a controlled setting for evaluating information-seeking.</li>
+            <li>Second, a set of inference techniques that pair language model agents with a code-based world model.</li>
+            <li>And when we put these together, we found we could dramatically accelerate discovery.</li>
+            <li>Agents that initially performed no better than random baselines achieved super-human performance.</li>
+            <li>And they outperformed frontier models like GPT-5 at orders of magnitude lower cost. Let me walk you through how.</li>
+          </ul>
         </aside>
       </section>
 
@@ -820,9 +826,13 @@
         </div>
 
         <aside class="notes">
-          We introduce BED through a concrete example. An analytical chemist encounters an unknown compound
-          and wants to identify its structure. They can run experiments — each one gives an observation that
-          updates their beliefs via Bayes' rule. The goal is to choose experiments that are maximally informative.
+          <p>Let me introduce Bayesian Experimental Design through a concrete example.</p>
+          <ul>
+            <li>Imagine an analytical chemist who encounters an unknown compound and wants to identify its molecular structure.</li>
+            <li>They have a set of experiments they can run — testing solubility, pH, reactivity, and so on — each of which probes a different property of the compound.</li>
+            <li>Each experiment produces an observation that narrows down the space of possible structures via Bayes' rule.</li>
+            <li>Here's the formal update — the posterior over structures is proportional to the likelihood times the prior. So how do we formalize which experiment is most informative?</li>
+          </ul>
         </aside>
       </section>
 
@@ -921,9 +931,13 @@
         </div>
 
         <aside class="notes">
-          The diagram and experiment chips persist from Slide A via auto-animate.
-          Fragment 0: Goal statement. Fragment 1: IG formula.
-          Fragment 2: EIG formula. Fragment 3: x* = argmax highlighted.
+          <p>We formalize this with Expected Information Gain.</p>
+          <ul>
+            <li>Our goal is to choose experiments that let us learn about the unknown structure as efficiently as possible.</li>
+            <li>Information Gain measures how much a single experiment reduces our uncertainty — it's the drop in entropy from before to after we observe the outcome.</li>
+            <li>But we don't know the outcome in advance, so we take the expectation over possible outcomes. That gives us Expected Information Gain, or EIG.</li>
+            <li>The optimal experiment is then simply the one that maximizes EIG. This gives us a clean objective, but computing it exactly turns out to be intractable.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1008,10 +1022,12 @@
         </div>
 
         <aside class="notes">
-          Three key challenges make EIG hard to compute exactly.
-          First, marginalization: evaluating the posterior requires summing over all possible structures.
-          Second, simulation: the likelihood requires running experiments on hypothesized structures.
-          Third, proposing experiments: the space of possible experiments may be too large to enumerate.
+          <p>There are three key difficulties, and I've highlighted where each one shows up in the equations.</p>
+          <ul>
+            <li>First, marginalization: computing the entropy requires summing over a combinatorial space of possible structures.</li>
+            <li>Second, simulation: estimating the likelihood of each outcome requires actually running the experiment on each hypothesized structure.</li>
+            <li>Third, proposing experiments: the space of possible experiments may be vast or open-ended, so we can't just enumerate them all. Our approach addresses each of these.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1022,7 +1038,7 @@
       <!-- B.0 Approach — Agent ↔ World Model -->
       <section data-auto-animate> <!-- B.0 #5 -->
         <div class="section-label">Approach</div>
-        <h3>Approach</h3>
+        <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 80px;">
           <!-- NOTE: No data-id on children inside agent-wm-row — see AUTO-ANIMATE GOTCHA above -->
@@ -1053,16 +1069,14 @@
         </div>
 
         <aside class="notes">
-          Our approach equips an agent with a world model — a code-based simulator that encodes
-          knowledge about the dynamics of the domain. The world model provides two affordances:
-          sampling hypotheses and simulating experiments.
+          <p>Our approach pairs an agent — a language model with code and reasoning capabilities — with a world model, which is a code-based simulator that encodes knowledge about the domain. The world model gives the agent two key affordances: sampling hypotheses and simulating experiments. Let me show you what that looks like.</p>
         </aside>
       </section>
 
       <!-- B.1 Approach — Hypothesis space -->
       <section data-auto-animate> <!-- B.1 #6 -->
         <div class="section-label">Approach</div>
-        <h3>Approach</h3>
+        <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
 
@@ -1138,15 +1152,14 @@
         </div>
 
         <aside class="notes">
-          The world model defines a generative process p(S). The agent uses it to
-          sample candidate hypotheses consistent with observed evidence, forming a hypothesis space.
+          <p>The first affordance is sampling. The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far. In the chemistry example, these would be candidate molecular structures — here we have five samples, each a plausible structure given the data.</p>
         </aside>
       </section>
 
       <!-- B.2 Approach — Full process diagram -->
       <section data-auto-animate> <!-- B.2 #7 -->
         <div class="section-label">Approach</div>
-        <h3>Approach</h3>
+        <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
 
@@ -1360,19 +1373,16 @@
         </div>
 
         <aside class="notes">
-          Our approach equips an agent with a world model — a code-based simulator that encodes
-          knowledge about the dynamics of the domain. The world model provides two affordances:
-
-          1. Sampling: The world model defines a generative process p(S). The agent uses it to
-             sample candidate hypotheses consistent with observed evidence, forming a hypothesis space.
-
-          2. Simulation: The world model exposes functional operations (like an API) that can be
-             composed to form experiments. The agent proposes experiments x, translates them into
-             code f_x(·), then submits them to the world model to predict likely outcomes and compute EIG.
-
-          Key insight: This affords an inference-scaling approach to experiment design. By proposing
-          and scoring multiple experiments, the agent picks the ones that yield the most information.
-          Our hypothesis is that this leads to more efficient discovery than baseline LLMs.
+          <p>The second affordance is simulation. Here's how the full pipeline works.</p>
+          <ul>
+            <li>On the left, the agent proposes experiments in natural language. On the right, the world model simulates and scores them.</li>
+            <li>For instance, the agent proposes "Is it water-soluble?"</li>
+            <li>It translates this into executable code — a function that tests whether a given molecule dissolves in water.</li>
+            <li>The world model runs this code on each sampled hypothesis and tallies the outcomes. We get a mix of yes and no answers, giving an EIG of 0.73 bits.</li>
+            <li>We repeat this for additional candidates. "Is it an acid or a base?" scores lower at 0.41.</li>
+            <li>"Does it undergo oxidation?" — 0.58.</li>
+            <li>The agent picks the experiment with the highest EIG — in this case, the solubility test. The key idea is inference-scaling for experiment design: investing more compute at decision time leads to better experiments and ultimately more efficient discovery. So we have a general framework — now we need a good domain to test it in.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1410,15 +1420,13 @@
         </div>
 
         <aside class="notes">
-          We set out to build a suitable environment for evaluating discovery agents. We had several
-          key desiderata. First, minimal but complete: the task should instantiate the full BED loop,
-          with simple state representation and dynamics, no complex prompting to explain the rules.
-          We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply
-          challenging. Second, human-interactive: both humans and AI agents should be able to interact
-          with the environment so we can compare behavior directly. Third, simulatable: experiments
-          should take seconds, not days. Finally, measurable: we want to quantify not just final
-          outcomes, but intermediate decisions — explore vs. exploit, and the information value of
-          each question.
+          <p>We set out to find a suitable environment for evaluating discovery agents. We had four key desiderata.</p>
+          <ul>
+            <li>First, minimal but complete: the task should instantiate the full BED loop with a simple state representation and dynamics — no domain expertise required. We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging.</li>
+            <li>Second, human-interactive: both humans and AI agents should be able to play, so we can compare their behavior directly.</li>
+            <li>Third, simulatable: experiments should take seconds, not days, and outcomes should be generated automatically.</li>
+            <li>Fourth, measurable: we want to quantify not just final outcomes, but intermediate decisions — explore versus exploit, and the information value of each question. And we found all of this in a classic game.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1525,11 +1533,12 @@
         </div>
 
         <aside class="notes">
-          Classic Battleship: four ships are hidden on an 8×8 grid.
-          [click] Here's a full board — four colored ships of sizes 2 through 5.
-          [click] But the player only sees a partial view — most tiles are unknown.
-          The faded tiles show where hidden ships actually are.
-          [click] The goal is to uncover all ships in as few moves as possible.
+          <p>Classic Battleship: four ships are hidden on an 8×8 grid.</p>
+          <ul>
+            <li>Here's a full board — four colored ships of sizes 2 through 5.</li>
+            <li>But the player only sees a partial view — most tiles are unknown. The faded tiles show where hidden ships actually are.</li>
+            <li>The goal is to uncover all ships in as few moves as possible. But in our version of the game, there's a twist.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1624,12 +1633,12 @@
         </div>
 
         <aside class="notes">
-          Prior work by Rothe, Lake, and Gureckis established Battleship as a paradigm
-          for studying information-seeking. The key extension: players can ask
-          natural-language questions and receive yes/no answers. Each question is an
-          experiment that probes the hidden board state — exactly the BED framework.
-          Notice how the board state S, question x, and answer y map directly to our
-          earlier notation.
+          <p>Building on prior work by Rothe, Lake, and Gureckis, we allow players to do more than just shoot.</p>
+          <ul>
+            <li>Players can also ask natural-language questions about the board and receive yes-or-no answers.</li>
+            <li>Each question probes the hidden board state and produces an observation — which maps directly onto the BED framework. The board state is S, the question is x, and the answer is y.</li>
+            <li>Prior work showed that people can readily discriminate between informative and uninformative questions, but they struggle to generate optimal ones themselves. That gap is what we want to study. To do that, we designed a two-player version of the game.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1735,11 +1744,13 @@
         </div>
 
         <aside class="notes">
-          We extend this paradigm to a two-player synchronous task we call Collaborative
-          Battleship. The Captain sees a partial board and must decide what to do — shoot
-          or ask a question. The Spotter sees the full board but can only answer Yes or No.
-          The Spotter effectively acts as an experiment oracle — providing instant feedback
-          about experiment outcomes. This is what makes the domain simulatable.
+          <p>We call our version Collaborative Battleship. It's a two-player synchronous task.</p>
+          <ul>
+            <li>The Captain sees a partial board and has to decide what to do on each turn — shoot at a tile, or ask a question.</li>
+            <li>The Spotter sees the full board with all the ships visible, but can only answer yes or no.</li>
+            <li>They communicate through this narrow channel — questions go one way, yes-or-no answers come back.</li>
+            <li>The Spotter acts as an experiment oracle, providing instant automated feedback about experiment outcomes. This is what makes the domain fully simulatable. Now let me show you how we compute EIG in this setting.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1943,12 +1954,14 @@
         </div>
 
         <aside class="notes">
-          Now let's see the full pipeline in Battleship. On the left, the Captain's partial
-          board — this is the current game state S. The world model samples plausible
-          complete boards. The agent proposes four candidate questions, translates each to
-          code, and simulates on the samples. "More than 2 purple tiles?" — all samples say No,
-          EIG is zero. "Red ship near purple?" — a 3/5 split, high EIG. The agent picks the
-          question with highest EIG.
+          <p>Here's the full pipeline applied to Battleship. On the left, the Captain's partial board and a set of sampled hypotheses from the world model. On the right, the agent proposes questions, translates them to code, and simulates.</p>
+          <ul>
+            <li>"Are there more than 2 purple tiles left?" — all five samples say no, so EIG is zero. This question tells us nothing we don't already know.</li>
+            <li>"Is the red ship near the purple ship?" — three say yes, two say no. That's a nice split, so EIG is 0.97.</li>
+            <li>"Any more ships in column 7?" — mostly no, EIG is 0.72.</li>
+            <li>"Are any ships along the edge?" — another good split, also 0.97.</li>
+            <li>The agent picks the question with the highest EIG. It selects the most informative experiment to ask the Spotter.</li>
+          </ul>
         </aside>
       </section>
 
@@ -1978,11 +1991,12 @@
         </div>
 
         <aside class="notes">
-          With the EIG framework in place, we can now formalize several key behavioral
-          questions. First, do agents and humans ask informative questions and give accurate
-          answers? Second, do they integrate information to make targeted guesses? Third,
-          do they use their limited question budget effectively? These are the questions
-          we'll investigate in our experiments.
+          <p>With this framework in place, we can formalize several behavioral questions about both humans and AI agents.</p>
+          <ul>
+            <li>First: do they ask informative questions, and do they give accurate answers?</li>
+            <li>Second: do they make targeted guesses that integrate the information they've gathered?</li>
+            <li>Third: do they make effective use of their limited question budget? These are the questions we set out to investigate.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2014,9 +2028,11 @@
         <span class="fragment" data-fragment-index="2" style="display:none;"></span>
 
         <aside class="notes">
-          Here's our roadmap. Two sets of experiments: first humans, then agents.
-          On the human side, we want to collect behavioral data and establish baselines.
-          On the agent side, we want to understand what happens when agents interact with a world model.
+          <p>Here's our roadmap. We ran two sets of experiments.</p>
+          <ul>
+            <li>First, a human study to collect behavioral data and establish baselines.</li>
+            <li>Then, agent experiments to understand how LMs perform out of the box, and whether a world model helps. Let's start with the humans.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2057,12 +2073,13 @@
         </div>
 
         <aside class="notes">
-          Before looking at agents, let's characterize human information-seeking.
-          We ran a study with 42 participants playing Battleship, collecting 931 gold-labeled questions.
-          Three key findings: humans rarely ask redundant questions — they're efficient with their budget.
-          Asking more questions strongly correlates with better targeting performance.
-          And human Spotters answer questions with 92.5% accuracy, giving us a strong baseline.
-          People aren't optimal, but they're resource-rational.
+          <p>We ran a study with 42 participants playing Collaborative Battleship, collecting 931 gold-labeled questions — what we call the BattleshipQA dataset. Here's what we found.</p>
+          <ul>
+            <li>Human Spotters were very accurate and consistent, agreeing with gold labels 92.5% of the time. This gave us confidence in the quality of the data.</li>
+            <li>Humans asked good questions, but not optimal ones. Their mean EIG was 0.351 bits, compared to a theoretical maximum of 0.531.</li>
+            <li>Importantly, humans very rarely asked redundant questions — only 2.8% had an EIG of zero. So they were efficient with their question budget, even if they weren't hitting the ceiling.</li>
+            <li>And we found a strong correlation between how many questions a player asked and how well they performed downstream — the Spearman correlation was 0.684. So overall, people were not information-theoretically optimal, but they used their limited resources wisely.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2131,9 +2148,7 @@
         <span class="fragment" data-fragment-index="0" style="display:none;"></span>
 
         <aside class="notes">
-          So we've established our human baselines. Casual players are surprisingly competent —
-          accurate answers, no redundant questions, and performance scales with how many questions they ask.
-          Now let's see how agents compare, and whether a world model helps.
+          <p>So we've established our human baselines. Casual players turned out to be quite competent — they gave accurate answers, rarely asked redundant questions, and their performance scaled with how many questions they asked. Now let's see how agents compare, and whether a world model helps.</p>
         </aside>
       </section>
 
@@ -2157,11 +2172,7 @@
         </div>
 
         <aside class="notes">
-          First result: the world model enables grounded simulation, which dramatically improves
-          answer accuracy. We test 15 models on 931 gold-labeled questions in a 2-by-2 design.
-          Accuracy varies widely, from 52 to 93 percent. But the key finding: translating questions
-          to code and executing against the world model gives a 14.7-point boost. Code-based
-          reasoning grounds the agent's answers in actual board state.
+          <p>Our first result is about grounding. We evaluated 15 language models on all 931 gold-labeled questions from the human study, in a two-by-two design: language versus code, and direct answering versus chain-of-thought. Accuracy varied widely across models, from about 52 to 93 percent. But the most consistent factor was whether the model used the world model to execute code — that gave an average boost of 14.7 percentage points. Code-based reasoning grounded the agent's answers in the actual board state, rather than relying on the LM to reason about spatial relationships in its head. So the world model helped with answering questions. But did it also help with asking better ones?</p>
         </aside>
       </section>
 
@@ -2193,11 +2204,14 @@
         </div>
 
         <aside class="notes">
-          Second result: the world model lets us score candidate questions by EIG and pick the
-          most informative one. EIG improves smoothly with more samples — just 10 candidates
-          gets you 94% of the theoretical ceiling. Critically, weaker models normally ask 15 to 18
-          percent redundant questions with zero information gain. The Bayesian question selection
-          completely eliminates these.
+          <p>Second result: the world model also helped agents ask more informative questions. This plot shows how the EIG of the best question scaled with the number of candidates sampled.</p>
+          <ul>
+            <li>EIG improved smoothly as we sampled more candidate questions.</li>
+            <li>With just 10 candidates, agents reached 94.2% of the information-theoretic ceiling.</li>
+            <li>Without this selection mechanism, weaker models asked 15 to 18 percent redundant questions — questions with zero information gain.</li>
+            <li>Sampling and scoring by EIG reduced that to 1.2% or less.</li>
+            <li>And this worked across a range of model sizes and capabilities. So we had better answers and better questions — the natural next question was whether this actually translated to better performance in the game.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2239,10 +2253,16 @@
         </div>
 
         <aside class="notes">
-          Third and final result: all three components together — informative questions, precision
-          targeting, and explore-vs-act decisions — lead to dramatically more efficient discovery.
-          Even Llama-4-Scout with Bayesian strategies jumps from 8% to 82% win rate against humans,
-          and beats GPT-5 at 100x less cost. The world model turns a weak LM into a strong agent.
+          <p>Third and most important: did all of this actually lead to better performance in the game?</p>
+          <ul>
+            <li>We measured targeting performance using F1 score — treating hits versus misses as a binary classification task.</li>
+            <li>One surprising finding was that just optimizing for question informativeness — what we call InfoMax — did not actually improve F1 on its own.</li>
+            <li>The issue was that weaker models didn't know how to act on the information they gathered. Asking good questions isn't enough if you can't use the answers effectively.</li>
+            <li>The full benefit came from using the world model to guide all three types of decisions: which questions to ask, when to stop asking and start shooting, and where to shoot.</li>
+            <li>This produced large F1 improvements, on the order of 0.3 to 0.37 points.</li>
+            <li>Even Llama-4-Scout, a relatively modest model, went from an 8% win rate against humans to 82% with these Bayesian strategies.</li>
+            <li>And it beat GPT-5 67% of the time, at roughly a hundred times lower cost.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2340,9 +2360,7 @@
         </div>
 
         <aside class="notes">
-          So here's the full picture. Humans give us strong baselines, and agents with world models
-          match or exceed human performance across all three dimensions. Now let's see if this
-          generalizes beyond Battleship.
+          <p>So here's the full picture. On the human side, we established that casual players are competent information seekers. On the agent side, the world model improved performance across all three dimensions — more accurate answers, more informative questions, and more efficient discovery overall. But an obvious question is whether any of this generalizes beyond Battleship.</p>
         </aside>
       </section>
 
@@ -2380,9 +2398,11 @@
         </div>
 
         <aside class="notes">
-          To show these aren't Battleship-specific tricks, we replicate on Guess Who?
-          from TextArena. Same strategies, similar gains. This generalizes to any domain
-          where you need to narrow down a combinatorial hypothesis space through questions.
+          <p>To test generalization, we replicated our approach on Guess Who?, a game from the TextArena benchmark with richer object-relational semantics — age, clothing, facial hair, and so on.</p>
+          <ul>
+            <li>The same strategies worked here too. GPT-4o went from about 62% to 90% success rate, and Llama-4-Scout went from 30% to 72%.</li>
+            <li>So the approach is not specific to Battleship — it generalizes to information-seeking tasks with combinatorial hypothesis spaces. Let me wrap up with a few takeaways.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2422,17 +2442,13 @@
         </div>
 
         <aside class="notes">
-          Four takeaways. First, this is necessary but not sufficient — if an agent can't
-          explore rationally in Battleship, we shouldn't trust it in the clinic or the lab.
-          Second, we need environments that let us formalize and measure rationality, comparing
-          LM behavior against human and ideal Bayesian baselines.
-          Third, the world model here is essentially an interactive simulator — the agent tests
-          hypotheses by running programs against sampled possible worlds. This connects to
-          sandboxed coding environments, dynamic world models like Genie, and other forms of
-          thinking before acting.
-          And fourth, these principles — asking informative questions, acting on evidence,
-          balancing exploration and exploitation — apply directly to agentic coding, medical
-          diagnosis, scientific discovery, and beyond.
+          <p>Four takeaways.</p>
+          <ul>
+            <li>First, we showed how to define and measure rational exploration, comparing LM behavior against both human and ideal Bayesian baselines.</li>
+            <li>Second, the world model here functions as an interactive simulator — the agent tests hypotheses by running programs against sampled possible worlds. This connects to broader ideas around sandboxed coding environments and thinking before acting.</li>
+            <li>Third, we see this kind of controlled evaluation as a necessary prerequisite. If an agent can't explore rationally in Battleship, we probably shouldn't trust it in the clinic or the lab.</li>
+            <li>And fourth, the underlying principles — asking informative questions, acting on evidence, balancing exploration and exploitation — apply directly to agentic coding, medical diagnosis, scientific discovery, and many other domains.</li>
+          </ul>
         </aside>
       </section>
 
@@ -2458,8 +2474,7 @@
         </div>
 
         <aside class="notes">
-          Thank you! All code, data, and interactive demos are available on the project website.
-          Happy to take questions.
+          <p>Thank you! All code, data, and interactive demos are available on the project website. Happy to take questions.</p>
         </aside>
       </section>
 
