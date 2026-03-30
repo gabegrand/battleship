@@ -662,10 +662,14 @@
                 <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
                 <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark.
                   <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
-                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
-                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
+                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
+                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
                   </ul>
                 </span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="4">
+                <span class="kp-icon"><i class="fas fa-question-circle"></i></span>
+                <span class="kp-text"><span class="kp-label">Asking vs. answering:</span> Post-training optimizes models to answer questions, but does it teach them to <strong>ask</strong> good questions?</span>
               </li>
             </ul>
           </div>
@@ -679,8 +683,9 @@
           <ul>
             <li>Many of the most exciting applications of AI involve agents that need to seek information strategically — think of a scientist designing experiments, or a doctor ordering diagnostic tests.</li>
             <li>But evaluating these capabilities turns out to be surprisingly hard.</li>
-            <li>Language models already have strong priors about many real-world domains, so it's difficult to tell whether they're genuinely reasoning or just recalling.</li>
-            <li>And running real experiments is often time-consuming and expensive, which makes results hard to verify and reproduce. So we need a different approach.</li>
+            <li>Running real experiments is often time-consuming and expensive, which makes results hard to verify and reproduce.</li>
+            <li>And language models already have strong priors about many real-world domains, so it's difficult to tell whether they're genuinely reasoning or just recalling.</li>
+            <li>There's been a lot of work showing how we can optimize models to answer complex questions accurately. But it's unclear whether these same post-training techniques teach models how to ask good questions for themselves.</li>
           </ul>
         </aside>
       </section>
@@ -723,14 +728,12 @@
         </div>
 
         <aside class="notes">
-          <p>To address these challenges, we developed a framework grounded in Bayesian Experimental Design for building and evaluating discovery agents. We made two contributions.</p>
+          <p>To address these challenges, we propose a framework grounded in Bayesian Experimental Design for building and evaluating discovery agents. We make two contributions.</p>
           <ul>
             <li>First, a sandbox environment that gives us a controlled setting for evaluating information-seeking.</li>
             <li>Second, a set of inference techniques that pair language model agents with a code-based world model.</li>
-            <li>And when we put these together, we found we could dramatically accelerate discovery.</li>
-            <li>Agents that initially performed no better than random baselines achieved super-human performance.</li>
-            <li>And they outperformed frontier models like GPT-5 at orders of magnitude lower cost. Let me walk you through how.</li>
           </ul>
+          <p>And when we put these together, we can dramatically accelerate discovery. Agents that initially perform no better than random baselines achieve super-human performance. And they outperform frontier models like GPT-5 at orders of magnitude lower cost. Let me walk you through how.</p>
         </aside>
       </section>
 
@@ -829,9 +832,8 @@
           <p>Let me introduce Bayesian Experimental Design through a concrete example.</p>
           <ul>
             <li>Imagine an analytical chemist who encounters an unknown compound and wants to identify its molecular structure.</li>
-            <li>They have a set of experiments they can run — testing solubility, pH, reactivity, and so on — each of which probes a different property of the compound.</li>
+            <li>They have a set of experiments they can run, each of which probes a different property of the compound.</li>
             <li>Each experiment produces an observation that narrows down the space of possible structures via Bayes' rule.</li>
-            <li>Here's the formal update — the posterior over structures is proportional to the likelihood times the prior. So how do we formalize which experiment is most informative?</li>
           </ul>
         </aside>
       </section>
@@ -1022,12 +1024,13 @@
         </div>
 
         <aside class="notes">
-          <p>There are three key difficulties, and I've highlighted where each one shows up in the equations.</p>
+          <p>There are three key difficulties.</p>
           <ul>
-            <li>First, marginalization: computing the entropy requires summing over a combinatorial space of possible structures.</li>
-            <li>Second, simulation: estimating the likelihood of each outcome requires actually running the experiment on each hypothesized structure.</li>
-            <li>Third, proposing experiments: the space of possible experiments may be vast or open-ended, so we can't just enumerate them all. Our approach addresses each of these.</li>
+            <li>First, computing the entropy requires summing over a combinatorial space of possible structures.</li>
+            <li>Second, estimating the likelihood of each outcome requires actually running the experiment on each hypothesized structure.</li>
+            <li>Third, the space of possible experiments may be vast or open-ended, so we can't just enumerate them all.</li>
           </ul>
+          <p>Our approach pairs an agent with a world model to address each of these.</p>
         </aside>
       </section>
 
@@ -1152,7 +1155,7 @@
         </div>
 
         <aside class="notes">
-          <p>The first affordance is sampling. The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far. In the chemistry example, these would be candidate molecular structures — here we have five samples, each a plausible structure given the data.</p>
+          <p>The first affordance is sampling. The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far.</p>
         </aside>
       </section>
 
@@ -1373,16 +1376,13 @@
         </div>
 
         <aside class="notes">
-          <p>The second affordance is simulation. Here's how the full pipeline works.</p>
+          <p>The second affordance is simulation. On the left, the agent proposes experiments in natural language and translates them into executable code. On the right, the world model runs that code on each sampled hypothesis to compute EIG.</p>
           <ul>
-            <li>On the left, the agent proposes experiments in natural language. On the right, the world model simulates and scores them.</li>
-            <li>For instance, the agent proposes "Is it water-soluble?"</li>
-            <li>It translates this into executable code — a function that tests whether a given molecule dissolves in water.</li>
-            <li>The world model runs this code on each sampled hypothesis and tallies the outcomes. We get a mix of yes and no answers, giving an EIG of 0.73 bits.</li>
-            <li>We repeat this for additional candidates. "Is it an acid or a base?" scores lower at 0.41.</li>
-            <li>"Does it undergo oxidation?" — 0.58.</li>
-            <li>The agent picks the experiment with the highest EIG — in this case, the solubility test. The key idea is inference-scaling for experiment design: investing more compute at decision time leads to better experiments and ultimately more efficient discovery. So we have a general framework — now we need a good domain to test it in.</li>
+            <li>The agent generates multiple candidate experiments and scores each one.</li>
+            <li>It picks the experiment with the highest EIG — the one that best splits the hypothesis space.</li>
+            <li>The key idea is inference-scaling for experiment design: investing more compute at decision time leads to better experiments and more efficient discovery.</li>
           </ul>
+          <p>So we have a general framework — now we need a good domain to test it in.</p>
         </aside>
       </section>
 
@@ -1422,11 +1422,12 @@
         <aside class="notes">
           <p>We set out to find a suitable environment for evaluating discovery agents. We had four key desiderata.</p>
           <ul>
-            <li>First, minimal but complete: the task should instantiate the full BED loop with a simple state representation and dynamics — no domain expertise required. We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging.</li>
-            <li>Second, human-interactive: both humans and AI agents should be able to play, so we can compare their behavior directly.</li>
-            <li>Third, simulatable: experiments should take seconds, not days, and outcomes should be generated automatically.</li>
-            <li>Fourth, measurable: we want to quantify not just final outcomes, but intermediate decisions — explore versus exploit, and the information value of each question. And we found all of this in a classic game.</li>
+            <li>The task should instantiate the full BED loop with a simple state representation and dynamics — no domain expertise required. We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging.</li>
+            <li>Both humans and AI agents should be able to play, so we can compare their behavior directly.</li>
+            <li>Experiments should take seconds, not days, and outcomes should be generated automatically.</li>
+            <li>We want to quantify not just final outcomes, but intermediate decisions — explore versus exploit, and the information value of each question.</li>
           </ul>
+          <p>And we found all of this in a classic game.</p>
         </aside>
       </section>
 
@@ -1533,7 +1534,7 @@
         </div>
 
         <aside class="notes">
-          <p>Classic Battleship: four ships are hidden on an 8×8 grid.</p>
+          <p>Battleship. Four ships are hidden on an 8×8 grid.</p>
           <ul>
             <li>Here's a full board — four colored ships of sizes 2 through 5.</li>
             <li>But the player only sees a partial view — most tiles are unknown. The faded tiles show where hidden ships actually are.</li>
@@ -1633,9 +1634,8 @@
         </div>
 
         <aside class="notes">
-          <p>Building on prior work by Rothe, Lake, and Gureckis, we allow players to do more than just shoot.</p>
+          <p>We consider a variant of Battleship where players can ask yes/no questions about the board state, in addition to shooting.</p>
           <ul>
-            <li>Players can also ask natural-language questions about the board and receive yes-or-no answers.</li>
             <li>Each question probes the hidden board state and produces an observation — which maps directly onto the BED framework. The board state is S, the question is x, and the answer is y.</li>
             <li>Prior work showed that people can readily discriminate between informative and uninformative questions, but they struggle to generate optimal ones themselves. That gap is what we want to study. To do that, we designed a two-player version of the game.</li>
           </ul>
@@ -1954,13 +1954,11 @@
         </div>
 
         <aside class="notes">
-          <p>Here's the full pipeline applied to Battleship. On the left, the Captain's partial board and a set of sampled hypotheses from the world model. On the right, the agent proposes questions, translates them to code, and simulates.</p>
+          <p>Here's the full pipeline applied to Battleship. On the left, the Captain's partial board and a set of sampled hypotheses from the world model. On the right, the agent proposes questions, translates them to code, and simulates each one against the hypothesis space.</p>
           <ul>
-            <li>"Are there more than 2 purple tiles left?" — all five samples say no, so EIG is zero. This question tells us nothing we don't already know.</li>
-            <li>"Is the red ship near the purple ship?" — three say yes, two say no. That's a nice split, so EIG is 0.97.</li>
-            <li>"Any more ships in column 7?" — mostly no, EIG is 0.72.</li>
-            <li>"Are any ships along the edge?" — another good split, also 0.97.</li>
-            <li>The agent picks the question with the highest EIG. It selects the most informative experiment to ask the Spotter.</li>
+            <li>Some questions are uninformative — they tell us nothing we don't already know, so EIG is zero.</li>
+            <li>Others produce a nice split across the hypothesis space, yielding high EIG.</li>
+            <li>The agent picks the question with the highest EIG and asks the Spotter.</li>
           </ul>
         </aside>
       </section>
@@ -2028,7 +2026,7 @@
         <span class="fragment" data-fragment-index="2" style="display:none;"></span>
 
         <aside class="notes">
-          <p>Here's our roadmap. We ran two sets of experiments.</p>
+          <p>I'm going to highlight the key findings from two sets of experiments.</p>
           <ul>
             <li>First, a human study to collect behavioral data and establish baselines.</li>
             <li>Then, agent experiments to understand how LMs perform out of the box, and whether a world model helps. Let's start with the humans.</li>
@@ -2075,10 +2073,10 @@
         <aside class="notes">
           <p>We ran a study with 42 participants playing Collaborative Battleship, collecting 931 gold-labeled questions — what we call the BattleshipQA dataset. Here's what we found.</p>
           <ul>
-            <li>Human Spotters were very accurate and consistent, agreeing with gold labels 92.5% of the time. This gave us confidence in the quality of the data.</li>
-            <li>Humans asked good questions, but not optimal ones. Their mean EIG was 0.351 bits, compared to a theoretical maximum of 0.531.</li>
-            <li>Importantly, humans very rarely asked redundant questions — only 2.8% had an EIG of zero. So they were efficient with their question budget, even if they weren't hitting the ceiling.</li>
-            <li>And we found a strong correlation between how many questions a player asked and how well they performed downstream — the Spearman correlation was 0.684. So overall, people were not information-theoretically optimal, but they used their limited resources wisely.</li>
+            <li>Human Spotters were very accurate and consistent. This gave us confidence in the quality of the data.</li>
+            <li>Humans asked good questions, but not optimal ones — they fell short of the information-theoretic ceiling.</li>
+            <li>Importantly, humans very rarely asked redundant questions. So they were efficient with their question budget, even if they weren't hitting the ceiling.</li>
+            <li>And we found a strong correlation between how many questions a player asked and how well they performed downstream. Now let's see how agents compare.</li>
           </ul>
         </aside>
       </section>
@@ -2148,7 +2146,7 @@
         <span class="fragment" data-fragment-index="0" style="display:none;"></span>
 
         <aside class="notes">
-          <p>So we've established our human baselines. Casual players turned out to be quite competent — they gave accurate answers, rarely asked redundant questions, and their performance scaled with how many questions they asked. Now let's see how agents compare, and whether a world model helps.</p>
+          <p>So we've established our human baselines. Overall, people were not information-theoretically optimal, but they used their limited resources wisely — they gave accurate answers, rarely asked redundant questions, and their performance scaled with how many questions they asked. Now let's see how agents compare, and whether a world model helps.</p>
         </aside>
       </section>
 
@@ -2156,23 +2154,40 @@
       <section> <!-- G.1 #20 -->
         <div class="section-label" style="color: #304ed8;"><span style="background: rgba(48,78,216,0.1); border-radius: 4px; padding: 2px 8px;">Result 1</span></div>
         <h3>World model grounds reasoning</h3>
-        <p style="text-align: center; font-size: 0.55em; color: #4a5770; margin-bottom: 8px;">
-          SpotterQA: 15 LMs &times; 931 gold-labeled questions &middot; 2&times;2 design: language vs.&nbsp;code &times; direct vs.&nbsp;CoT
-        </p>
-        <div style="display: flex; justify-content: center; margin-top: 8px;">
-          <div id="spotter-accuracy-overall" style="width: 480px; height: 380px;"></div>
-        </div>
-        <div style="text-align: center; margin-top: 4px;">
-          <div style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
-            <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+        <div class="two-col" style="align-items: flex-start;">
+          <div class="col" style="text-align: center;">
+            <div id="spotter-accuracy-overall" style="width: 480px; height: 380px;"></div>
+            <div style="margin-top: 4px;">
+              <div style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does the world model improve answer accuracy?</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 15 LMs &times; 931 questions &middot; 2&times;2: language vs.&nbsp;code &times; direct vs.&nbsp;CoT</p>
+
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Code-based reasoning: <strong>+14.7pp</strong> average accuracy boost</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Most consistent factor across all 15 models</p>
+
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Grounding matters more than chain-of-thought</p>
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Code execution anchors reasoning in the actual board state</p>
           </div>
         </div>
 
         <aside class="notes">
-          <p>Our first result is about grounding. We evaluated 15 language models on all 931 gold-labeled questions from the human study, in a two-by-two design: language versus code, and direct answering versus chain-of-thought. Accuracy varied widely across models, from about 52 to 93 percent. But the most consistent factor was whether the model used the world model to execute code — that gave an average boost of 14.7 percentage points. Code-based reasoning grounded the agent's answers in the actual board state, rather than relying on the LM to reason about spatial relationships in its head. So the world model helped with answering questions. But did it also help with asking better ones?</p>
+          <p>Our first question was whether the world model actually helped agents answer questions more accurately. We evaluated 15 language models on all 931 gold-labeled questions from the human study, in a two-by-two design: language versus code, and direct answering versus chain-of-thought.</p>
+          <ul>
+            <li>The dashed line shows human accuracy as a baseline.</li>
+            <li>Base LM performance varied widely across models.</li>
+            <li>Adding chain-of-thought reasoning helped somewhat.</li>
+            <li>But the biggest gain came from code-based reasoning — using the world model to execute code gave an average boost of 14.7 percentage points.</li>
+            <li>Combining CoT with code gave the best results overall. Code-based reasoning grounded the agent's answers in the actual board state, rather than relying on the LM to reason about spatial relationships abstractly.</li>
+          </ul>
+          <p>So the world model helped with answering questions. But did it also help with asking better ones?</p>
         </aside>
       </section>
 
@@ -2180,7 +2195,7 @@
       <!-- H.0 Result 2: Higher-EIG questions -->
       <section> <!-- H.0 #21 -->
         <div class="section-label" style="color: #304ed8;"><span style="background: rgba(48,78,216,0.1); border-radius: 4px; padding: 2px 8px;">Result 2</span></div>
-        <h3>World model yields more informative questions</h3>
+        <h3>World model enriches questions</h3>
         <div class="two-col" style="align-items: flex-start;">
           <div class="col" style="text-align: center;">
             <div id="eig-max-vs-k" style="width: 520px; height: 340px;"></div>
@@ -2193,8 +2208,8 @@
             </div>
           </div>
           <div class="col">
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">EIG improves smoothly with more candidates</p>
-            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">EIG improves smoothly with more candidates</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
 
             <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</p>
             <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Sampling + scoring by EIG reduces redundant questions to &le;1.2%</p>
@@ -2204,14 +2219,16 @@
         </div>
 
         <aside class="notes">
-          <p>Second result: the world model also helped agents ask more informative questions. This plot shows how the EIG of the best question scaled with the number of candidates sampled.</p>
+          <p>Next, we asked whether the world model also helped agents ask better questions. We can plot the EIG of the best question as a function of the number of candidates sampled.</p>
           <ul>
-            <li>EIG improved smoothly as we sampled more candidate questions.</li>
-            <li>With just 10 candidates, agents reached 94.2% of the information-theoretic ceiling.</li>
-            <li>Without this selection mechanism, weaker models asked 15 to 18 percent redundant questions — questions with zero information gain.</li>
-            <li>Sampling and scoring by EIG reduced that to 1.2% or less.</li>
-            <li>And this worked across a range of model sizes and capabilities. So we had better answers and better questions — the natural next question was whether this actually translated to better performance in the game.</li>
+            <li>The top line shows the information-theoretic ceiling — the maximum achievable EIG.</li>
+            <li>The dashed lines show the human mean and median from our study.</li>
+            <li>As we sample more candidate questions and select the best one by EIG, information gain improves smoothly.</li>
+            <li>With just 10 candidates, agents reached 94.2% of the ceiling.</li>
+            <li>Without this selection mechanism, weaker models asked 15 to 18 percent redundant questions — questions with zero information gain. Sampling and scoring by EIG reduced that to 1.2% or less.</li>
+            <li>And this worked across a range of model sizes and capabilities.</li>
           </ul>
+          <p>So we had better answers and better questions — the natural next question was whether this actually translated to better performance in the game.</p>
         </aside>
       </section>
 
@@ -2222,7 +2239,7 @@
       <!-- H.1 Result 3: More efficient discovery -->
       <section> <!-- H.1 #22 -->
         <div class="section-label" style="color: #304ed8;"><span style="background: rgba(48,78,216,0.1); border-radius: 4px; padding: 2px 8px;">Result 3</span></div>
-        <h3>More efficient discovery</h3>
+        <h3>World model accelerates discovery</h3>
         <div class="two-col" style="align-items: flex-start;">
           <div class="col" style="text-align: center;">
             <div id="captain-f1-boxplot" style="width: 560px; height: 340px;"></div>
@@ -2240,7 +2257,7 @@
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does using a world model improve downstream performance?</p>
             <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
 
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Just optimizing EIG (<strong>InfoMax</strong>) does not help</p>
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Just optimizing EIG (<strong>InfoMax</strong>) does not help</p>
             <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 8px;">&rarr; Weaker models (Llama&nbsp;4, GPT-4o) don&rsquo;t know <em>how to act</em> on information gained</p>
 
             <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to select <em>when and where to shoot</em>:</p>
@@ -2253,14 +2270,16 @@
         </div>
 
         <aside class="notes">
-          <p>Third and most important: did all of this actually lead to better performance in the game?</p>
+          <p>Third and most important: did all of this actually lead to better performance in the game? We measured targeting performance using F1 score — treating hits versus misses as a binary classification task.</p>
           <ul>
-            <li>We measured targeting performance using F1 score — treating hits versus misses as a binary classification task.</li>
-            <li>One surprising finding was that just optimizing for question informativeness — what we call InfoMax — did not actually improve F1 on its own.</li>
+            <li>Random shooting gives a low baseline.</li>
+            <li>Humans do much better, with a wide spread across players.</li>
+            <li>Out-of-the-box LMs are in a similar range, though GPT-5 is already competitive with humans.</li>
+            <li>One surprising finding: just optimizing for question informativeness — InfoMax — did not actually improve F1 on its own.</li>
             <li>The issue was that weaker models didn't know how to act on the information they gathered. Asking good questions isn't enough if you can't use the answers effectively.</li>
             <li>The full benefit came from using the world model to guide all three types of decisions: which questions to ask, when to stop asking and start shooting, and where to shoot.</li>
             <li>This produced large F1 improvements, on the order of 0.3 to 0.37 points.</li>
-            <li>Even Llama-4-Scout, a relatively modest model, went from an 8% win rate against humans to 82% with these Bayesian strategies.</li>
+            <li>Even Llama-4-Scout, a relatively modest model, went from an 8% win rate against humans to 82%.</li>
             <li>And it beat GPT-5 67% of the time, at roughly a hundred times lower cost.</li>
           </ul>
         </aside>
@@ -2352,15 +2371,22 @@
             <h4 style="font-size: 0.75em; color: #304ed8; margin-bottom: 8px;"><i class="fas fa-robot"></i> &nbsp;Agents <span style="font-size: 0.7em; color: #304ed8;">&#10003;</span></h4>
             <p style="font-size: 0.55em; color: #888; font-style: italic; margin-bottom: 12px;">Goal: Understand how agents perform out-of-box and with a world model</p>
             <ul style="font-size: 0.55em; color: #555; line-height: 1.4; margin: 0; padding-left: 18px;">
-              <li>A world model enables <strong>grounded simulation</strong>, producing more accurate answers</li>
-              <li>Sampling + scoring questions yields more <strong>informative experiments</strong></li>
-              <li>Together, these lead to more <strong>efficient discovery</strong></li>
+              <li class="fragment fade-in" data-fragment-index="0">A world model enables <strong>grounded simulation</strong>, producing more accurate answers</li>
+              <li class="fragment fade-in" data-fragment-index="1">Sampling + scoring questions yields more <strong>informative experiments</strong></li>
+              <li class="fragment fade-in" data-fragment-index="2">Together, these lead to more <strong>efficient discovery</strong></li>
             </ul>
           </div>
         </div>
 
         <aside class="notes">
-          <p>So here's the full picture. On the human side, we established that casual players are competent information seekers. On the agent side, the world model improved performance across all three dimensions — more accurate answers, more informative questions, and more efficient discovery overall. But an obvious question is whether any of this generalizes beyond Battleship.</p>
+          <p>So here's the full picture.</p>
+          <ul>
+            <li>On the human side, we established that casual players are competent information seekers.</li>
+            <li>On the agent side, the world model produced more accurate answers through grounded simulation.</li>
+            <li>Sampling and scoring questions by EIG yielded more informative experiments.</li>
+            <li>And together, these led to more efficient discovery overall.</li>
+          </ul>
+          <p>But an obvious question is whether any of this generalizes beyond Battleship.</p>
         </aside>
       </section>
 
@@ -2401,7 +2427,7 @@
           <p>To test generalization, we replicated our approach on Guess Who?, a game from the TextArena benchmark with richer object-relational semantics — age, clothing, facial hair, and so on.</p>
           <ul>
             <li>The same strategies worked here too. GPT-4o went from about 62% to 90% success rate, and Llama-4-Scout went from 30% to 72%.</li>
-            <li>So the approach is not specific to Battleship — it generalizes to information-seeking tasks with combinatorial hypothesis spaces. Let me wrap up with a few takeaways.</li>
+            <li>So the approach is not specific to Battleship — it generalizes to information-seeking tasks with combinatorial hypothesis spaces.</li>
           </ul>
         </aside>
       </section>
@@ -2442,7 +2468,7 @@
         </div>
 
         <aside class="notes">
-          <p>Four takeaways.</p>
+          <p>Let me wrap up with a few takeaways.</p>
           <ul>
             <li>First, we showed how to define and measure rational exploration, comparing LM behavior against both human and ideal Bayesian baselines.</li>
             <li>Second, the world model here functions as an interactive simulator — the agent tests hypotheses by running programs against sampled possible worlds. This connects to broader ideas around sandboxed coding environments and thinking before acting.</li>
@@ -2474,7 +2500,7 @@
         </div>
 
         <aside class="notes">
-          <p>Thank you! All code, data, and interactive demos are available on the project website. Happy to take questions.</p>
+          <p>Thank you! For details, please check out the project website. Happy to take questions.</p>
         </aside>
       </section>
 
@@ -3365,23 +3391,29 @@ def answer(true_board, partial_board) -> bool:
         return { bar: bar, err: err, d: d };
       });
 
-      // ── Step-based animation state ──
-      // Steps: 0 = axes only, 1 = human line, 2–5 = bars (Base, CoT, Code, CoT+Code)
-      var step = 0;
-      var TOTAL_STEPS = 6; // 0..5
+      // ── Declarative animation driven by fragment index (sync pattern) ──
+      // animGroup: humanLine=0, Base=1, CoT=2, Code=3, CoT+Code=4
+      // Hidden fragments at indices 0–4; visible text fragments also at 0,3,4
+      var slide = container.closest('section');
 
-      function showStep(n) {
-        // Step 1: human line
-        if (n >= 1) {
+      function syncChart() {
+        if (!slide) return;
+        var maxVisible = -1;
+        slide.querySelectorAll('.fragment.visible').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'));
+          if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
+        });
+        // Human line: visible when maxVisible >= 0
+        if (maxVisible >= 0) {
           humanLine.transition().duration(400).attr('opacity', 1);
           humanLabel.transition().duration(400).attr('opacity', 1);
         } else {
           humanLine.attr('opacity', 0);
           humanLabel.attr('opacity', 0);
         }
-        // Steps 2–5: bars
+        // Bars: animGroup i visible when maxVisible >= i+1
         barGroups.forEach(function(bg, i) {
-          if (n >= i + 2) {
+          if (maxVisible >= i + 1) {
             bg.bar.transition().duration(600).ease(d3.easeCubicOut)
               .attr('y', y(bg.d.mean))
               .attr('height', height - y(bg.d.mean));
@@ -3394,14 +3426,7 @@ def answer(true_board, partial_board) -> bool:
         });
       }
 
-      function stepForward() {
-        if (step < TOTAL_STEPS - 1) { step++; showStep(step); }
-      }
-      function stepBackward() {
-        if (step > 0) { step--; showStep(step); }
-      }
       function resetAll() {
-        step = 0;
         humanLine.attr('opacity', 0);
         humanLabel.attr('opacity', 0);
         barGroups.forEach(function(bg) {
@@ -3409,48 +3434,28 @@ def answer(true_board, partial_board) -> bool:
           bg.err.attr('opacity', 0);
         });
       }
-      function showAll() {
-        step = TOTAL_STEPS - 1;
-        showStep(step);
-      }
 
-      // ── Reveal.js integration via hidden fragments ──
-      // Find the slide containing this chart and inject invisible fragment spans
-      var slide = container.closest('section');
+      // Inject hidden fragments for chart-only steps (indices 0–4)
+      // Indices 0,3,4 also have visible text fragments — sync pattern handles this correctly
       if (slide) {
-        for (var i = 0; i < TOTAL_STEPS - 1; i++) {
+        for (var i = 0; i < 5; i++) {
           var frag = document.createElement('span');
           frag.className = 'fragment';
           frag.setAttribute('data-fragment-index', i);
-          frag.setAttribute('data-spotter-chart-step', i + 1);
           frag.style.display = 'none';
           slide.appendChild(frag);
         }
       }
 
       Reveal.on('fragmentshown', function(event) {
-        if (event.fragment.hasAttribute('data-spotter-chart-step')) {
-          stepForward();
-        }
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
       });
       Reveal.on('fragmenthidden', function(event) {
-        if (event.fragment.hasAttribute('data-spotter-chart-step')) {
-          stepBackward();
-        }
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
       });
-      // Reset when leaving the slide, show all when arriving back
       Reveal.on('slidechanged', function(event) {
-        if (event.previousSlide && event.previousSlide.querySelector('#spotter-accuracy-overall')) {
-          resetAll();
-        }
-        if (event.currentSlide && event.currentSlide.querySelector('#spotter-accuracy-overall')) {
-          // Show up to the current fragment index
-          var frags = event.currentSlide.querySelectorAll('[data-spotter-chart-step]');
-          var visCount = 0;
-          frags.forEach(function(f) { if (f.classList.contains('visible')) visCount++; });
-          step = visCount;
-          showStep(step);
-        }
+        if (event.previousSlide && event.previousSlide.querySelector('#spotter-accuracy-overall')) { resetAll(); }
+        if (event.currentSlide && event.currentSlide.querySelector('#spotter-accuracy-overall')) { syncChart(); }
       });
     })();
 
@@ -3722,8 +3727,8 @@ def answer(true_board, partial_board) -> bool:
       // ── Draw boxes (hidden initially) ──
       // Animation groups: 0=Human+Baselines, 1=LM, 2=+Bayes-Q, 3=+Bayes-M, 4=+Bayes-QM, 5=+Bayes-QMD
       var animGroups = {
-        'Random': 0, 'Human': 1, 'LM': 2,
-        '+Bayes-Q': 3, '+Bayes-QM': 4,
+        'Random': 1, 'Human': 2, 'LM': 3,
+        '+Bayes-Q': 4, '+Bayes-QM': 6,
       };
 
       // Lighten a hex color by mixing with white
@@ -3783,9 +3788,8 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Declarative animation driven by fragment index ──
-      // animGroup values: Random=0, Human=1, LM=2, +Bayes-Q=3, +Bayes-QM=4
-      // Chart groups appear at fragment indices 0,1,2,3,4
-      // Text fragments also fire at indices 3,4 (simultaneous — that's fine)
+      // animGroup values: Random=1, Human=2, LM=3, +Bayes-Q=4, +Bayes-QM=6
+      // Hidden fragments at indices 1,2,3; visible text fragments cover 0,4,5,6,7,8,9
 
       function syncChart() {
         var slide = container.closest('section');
@@ -3810,11 +3814,11 @@ def answer(true_board, partial_board) -> bool:
         boxElems.forEach(function(be) { be.grp.attr('opacity', 0); });
       }
 
-      // Inject hidden fragments for chart-only steps (indices 0,1,2)
-      // Indices 3,4 are already covered by the visible text fragments
+      // Inject hidden fragments for chart-only steps (indices 1,2,3)
+      // Indices 4,6 are covered by visible text fragments (+Bayes-Q, +Bayes-QM)
       var slide = container.closest('section');
       if (slide) {
-        [0, 1, 2].forEach(function(i) {
+        [1, 2, 3].forEach(function(i) {
           var frag = document.createElement('span');
           frag.className = 'fragment';
           frag.setAttribute('data-fragment-index', String(i));
@@ -3978,28 +3982,32 @@ def answer(true_board, partial_board) -> bool:
         return { name: m.name, path: path, area: area, totalLen: totalLen };
       });
 
-      // ── Step-based animation ──
-      // Step 0: axes only
-      // Step 1: theoretical max line
-      // Step 2: human mean + median lines
-      // Step 3: all 3 model curves (wipe left-to-right)
-      var step = 0;
-      var TOTAL_STEPS = 4;
+      // ── Declarative animation driven by fragment index (sync pattern) ──
+      // Fragment 0: theoretical max line
+      // Fragment 1: human mean + median lines
+      // Fragment 2: all 3 model curves + visible text "EIG improves smoothly..."
+      var slide = container.closest('section');
 
-      function showStep(n) {
-        // Step 1: theoretical max
+      function syncChart() {
+        if (!slide) return;
+        var maxVisible = -1;
+        slide.querySelectorAll('.fragment.visible').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'));
+          if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
+        });
+        // Theoretical max: visible when maxVisible >= 0
         var tm = refElems.theoreticalMax;
-        if (n >= 1) {
+        if (maxVisible >= 0) {
           tm.line.transition().duration(400).attr('opacity', 1);
           tm.label.transition().duration(400).attr('opacity', 1);
         } else {
           tm.line.attr('opacity', 0);
           tm.label.attr('opacity', 0);
         }
-        // Step 2: human mean + median
+        // Human mean + median: visible when maxVisible >= 1
         ['humanMean', 'humanMedian'].forEach(function(key) {
           var el = refElems[key];
-          if (n >= 2) {
+          if (maxVisible >= 1) {
             el.line.transition().duration(400).attr('opacity', 1);
             el.label.transition().duration(400).attr('opacity', 1);
           } else {
@@ -4007,63 +4015,53 @@ def answer(true_board, partial_board) -> bool:
             el.label.attr('opacity', 0);
           }
         });
-        // Step 3: all model curves wipe in together
+        // Model curves: visible when maxVisible >= 2
         modelElems.forEach(function(m, i) {
-          if (n >= 3) {
+          if (maxVisible >= 2) {
             m.path.transition().duration(1000).delay(i * 100).ease(d3.easeLinear)
               .attr('opacity', 1)
               .attr('stroke-dashoffset', 0);
             m.area.transition().delay(600 + i * 100).duration(400)
               .attr('opacity', 0.18);
           } else {
-            m.path.attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
-            m.area.attr('opacity', 0);
+            m.path.interrupt().attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
+            m.area.interrupt().attr('opacity', 0);
           }
         });
       }
 
-      function stepForward() { if (step < TOTAL_STEPS - 1) { step++; showStep(step); } }
-      function stepBackward() { if (step > 0) { step--; showStep(step); } }
       function resetAll() {
-        step = 0;
         Object.keys(refElems).forEach(function(key) {
-          refElems[key].line.attr('opacity', 0);
-          refElems[key].label.attr('opacity', 0);
+          refElems[key].line.interrupt().attr('opacity', 0);
+          refElems[key].label.interrupt().attr('opacity', 0);
         });
         modelElems.forEach(function(m) {
-          m.path.attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
-          m.area.attr('opacity', 0);
+          m.path.interrupt().attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
+          m.area.interrupt().attr('opacity', 0);
         });
       }
 
-      // Inject hidden fragments
-      var slide = container.closest('section');
+      // Inject hidden fragments for chart-only steps (indices 0,1)
+      // Index 2 is covered by the visible text fragment — sync pattern handles the collision
       if (slide) {
-        for (var i = 0; i < TOTAL_STEPS - 1; i++) {
+        [0, 1].forEach(function(i) {
           var frag = document.createElement('span');
           frag.className = 'fragment';
           frag.setAttribute('data-fragment-index', i);
-          frag.setAttribute('data-eig-chart-step', i + 1);
           frag.style.display = 'none';
           slide.appendChild(frag);
-        }
+        });
       }
 
       Reveal.on('fragmentshown', function(event) {
-        if (event.fragment.hasAttribute('data-eig-chart-step')) { stepForward(); }
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
       });
       Reveal.on('fragmenthidden', function(event) {
-        if (event.fragment.hasAttribute('data-eig-chart-step')) { stepBackward(); }
+        if (event.fragment.closest && event.fragment.closest('section') === slide) { syncChart(); }
       });
       Reveal.on('slidechanged', function(event) {
         if (event.previousSlide && event.previousSlide.querySelector('#eig-max-vs-k')) { resetAll(); }
-        if (event.currentSlide && event.currentSlide.querySelector('#eig-max-vs-k')) {
-          var frags = event.currentSlide.querySelectorAll('[data-eig-chart-step]');
-          var visCount = 0;
-          frags.forEach(function(f) { if (f.classList.contains('visible')) visCount++; });
-          step = visCount;
-          showStep(step);
-        }
+        if (event.currentSlide && event.currentSlide.querySelector('#eig-max-vs-k')) { syncChart(); }
       });
     })();
 
