@@ -41,6 +41,7 @@
       --r-heading-font-weight: 700;
     }
 
+
     .reveal .slides { text-align: left; }
     .reveal .slides section { padding: 40px; }
     .reveal .slides .center { text-align: center; }
@@ -1036,59 +1037,101 @@
            SECTION B: APPROACH
            ═══════════════════════════════════════════════════════════════ -->
 
-      <!-- B.0 Approach — Agent ↔ World Model -->
+      <!-- B.0 Approach — Agent ↔ World Model (centered) -->
       <section data-auto-animate> <!-- B.0 #5 -->
-        <div class="section-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Approach</div>
         <h3>Grounding reasoning in a world model</h3>
 
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 80px;">
-          <!-- NOTE: No data-id on children inside agent-wm-row — see AUTO-ANIMATE GOTCHA above -->
-          <div data-id="agent-wm-row" style="display: flex; align-items: flex-start; gap: 24px;">
-            <!-- Agent badge + caption -->
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-              <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px;">
-                <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
-                <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
-              </div>
-              <p style="margin: 0; font-size: 0.45em; color: #4a5770; text-align: center; line-height: 1.4;">
-                LLM with code &amp; reasoning capabilities
-              </p>
-            </div>
-            <span style="font-size: 1em; color: #aaa; margin-top: 14px;"><i class="fas fa-arrows-alt-h"></i></span>
-            <!-- World Model badge + caption -->
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-              <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px;">
-                <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
-                <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
-                <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
-              </div>
-              <p style="margin: 0; font-size: 0.45em; color: #304ed8; text-align: center; line-height: 1.4;">
-                A code-based simulator that encodes domain knowledge
-              </p>
-            </div>
+        <div style="display: grid; grid-template-columns: auto auto auto; align-items: center; justify-content: center; column-gap: 24px; row-gap: 12px; margin-top: 80px;">
+          <!-- Row 1: boxes + arrow -->
+          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
           </div>
+          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa; text-align: center;"><i class="fas fa-arrows-alt-h"></i></span>
+          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
+            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+          </div>
+          <!-- Row 2: subtitles -->
+          <p data-id="agent-sub" style="margin: 0; font-size: 0.45em; color: #4a5770; text-align: center; line-height: 1.4;">
+            LLM with code &amp; reasoning capabilities
+          </p>
+          <span></span>
+          <p data-id="wm-sub" style="margin: 0; font-size: 0.45em; color: #304ed8; text-align: center; line-height: 1.4;">
+            A code-based simulator that encodes domain knowledge
+          </p>
         </div>
 
         <aside class="notes">
-          <p>...our approach pairs an agent with a world model: a code-based simulator that encodes knowledge about the domain. The world model gives the agent two key affordances: sampling hypotheses and simulating experiments. Let me show you what that looks like.</p>
+          <p>...our approach pairs an agent with a world model: a code-based simulator that encodes knowledge about the domain.</p>
+        </aside>
+      </section>
+
+      <!-- B.0b Approach — Agent ↔ World Model + Affordances -->
+      <section data-auto-animate> <!-- B.0b -->
+        <div class="section-label" data-id="approach-label">Approach</div>
+        <h3>Grounding reasoning in a world model</h3>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 80px;">
+          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+          </div>
+          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
+            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+          </div>
+          <!-- Affordance sub-modules (unmatched — fades in) -->
+          <div style="display: flex; align-items: center; gap: 0; margin-left: -4px;">
+              <svg width="36" height="90" viewBox="0 0 36 90" style="flex-shrink: 0;">
+                <line x1="0" y1="45" x2="14" y2="45" stroke="rgba(48,78,216,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                <line x1="14" y1="16" x2="14" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+                <line x1="14" y1="16" x2="36" y2="16" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+                <line x1="14" y1="74" x2="36" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+              </svg>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
+                  <i class="fas fa-random" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
+                  <div>
+                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Sample</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">Draw hypotheses from the prior</div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
+                  <i class="fas fa-play" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
+                  <div>
+                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Simulate</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">Execute experiments on sampled worlds</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <aside class="notes">
+          <p>The world model gives the agent two key affordances: sampling hypotheses from the prior, and simulating experiments on those hypotheses. Let me show you what that looks like in practice.</p>
         </aside>
       </section>
 
       <!-- B.1 Approach — Hypothesis space -->
       <section data-auto-animate> <!-- B.1 #6 -->
-        <div class="section-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Approach</div>
         <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
 
-          <!-- Agent ↔ World Model (shrunk) — matches D1's data-id -->
-          <div data-id="agent-wm-row" style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+          <!-- Agent ↔ World Model (shrunk) -->
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
+            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
             </div>
-            <span style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
               <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
@@ -1159,19 +1202,19 @@
 
       <!-- B.2 Approach — Full process diagram -->
       <section data-auto-animate> <!-- B.2 #7 -->
-        <div class="section-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Approach</div>
         <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
 
-          <!-- Agent ↔ World Model (same size as D2) -->
-          <div data-id="agent-wm-row" style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px;">
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+          <!-- Agent ↔ World Model (same size as B.1) -->
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
             </div>
-            <span style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
               <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
               <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
               <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
@@ -1179,7 +1222,7 @@
           </div>
 
           <!-- ① Sample: Hypothesis Space — shrunk from D2 -->
-          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 8px;">
+          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 22px;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
                 <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
@@ -1228,42 +1271,42 @@
             </div>
           </div>
 
-          <!-- ② Column headers: Propose & Translate | → | Simulate & Score -->
-          <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 4px;">
-            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
-              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose &amp; Translate
+          <!-- ② Column headers: Propose | Translate | Simulate & Score -->
+          <div style="display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 10px;">
+            <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose
             </div>
-            <div style="width: 24px;"></div>
-            <div style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+            <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-code" style="margin-right: 4px;"></i> Translate
+            </div>
+            <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
               <i class="fas fa-play" style="margin-right: 4px;"></i> Simulate &amp; Score
             </div>
           </div>
 
           <!-- ③ Experiment rows: each row = [Propose box] → [Simulate box] -->
-          <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
 
             <!-- Row 1: Water-soluble -->
-            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 8px;">
+            <div style="position: relative;">
+            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 6px;">
               <!-- Propose -->
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$:</div>
-                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
-                </div>
-                <div class="fragment fade-in" data-fragment-index="2" style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
-                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span>
-                  </div>
-                </div>
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
               </div>
-              <!-- Arrow -->
-              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
-                <i class="fas fa-arrow-right"></i>
+              <!-- Translate -->
+              <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_1}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span>
+                </div>
               </div>
               <!-- Simulate -->
               <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
                 <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_1}(s_i) \rightarrow y_i$</div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_1}(s_i)$</div>
                   <div style="display: flex; gap: 4px; align-items: center;">
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_2$</span>
@@ -1273,35 +1316,35 @@
                     <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
                   </div>
                 </div>
-                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 6px; padding: 5px 10px; color: white; text-align: center; white-space: nowrap;">
-                  <div style="font-size: 0.28em; font-weight: 600; opacity: 0.85;">EIG</div>
-                  <div style="font-size: 0.4em; font-weight: 700;">0.73</div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.73</div>
                 </div>
               </div>
             </div>
+            <!-- Highlight overlay: appears with argmax -->
+            <div class="fragment fade-in" data-fragment-index="6" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 11px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
+            </div>
 
             <!-- Row 2: Acid/base -->
-            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 8px;">
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
               <!-- Propose -->
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$:</div>
-                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it an acid or a base?&rdquo;</div>
-                </div>
-                <div style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
-                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_pH</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.pH() &lt; </span><span style="color: #ab9df2;">7</span>
-                  </div>
-                </div>
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it an acid or a base?&rdquo;</div>
               </div>
-              <!-- Arrow -->
-              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
-                <i class="fas fa-arrow-right"></i>
+              <!-- Translate -->
+              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_2}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_pH</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.pH() &lt; </span><span style="color: #ab9df2;">7</span>
+                </div>
               </div>
               <!-- Simulate -->
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
                 <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_2}(s_i) \rightarrow y_i$</div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_2}(s_i)$</div>
                   <div style="display: flex; gap: 4px; align-items: center;">
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
@@ -1319,27 +1362,24 @@
             </div>
 
             <!-- Row 3: Oxidation -->
-            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 8px;">
+            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
               <!-- Propose -->
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$:</div>
-                  <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Does it undergo oxidation?&rdquo;</div>
-                </div>
-                <div style="background: #1e1e2e; border-radius: 6px; padding: 5px 8px;">
-                  <div style="font-size: 0.3em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                    <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_oxidation</span><span style="color: #a9dc76;">(s):</span> <span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.reacts_with(</span><span style="color: #ffd866;">"O2"</span><span style="color: #a9dc76;">)</span>
-                  </div>
-                </div>
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Does it undergo oxidation?&rdquo;</div>
               </div>
-              <!-- Arrow -->
-              <div style="display: flex; align-items: center; font-size: 0.55em; color: #bbb; width: 24px; justify-content: center;">
-                <i class="fas fa-arrow-right"></i>
+              <!-- Translate -->
+              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_3}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_oxidation</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.reacts_with(</span><span style="color: #ffd866;">"O2"</span><span style="color: #a9dc76;">)</span>
+                </div>
               </div>
               <!-- Simulate -->
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
                 <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$f_{x_3}(s_i) \rightarrow y_i$</div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_3}(s_i)$</div>
                   <div style="display: flex; gap: 4px; align-items: center;">
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_1$</span>
                     <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
@@ -1358,11 +1398,14 @@
 
           </div><!-- /experiment rows -->
 
-          <!-- F6: Highlight x1 as argmax + key insight -->
-          <div class="fragment fade-in" data-fragment-index="6" style="width: 100%; margin-top: 8px;">
-            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600; margin-bottom: 4px;">
+          <!-- F6: Highlight x1 as argmax -->
+          <div class="fragment fade-in" data-fragment-index="6" style="width: 100%; margin-top: 22px;">
+            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600;">
               $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 10px;">&ldquo;Is it water-soluble?&rdquo; &nbsp; (EIG = 0.73)</span>
             </div>
+          </div>
+          <!-- F7: Key insight -->
+          <div class="fragment fade-in" data-fragment-index="7" style="width: 100%; margin-top: 16px;">
             <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
               <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
                 <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
@@ -1386,7 +1429,7 @@
 
       <!-- B.3 Building a sandbox for discovery -->
       <section> <!-- B.3 #8 -->
-        <div class="section-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Approach</div>
         <h3>Building a sandbox for discovery</h3>
 
         <div class="two-col" style="align-items: center; gap: 36px;">
@@ -1402,7 +1445,7 @@
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-bolt"></i></span>
-                <span class="kp-text"><span class="kp-label">Simulatable.</span> Experiments take seconds, not days &mdash; outcomes can be generated automatically.</span>
+                <span class="kp-text"><span class="kp-label">Simulatable.</span> Outcomes can be generated automatically. Experiments take seconds, not days.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="3">
                 <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
@@ -1761,10 +1804,10 @@
         <div class="section-label" data-id="cd-label">Framework</div>
         <h3 data-id="cd-title">Computing EIG in Battleship</h3>
 
-        <div style="display: flex; gap: 12px; align-items: start; margin-top: 4px;">
+        <div style="display: flex; gap: 18px; align-items: start; margin-top: 4px;">
 
           <!-- Left column: Captain board + World Model + Samples -->
-          <div style="flex: 0 0 200px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <div style="flex: 0 0 200px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
             <div data-id="d-captain-board" class="game-action-board-wrap" style="padding: 8px;">
               <h4 style="font-size: 0.5em;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
               <div class="mini-board" style="font-size: 0.45em;">
@@ -1822,28 +1865,28 @@
           </div>
 
           <!-- Right column: Question rows (Question | Code | Simulate) -->
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
 
             <!-- Column headers -->
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-              <div style="flex: 2; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-lightbulb" style="margin-right: 3px;"></i> Propose
               </div>
-              <div style="flex: 3; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-code" style="margin-right: 3px;"></i> Translate
               </div>
-              <div style="flex: 2; font-size: 0.32em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-play" style="margin-right: 3px;"></i> Simulate
               </div>
             </div>
 
             <!-- Row 1: "More than 2 purple tiles?" -->
             <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 2; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_1$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;More than 2 purple tiles left?&rdquo;</div>
               </div>
-              <div style="flex: 3; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_1}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
@@ -1851,7 +1894,7 @@
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.sum(board == purple) > </span><span style="color: #ab9df2;">2</span>
                 </div>
               </div>
-              <div style="flex: 2; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
                   <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_1}(s_i)$</div>
                   <div style="display: flex; gap: 3px;"><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
@@ -1864,12 +1907,13 @@
             </div>
 
             <!-- Row 2: "Red ship near purple?" -->
+            <div style="position: relative;">
             <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 2; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_2$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Is the red ship near the purple ship?&rdquo;</div>
               </div>
-              <div style="flex: 3; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_2}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
@@ -1878,25 +1922,28 @@
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">min_dist(red, purp) &lt; </span><span style="color: #ab9df2;">3</span>
                 </div>
               </div>
-              <div style="flex: 2; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
                   <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_2}(s_i)$</div>
                   <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
                 </div>
-                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 4px; padding: 3px 6px; color: white; text-align: center;">
-                  <div style="font-size: 0.24em; font-weight: 600; opacity: 0.85;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700;">0.97</div>
+                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.97</div>
                 </div>
               </div>
+            </div>
+            <!-- Highlight overlay: appears with argmax -->
+            <div class="fragment fade-in" data-fragment-index="4" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 9px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
             </div>
 
             <!-- Row 3: "Ships in column 7?" -->
             <div class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 2; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_3$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Any more ships in column 7?&rdquo;</div>
               </div>
-              <div style="flex: 3; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_3}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
@@ -1904,7 +1951,7 @@
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(col7 > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
                 </div>
               </div>
-              <div style="flex: 2; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
                   <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_3}(s_i)$</div>
                   <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
@@ -1918,11 +1965,11 @@
 
             <!-- Row 4: "Ships along the edge?" -->
             <div class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 2; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_4$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Are any ships along the edge?&rdquo;</div>
               </div>
-              <div style="flex: 3; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_4}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
@@ -1931,20 +1978,20 @@
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(edges > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
                 </div>
               </div>
-              <div style="flex: 2; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
                   <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_4}(s_i)$</div>
                   <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
                 </div>
-                <div style="background: linear-gradient(135deg, #304ed8, #4a6cf7); border-radius: 4px; padding: 3px 6px; color: white; text-align: center;">
-                  <div style="font-size: 0.24em; font-weight: 600; opacity: 0.85;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700;">0.97</div>
+                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.65</div>
                 </div>
               </div>
             </div>
 
             <!-- Argmax line -->
-            <div class="fragment fade-in" data-fragment-index="4" style="margin-top: 4px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
+            <div class="fragment fade-in" data-fragment-index="4" style="margin-top: 12px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
               $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 8px;">&ldquo;Is the red ship near the purple ship?&rdquo;</span>
             </div>
 
@@ -1952,9 +1999,9 @@
         </div>
 
         <aside class="notes">
-          <p>Here's the full pipeline applied to Battleship. On the left, the Captain's partial board and a set of sampled hypotheses from the world model. On the right, the agent proposes questions, translates them to code, and simulates each one against the hypothesis space.</p>
+          <p>First, the Captain agent observes a partial board and samples a set of hypotheses from the world model. Then, the Captain proposes questions, translates them to code, and simulates each one against the hypothesis space.</p>
           <ul>
-            <li>Some questions are uninformative — they tell us nothing we don't already know, so EIG is zero.</li>
+            <li>Some questions are redundant — the answer is the same in all cases, so EIG is zero.</li>
             <li>Others produce a nice split across the hypothesis space, yielding high EIG.</li>
             <li>The agent picks the question with the highest EIG and asks the Spotter.</li>
           </ul>
