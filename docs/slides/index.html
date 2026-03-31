@@ -627,7 +627,7 @@
 
       <!-- A.0 Title -->
       <section class="title-slide"> <!-- A.0 #0 -->
-        <h1>Shoot First, Ask Questions Later?</h1>
+        <h1>Shoot First,<br/>Ask Questions Later?</h1>
         <h2>Building Rational Agents That Explore and Act Like People</h2>
         <div class="authors">
           <a href="https://gabegrand.com">Gabriel Grand</a><sup>1,2*</sup> &middot;
@@ -681,11 +681,11 @@
 
         <aside class="notes">
           <ul>
-            <li>Many of the most exciting applications of AI involve agents that need to seek information strategically — think of a scientist designing experiments, or a doctor ordering diagnostic tests.</li>
-            <li>But evaluating these capabilities turns out to be surprisingly hard.</li>
-            <li>Running real experiments is often time-consuming and expensive, which makes results hard to verify and reproduce.</li>
-            <li>And language models already have strong priors about many real-world domains, so it's difficult to tell whether they're genuinely reasoning or just recalling.</li>
-            <li>There's been a lot of work showing how we can optimize models to answer complex questions accurately. But it's unclear whether these same post-training techniques teach models how to ask good questions for themselves.</li>
+            <li>From science to medicine to engineering, many of the most exciting applications of AI require agents to form data-driven hypotheses and seek information strategically.</li>
+            <li>But evaluating these capabilities is surprisingly difficult, for a couple reasons:</li>
+            <li>Running real experiments is often time-consuming and expensive, so high-profile discoveries are typically hard to reproduce.</li>
+            <li>Moreover, language models already have strong priors about many real-world domains—strong enough to answer complex questions accurately.</li>
+            <li>What's less clear is whether they can ask good questions for themselves. That's what we aim to investigate.</li>
           </ul>
         </aside>
       </section>
@@ -728,12 +728,12 @@
         </div>
 
         <aside class="notes">
-          <p>To address these challenges, we propose a framework grounded in Bayesian Experimental Design for building and evaluating discovery agents. We make two contributions.</p>
+          <p>To study this question, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. We make two contributions:</p>
           <ul>
             <li>First, a sandbox environment that gives us a controlled setting for evaluating information-seeking.</li>
-            <li>Second, a set of inference techniques that pair language model agents with a code-based world model.</li>
+            <li>Second, a set of inference techniques that pair agents with a code-based world model.</li>
           </ul>
-          <p>And when we put these together, we can dramatically accelerate discovery. Agents that initially perform no better than random baselines achieve super-human performance. And they outperform frontier models like GPT-5 at orders of magnitude lower cost. Let me walk you through how.</p>
+          <p>When we put these together... we can boost agents that initially perform no better than random chance up to super-human performance. And we find that these models now outperform frontier models at orders of magnitude lower cost.</p>
         </aside>
       </section>
 
@@ -750,7 +750,7 @@
             <ul class="key-points" style="margin: 0;">
               <li class="fragment fade-in" data-fragment-index="0">
                 <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">Scenario:</span> An analytical chemist encounters an unknown compound. Goal: identify its molecular structure $S$.</span>
+                <span class="kp-text"><span class="kp-label">Scenario:</span> We encounter an unknown compound in the lab. Goal: identify its molecular structure $S$.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="1" data-id="bed-kp-exp">
                 <span class="kp-icon"><i class="fas fa-vials"></i></span>
@@ -829,11 +829,11 @@
         </div>
 
         <aside class="notes">
-          <p>Let me introduce Bayesian Experimental Design through a concrete example.</p>
+          <p>Our approach is based on Bayesian Experimental Design, which I'll introduce with a concrete example.</p>
           <ul>
-            <li>Imagine an analytical chemist who encounters an unknown compound and wants to identify its molecular structure.</li>
-            <li>They have a set of experiments they can run, each of which probes a different property of the compound.</li>
-            <li>Each experiment produces an observation that narrows down the space of possible structures via Bayes' rule.</li>
+            <li>Imagine we're working in a chemistry lab and we encounter an unknown compound. We want to identify its molecular structure.</li>
+            <li>We have a set of experiments we can run, each of which probes a different property of the compound.</li>
+            <li>Each experiment produces an observation, which we can use to narrow down the space of possible structures via Bayes' rule.</li>
           </ul>
         </aside>
       </section>
@@ -933,12 +933,11 @@
         </div>
 
         <aside class="notes">
-          <p>We formalize this with Expected Information Gain.</p>
+          <p>Our goal, then, is to choose experiments that let us learn as efficiently as possible.</p>
           <ul>
-            <li>Our goal is to choose experiments that let us learn about the unknown structure as efficiently as possible.</li>
-            <li>Information Gain measures how much a single experiment reduces our uncertainty — it's the drop in entropy from before to after we observe the outcome.</li>
-            <li>But we don't know the outcome in advance, so we take the expectation over possible outcomes. That gives us Expected Information Gain, or EIG.</li>
-            <li>The optimal experiment is then simply the one that maximizes EIG. This gives us a clean objective, but computing it exactly turns out to be intractable.</li>
+            <li>We can formalize this with Information Gain, which measures how much the experiment reduces our uncertainty. But we don't know the result in advance...</li>
+            <li>...so we take the expectation over possible outcomes. That gives us Expected Information Gain, or EIG.</li>
+            <li>Then, the best experiment is then simply the one that maximizes EIG. While this gives us a clean objective, optimizing it in practice faces several challenges...</li>
           </ul>
         </aside>
       </section>
@@ -1024,13 +1023,12 @@
         </div>
 
         <aside class="notes">
-          <p>There are three key difficulties.</p>
           <ul>
             <li>First, computing the entropy requires summing over a combinatorial space of possible structures.</li>
-            <li>Second, estimating the likelihood of each outcome requires actually running the experiment on each hypothesized structure.</li>
-            <li>Third, the space of possible experiments may be vast or open-ended, so we can't just enumerate them all.</li>
+            <li>Second, estimating the likelihood of each outcome requires actually running the experiment, or at least having a good simulator.</li>
+            <li>Finally, the space of possible experiments may be vast or open-ended, so we can't just enumerate them all.</li>
           </ul>
-          <p>Our approach pairs an agent with a world model to address each of these.</p>
+          <p>To address these challenges...</p>
         </aside>
       </section>
 
@@ -1072,7 +1070,7 @@
         </div>
 
         <aside class="notes">
-          <p>Our approach pairs an agent — a language model with code and reasoning capabilities — with a world model, which is a code-based simulator that encodes knowledge about the domain. The world model gives the agent two key affordances: sampling hypotheses and simulating experiments. Let me show you what that looks like.</p>
+          <p>...our approach pairs an agent with a world model: a code-based simulator that encodes knowledge about the domain. The world model gives the agent two key affordances: sampling hypotheses and simulating experiments. Let me show you what that looks like.</p>
         </aside>
       </section>
 
@@ -1155,7 +1153,7 @@
         </div>
 
         <aside class="notes">
-          <p>The first affordance is sampling. The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far.</p>
+          <p>The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far.</p>
         </aside>
       </section>
 
@@ -1368,7 +1366,7 @@
             <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
               <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
                 <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
-                <strong>Inference-scaling for experiment design:</strong> more compute at decision time &rarr; better experiments &rarr; more efficient discovery.
+                <strong>Inference-scaling for experiment design:</strong> scaling compute leads to more informative experiments.
               </div>
             </div>
           </div>
@@ -1376,11 +1374,11 @@
         </div>
 
         <aside class="notes">
-          <p>The second affordance is simulation. On the left, the agent proposes experiments in natural language and translates them into executable code. On the right, the world model runs that code on each sampled hypothesis to compute EIG.</p>
+          <p>To figure out whether to run an experiment, the agent first translates it into executable code. Then, it calls the world model to run that code on each sampled hypothesis, yielding the EIG.</p>
           <ul>
-            <li>The agent generates multiple candidate experiments and scores each one.</li>
+            <li>The agent can repeat this process to evaluate multiple experiments.</li>
             <li>It picks the experiment with the highest EIG — the one that best splits the hypothesis space.</li>
-            <li>The key idea is inference-scaling for experiment design: investing more compute at decision time leads to better experiments and more efficient discovery.</li>
+            <li>This gives us an inference-scaling recipe: investing more compute leads to better experiments and more efficient discovery.</li>
           </ul>
           <p>So we have a general framework — now we need a good domain to test it in.</p>
         </aside>
