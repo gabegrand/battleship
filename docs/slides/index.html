@@ -731,10 +731,10 @@
         <aside class="notes">
           <p>To study this question, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. We make two contributions:</p>
           <ul>
-            <li>First, a sandbox environment that gives us a controlled setting for evaluating information-seeking.</li>
-            <li>Second, a set of inference techniques that pair agents with a code-based world model.</li>
+            <li>First, a sandbox environment for evaluating information-seeking.</li>
+            <li>Second, a family of inference techniques that pair agents with a code-based world model.</li>
           </ul>
-          <p>When we put these together... we can boost agents that initially perform no better than random chance up to super-human performance. And we find that these models now outperform frontier models at orders of magnitude lower cost.</p>
+          <p>When we put these together... we show that we can boost agents from random chance up to super-human performance. And we can make weaker LLMs outperform frontier models at orders of magnitude lower cost.</p>
         </aside>
       </section>
 
@@ -2116,54 +2116,15 @@
         </div>
 
         <aside class="notes">
-          <p>We ran a study with 42 participants playing Collaborative Battleship, collecting 931 gold-labeled questions — what we call the BattleshipQA dataset. Here's what we found.</p>
+          <p>We ran a study with 42 participants playing Collaborative Battleship, collecting question and action trajectories to build a benchmark — what we call the BattleshipQA dataset. Here's what we found.</p>
           <ul>
-            <li>Human Spotters were very accurate and consistent. This gave us confidence in the quality of the data.</li>
+            <li>Human Spotters were very accurate, providing answers that nearly always agreed with our expert labels.</li>
             <li>Humans asked good questions, but not optimal ones — they fell short of the information-theoretic ceiling.</li>
-            <li>Importantly, humans very rarely asked redundant questions. So they were efficient with their question budget, even if they weren't hitting the ceiling.</li>
-            <li>And we found a strong correlation between how many questions a player asked and how well they performed downstream. Now let's see how agents compare.</li>
+            <li>Importantly, though, humans almost never asked redundant questions.</li>
+            <li>And we found a strong correlation between how many questions a player asked and how well they performed at sinking ships.</li>
           </ul>
         </aside>
       </section>
-
-      <!-- F.1 Human study results — figures [HIDDEN: condensed into F.0] -->
-      <section data-visibility="hidden" data-auto-animate> <!-- F.1 #17 -->
-        <div class="section-label" data-id="human-label">Human Study</div>
-        <h3 data-id="human-title">How do people play?</h3>
-        <div class="fig-row" style="margin-top: 12px;">
-          <figure class="fragment">
-            <img src="../static/images/board_timeline_B02.png"
-                 alt="Timeline of multiple human games on board B02" style="max-height: 280px;" />
-            <figcaption><strong>(a)</strong> Different players show diverse explore/exploit strategies on the same board; colors indicate different players.</figcaption>
-          </figure>
-          <figure class="fragment">
-            <img src="../static/images/f1_score_vs_question_count.png"
-                 alt="F1 vs questions asked" style="max-height: 280px;" />
-            <figcaption><strong>(b)</strong> Asking more questions correlates with better targeting performance ($\rho = 0.684$, $p &lt; 0.002$).</figcaption>
-          </figure>
-        </div>
-
-        <aside class="notes">
-          Two key findings from the study. First, asking more questions correlates with
-          better targeting accuracy. Second, players adopt diverse strategies on the same board.
-        </aside>
-      </section>
-
-      <!-- F.2 Human study results — accuracy [HIDDEN: condensed into F.0] -->
-      <section data-visibility="hidden" data-auto-animate> <!-- F.2 #18 -->
-        <div class="section-label" data-id="human-label">Human Study</div>
-        <h3 data-id="human-title">How do people play?</h3>
-        <div class="callout" data-id="human-accuracy" style="margin-top: 40px;">
-          <p><span class="callout-label">Human accuracy:</span> Spotters answer questions correctly <strong>92.5%</strong> of the time w.r.t.&nbsp;gold labels.<br/><span class="fragment fade-in">&rarr; Can LMs match this?</span></p>
-        </div>
-
-        <aside class="notes">
-          Importantly, human Spotters answer questions with 92.5% accuracy against the gold labels,
-          and this stays consistent across simple and complex questions.
-          This 92.5% accuracy now becomes our baseline: can LMs match it?
-        </aside>
-      </section>
-
 
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION G: AGENTS — Results 1 (grounded simulation)
@@ -2191,7 +2152,7 @@
         <span class="fragment" data-fragment-index="0" style="display:none;"></span>
 
         <aside class="notes">
-          <p>So we've established our human baselines. Overall, people were not information-theoretically optimal, but they used their limited resources wisely — they gave accurate answers, rarely asked redundant questions, and their performance scaled with how many questions they asked. Now let's see how agents compare, and whether a world model helps.</p>
+          <p>So we've established our human baselines. Now let's see how agents compare.</p>
         </aside>
       </section>
 
@@ -2224,13 +2185,12 @@
         </div>
 
         <aside class="notes">
-          <p>Our first question was whether the world model actually helped agents answer questions more accurately. We evaluated 15 language models on all 931 gold-labeled questions from the human study, in a two-by-two design: language versus code, and direct answering versus chain-of-thought.</p>
+          <p>Before looking at question-asking, we first examined whether agents could accurately *answer* questions based on the board state. We evaluated 15 language models from all major providers on the gold-labeled questions from the human study.</p>
           <ul>
             <li>The dashed line shows human accuracy as a baseline.</li>
-            <li>Base LM performance varied widely across models.</li>
+            <li>Base performance varied widely across models, but averaged significantly below humans.</li>
             <li>Adding chain-of-thought reasoning helped somewhat.</li>
-            <li>But the biggest gain came from code-based reasoning — using the world model to execute code gave an average boost of 14.7 percentage points.</li>
-            <li>Combining CoT with code gave the best results overall. Code-based reasoning grounded the agent's answers in the actual board state, rather than relying on the LM to reason about spatial relationships abstractly.</li>
+            <li>But the biggest gains came from code-based reasoning: Using the world model gave an average boost of 14.7 percentage points.</li>
           </ul>
           <p>So the world model helped with answering questions. But did it also help with asking better ones?</p>
         </aside>
@@ -2253,21 +2213,21 @@
             </div>
           </div>
           <div class="col">
-            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">EIG improves smoothly with more candidates</p>
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">EIG improves smoothly with more candidates</p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; <strong>10</strong> samples yields <strong>94.2%</strong> of the info-theoretic ceiling</p>
 
-            <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</p>
-            <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Sampling + scoring by EIG reduces redundant questions to &le;1.2%</p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Weaker models ask <strong>15&ndash;18%</strong> redundant questions (EIG=0)</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Sampling + scoring by EIG reduces redundant questions to &le;1.2%</p>
 
-            <p class="fragment fade-in" data-fragment-index="7" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Benefits LLMs with a range of different sizes and capabilities</p>
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Benefits LLMs with a range of different sizes and capabilities</p>
           </div>
         </div>
 
         <aside class="notes">
-          <p>Next, we asked whether the world model also helped agents ask better questions. We can plot the EIG of the best question as a function of the number of candidates sampled.</p>
+          <p>To quantify this, we can plot the EIG of the best question as a function of the number of candidates sampled.</p>
           <ul>
-            <li>The top line shows the information-theoretic ceiling — the maximum achievable EIG.</li>
-            <li>The dashed lines show the human mean and median from our study.</li>
+            <!-- <li>The top line shows the information-theoretic ceiling — the maximum achievable EIG.</li>
+            <li>The dashed lines show the human mean and median from our study.</li> -->
             <li>As we sample more candidate questions and select the best one by EIG, information gain improves smoothly.</li>
             <li>With just 10 candidates, agents reached 94.2% of the ceiling.</li>
             <li>Without this selection mechanism, weaker models asked 15 to 18 percent redundant questions — questions with zero information gain. Sampling and scoring by EIG reduced that to 1.2% or less.</li>
@@ -3985,14 +3945,14 @@ def answer(true_board, partial_board) -> bool:
           .attr('y1', y(ref.val)).attr('y2', y(ref.val))
           .attr('stroke', ref.color).attr('stroke-width', 1.5)
           .attr('stroke-dasharray', dasharray)
-          .attr('opacity', 0);
+          .attr('opacity', 1);
         var label = g.append('text')
           .attr('x', width / 2).attr('y', y(ref.val) - 5)
           .attr('text-anchor', 'middle')
           .style('font-size', '9px').style('font-family', 'Noto Sans, sans-serif')
           .style('fill', ref.color).style('font-weight', '600')
           .text(ref.label)
-          .attr('opacity', 0);
+          .attr('opacity', 1);
         refElems[key] = { line: line, label: label };
       });
 
@@ -4040,29 +4000,9 @@ def answer(true_board, partial_board) -> bool:
           var idx = parseInt(f.getAttribute('data-fragment-index'));
           if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
         });
-        // Theoretical max: visible when maxVisible >= 0
-        var tm = refElems.theoreticalMax;
-        if (maxVisible >= 0) {
-          tm.line.transition().duration(400).attr('opacity', 1);
-          tm.label.transition().duration(400).attr('opacity', 1);
-        } else {
-          tm.line.attr('opacity', 0);
-          tm.label.attr('opacity', 0);
-        }
-        // Human mean + median: visible when maxVisible >= 1
-        ['humanMean', 'humanMedian'].forEach(function(key) {
-          var el = refElems[key];
-          if (maxVisible >= 1) {
-            el.line.transition().duration(400).attr('opacity', 1);
-            el.label.transition().duration(400).attr('opacity', 1);
-          } else {
-            el.line.attr('opacity', 0);
-            el.label.attr('opacity', 0);
-          }
-        });
-        // Model curves: visible when maxVisible >= 2
+        // Model curves: visible when maxVisible >= 0
         modelElems.forEach(function(m, i) {
-          if (maxVisible >= 2) {
+          if (maxVisible >= 0) {
             m.path.transition().duration(1000).delay(i * 100).ease(d3.easeLinear)
               .attr('opacity', 1)
               .attr('stroke-dashoffset', 0);
@@ -4077,24 +4017,12 @@ def answer(true_board, partial_board) -> bool:
 
       function resetAll() {
         Object.keys(refElems).forEach(function(key) {
-          refElems[key].line.interrupt().attr('opacity', 0);
-          refElems[key].label.interrupt().attr('opacity', 0);
+          refElems[key].line.interrupt().attr('opacity', 1);
+          refElems[key].label.interrupt().attr('opacity', 1);
         });
         modelElems.forEach(function(m) {
           m.path.interrupt().attr('opacity', 0).attr('stroke-dashoffset', m.totalLen);
           m.area.interrupt().attr('opacity', 0);
-        });
-      }
-
-      // Inject hidden fragments for chart-only steps (indices 0,1)
-      // Index 2 is covered by the visible text fragment — sync pattern handles the collision
-      if (slide) {
-        [0, 1].forEach(function(i) {
-          var frag = document.createElement('span');
-          frag.className = 'fragment';
-          frag.setAttribute('data-fragment-index', i);
-          frag.style.display = 'none';
-          slide.appendChild(frag);
         });
       }
 
