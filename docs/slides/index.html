@@ -1098,14 +1098,14 @@
                   <i class="fas fa-random" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
                   <div>
                     <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Sample</div>
-                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">Draw hypotheses from the prior</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
                   <i class="fas fa-play" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
                   <div>
                     <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Simulate</div>
-                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">Execute experiments on sampled worlds</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$y = f_x(s)$</div>
                   </div>
                 </div>
               </div>
@@ -1113,7 +1113,7 @@
         </div>
 
         <aside class="notes">
-          <p>The world model gives the agent two key affordances: sampling hypotheses from the prior, and simulating experiments on those hypotheses. Let me show you what that looks like in practice.</p>
+          <p>The world model gives the agent two key affordances: sampling hypothetical world states from the evidence-conditioned posterior, and simulating experiments on those sampled worlds to predict outcomes. Let me show you what that looks like in practice.</p>
         </aside>
       </section>
 
@@ -1191,7 +1191,7 @@
           </div>
 
           <p style="margin-top: 12px; font-size: 0.48em; color: #666; text-align: center; line-height: 1.5;">
-            The world model defines a generative process $p(S)$. Sample candidate hypotheses to form a hypothesis space.
+            Sample candidates to form a hypothesis space $\mathcal{S}$.
           </p>
         </div>
 
