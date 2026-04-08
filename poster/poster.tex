@@ -1,0 +1,287 @@
+% Gemini theme --- https://github.com/anishathalye/gemini
+% Poster for ICLR 2026
+
+\documentclass[final]{beamer}
+
+% ====================
+% Packages
+% ====================
+
+\usepackage[T1]{fontenc}
+\usepackage[size=custom,width=194,height=95,scale=1.0]{beamerposter}
+\usetheme{gemini}
+\usecolortheme{gemini}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+
+% ====================
+% Custom Colors (project branding)
+% ====================
+
+\definecolor{accentblue}{HTML}{304ed8}
+\definecolor{darkblue}{HTML}{1a2b6b}
+\definecolor{successgreen}{HTML}{04af70}
+\definecolor{alertred}{HTML}{e74c3c}
+\definecolor{lightblue}{HTML}{e8f4ff}
+\definecolor{lightgray}{HTML}{f5f6fa}
+
+% Override Gemini colors
+\setbeamercolor{headline}{fg=white,bg=accentblue}
+\setbeamercolor{headline title}{fg=white}
+\setbeamercolor{headline author}{fg=white}
+\setbeamercolor{headline institute}{fg=white}
+\setbeamercolor{headline rule}{bg=darkblue}
+\setbeamercolor{block title}{fg=accentblue,bg=white}
+\setbeamercolor{block separator}{bg=accentblue}
+\setbeamercolor{block body}{fg=black,bg=white}
+\setbeamercolor{block title alerted}{fg=white,bg=accentblue}
+\setbeamercolor{block separator alerted}{bg=accentblue}
+\setbeamercolor{block body alerted}{fg=black,bg=lightblue}
+\setbeamercolor{block title example}{fg=accentblue,bg=lightgray}
+\setbeamercolor{block separator example}{bg=accentblue}
+\setbeamercolor{block body example}{fg=black,bg=lightgray}
+\setbeamercolor{item}{fg=accentblue}
+\setbeamercolor{heading}{fg=accentblue}
+
+% ====================
+% Callout box style
+% ====================
+
+\newtcolorbox{resultbox}[1][]{
+  colback=lightblue,
+  colframe=accentblue,
+  boxrule=1.5pt,
+  arc=3pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt,
+  #1
+}
+
+% ====================
+% Lengths
+% ====================
+
+\newlength{\sepwidth}
+\newlength{\colwidth}
+\setlength{\sepwidth}{0.02\paperwidth}
+\setlength{\colwidth}{0.3067\paperwidth}
+
+% ====================
+% Title
+% ====================
+
+\title{Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People}
+
+\author{Gabriel Grand\textsuperscript{*1,2} \quad Valerio Pepe\textsuperscript{*3} \quad Joshua B.\ Tenenbaum\textsuperscript{1,2} \quad Jacob Andreas\textsuperscript{1}}
+
+\institute{\textsuperscript{1}MIT CSAIL \quad \textsuperscript{2}MIT Brain and Cognitive Sciences \quad \textsuperscript{3}Harvard SEAS \qquad {\normalsize\textsuperscript{*}Equal contribution}}
+
+% \logoleft{\includegraphics[height=7cm]{logos/mit-csail.png}}
+% \logoright{\includegraphics[height=7cm]{logos/qr-code.png}}
+
+% ====================
+% Footer
+% ====================
+
+\footercontent{
+  \textbf{gabegrand.github.io/battleship} \hfill
+  ICLR 2026 --- Oral Presentation \hfill
+  github.com/gabegrand/battleship
+}
+
+% ====================
+% Document
+% ====================
+
+\begin{document}
+\begin{frame}[t]
+\begin{columns}[t]
+
+% ====================
+% Column 1: Motivation + Task + Framework
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{Motivation}
+
+In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, AI agents must \emph{ask smart questions} before acting---but current LMs are optimized to \emph{answer} questions, not \emph{ask} good ones.
+
+We formalize information-seeking as \textbf{Bayesian Experimental Design} and develop inference-time strategies that guide what agents ask, where they act, and when to explore vs.\ exploit.
+
+\end{block}
+
+\begin{block}{Collaborative Battleship}
+
+\begin{center}
+  \includegraphics[width=0.7\colwidth]{figures/battleship-splash-2.png}
+\end{center}
+
+A two-player dialogue task for studying information-seeking:
+\begin{itemize}
+  \item \textbf{Captain}: asks yes/no questions, then fires at tiles
+  \item \textbf{Spotter}: sees full board, provides grounded answers
+  \item 8$\times$8 board, 4 ships, budget of 15 questions + 40 shots
+  \item Human study (N=42): question-asking correlates with performance ($\rho$=0.684)
+\end{itemize}
+
+\end{block}
+
+\begin{block}{Bayesian Strategies}
+
+The Captain maintains a \textbf{belief state} $b_t$ over hidden boards and selects questions to maximize \textbf{Expected Information Gain (EIG)}:
+%
+\begin{equation*}
+  \text{EIG}_\varepsilon(q) = H\!\left(\varepsilon + (1 - 2\varepsilon)\, p_t\right) - H(\varepsilon)
+\end{equation*}
+%
+Maximized when $p_t \approx 0.5$: the question is equally likely to be answered yes or no. Questions are translated to Python programs; EIG is computed via Sequential Monte Carlo.
+
+\medskip
+
+\begin{tcolorbox}[colback=lightblue, colframe=accentblue, arc=2pt, boxrule=1pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+\textbf{\color{accentblue}Bayes-Q} \enspace Ask the most informative question\\[0.5ex]
+\textbf{\color{accentblue}Bayes-M} \enspace Shoot at the highest-probability tile\\[0.5ex]
+\textbf{\color{accentblue}Bayes-D} \enspace One-step lookahead: explore vs.\ exploit
+\end{tcolorbox}
+
+\end{block}
+
+\end{column}
+
+% ====================
+% Column 2: Results
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{SpotterQA: Question Answering}
+
+931 gold-labeled questions from human games, \textbf{15 frontier LMs}, 4 strategies.
+
+\begin{center}
+  \includegraphics[width=0.6\colwidth]{figures/spotter_accuracy_overall.pdf}
+\end{center}
+
+\begin{resultbox}
+  \textbf{Code generation boosts accuracy by +14.7\%} over LM baselines.
+  Best model reaches 92.8\% (human: 92.5\%).
+\end{resultbox}
+
+\end{block}
+
+\begin{block}{CaptainQA: Full Game Performance}
+
+54 games (18 boards $\times$ 3 seeds), 3 LMs + Bayesian strategy ablations.
+
+\begin{center}
+  \includegraphics[width=0.6\colwidth]{figures/captain_f1_boxplot.pdf}
+\end{center}
+
+\begin{resultbox}
+  \begin{center}
+  \begin{tabular}{ccc}
+    \textbf{Llama-4-Scout F1} & \textbf{vs.\ Humans} & \textbf{vs.\ GPT-5} \\[0.5ex]
+    {\LARGE\color{accentblue}\bfseries 0.37 $\rightarrow$ 0.76} &
+    {\LARGE\color{successgreen}\bfseries 82\% win} &
+    {\LARGE\color{successgreen}\bfseries 67\% win} \\
+  \end{tabular}
+  \end{center}
+\end{resultbox}
+
+Bayesian strategies enable a weak, open-source model to \textbf{outperform frontier models and humans}.
+
+\end{block}
+
+\end{column}
+
+% ====================
+% Column 3: Scaling, Generalization, Takeaways
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{Inference Scaling}
+
+\begin{columns}[T]
+  \begin{column}{0.48\colwidth}
+    \includegraphics[width=\linewidth]{figures/eig_max_vs_k.pdf}
+  \end{column}
+  \begin{column}{0.48\colwidth}
+    \includegraphics[width=\linewidth]{figures/question_timing.pdf}
+  \end{column}
+\end{columns}
+
+\begin{itemize}
+  \item EIG: \textbf{+0.227 bits} (94\% of ceiling) with $K$=10 samples
+  \item Redundant questions: \textbf{18.5\% $\rightarrow$ 0.2\%}
+  \item Bayes-D matches human explore/exploit timing
+\end{itemize}
+
+\end{block}
+
+\begin{block}{Generalization: Guess Who?}
+
+Same strategies on \textbf{Guess Who?} (100 characters, 8 questions).
+
+\begin{center}
+  \includegraphics[width=0.55\colwidth]{figures/guess-who-results.pdf}
+\end{center}
+
+\vspace{-1ex}
+
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{Model} & \textbf{LM only} & \textbf{+ Bayes} \\
+  \midrule
+  Llama-4-Scout & 0.300 & \textbf{0.724} \\
+  GPT-4o & 0.617 & \textbf{0.900} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\end{block}
+
+\begin{block}{Cost \& Takeaways}
+
+\begin{center}
+\begin{tabular}{lrr}
+  \toprule
+  \textbf{Model} & \textbf{Cost} & \textbf{F1} \\
+  \midrule
+  Llama + Bayes & \textbf{\$8} & \textbf{0.764} \\
+  GPT-4o + Bayes & \$239 & 0.712 \\
+  GPT-5 & \$874 & 0.678 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{resultbox}
+  \begin{center}
+    {\LARGE\color{accentblue}\bfseries 99.7\% cost savings}
+  \end{center}
+\end{resultbox}
+
+\begin{enumerate}
+  \item \textbf{Bayesian inference-time strategies} compensate for weaker LMs
+  \item \textbf{Code generation} improves grounded QA by +14.7\%
+  \item The \textbf{explore/exploit} decision (Bayes-D) is critical
+  \item Framework \textbf{generalizes} beyond Battleship
+\end{enumerate}
+
+\end{block}
+
+\end{column}
+\begin{column}{\sepwidth}\end{column}
+
+\end{columns}
+\end{frame}
+\end{document}
