@@ -15,6 +15,10 @@
 \usepackage{booktabs}
 \usepackage{tikz}
 \usepackage{amsmath,amssymb,mathtools}
+\usepackage{newtxmath}
+% Fix mathrm/operatorname to use Times (fontspec overrides it to Lato)
+\SetSymbolFont{operators}{normal}{OT1}{ntxtlf}{m}{n}
+\SetSymbolFont{operators}{bold}{OT1}{ntxtlf}{b}{n}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
 \usepackage{qrcode}
@@ -141,27 +145,19 @@ Given hidden state $S \in \mathcal{S}$, experiment $x \in X$, observation $y$:
   \underbrace{p(S)}_{\text{prior}}
 \end{equation*}
 
-\vspace{-2ex}
-
 \heading{Expected Information Gain}
 
-\vspace{-1.5ex}
-
 \begin{align*}
-  \text{IG}(x, y) &= H\big[p(S)\big] - H\big[p(S \mid x, y)\big] \\[-0.3ex]
-  \text{EIG}(x) &= \mathbb{E}_{y \sim p(y \mid x)}\!\big[\text{IG}(x, y)\big], \quad
-  x^{\star} = \arg\max_{x \in X}\; \text{EIG}(x)
+  \operatorname{IG}(x, y) &= H\big[p(S)\big] - H\big[p(S \mid x, y)\big] \\[0.5ex]
+  \operatorname{EIG}(x) &= \mathbb{E}_{y \sim p(y \mid x)}\!\big[\operatorname{IG}(x, y)\big], \quad
+  x^{\star} = \arg\max_{x \in X}\; \operatorname{EIG}(x)
 \end{align*}
 
-\vspace{-2ex}
-
-For binary answers with a noisy oracle ($\text{BSC}(\varepsilon)$):
+For binary answers with a noisy oracle ($\mathrm{BSC}(\varepsilon)$):
 %
 \begin{equation*}
-  \boxed{\;\text{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
+  \boxed{\;\operatorname{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
 \end{equation*}
-
-\vspace{-1ex}
 
 where $p := P(a\!=\!1) = \mathbb{E}_{s \sim P(S)}\!\big[P(a \mid q;\, s)\big]$.
 Maximized when $p \approx 0.5$.
@@ -181,32 +177,28 @@ Maximized when $p \approx 0.5$.
 
 Three inference-time strategies leveraging the BED framework:
 
-\heading{$Q_{\text{Bayes}}$: Maximize information gain}
-\vspace{-1.5ex}
+\heading{$Q_{\mathrm{Bayes}}$: Maximize information gain}
+
 Sample $K$ candidates from the LM, select the most informative:
-\vspace{-0.5ex}
+%
 \begin{equation*}
-  q_t^{\star} \in \arg\max_{q \in \mathcal{Q}}\; \text{EIG}_\varepsilon(q \mid b_t)
+  q_t^{\star} \in \arg\max_{q \in \mathcal{Q}}\; \operatorname{EIG}_\varepsilon(q \mid b_t)
 \end{equation*}
 
-\vspace{-2ex}
+\heading{$M_{\mathrm{Bayes}}$: Maximize hit probability}
 
-\heading{$M_{\text{Bayes}}$: Maximize hit probability}
-\vspace{-1.5ex}
 Select the tile most likely to contain a ship:
-\vspace{-0.5ex}
+%
 \begin{equation*}
-  u_t^{\star} \in \arg\max_{u}\; p_{\text{hit}}(u \mid b_t), \;\; p_{\text{hit}}(u \mid b_t) \coloneqq \!\!\sum_{s \in \mathcal{F}} b_t(s)\, \mathbb{1}[u \text{ is ship in } s]
+  u_t^{\star} \in \arg\max_{u}\; p_{\mathrm{hit}}(u \mid b_t), \;\; p_{\mathrm{hit}}(u \mid b_t) \coloneqq \!\!\sum_{s \in \mathcal{F}} b_t(s)\, \mathbb{1}[u \text{ is ship in } s]
 \end{equation*}
 
-\vspace{-2ex}
+\heading{$D_{\mathrm{Bayes}}$: Explore vs.\ exploit}
 
-\heading{$D_{\text{Bayes}}$: Explore vs.\ exploit}
-\vspace{-1.5ex}
 One-step lookahead---ask if expected post-question hit prob.\ exceeds current:
-\vspace{-0.5ex}
+%
 \begin{equation*}
-  \text{Ask } q_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\text{hit}}^{\,t+1}(q_t^{\star}) \;>\; p_{\text{hit}}(u_t^{\star} \mid b_t)
+  \text{Ask } q_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\mathrm{hit}}^{\,t+1}(q_t^{\star}) \;>\; p_{\mathrm{hit}}(u_t^{\star} \mid b_t)
 \end{equation*}
 
 \end{block}
