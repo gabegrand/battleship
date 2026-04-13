@@ -294,11 +294,28 @@ Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}?
 
 \begin{block}{Generalization: Guess Who?}
 
-Do these strategies \textbf{generalize} beyond Battleship? We test on Guess Who? from \textbf{TextArena} [8], an information-seeking game with richer object-relational semantics.
+Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Who?'' from \textbf{TextArena} [8], a game with richer object-relational semantics.
 
-\begin{center}
-  \includegraphics[height=8cm]{figures/guess-who-results.pdf}
-\end{center}
+\begin{minipage}[t]{0.32\colwidth}
+  \vspace{0pt}
+  \includegraphics[height=12cm]{figures/guess-who-results.pdf}
+\end{minipage}\hspace{1em}%
+\begin{minipage}[t]{0.62\colwidth}
+  \vspace{0pt}
+  Same strategies, different domain:
+
+  \medskip
+
+  \textbf{GPT-4o}: 61.7\% $\rightarrow$ \textbf{90.0\%}\\
+  \textbf{Llama-4-Scout}: 30.0\% $\rightarrow$ \textbf{72.4\%}
+
+  \medskip
+  \medskip
+
+  \begin{resultbox}
+    \textbf{Not Battleship-specific:} Our approach generalizes to info-seeking tasks with combinatorial hypothesis spaces.
+  \end{resultbox}
+\end{minipage}
 
 \end{block}
 
