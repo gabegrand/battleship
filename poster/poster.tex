@@ -8,13 +8,13 @@
 % ====================
 
 \usepackage[T1]{fontenc}
-\usepackage[size=custom,width=194,height=95,scale=1.0]{beamerposter}
+\usepackage[size=custom,width=194,height=95,scale=1.55]{beamerposter}
 \usetheme{gemini}
 \usecolortheme{gemini}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tikz}
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath,amssymb,mathtools}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
 \tcbuselibrary{skins}
@@ -23,39 +23,39 @@
 % Custom Colors (project branding)
 % ====================
 
-\definecolor{accentblue}{HTML}{304ed8}
-\definecolor{darkblue}{HTML}{1a2b6b}
-\definecolor{successgreen}{HTML}{04af70}
-\definecolor{alertred}{HTML}{e74c3c}
-\definecolor{lightblue}{HTML}{e8f4ff}
-\definecolor{lightgray}{HTML}{f5f6fa}
+% Color palette
+\definecolor{SeaGreen}{HTML}{008f69}
+\definecolor{BattleshipGray}{HTML}{848482}
+\definecolor{AirBlue}{HTML}{71a0c1}
+\definecolor{HonoluluBlue}{HTML}{0e79b2}
+\definecolor{NavyBlue}{HTML}{000080}
+\definecolor{Charcoal}{HTML}{2c3e50}
+\definecolor{LightLavender}{HTML}{f0f4ff}
 
-% Override Gemini colors
-\setbeamercolor{headline}{fg=white,bg=accentblue}
+% Override Gemini colors — neutral header, accent blue details
+\setbeamercolor{headline}{fg=white,bg=HonoluluBlue}
 \setbeamercolor{headline title}{fg=white}
 \setbeamercolor{headline author}{fg=white}
 \setbeamercolor{headline institute}{fg=white}
-\setbeamercolor{headline rule}{bg=darkblue}
-\setbeamercolor{block title}{fg=accentblue,bg=white}
-\setbeamercolor{block separator}{bg=accentblue}
-\setbeamercolor{block body}{fg=black,bg=white}
-\setbeamercolor{block title alerted}{fg=white,bg=accentblue}
-\setbeamercolor{block separator alerted}{bg=accentblue}
-\setbeamercolor{block body alerted}{fg=black,bg=lightblue}
-\setbeamercolor{block title example}{fg=accentblue,bg=lightgray}
-\setbeamercolor{block separator example}{bg=accentblue}
-\setbeamercolor{block body example}{fg=black,bg=lightgray}
-\setbeamercolor{item}{fg=accentblue}
-\setbeamercolor{heading}{fg=accentblue}
+\setbeamercolor{headline rule}{bg=HonoluluBlue}
+\setbeamercolor{block title}{fg=NavyBlue,bg=white}
+\setbeamercolor{block separator}{bg=AirBlue}
+\setbeamercolor{block body}{fg=Charcoal,bg=white}
+\setbeamercolor{block title alerted}{fg=white,bg=HonoluluBlue}
+\setbeamercolor{block separator alerted}{bg=AirBlue}
+\setbeamercolor{block body alerted}{fg=Charcoal,bg=LightLavender}
+\setbeamercolor{item}{fg=HonoluluBlue}
+\setbeamercolor{heading}{fg=HonoluluBlue}
+\setbeamercolor{footline}{fg=white,bg=HonoluluBlue}
 
 % ====================
 % Callout box style
 % ====================
 
 \newtcolorbox{resultbox}[1][]{
-  colback=lightblue,
-  colframe=accentblue,
-  boxrule=1.5pt,
+  colback=AirBlue!15,
+  colframe=AirBlue!15,
+  boxrule=0pt,
   arc=3pt,
   left=6pt, right=6pt, top=4pt, bottom=4pt,
   #1
@@ -102,7 +102,7 @@
 \begin{columns}[t]
 
 % ====================
-% Column 1: Motivation + Task + Framework
+% Column 1: Motivation + Task + BED Framework
 % ====================
 
 \begin{column}{\sepwidth}\end{column}
@@ -112,61 +112,111 @@
 
 In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, AI agents must \emph{ask smart questions} before acting---but current LMs are optimized to \emph{answer} questions, not \emph{ask} good ones.
 
-We formalize information-seeking as \textbf{Bayesian Experimental Design} and develop inference-time strategies that guide what agents ask, where they act, and when to explore vs.\ exploit.
-
 \end{block}
 
 \begin{block}{Collaborative Battleship}
 
 \begin{center}
-  \includegraphics[width=0.7\colwidth]{figures/battleship-splash-2.png}
+  \includegraphics[width=0.95\colwidth]{figures/battleship-splash-2.png}
 \end{center}
 
-A two-player dialogue task for studying information-seeking:
 \begin{itemize}
   \item \textbf{Captain}: asks yes/no questions, then fires at tiles
   \item \textbf{Spotter}: sees full board, provides grounded answers
   \item 8$\times$8 board, 4 ships, budget of 15 questions + 40 shots
-  \item Human study (N=42): question-asking correlates with performance ($\rho$=0.684)
 \end{itemize}
 
 \end{block}
 
-\begin{block}{Bayesian Strategies}
+\begin{block}{Bayesian Experimental Design}
 
-The Captain maintains a \textbf{belief state} $b_t$ over hidden boards and selects questions to maximize \textbf{Expected Information Gain (EIG)}:
+Given hidden state $S \in \mathcal{S}$, experiment $x \in X$, observation $y$:
 %
 \begin{equation*}
-  \text{EIG}_\varepsilon(q) = H\!\left(\varepsilon + (1 - 2\varepsilon)\, p_t\right) - H(\varepsilon)
+  \underbrace{p(S \mid x, y)}_{\text{posterior}}
+  \;\propto\;
+  \underbrace{p(y \mid S, x)}_{\text{likelihood}}
+  \;\;
+  \underbrace{p(S)}_{\text{prior}}
 \end{equation*}
+
+\vspace{-2ex}
+
+\heading{Expected Information Gain}
+
+\vspace{-1.5ex}
+
+\begin{align*}
+  \text{IG}(x, y) &= H\big[p(S)\big] - H\big[p(S \mid x, y)\big] \\[-0.3ex]
+  \text{EIG}(x) &= \mathbb{E}_{y \sim p(y \mid x)}\!\big[\text{IG}(x, y)\big], \quad
+  x^{\star} = \arg\max_{x \in X}\; \text{EIG}(x)
+\end{align*}
+
+\vspace{-2ex}
+
+For binary answers with a noisy oracle ($\text{BSC}(\varepsilon)$):
 %
-Maximized when $p_t \approx 0.5$: the question is equally likely to be answered yes or no. Questions are translated to Python programs; EIG is computed via Sequential Monte Carlo.
+\begin{equation*}
+  \boxed{\;\text{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
+\end{equation*}
 
-\medskip
+\vspace{-1ex}
 
-\begin{tcolorbox}[colback=lightblue, colframe=accentblue, arc=2pt, boxrule=1pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
-\textbf{\color{accentblue}Bayes-Q} \enspace Ask the most informative question\\[0.5ex]
-\textbf{\color{accentblue}Bayes-M} \enspace Shoot at the highest-probability tile\\[0.5ex]
-\textbf{\color{accentblue}Bayes-D} \enspace One-step lookahead: explore vs.\ exploit
-\end{tcolorbox}
+where $p := P(a\!=\!1) = \mathbb{E}_{s \sim P(S)}\!\big[P(a \mid q;\, s)\big]$.
+Maximized when $p \approx 0.5$.
 
 \end{block}
 
 \end{column}
 
 % ====================
-% Column 2: Results
+% Column 2: Strategies + SpotterQA + CaptainQA
 % ====================
 
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
 
+\begin{block}{Bayesian Strategies}
+
+Three inference-time strategies leveraging the BED framework:
+
+\heading{$Q_{\text{Bayes}}$: Maximize information gain}
+\vspace{-1.5ex}
+Sample $K$ candidates from the LM, select the most informative:
+\vspace{-0.5ex}
+\begin{equation*}
+  q_t^{\star} \in \arg\max_{q \in \mathcal{Q}}\; \text{EIG}_\varepsilon(q \mid b_t)
+\end{equation*}
+
+\vspace{-2ex}
+
+\heading{$M_{\text{Bayes}}$: Maximize hit probability}
+\vspace{-1.5ex}
+Select the tile most likely to contain a ship:
+\vspace{-0.5ex}
+\begin{equation*}
+  u_t^{\star} \in \arg\max_{u}\; p_{\text{hit}}(u \mid b_t), \;\; p_{\text{hit}}(u \mid b_t) \coloneqq \!\!\sum_{s \in \mathcal{F}} b_t(s)\, \mathbb{1}[u \text{ is ship in } s]
+\end{equation*}
+
+\vspace{-2ex}
+
+\heading{$D_{\text{Bayes}}$: Explore vs.\ exploit}
+\vspace{-1.5ex}
+One-step lookahead---ask if expected post-question hit prob.\ exceeds current:
+\vspace{-0.5ex}
+\begin{equation*}
+  \text{Ask } q_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\text{hit}}^{\,t+1}(q_t^{\star}) \;>\; p_{\text{hit}}(u_t^{\star} \mid b_t)
+\end{equation*}
+
+\end{block}
+
 \begin{block}{SpotterQA: Question Answering}
 
-931 gold-labeled questions from human games, \textbf{15 frontier LMs}, 4 strategies.
+931 gold-labeled questions, \textbf{15 LMs}, 4 strategies.
+Bars = mean accuracy $\pm$ s.d.\ across models. Dashed line = human.
 
 \begin{center}
-  \includegraphics[width=0.6\colwidth]{figures/spotter_accuracy_overall.pdf}
+  \includegraphics[height=16cm]{figures/spotter_accuracy_overall.pdf}
 \end{center}
 
 \begin{resultbox}
@@ -176,106 +226,65 @@ Maximized when $p_t \approx 0.5$: the question is equally likely to be answered 
 
 \end{block}
 
-\begin{block}{CaptainQA: Full Game Performance}
-
-54 games (18 boards $\times$ 3 seeds), 3 LMs + Bayesian strategy ablations.
-
-\begin{center}
-  \includegraphics[width=0.6\colwidth]{figures/captain_f1_boxplot.pdf}
-\end{center}
-
-\begin{resultbox}
-  \begin{center}
-  \begin{tabular}{ccc}
-    \textbf{Llama-4-Scout F1} & \textbf{vs.\ Humans} & \textbf{vs.\ GPT-5} \\[0.5ex]
-    {\LARGE\color{accentblue}\bfseries 0.37 $\rightarrow$ 0.76} &
-    {\LARGE\color{successgreen}\bfseries 82\% win} &
-    {\LARGE\color{successgreen}\bfseries 67\% win} \\
-  \end{tabular}
-  \end{center}
-\end{resultbox}
-
-Bayesian strategies enable a weak, open-source model to \textbf{outperform frontier models and humans}.
-
-\end{block}
-
 \end{column}
 
 % ====================
-% Column 3: Scaling, Generalization, Takeaways
+% Column 3: CaptainQA + Generalization + References
 % ====================
 
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
 
-\begin{block}{Inference Scaling}
+\begin{block}{CaptainQA: Full Game Performance}
+
+54 games, 3 LMs + strategy ablations. \enspace
+{\color{AirBlue}$\blacksquare$}\,Llama-4-Scout \enspace {\color{HonoluluBlue}$\blacksquare$}\,GPT-4o \enspace {\color{NavyBlue}$\blacksquare$}\,GPT-5
 
 \begin{columns}[T]
   \begin{column}{0.48\colwidth}
-    \includegraphics[width=\linewidth]{figures/eig_max_vs_k.pdf}
+    \begin{center}
+      \includegraphics[height=14cm]{figures/captain_f1_boxplot.pdf}
+    \end{center}
   \end{column}
   \begin{column}{0.48\colwidth}
-    \includegraphics[width=\linewidth]{figures/question_timing.pdf}
+    \begin{center}
+      \includegraphics[height=14cm]{figures/eig_max_vs_k.pdf}
+    \end{center}
   \end{column}
 \end{columns}
 
-\begin{itemize}
-  \item EIG: \textbf{+0.227 bits} (94\% of ceiling) with $K$=10 samples
-  \item Redundant questions: \textbf{18.5\% $\rightarrow$ 0.2\%}
-  \item Bayes-D matches human explore/exploit timing
-\end{itemize}
+\begin{resultbox}
+  \begin{center}
+  \begin{tabular}{ccc}
+    \textbf{Llama-4-Scout F1} & \textbf{vs.\ Humans} & \textbf{vs.\ GPT-5} \\[0.3ex]
+    {\LARGE\color{HonoluluBlue}\bfseries 0.37 $\rightarrow$ 0.76} &
+    {\LARGE\color{SeaGreen}\bfseries 82\% win} &
+    {\LARGE\color{SeaGreen}\bfseries 67\% win} \\
+  \end{tabular}
+  \end{center}
+  \vspace{-0.5ex}
+  {\small \textbf{99.7\% cost savings} vs.\ GPT-5 (\$8 vs.\ \$874). EIG: \textbf{+0.227 bits} (94\% of ceiling) with $K$=10. Redundant questions: \textbf{18.5\% $\rightarrow$ 0.2\%}.}
+\end{resultbox}
 
 \end{block}
 
 \begin{block}{Generalization: Guess Who?}
 
 Same strategies on \textbf{Guess Who?} (100 characters, 8 questions).
+Llama: 0.300 $\rightarrow$ \textbf{0.724}; \enspace GPT-4o: 0.617 $\rightarrow$ \textbf{0.900}.
 
 \begin{center}
-  \includegraphics[width=0.55\colwidth]{figures/guess-who-results.pdf}
-\end{center}
-
-\vspace{-1ex}
-
-\begin{center}
-\begin{tabular}{lcc}
-  \toprule
-  \textbf{Model} & \textbf{LM only} & \textbf{+ Bayes} \\
-  \midrule
-  Llama-4-Scout & 0.300 & \textbf{0.724} \\
-  GPT-4o & 0.617 & \textbf{0.900} \\
-  \bottomrule
-\end{tabular}
+  \includegraphics[height=8cm]{figures/guess-who-results.pdf}
 \end{center}
 
 \end{block}
 
-\begin{block}{Cost \& Takeaways}
+\begin{block}{References}
 
-\begin{center}
-\begin{tabular}{lrr}
-  \toprule
-  \textbf{Model} & \textbf{Cost} & \textbf{F1} \\
-  \midrule
-  Llama + Bayes & \textbf{\$8} & \textbf{0.764} \\
-  GPT-4o + Bayes & \$239 & 0.712 \\
-  GPT-5 & \$874 & 0.678 \\
-  \bottomrule
-\end{tabular}
-\end{center}
-
-\begin{resultbox}
-  \begin{center}
-    {\LARGE\color{accentblue}\bfseries 99.7\% cost savings}
-  \end{center}
-\end{resultbox}
-
-\begin{enumerate}
-  \item \textbf{Bayesian inference-time strategies} compensate for weaker LMs
-  \item \textbf{Code generation} improves grounded QA by +14.7\%
-  \item The \textbf{explore/exploit} decision (Bayes-D) is critical
-  \item Framework \textbf{generalizes} beyond Battleship
-\end{enumerate}
+\small
+[1] Lindley (1956). \textit{Ann.\ Math.\ Stat.} \enspace
+[2] Rothe et al.\ (2018). \textit{CBB.} \enspace
+[3] Wong, Grand et al.\ (2023). \textit{arXiv}.
 
 \end{block}
 
