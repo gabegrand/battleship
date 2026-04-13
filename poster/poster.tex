@@ -167,10 +167,10 @@ Given hidden state $S \in \mathcal{S}$, experiment $x \in X$, observation $y$:
 For binary answers with a noisy oracle ($\mathrm{BSC}(\varepsilon)$):
 %
 \begin{equation*}
-  \boxed{\;\operatorname{EIG}_\varepsilon(S;\, q) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
+  \boxed{\;\operatorname{EIG}_\varepsilon(S;\, x) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
 \end{equation*}
 
-where $p := P(a\!=\!1) = \mathbb{E}_{s \sim P(S)}\!\big[P(a \mid q;\, s)\big]$.
+where $p := P(y\!=\!1) = \mathbb{E}_{s \sim p(S)}\!\big[p(y \mid x,\, s)\big]$.
 Maximized when $p \approx 0.5$.
 
 \end{block}
@@ -193,7 +193,7 @@ Three inference-time strategies leveraging the BED framework:
 Sample $K$ candidates from the LM, select the most informative:
 %
 \begin{equation*}
-  q_t^{\star} \in \arg\max_{q \in \mathcal{Q}}\; \operatorname{EIG}_\varepsilon(q \mid b_t)
+  x_t^{\star} \in \arg\max_{x \in \mathcal{X}}\; \operatorname{EIG}_\varepsilon(x \mid p_t(S))
 \end{equation*}
 
 \heading{$M_{\mathrm{Bayes}}$: Maximize hit probability}
@@ -201,7 +201,7 @@ Sample $K$ candidates from the LM, select the most informative:
 Select the tile most likely to contain a ship:
 %
 \begin{equation*}
-  u_t^{\star} \in \arg\max_{u}\; p_{\mathrm{hit}}(u \mid b_t), \;\; p_{\mathrm{hit}}(u \mid b_t) \coloneqq \!\!\sum_{s \in \mathcal{F}} b_t(s)\, \mathbb{1}[u \text{ is ship in } s]
+  u_t^{\star} \in \arg\max_{u}\; p_{\mathrm{hit}}(u), \;\; p_{\mathrm{hit}}(u) \coloneqq \!\!\sum_{s} p_t(s)\, \mathbb{1}[u \text{ is ship in } s]
 \end{equation*}
 
 \heading{$D_{\mathrm{Bayes}}$: Explore vs.\ exploit}
@@ -209,7 +209,7 @@ Select the tile most likely to contain a ship:
 One-step lookahead---ask if expected post-question hit prob.\ exceeds current:
 %
 \begin{equation*}
-  \text{Ask } q_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\mathrm{hit}}^{\,t+1}(q_t^{\star}) \;>\; p_{\mathrm{hit}}(u_t^{\star} \mid b_t)
+  \text{Ask } x_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\mathrm{hit}}^{\,t+1}(x_t^{\star}) \;>\; p_{\mathrm{hit}}(u_t^{\star})
 \end{equation*}
 
 \end{block}
