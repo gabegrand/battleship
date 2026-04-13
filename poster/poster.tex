@@ -17,6 +17,7 @@
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{qrcode}
 \tcbuselibrary{skins}
 
 % ====================
@@ -281,10 +282,26 @@ Llama: 0.300 $\rightarrow$ \textbf{0.724}; \enspace GPT-4o: 0.617 $\rightarrow$ 
 
 \begin{block}{References}
 
-\small
-[1] Lindley (1956). \textit{Ann.\ Math.\ Stat.} \enspace
-[2] Rothe et al.\ (2018). \textit{CBB.} \enspace
-[3] Wong, Grand et al.\ (2023). \textit{arXiv}.
+{%
+\footnotesize
+\begin{minipage}[c]{0.82\colwidth}
+\begin{tabular}{@{}r@{\;\;}p{0.92\linewidth}@{}}
+{[1]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Question asking as program generation. \textit{NeurIPS}, 2017. \\
+{[2]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Do people ask good questions? \textit{CBB}, 2018. \\
+{[3]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Asking goal-oriented questions and learning from answers. \textit{CogSci}, 2019. \\
+{[4]} & G.~Grand, V.~Pepe, J.~Andreas, J.B.~Tenenbaum. Loose LIPS sink ships. \textit{CogSci}, 2024. \\
+{[5]} & C.E.~Shannon. A mathematical theory of communication. \textit{Bell Syst.\ Tech.\ J.}, 1948. \\
+{[6]} & D.V.~Lindley. On a measure of the information provided by an experiment. \textit{Ann.\ Math.\ Stat.}, 1956. \\
+{[7]} & T.~Rainforth, A.~Foster, D.R.~Ivanova, F.B.~Smith. Modern Bayesian experimental design. \textit{arXiv}, 2023. \\
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.11\colwidth}
+  \centering
+  \qrcode[height=0.9\linewidth]{https://gabegrand.github.io/battleship}
+  \par\vspace{0.5ex}
+  {\sffamily\scriptsize\textbf{Paper \& Code}}
+\end{minipage}%
+}
 
 \end{block}
 
