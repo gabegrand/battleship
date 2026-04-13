@@ -144,9 +144,9 @@ In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, A
 
 \end{block}
 
-\begin{block}{Bayesian Experimental Design}
+\begin{block}{Method: Bayesian Experimental Design}
 
-Given hidden state $S \in \mathcal{S}$, experiment $x \in X$, observation $y$:
+We formalize question selection as BED. Given hidden state $S$, experiment $x$, observation $y$:
 %
 \begin{equation*}
   \underbrace{p(S \mid x, y)}_{\text{posterior}}
@@ -156,63 +156,44 @@ Given hidden state $S \in \mathcal{S}$, experiment $x \in X$, observation $y$:
   \underbrace{p(S)}_{\text{prior}}
 \end{equation*}
 
-\heading{Expected Information Gain}
-
-\begin{align*}
-  \operatorname{IG}(x, y) &= H\big[p(S)\big] - H\big[p(S \mid x, y)\big] \\[0.5ex]
-  \operatorname{EIG}(x) &= \mathbb{E}_{y \sim p(y \mid x)}\!\big[\operatorname{IG}(x, y)\big], \quad
-  x^{\star} = \arg\max_{x \in X}\; \operatorname{EIG}(x)
-\end{align*}
-
-For binary answers with a noisy oracle ($\mathrm{BSC}(\varepsilon)$):
+Select questions to maximize \textbf{Expected Information Gain}:
 %
-\begin{equation*}
-  \boxed{\;\operatorname{EIG}_\varepsilon(S;\, x) = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,p\big) - H_b(\varepsilon)\;}
-\end{equation*}
+\begin{center}
+\colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S)\big] - H\big[p(S \mid x, y)\big]\Big]$\;\;}
+\end{center}
 
-where $p := P(y\!=\!1) = \mathbb{E}_{s \sim p(S)}\!\big[p(y \mid x,\, s)\big]$.
-Maximized when $p \approx 0.5$.
+For binary answers with noisy oracle ($\mathrm{BSC}(\varepsilon)$):
+$\operatorname{EIG}_\varepsilon = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,P(y\!=\!1)\big) - H_b(\varepsilon)$, maximized when $P(y\!=\!1) \approx 0.5$.
+
+\heading{Three inference-time strategies}
+
+At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Let $p^{\mathrm{hit}}_t(u) = \Pr(\text{ship at } u \mid p_t)$.
+
+\vspace{-0.5ex}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{llll}
+  \toprule
+  \textbf{Strategy} & \textbf{Action} & \textbf{Rule} & \textbf{Intuition} \\
+  \midrule
+  $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}_\varepsilon(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
+  $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) tile \\
+  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, \max_u p^{\mathrm{hit}}_{t+1}(u \mid x_t^{\star}) > \max_u p^{\mathrm{hit}}_t(u)$ & One-step lookahead \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
 \end{block}
 
 \end{column}
 
 % ====================
-% Column 2: Strategies + SpotterQA + CaptainQA
+% Column 2: SpotterQA + CaptainQA
 % ====================
 
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
-
-\begin{block}{Bayesian Strategies}
-
-Three inference-time strategies leveraging the BED framework:
-
-\heading{$Q_{\mathrm{Bayes}}$: Maximize information gain}
-
-Sample $K$ candidates from the LM, select the most informative:
-%
-\begin{equation*}
-  x_t^{\star} \in \arg\max_{x \in \mathcal{X}}\; \operatorname{EIG}_\varepsilon(x \mid p_t(S))
-\end{equation*}
-
-\heading{$M_{\mathrm{Bayes}}$: Maximize hit probability}
-
-Select the tile most likely to contain a ship:
-%
-\begin{equation*}
-  u_t^{\star} \in \arg\max_{u}\; p_{\mathrm{hit}}(u), \;\; p_{\mathrm{hit}}(u) \coloneqq \!\!\sum_{s} p_t(s)\, \mathbb{1}[u \text{ is ship in } s]
-\end{equation*}
-
-\heading{$D_{\mathrm{Bayes}}$: Explore vs.\ exploit}
-
-One-step lookahead---ask if expected post-question hit prob.\ exceeds current:
-%
-\begin{equation*}
-  \text{Ask } x_t^{\star} \;\text{if}\; \gamma\,\widehat{p}_{\mathrm{hit}}^{\,t+1}(x_t^{\star}) \;>\; p_{\mathrm{hit}}(u_t^{\star})
-\end{equation*}
-
-\end{block}
 
 \begin{block}{SpotterQA: Question Answering}
 
