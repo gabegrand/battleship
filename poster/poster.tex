@@ -173,7 +173,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 
 \begin{center}
 \renewcommand{\arraystretch}{1.4}
-\begin{tabular}{llll}
+\begin{tabular*}{\colwidth}{l@{\extracolsep{\fill}}lll}
   \toprule
   \textbf{Strategy} & \textbf{Action} & \textbf{Rule} & \textbf{Intuition} \\
   \midrule
@@ -181,7 +181,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) tile \\
   $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, \max_u p^{\mathrm{hit}}_{t+1}(u \mid x_t^{\star}) > \max_u p^{\mathrm{hit}}_t(u)$ & One-step lookahead \\
   \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{center}
 
 \end{block}
