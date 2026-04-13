@@ -278,16 +278,12 @@ Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}?
 \end{center}
 
 \begin{resultbox}
-  \begin{center}
-  \begin{tabular}{ccc}
-    \textbf{Llama-4-Scout F1} & \textbf{vs.\ Humans} & \textbf{vs.\ GPT-5} \\[0.3ex]
-    {\LARGE\color{HonoluluBlue}\bfseries 0.37 $\rightarrow$ 0.76} &
-    {\LARGE\color{SeaGreen}\bfseries 82\% win} &
-    {\LARGE\color{SeaGreen}\bfseries 67\% win} \\
-  \end{tabular}
-  \end{center}
-  \vspace{-0.5ex}
-  {\small \textbf{99.7\% cost savings} vs.\ GPT-5 (\$8 vs.\ \$874). EIG: \textbf{+0.227 bits} (94\% of ceiling) with $K$=10. Redundant questions: \textbf{18.5\% $\rightarrow$ 0.2\%}.}
+  With Bayesian strategies, our approach boosts \textbf{Llama-4-Scout} from random chance to expert-level:
+  \begin{itemize}
+    \item[\textbullet] \textbf{Better guessing:} Targeting improves from \textbf{0.37 F1} $\rightarrow$ \textbf{0.76 F1}
+    \item[\textbullet] \textbf{Super-human:} Win rate vs. humans \textbf{8\%} $\rightarrow$ \textbf{82\%}
+    \item[\textbullet] \textbf{Surpasses frontier:} Win rate vs. GPT-5 \textbf{0\%} $\rightarrow$ \textbf{67\%}, at \textbf{100$\times$} lower cost
+  \end{itemize}
 \end{resultbox}
 
 \end{block}
