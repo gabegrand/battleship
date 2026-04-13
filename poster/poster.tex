@@ -195,6 +195,27 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
 
+\begin{block}{Human Study: BattleshipQA Dataset}
+
+How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
+
+\begin{minipage}[b]{0.28\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[0.3ex]
+  {\small (a) Questions predict performance}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.68\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[0.3ex]
+  {\small (b) Players show widely varying explore/exploit strategies}
+\end{minipage}
+
+\medskip
+
+Humans are \emph{resource-rational}: they ask \emph{enough} questions to play well ($\rho = 0.684$, $p < 0.002$), but vary widely in \emph{when} and \emph{what} they ask.
+
+\end{block}
+
 \begin{block}{SpotterQA: Question Answering}
 
 Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
