@@ -36,6 +36,12 @@
 \definecolor{NavyBlue}{HTML}{000080}
 \definecolor{Charcoal}{HTML}{2c3e50}
 \definecolor{LightLavender}{HTML}{f0f4ff}
+% Spotter strategy colors (Set2 palette)
+\definecolor{SetTwoOne}{HTML}{66C2A5}   % Base LM
+\definecolor{SetTwoTwo}{HTML}{FC8D62}   % CoT
+\definecolor{SetTwoThree}{HTML}{8DA0CB} % Code
+\definecolor{SetTwoFour}{HTML}{E78AC3}  % CoT + Code
+\definecolor{SetTwoFive}{HTML}{A6D854}  % Human
 
 % Override Gemini colors — neutral header, accent blue details
 \setbeamercolor{headline}{fg=white,bg=HonoluluBlue}
@@ -205,11 +211,28 @@ One-step lookahead---ask if expected post-question hit prob.\ exceeds current:
 
 \begin{block}{SpotterQA: Question Answering}
 
-931 gold-labeled questions, \textbf{15 LMs}, 4 strategies.
-Bars = mean accuracy $\pm$ s.d.\ across models. Dashed line = human.
+Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
 
 \begin{center}
-  \includegraphics[height=16cm]{figures/spotter_accuracy_overall.pdf}
+  \begin{minipage}[t]{0.37\colwidth}\centering
+    {\small (a) By LM}\\[0.3ex]
+    \includegraphics[height=17cm]{figures/spotter_accuracy_by_model.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.37\colwidth}\centering
+    {\small (b) By Spotter Strategy}\\[0.3ex]
+    \includegraphics[height=17cm]{figures/spotter_accuracy_overall.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.20\colwidth}\centering
+    {\small (c) By Complexity}\\[0.3ex]
+    \includegraphics[height=17cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
+  \end{minipage}\\[0.5ex]
+  {\small
+  \textcolor{SetTwoOne}{\rule{1em}{1em}}\;\,Base LM \enspace
+  \textcolor{SetTwoTwo}{\rule{1em}{1em}}\;\,CoT \enspace
+  \textcolor{SetTwoThree}{\rule{1em}{1em}}\;\,Code \enspace
+  \textcolor{SetTwoFour}{\rule{1em}{1em}}\;\,CoT+Code \enspace
+  \textcolor{SetTwoFive}{\rule{1em}{1em}}\;\,Human
+  }
 \end{center}
 
 \begin{resultbox}
@@ -230,21 +253,29 @@ Bars = mean accuracy $\pm$ s.d.\ across models. Dashed line = human.
 
 \begin{block}{CaptainQA: Full Game Performance}
 
-54 games, 3 LMs + strategy ablations. \enspace
-{\color{AirBlue}$\blacksquare$}\,Llama-4-Scout \enspace {\color{HonoluluBlue}$\blacksquare$}\,GPT-4o \enspace {\color{NavyBlue}$\blacksquare$}\,GPT-5
+Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}? Do they make \textbf{effective use} of a limited question budget?
 
-\begin{columns}[T]
-  \begin{column}{0.48\colwidth}
-    \begin{center}
-      \includegraphics[height=14cm]{figures/captain_f1_boxplot.pdf}
-    \end{center}
-  \end{column}
-  \begin{column}{0.48\colwidth}
-    \begin{center}
-      \includegraphics[height=14cm]{figures/eig_max_vs_k.pdf}
-    \end{center}
-  \end{column}
-\end{columns}
+\begin{center}
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small (a) Targeting scores (F1)}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/captain_f1_boxplot.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small (b) Maximizing EIG with $Q_{\mathrm{Bayes}}$}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/eig_max_vs_k.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small (c) Question timing}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/question_timing.pdf}
+  \end{minipage}\\[0.5ex]
+  {\small
+  \textcolor{SeaGreen}{\rule{1em}{1em}}\;\,Human \enspace
+  \textcolor{BattleshipGray}{\rule{1em}{1em}}\;\,Baseline \enspace
+  \textcolor{AirBlue}{\rule{1em}{1em}}\;\,Llama-4-Scout \enspace
+  \textcolor{HonoluluBlue}{\rule{1em}{1em}}\;\,GPT-4o \enspace
+  \textcolor{NavyBlue}{\rule{1em}{1em}}\;\,GPT-5
+  }
+\end{center}
 
 \begin{resultbox}
   \begin{center}
@@ -263,8 +294,7 @@ Bars = mean accuracy $\pm$ s.d.\ across models. Dashed line = human.
 
 \begin{block}{Generalization: Guess Who?}
 
-Same strategies on \textbf{Guess Who?} (100 characters, 8 questions).
-Llama: 0.300 $\rightarrow$ \textbf{0.724}; \enspace GPT-4o: 0.617 $\rightarrow$ \textbf{0.900}.
+Do these strategies \textbf{generalize} beyond Battleship? We test on Guess Who? from \textbf{TextArena} [8], an information-seeking game with richer object-relational semantics.
 
 \begin{center}
   \includegraphics[height=8cm]{figures/guess-who-results.pdf}
@@ -285,6 +315,7 @@ Llama: 0.300 $\rightarrow$ \textbf{0.724}; \enspace GPT-4o: 0.617 $\rightarrow$ 
 {[5]} & C.E.~Shannon. A mathematical theory of communication. \textit{Bell Syst.\ Tech.\ J.}, 1948. \\
 {[6]} & D.V.~Lindley. On a measure of the information provided by an experiment. \textit{Ann.\ Math.\ Stat.}, 1956. \\
 {[7]} & T.~Rainforth, A.~Foster, D.R.~Ivanova, F.B.~Smith. Modern Bayesian experimental design. \textit{arXiv}, 2023. \\
+{[8]} & L.~Guertler, B.~Cheng, S.~Yu, B.~Liu, L.~Choshen, C.~Tan. TextArena. \textit{arXiv}, 2025. \\
 \end{tabular}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.11\colwidth}
