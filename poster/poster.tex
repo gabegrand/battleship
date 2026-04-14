@@ -258,7 +258,7 @@ How do humans (N=42) balance \textbf{asking questions} and \textbf{taking action
   {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
 \end{minipage}
 
-\medskip
+\smallskip
 
 Humans are \emph{resource-rational}: they ask \emph{enough} questions to play well ($\rho = 0.684$, $p < 0.002$), but vary widely in \emph{when} and \emph{what} they ask.
 
@@ -269,33 +269,36 @@ Humans are \emph{resource-rational}: they ask \emph{enough} questions to play we
 Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
 
 \begin{center}
-  \begin{minipage}[t]{0.37\colwidth}\centering
+  \begin{minipage}[t]{0.18\colwidth}
+    \vspace{0.5cm}
+    \begin{resultbox}
+      \textbf{Code generation boosts accuracy by +14.7\%}
+    \end{resultbox}
+    \vspace{0.5ex}
+    {\small
+    \textcolor{SetTwoOne}{\rule{0.8em}{0.8em}}\; Base LM\\
+    \textcolor{SetTwoTwo}{\rule{0.8em}{0.8em}}\; CoT\\
+    \textcolor{SetTwoThree}{\rule{0.8em}{0.8em}}\; Code\\
+    \textcolor{SetTwoFour}{\rule{0.8em}{0.8em}}\; CoT+Code\\
+    \textcolor{SetTwoFive}{\rule{0.8em}{0.8em}}\; Human
+    }
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\colwidth}\centering
     {\small \textbf{(a)} By LM}\\[0.3ex]
-    \includegraphics[height=12cm]{figures/spotter_accuracy_by_model.pdf}
+    \includegraphics[height=15cm]{figures/spotter_accuracy_by_model.pdf}
   \end{minipage}\hfill
-  \begin{minipage}[t]{0.37\colwidth}\centering
+  \begin{minipage}[t]{0.33\colwidth}\centering
     {\small \textbf{(b)} By Spotter Strategy}\\[0.3ex]
-    \includegraphics[height=12cm]{figures/spotter_accuracy_overall.pdf}
+    \includegraphics[height=15cm]{figures/spotter_accuracy_overall.pdf}
   \end{minipage}\hfill
-  \begin{minipage}[t]{0.20\colwidth}\centering
+  \begin{minipage}[t]{0.15\colwidth}\centering
     {\small \textbf{(c)} By Complexity}\\[0.3ex]
-    \includegraphics[height=12cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
-  \end{minipage}\\[0.5ex]
-  {\small
-  \textcolor{SetTwoOne}{\rule{1em}{1em}}\;\,Base LM \enspace
-  \textcolor{SetTwoTwo}{\rule{1em}{1em}}\;\,CoT \enspace
-  \textcolor{SetTwoThree}{\rule{1em}{1em}}\;\,Code \enspace
-  \textcolor{SetTwoFour}{\rule{1em}{1em}}\;\,CoT+Code \enspace
-  \textcolor{SetTwoFive}{\rule{1em}{1em}}\;\,Human
-  }
+    \includegraphics[height=15cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
+  \end{minipage}
 \end{center}
 
-\begin{resultbox}
-  \textbf{Code generation boosts accuracy by +14.7\%} over LM baselines.
-\end{resultbox}
-
 \heading{Example: Grounding questions with code}
-
+\vspace{-1ex}
 \begin{minipage}[c]{0.30\colwidth}
   \centering
   \includegraphics[width=\linewidth]{figures/board_example_spotter.png}
@@ -305,7 +308,7 @@ Can agents provide \textbf{accurate, grounded answers} to natural language quest
 
   \vspace{1pt}
 
-  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=2pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
+  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=2pt, left=4pt, right=4pt, top=2pt, bottom=2pt]
   \begin{lstlisting}[style=pythondark]
 def answer(board, partial):
   found = set(partial[partial > 0])          # already sunk
