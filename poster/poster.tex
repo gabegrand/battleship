@@ -251,37 +251,58 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 % --- TOP ROW: Dialogue + Board ---
 \newlength{\msgwidth}
 
+% Circle avatar commands
+\newcommand{\captainavatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=HonoluluBlue!80, bottom color=HonoluluBlue, text=white, font=\scriptsize]{\faAnchor};}}
+\newcommand{\spotteravatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=SeaGreen!80, bottom color=SeaGreen, text=white, font=\scriptsize]{\faBinoculars};}}
+% Chat bubble styles
+\newtcolorbox{captainbubble}{colback=HonoluluBlue!12, colframe=HonoluluBlue!25,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt}
+\newtcolorbox{spotterbubble}{colback=SeaGreen!10, colframe=SeaGreen!30,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt}
+%
+% Measure board image height to match dialogue box
+\newlength{\boardht}
+\settoheight{\boardht}{\includegraphics[width=0.3525\colwidth]{figures/board_example_spotter.png}}
+%
 \begin{minipage}[c]{0.47\colwidth}
-  \setlength{\msgwidth}{\linewidth}
-  \addtolength{\msgwidth}{-32pt}% account for tcolorbox padding (left+right) + colorbox margins
   \begin{tcolorbox}[colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
-                    left=8pt, right=8pt, top=6pt, bottom=6pt]
-  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} Shoot at C6}}
-  \vspace{4pt}
-
-  \colorbox{BattleshipGray!15}{\makebox[\msgwidth][c]{\strut Hit purple}}
-  \vspace{4pt}
-
-  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} ``Is the purple ship horizontal?''}}
-  \vspace{4pt}
-
-  \colorbox{SeaGreen!15}{\makebox[\msgwidth][r]{\strut\textbf{Spotter:} ``No''\;}}
-  \vspace{4pt}
-
-  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} Shoot at B6}}
-  \vspace{4pt}
-
-  \colorbox{BattleshipGray!15}{\makebox[\msgwidth][c]{\strut Hit --- purple ship is sunk}}
-  \vspace{4pt}
-
-  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} \ldots}}
+                    left=8pt, right=8pt, top=8pt, bottom=8pt, height=\boardht]
+  \begin{minipage}[t][\dimexpr\boardht-19pt\relax][t]{\dimexpr\linewidth\relax}
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at C6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple}}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} ``Is the purple ship horizontal?''
+  \end{captainbubble}
+  \vfill
+  \begin{spotterbubble}
+  \spotteravatar\;\textbf{Spotter:} ``No''
+  \end{spotterbubble}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at B6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit --- purple ship is sunk}}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} \ldots
+  \end{captainbubble}
+  \end{minipage}
   \end{tcolorbox}
   \smallskip
   \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.47\colwidth}
   \centering
-  \includegraphics[width=0.95\linewidth]{figures/board_example_spotter.png}
+  \includegraphics[width=0.75\linewidth]{figures/board_example_spotter.png}
   \smallskip
   \begin{center}{\small\textcolor{BattleshipGray}{Board state (Spotter's view)}}\end{center}
 \end{minipage}
