@@ -244,30 +244,26 @@ We adapt a classic task paradigm from cognitive science [1--4] into an evaluatio
 
 \begin{block}{Method: Bayesian Experimental Design}
 
-We formalize question selection as BED. Given hidden state $S$, experiment $x$, observation $y$:
-%
-\begin{equation*}
-  \underbrace{p(S \mid x, y)}_{\text{posterior}}
-  \;\propto\;
-  \underbrace{p(y \mid S, x)}_{\text{likelihood}}
-  \;\;
-  \underbrace{p(S)}_{\text{prior}}
-\end{equation*}
-
-Select questions to maximize \textbf{Expected Information Gain}:
+We formalize question selection as BED [5--7]. Given hidden state $S$, we compute the utility of question $x$ as the expected information gain (EIG) after observing answer $y$:
 %
 \begin{center}
+\begin{minipage}[c]{0.38\colwidth}
+\begin{equation*}
+  p(S \mid x, y)
+  \;\propto\;
+  p(y \mid S, x)
+  \;\;
+  p(S)
+\end{equation*}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.58\colwidth}
 \colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S)\big] - H\big[p(S \mid x, y)\big]\Big]$\;\;}
+\end{minipage}
 \end{center}
 
-For binary answers with noisy oracle ($\mathrm{BSC}(\varepsilon)$):
-$\operatorname{EIG}_\varepsilon = H_b\!\big(\varepsilon + (1 - 2\varepsilon)\,P(y\!=\!1)\big) - H_b(\varepsilon)$, maximized when $P(y\!=\!1) \approx 0.5$.
-
-\heading{Three inference-time strategies}
+{\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypothesis spaces is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and candidate questions.
 
 At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Let $p^{\mathrm{hit}}_t(u) = \Pr(\text{ship at } u \mid p_t)$.
-
-\vspace{-0.5ex}
 
 \begin{center}
 \renewcommand{\arraystretch}{1.4}
@@ -275,7 +271,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   \toprule
   \textbf{Strategy} & \textbf{Action} & \textbf{Rule} & \textbf{Intuition} \\
   \midrule
-  $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}_\varepsilon(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
+  $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
   $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) tile \\
   $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, \max_u p^{\mathrm{hit}}_{t+1}(u \mid x_t^{\star}) > \max_u p^{\mathrm{hit}}_t(u)$ & One-step lookahead \\
   \bottomrule
