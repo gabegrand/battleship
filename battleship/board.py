@@ -721,19 +721,22 @@ class Board(object):
         ax.set_yticks(np.arange(0, len(board_array), 1))
         ax.set_xticklabels(
             np.arange(1, len(board_array) + 1, 1),
-            fontsize=24,
+            fontsize=14,
             fontweight="bold",
             color="#9b9c97",
         )
         ax.set_yticklabels(
             [chr(ord("A") + i) for i in np.arange(0, len(board_array), 1)],
-            fontsize=24,
+            fontsize=14,
             fontweight="bold",
+            fontfamily="monospace",
+            ha="right",
             color="#9b9c97",
         )
 
         # Hide ticks
         ax.tick_params(axis="both", which="both", length=0)
+        ax.tick_params(axis="y", pad=6)
 
         # Set border to white
         for spine in ax.spines.values():

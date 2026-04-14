@@ -21,7 +21,54 @@
 \SetSymbolFont{operators}{bold}{OT1}{ntxtlf}{b}{n}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\tcbuselibrary{skins}
 \usepackage{qrcode}
+\usepackage{listings}
+
+% Code font
+\newfontfamily\SourceCodePro{Source Code Pro}[
+  UprightFont=*-Regular,
+  BoldFont=*-Bold,
+  ItalicFont=*-It,
+]
+
+% Monokai-inspired colors
+\definecolor{MonokaiGreen}{HTML}{a6e22e}
+\definecolor{MonokaiOrange}{HTML}{fd971f}
+\definecolor{MonokaiPink}{HTML}{f92672}
+\definecolor{MonokaiBlue}{HTML}{66d9ef}
+\definecolor{MonokaiYellow}{HTML}{e6db74}
+\definecolor{MonokaiComment}{HTML}{75715e}
+\definecolor{MonokaiBG}{HTML}{272822}
+\definecolor{MonokaiFG}{HTML}{f8f8f2}
+
+% Python code style
+\lstdefinestyle{pythondark}{
+  language=Python,
+  basicstyle=\SourceCodePro\small\color{MonokaiFG},
+  keywordstyle=\color{MonokaiPink},
+  keywordstyle=[2]\color{MonokaiBlue},
+  keywordstyle=[3]\color{MonokaiGreen},
+  stringstyle=\color{MonokaiYellow},
+  commentstyle=\color{MonokaiComment}\itshape,
+  morekeywords={True, False, None, self},
+  morekeywords=[2]{set, np, range, max, min, any, bool},
+  morekeywords=[3]{answer, neighbors, argwhere},
+  backgroundcolor={},
+  frame=none,
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  aboveskip=0pt,
+  belowskip=0pt,
+  showstringspaces=false,
+  breaklines=true,
+  basewidth=0.55em,
+  literate={>}{{\textcolor{MonokaiPink}{>}}}1
+           {<}{{\textcolor{MonokaiPink}{<}}}1
+           {=}{{\textcolor{MonokaiPink}{=}}}1
+           {0}{{\textcolor{MonokaiBlue}{0}}}1
+           {4}{{\textcolor{MonokaiBlue}{4}}}1,
+}
 \tcbuselibrary{skins}
 
 % ====================
@@ -35,6 +82,7 @@
 \definecolor{HonoluluBlue}{HTML}{0e79b2}
 \definecolor{NavyBlue}{HTML}{000080}
 \definecolor{Charcoal}{HTML}{2c3e50}
+\definecolor{AlertRed}{HTML}{e74c3c}
 \definecolor{LightLavender}{HTML}{f0f4ff}
 % Spotter strategy colors (Set2 palette)
 \definecolor{SetTwoOne}{HTML}{66C2A5}   % Base LM
@@ -114,7 +162,7 @@
 % ====================
 
 \begin{document}
-\begin{frame}[t]
+\begin{frame}[t,fragile]
 \begin{columns}[t]
 
 % ====================
@@ -202,12 +250,12 @@ How do humans (N=42) balance \textbf{asking questions} and \textbf{taking action
 \begin{minipage}[b]{0.28\colwidth}
   \centering
   \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[0.3ex]
-  {\small (a) Questions predict performance}
+  {\small \textbf{(a)} Questions predict performance}
 \end{minipage}\hfill
 \begin{minipage}[b]{0.68\colwidth}
   \centering
   \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[0.3ex]
-  {\small (b) Players show widely varying explore/exploit strategies}
+  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
 \end{minipage}
 
 \medskip
@@ -222,16 +270,16 @@ Can agents provide \textbf{accurate, grounded answers} to natural language quest
 
 \begin{center}
   \begin{minipage}[t]{0.37\colwidth}\centering
-    {\small (a) By LM}\\[0.3ex]
-    \includegraphics[height=17cm]{figures/spotter_accuracy_by_model.pdf}
+    {\small \textbf{(a)} By LM}\\[0.3ex]
+    \includegraphics[height=12cm]{figures/spotter_accuracy_by_model.pdf}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.37\colwidth}\centering
-    {\small (b) By Spotter Strategy}\\[0.3ex]
-    \includegraphics[height=17cm]{figures/spotter_accuracy_overall.pdf}
+    {\small \textbf{(b)} By Spotter Strategy}\\[0.3ex]
+    \includegraphics[height=12cm]{figures/spotter_accuracy_overall.pdf}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.20\colwidth}\centering
-    {\small (c) By Complexity}\\[0.3ex]
-    \includegraphics[height=17cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
+    {\small \textbf{(c)} By Complexity}\\[0.3ex]
+    \includegraphics[height=12cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
   \end{minipage}\\[0.5ex]
   {\small
   \textcolor{SetTwoOne}{\rule{1em}{1em}}\;\,Base LM \enspace
@@ -244,8 +292,37 @@ Can agents provide \textbf{accurate, grounded answers} to natural language quest
 
 \begin{resultbox}
   \textbf{Code generation boosts accuracy by +14.7\%} over LM baselines.
-  Best model reaches 92.8\% (human: 92.5\%).
 \end{resultbox}
+
+\heading{Example: Grounding questions with code}
+
+\begin{minipage}[c]{0.30\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/board_example_spotter.png}
+\end{minipage}\hspace{0.5em}%
+\begin{minipage}[c]{0.66\colwidth}
+  \colorbox{HonoluluBlue!15}{\makebox[\linewidth][l]{\small\strut\;\textbf{Captain:} ``Is there another ship near yellow?''}}
+
+  \vspace{1pt}
+
+  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=2pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
+  \begin{lstlisting}[style=pythondark]
+def answer(board, partial):
+  found = set(partial[partial > 0])          # already sunk
+  yellow = np.argwhere(board == 4)           # "yellow" ship
+  for x, y in yellow:
+    for dx, dy in neighbors(x, y):           # within 1 tile
+      ship = board[dx, dy]
+      if ship > 0 and ship not in found:     # "another"
+        return True
+  return False
+  \end{lstlisting}
+  \end{tcolorbox}
+
+  \vspace{1pt}
+
+  \colorbox{SeaGreen!15}{\makebox[\linewidth][l]{\small\strut\;\textbf{Spotter:} \textcolor{SeaGreen}{\checkmark} \textbf{Yes}}}
+\end{minipage}
 
 \end{block}
 
@@ -264,15 +341,15 @@ Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}?
 
 \begin{center}
   \begin{minipage}[t]{0.32\colwidth}\centering
-    {\small (a) Targeting scores (F1)}\\[0.3ex]
+    {\small \textbf{(a)} Targeting scores (F1)}\\[0.3ex]
     \includegraphics[width=\linewidth]{figures/captain_f1_boxplot.pdf}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.32\colwidth}\centering
-    {\small (b) Maximizing EIG with $Q_{\mathrm{Bayes}}$}\\[0.3ex]
+    {\small \textbf{(b)} Maximizing EIG with $Q_{\mathrm{Bayes}}$}\\[0.3ex]
     \includegraphics[width=\linewidth]{figures/eig_max_vs_k.pdf}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.32\colwidth}\centering
-    {\small (c) Question timing}\\[0.3ex]
+    {\small \textbf{(c)} Question timing}\\[0.3ex]
     \includegraphics[width=\linewidth]{figures/question_timing.pdf}
   \end{minipage}\\[0.5ex]
   {\small
@@ -301,7 +378,7 @@ Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Wh
 
 \begin{minipage}[t]{0.32\colwidth}
   \vspace{0pt}
-  \includegraphics[height=12cm]{figures/guess-who-results.pdf}
+  \includegraphics[height=10cm]{figures/guess-who-results.pdf}
 \end{minipage}\hspace{1em}%
 \begin{minipage}[t]{0.62\colwidth}
   \vspace{0pt}
