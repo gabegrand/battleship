@@ -276,38 +276,42 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 
   \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} \ldots}}
   \end{tcolorbox}
+  \smallskip
+  \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.47\colwidth}
   \centering
   \includegraphics[width=0.95\linewidth]{figures/board_example_spotter.png}
+  \smallskip
+  \begin{center}{\small\textcolor{BattleshipGray}{Board state (Spotter's view)}}\end{center}
 \end{minipage}
 
 \vspace{1cm}
 
 % --- COLUMN HEADERS with math ---
 \begin{minipage}[b]{0.18\colwidth}\centering
-  {\small\bfseries\textcolor{Charcoal}{\faLightbulb\enspace PROPOSE}}\\[4pt]
+  {\bfseries\textcolor{Charcoal}{\faLightbulb\enspace PROPOSE}}\\[4pt]
   {\small $x \sim p_{\mathrm{LM}}(x)$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.30\colwidth}\centering
-  {\small\bfseries\textcolor{Charcoal}{\faCode\enspace TRANSLATE}}\\[4pt]
+\begin{minipage}[b]{0.34\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faCode\enspace TRANSLATE}}\\[4pt]
   {\small $x \mapsto f_x$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.26\colwidth}\centering
-  {\small\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
+\begin{minipage}[b]{0.28\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
   {\small $y_i = f_x(s_i),\; s_i \sim p(S)$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.14\colwidth}\centering
-  {\small\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
+\begin{minipage}[b]{0.08\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
   {\small $\arg\max_x \operatorname{EIG}$}
 \end{minipage}
 
 \vspace{0.5cm}
 
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
-% Widths: 0.18 + 0.30 + 0.26 + 0.14 = 0.88 (rest is \hfill gaps)
+% Widths: 0.18 + 0.34 + 0.28 + 0.08 = 0.88 (rest is \hfill gaps)
 \begin{minipage}[t]{0.18\colwidth}
-  \vspace{0pt}% force top alignment
+  \vspace{0pt}
   % xA - highlighted
   \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
@@ -326,8 +330,8 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   {\small $x_C$: \textit{``Is the green ship longer than 3 tiles?''}}
   \end{tcolorbox}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.30\colwidth}
-  \vspace{0pt}% force top alignment
+\begin{minipage}[t]{0.34\colwidth}
+  \vspace{0pt}
   \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=4pt,
                     left=6pt, right=6pt, top=4pt, bottom=4pt]
   \begin{lstlisting}[style=pythondark]
@@ -343,26 +347,26 @@ def answer(board, partial):
   \end{lstlisting}
   \end{tcolorbox}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.26\colwidth}
-  \vspace{0pt}% force top alignment
+\begin{minipage}[t]{0.28\colwidth}
+  \vspace{0pt}
   \centering
   % Simulated answers
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1pt, arc=3pt,
-                      left=2pt, right=2pt, top=2pt, bottom=2pt]
-    \centering{\small\bfseries\textcolor{SeaGreen}{Y}}
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{SeaGreen}{Y}}
     \end{tcolorbox}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \begin{tcolorbox}[colback=AlertRed!10, colframe=AlertRed!40, boxrule=1pt, arc=3pt,
-                      left=2pt, right=2pt, top=2pt, bottom=2pt]
-    \centering{\small\bfseries\textcolor{AlertRed}{N}}
+    \begin{tcolorbox}[colback=AlertRed!10, colframe=AlertRed!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{AlertRed}{N}}
     \end{tcolorbox}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1pt, arc=3pt,
-                      left=2pt, right=2pt, top=2pt, bottom=2pt]
-    \centering{\small\bfseries\textcolor{SeaGreen}{Y}}
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{SeaGreen}{Y}}
     \end{tcolorbox}
   \end{minipage}
 
@@ -371,31 +375,31 @@ def answer(board, partial):
   % Conditional samples (board thumbnails)
   \begin{minipage}[t]{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{figures/sample_s1.png}\\[-2pt]
-    {\scriptsize $s_1$}
+    {\footnotesize $s_1$}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{figures/sample_s2.png}\\[-2pt]
-    {\scriptsize $s_2$}
+    {\footnotesize $s_2$}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{figures/sample_s3.png}\\[-2pt]
-    {\scriptsize $s_3$}
+    {\footnotesize $s_3$}
   \end{minipage}
 
   \vspace{6pt}
 
   % World Model icon
   \begin{tikzpicture}
-    \node[circle, minimum size=2.5cm, inner sep=0pt,
+    \node[circle, minimum size=3cm, inner sep=0pt,
           top color=HonoluluBlue!90, bottom color=SeaGreen!85,
-          text=white, font=\fontsize{28}{32}\selectfont] {\faGlobeAmericas};
+          text=white, font=\fontsize{32}{36}\selectfont] {\faGlobeAmericas};
   \end{tikzpicture}
 
   \vspace{0.2cm}
   {\bfseries\textcolor{HonoluluBlue}{World Model}}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.14\colwidth}
-  \vspace{0pt}% force top alignment
+\begin{minipage}[t]{0.08\colwidth}
+  \vspace{0pt}
   % EIG values only
   \begin{tcolorbox}[colback=AirBlue!10, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
