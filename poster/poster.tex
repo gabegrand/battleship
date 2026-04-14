@@ -14,7 +14,7 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta, calc}
+\usetikzlibrary{arrows.meta, calc, decorations.pathmorphing}
 \usepackage{fontawesome5}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{newtxmath}
@@ -322,24 +322,26 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   {\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
   {\small $y_i = f_x(s_i),\; s_i \sim p(S)$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.08\colwidth}\centering
+\begin{minipage}[b]{0.12\colwidth}\centering
   {\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
   {\small $\arg\max_x \operatorname{EIG}$}
 \end{minipage}
+
+\vspace{-1cm}
 
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
 % Pipeline column container style
 \newtcolorbox{pipelinecol}{colback=BattleshipGray!6, colframe=BattleshipGray!20,
   boxrule=0.5pt, arc=6pt, left=6pt, right=6pt, top=16pt, bottom=16pt,
   equal height group=pipeline, valign=center}
-% Widths: 0.18 + 0.34 + 0.28 + 0.08 = 0.88 (rest is \hfill gaps)
+% Widths: 0.18 + 0.34 + 0.28 + 0.12 = 0.92 (rest is \hfill gaps)
 \begin{minipage}[t]{0.18\colwidth}
   \vspace{0pt}
   \begin{pipelinecol}
   % xA - highlighted
   \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
-  {\small\textcolor{HonoluluBlue}{\bfseries $x_A$:} \textit{``Is there another ship near yellow?''}}
+  {\small\textcolor{HonoluluBlue}{\bfseries $x_A$:} \textit{``Is there another ship near orange?''}}
   \end{tcolorbox}
   \vspace{4pt}
   % xB
@@ -361,13 +363,17 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
                     left=6pt, right=6pt, top=16pt, bottom=16pt,
                     equal height group=pipeline]
   \begin{lstlisting}[style=pythondark]
-def answer(board, partial):
-  found = set(partial[partial > 0])   # already sunk
-  yellow = np.argwhere(board == 4)    # "yellow" ship
-  for x, y in yellow:
-    for dx, dy in neighbors(x, y):    # within 1 tile
+def answer(board, obs):
+  # Find orange ship
+  orange = np.argwhere(board == 4)
+  # What does the captain see?
+  found = set(obs[obs > 0])
+  # Check neighbors for another ship
+  for x, y in orange:
+    for dx, dy in neighbors(x, y):
       ship = board[dx, dy]
-      if ship > 0 and ship not in found: # "another"
+      if (ship > 0 and
+          ship not in found):
         return True
   return False
   \end{lstlisting}
@@ -397,23 +403,33 @@ def answer(board, partial):
     \end{tcolorbox}
   \end{minipage}
 
-  \vspace{4pt}
+  \vspace{2pt}
 
   % Conditional samples (board thumbnails)
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \includegraphics[width=\linewidth]{figures/sample_s1.png}\\[-2pt]
-    {\footnotesize $s_1$}
+    \includegraphics[width=\linewidth]{figures/sample_s1.png}\\[-6pt]
+    {\small $s_1$}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \includegraphics[width=\linewidth]{figures/sample_s2.png}\\[-2pt]
-    {\footnotesize $s_2$}
+    \includegraphics[width=\linewidth]{figures/sample_s2.png}\\[-6pt]
+    {\small $s_2$}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.30\linewidth}\centering
-    \includegraphics[width=\linewidth]{figures/sample_s3.png}\\[-2pt]
-    {\footnotesize $s_3$}
+    \includegraphics[width=\linewidth]{figures/sample_s3.png}\\[-6pt]
+    {\small $s_3$}
   \end{minipage}
 
-  \vspace{6pt}
+  \vspace{16pt}
+
+  % Squiggly arrow: samples drawn from world model
+  \begin{tikzpicture}
+    \draw[decorate, decoration={snake, amplitude=3pt, segment length=18pt},
+          line width=5pt, HonoluluBlue]
+          (0,0) -- (0,1.2cm);
+    \fill[HonoluluBlue] (-0.35,1.1) -- (0.35,1.1) -- (0,1.7) -- cycle;
+  \end{tikzpicture}
+
+  \vspace{2pt}
 
   % World Model icon
   \begin{tikzpicture}
@@ -426,22 +442,22 @@ def answer(board, partial):
   {\bfseries\textcolor{HonoluluBlue}{World Model}}
   \end{pipelinecol}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.08\colwidth}
+\begin{minipage}[t]{0.12\colwidth}
   \vspace{0pt}
   \begin{pipelinecol}
   % EIG values only
   \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
-                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
   {\small $\operatorname{EIG}(x_A)$}\\{\small $= \mathbf{0.48}$}
   \end{tcolorbox}
   \vspace{4pt}
   \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
-                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
   {\small $\operatorname{EIG}(x_B)$}\\{\small $= 0.36$}
   \end{tcolorbox}
   \vspace{4pt}
   \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
-                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
   {\small $\operatorname{EIG}(x_C)$}\\{\small $= 0.00$}
   \end{tcolorbox}
   \end{pipelinecol}
