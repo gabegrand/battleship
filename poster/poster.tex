@@ -176,11 +176,13 @@
 
 \begin{block}{Motivation}
 
-In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, AI agents must \emph{ask smart questions} before acting. Current LMs are optimized to \emph{answer} questions---but can they \emph{ask} good questions for themselves?
+In \textbf{high-stakes settings} like scientific discovery and medical diagnosis, AI agents must \textbf{ask smart questions} before acting. People are remarkably efficient information-seekers, balancing \textbf{exploration} and \textbf{action} under uncertainty. Can we build LM agents that do the same?
 
 \end{block}
 
 \begin{block}{Collaborative Battleship}
+
+We adapt a classic task paradigm from cognitive science [1--4] into an evaluation harness for AI agents. The \textbf{Captain} must balance \emph{exploration} (asking questions) and \emph{action} (taking shots), while the \textbf{Spotter} must supply accurate, contextually-grounded answers.
 
 % Circle avatar commands
 \newcommand{\captainavatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
