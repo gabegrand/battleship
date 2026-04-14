@@ -118,7 +118,7 @@
   colframe=AirBlue!15,
   boxrule=0pt,
   arc=3pt,
-  left=6pt, right=6pt, top=4pt, bottom=4pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
   #1
 }
 
@@ -248,20 +248,15 @@ We formalize question selection as BED [5--7]. Given hidden state $S$, we comput
 %
 \begin{center}
 \begin{minipage}[c]{0.38\colwidth}
-\begin{equation*}
-  p(S \mid x, y)
-  \;\propto\;
-  p(y \mid S, x)
-  \;\;
-  p(S)
-\end{equation*}
+\centering
+$\displaystyle p(S \mid x, y) \;\propto\; p(y \mid S, x) \;\; p(S)$
 \end{minipage}\hfill
 \begin{minipage}[c]{0.58\colwidth}
 \colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S)\big] - H\big[p(S \mid x, y)\big]\Big]$\;\;}
 \end{minipage}
 \end{center}
 
-{\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypothesis spaces is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and candidate questions.
+{\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypotheses $s \in \mathcal{S}$ and experiments $x \in \mathcal{X}$ is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and questions.
 
 At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Let $p^{\mathrm{hit}}_t(u) = \Pr(\text{ship at } u \mid p_t)$.
 
@@ -272,8 +267,8 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   \textbf{Strategy} & \textbf{Action} & \textbf{Rule} & \textbf{Intuition} \\
   \midrule
   $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
-  $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) tile \\
-  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, \max_u p^{\mathrm{hit}}_{t+1}(u \mid x_t^{\star}) > \max_u p^{\mathrm{hit}}_t(u)$ & One-step lookahead \\
+  $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) action \\
+  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, p^{\mathrm{hit}}_{t+1}(u_{t+1}^{\star} \mid x_t^{\star}) > p^{\mathrm{hit}}_t(u_t^{\star})$ & One-step lookahead \\
   \bottomrule
 \end{tabular*}
 \end{center}
@@ -293,23 +288,23 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 
 % --- COLUMN HEADERS with math ---
 \begin{minipage}[b]{0.18\colwidth}\centering
-  {\bfseries\textcolor{Charcoal}{\faLightbulb\enspace PROPOSE}}\\[4pt]
+  {\bfseries\textcolor{Charcoal}{\faLightbulb\enspace Propose}}\\[4pt]
   {\small $x \sim p_{\mathrm{LM}}(x)$}
 \end{minipage}\hfill
 \begin{minipage}[b]{0.34\colwidth}\centering
-  {\bfseries\textcolor{Charcoal}{\faCode\enspace TRANSLATE}}\\[4pt]
+  {\bfseries\textcolor{Charcoal}{\faCode\enspace Translate}}\\[4pt]
   {\small $x \mapsto f_x$}
 \end{minipage}\hfill
 \begin{minipage}[b]{0.28\colwidth}\centering
-  {\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
+  {\bfseries\textcolor{Charcoal}{\faPlay\enspace Simulate}}\\[4pt]
   {\small $y_i = f_x(s_i),\; s_i \sim p(S)$}
 \end{minipage}\hfill
 \begin{minipage}[b]{0.12\colwidth}\centering
-  {\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
+  {\bfseries\textcolor{Charcoal}{\faChartBar\enspace Score}}\\[4pt]
   {\small $\arg\max_x \operatorname{EIG}$}
 \end{minipage}
 
-\vspace{-1cm}
+\vspace{-2ex}
 
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
 % Pipeline column container style
@@ -466,6 +461,8 @@ How do humans (N=42) balance \textbf{asking questions} and \textbf{taking action
 
 Humans are \emph{resource-rational}: they pose informative questions, but vary in \emph{what} and \emph{when} they ask.
 
+\vspace{-1ex}
+
 \end{block}
 
 \begin{block}{SpotterQA: Question Answering}
@@ -552,27 +549,25 @@ Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}?
 \begin{block}{Generalization: Guess Who?}
 
 Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Who?'' from \textbf{TextArena} [8], a game with richer object-relational semantics.
+\vspace{-1ex}
 
-\begin{minipage}[t]{0.32\colwidth}
+\begin{minipage}[t]{0.48\colwidth}
   \vspace{0pt}
-  \includegraphics[height=10cm]{figures/guess-who-results.pdf}
-\end{minipage}\hspace{1em}%
-\begin{minipage}[t]{0.62\colwidth}
+  \centering
+  \includegraphics[height=14cm]{figures/guess-who-results.pdf}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\colwidth}
   \vspace{0pt}
-  Same strategies, different domain:
-
-  \medskip
-
   \textbf{GPT-4o}: 61.7\% $\rightarrow$ \textbf{90.0\%}\\
   \textbf{Llama-4-Scout}: 30.0\% $\rightarrow$ \textbf{72.4\%}
 
-  \medskip
   \medskip
 
   \begin{resultbox}
     \textbf{Not Battleship-specific:} Our approach generalizes to info-seeking tasks with combinatorial hypothesis spaces.
   \end{resultbox}
 \end{minipage}
+\vspace{-2ex}
 
 \end{block}
 
@@ -580,7 +575,7 @@ Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Wh
 
 {%
 \footnotesize
-\begin{minipage}[c]{0.82\colwidth}
+\begin{minipage}[t]{0.85\colwidth}
 \begin{tabular}{@{}r@{\;\;}p{0.92\linewidth}@{}}
 {[1]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Question asking as program generation. \textit{NeurIPS}, 2017. \\
 {[2]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Do people ask good questions? \textit{CBB}, 2018. \\
@@ -592,9 +587,9 @@ Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Wh
 {[8]} & L.~Guertler, B.~Cheng, S.~Yu, B.~Liu, L.~Choshen, C.~Tan. TextArena. \textit{arXiv}, 2025. \\
 \end{tabular}
 \end{minipage}\hfill
-\begin{minipage}[c]{0.11\colwidth}
+\begin{minipage}[t]{0.12\colwidth}
   \centering
-  \qrcode[height=0.9\linewidth]{https://gabegrand.github.io/battleship}
+  \qrcode[height=\linewidth]{https://gabegrand.github.io/battleship}
   \par\vspace{0.5ex}
   {\sffamily\scriptsize\textbf{Paper \& Code}}
 \end{minipage}%
