@@ -14,6 +14,8 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc}
+\usepackage{fontawesome5}
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{newtxmath}
 % Fix mathrm/operatorname to use Times (fontspec overrides it to Lato)
@@ -174,23 +176,24 @@
 
 \begin{block}{Motivation}
 
-In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, AI agents must \emph{ask smart questions} before acting---but current LMs are optimized to \emph{answer} questions, not \emph{ask} good ones.
+In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, AI agents must \emph{ask smart questions} before acting. Current LMs are optimized to \emph{answer} questions---but can they \emph{ask} good questions for themselves?
 
 \end{block}
 
-\begin{block}{Collaborative Battleship}
-
-\begin{center}
-  \includegraphics[width=0.95\colwidth]{figures/battleship-splash-2.png}
-\end{center}
-
-\begin{itemize}
-  \item \textbf{Captain}: asks yes/no questions, then fires at tiles
-  \item \textbf{Spotter}: sees full board, provides grounded answers
-  \item 8$\times$8 board, 4 ships, budget of 15 questions + 40 shots
-\end{itemize}
-
-\end{block}
+% HIDDEN: Collaborative Battleship
+% \begin{block}{Collaborative Battleship}
+%
+% \begin{center}
+%   \includegraphics[width=0.95\colwidth]{figures/battleship-splash-2.png}
+% \end{center}
+%
+% \begin{itemize}
+%   \item \textbf{Captain}: asks yes/no questions, then fires at tiles
+%   \item \textbf{Spotter}: sees full board, provides grounded answers
+%   \item 8$\times$8 board, 4 ships, budget of 15 questions + 40 shots
+% \end{itemize}
+%
+% \end{block}
 
 \begin{block}{Method: Bayesian Experimental Design}
 
@@ -237,77 +240,96 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 \end{column}
 
 % ====================
-% Column 2: SpotterQA + CaptainQA
+% Column 2: Architecture Diagram
 % ====================
 
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
 
-\begin{block}{Human Study: BattleshipQA Dataset}
+\begin{block}{Collaborative Battleship}
 
-How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
+% --- TOP ROW: Dialogue + Board ---
+\newlength{\msgwidth}
 
-\begin{minipage}[b]{0.28\colwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[0.3ex]
-  {\small \textbf{(a)} Questions predict performance}
+\begin{minipage}[c]{0.47\colwidth}
+  \setlength{\msgwidth}{\linewidth}
+  \addtolength{\msgwidth}{-32pt}% account for tcolorbox padding (left+right) + colorbox margins
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
+                    left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} Shoot at C6}}
+  \vspace{4pt}
+
+  \colorbox{BattleshipGray!15}{\makebox[\msgwidth][c]{\strut Hit purple}}
+  \vspace{4pt}
+
+  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} ``Is the purple ship horizontal?''}}
+  \vspace{4pt}
+
+  \colorbox{SeaGreen!15}{\makebox[\msgwidth][r]{\strut\textbf{Spotter:} ``No''\;}}
+  \vspace{4pt}
+
+  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} Shoot at B6}}
+  \vspace{4pt}
+
+  \colorbox{BattleshipGray!15}{\makebox[\msgwidth][c]{\strut Hit --- purple ship is sunk}}
+  \vspace{4pt}
+
+  \colorbox{HonoluluBlue!15}{\makebox[\msgwidth][l]{\strut\;\textbf{Captain:} \ldots}}
+  \end{tcolorbox}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.68\colwidth}
+\begin{minipage}[c]{0.47\colwidth}
   \centering
-  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[0.3ex]
-  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
+  \includegraphics[width=0.95\linewidth]{figures/board_example_spotter.png}
 \end{minipage}
 
-\smallskip
+\vspace{1cm}
 
-Humans are \emph{resource-rational}: they ask \emph{enough} questions to play well ($\rho = 0.684$, $p < 0.002$), but vary widely in \emph{when} and \emph{what} they ask.
-
-\end{block}
-
-\begin{block}{SpotterQA: Question Answering}
-
-Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
-
-\begin{center}
-  \begin{minipage}[t]{0.18\colwidth}
-    \vspace{0.5cm}
-    \begin{resultbox}
-      \textbf{Code generation boosts accuracy by +14.7\%}
-    \end{resultbox}
-    \vspace{0.5ex}
-    {\small
-    \textcolor{SetTwoOne}{\rule{0.8em}{0.8em}}\; Base LM\\
-    \textcolor{SetTwoTwo}{\rule{0.8em}{0.8em}}\; CoT\\
-    \textcolor{SetTwoThree}{\rule{0.8em}{0.8em}}\; Code\\
-    \textcolor{SetTwoFour}{\rule{0.8em}{0.8em}}\; CoT+Code\\
-    \textcolor{SetTwoFive}{\rule{0.8em}{0.8em}}\; Human
-    }
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.30\colwidth}\centering
-    {\small \textbf{(a)} By LM}\\[0.3ex]
-    \includegraphics[height=15cm]{figures/spotter_accuracy_by_model.pdf}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.33\colwidth}\centering
-    {\small \textbf{(b)} By Spotter Strategy}\\[0.3ex]
-    \includegraphics[height=15cm]{figures/spotter_accuracy_overall.pdf}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.15\colwidth}\centering
-    {\small \textbf{(c)} By Complexity}\\[0.3ex]
-    \includegraphics[height=15cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
-  \end{minipage}
-\end{center}
-
-\heading{Example: Grounding questions with code}
-\begin{minipage}[c]{0.28\colwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/board_example_spotter.png}
+% --- COLUMN HEADERS with math ---
+\begin{minipage}[b]{0.20\colwidth}\centering
+  {\small\bfseries\textcolor{Charcoal}{\faLightbulb\enspace PROPOSE}}\\[4pt]
+  {\small $x \sim p_{\mathrm{LM}}(x)$}
 \end{minipage}\hfill
-\begin{minipage}[c]{0.70\colwidth}
-  \colorbox{HonoluluBlue!15}{\makebox[\linewidth][l]{\small\strut\;\textbf{Captain:} ``Is there another ship near yellow?''}}
+\begin{minipage}[b]{0.36\colwidth}\centering
+  {\small\bfseries\textcolor{Charcoal}{\faCode\enspace TRANSLATE}}\\[4pt]
+  {\small $x \mapsto f_x$}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.16\colwidth}\centering
+  {\small\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
+  {\small $y_i = f_x(s_i)$}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.16\colwidth}\centering
+  {\small\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
+  {\small $\arg\max_x \operatorname{EIG}$}
+\end{minipage}
 
-  \vspace{1pt}
+\vspace{0.5cm}
 
-  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=2pt, left=4pt, right=4pt, top=2pt, bottom=2pt]
+% --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
+% Widths: 0.20 + 0.38 + 0.16 + 0.14 = 0.88 (rest is \hfill gaps)
+\begin{minipage}[t]{0.20\colwidth}
+  \vspace{0pt}% force top alignment
+  % x1 - highlighted
+  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  {\small\textcolor{HonoluluBlue}{\bfseries $x_1$:} \textit{``Is there another ship near yellow?''}}
+  \end{tcolorbox}
+  \vspace{4pt}
+  % x2
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  {\small $x_2$: \textit{``Do any ships lie along the edges?''}}
+  \end{tcolorbox}
+  \vspace{4pt}
+  % x3
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  {\small $x_3$: \textit{``Is the green ship longer than 3 tiles?''}}
+  \end{tcolorbox}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.36\colwidth}
+  \vspace{0pt}% force top alignment
+  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=4pt,
+                    left=6pt, right=6pt, top=4pt, bottom=4pt]
   \begin{lstlisting}[style=pythondark]
 def answer(board, partial):
   found = set(partial[partial > 0])          # already sunk
@@ -320,10 +342,36 @@ def answer(board, partial):
   return False
   \end{lstlisting}
   \end{tcolorbox}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.16\colwidth}
+  \vspace{0pt}% force top alignment
+  \centering
+  \begin{tikzpicture}
+    \node[circle, minimum size=3.5cm, inner sep=0pt,
+          top color=HonoluluBlue!90, bottom color=SeaGreen!85,
+          text=white, font=\fontsize{36}{40}\selectfont] {\faGlobeAmericas};
+  \end{tikzpicture}
 
-  \vspace{1pt}
-
-  \colorbox{SeaGreen!15}{\makebox[\linewidth][l]{\small\strut\;\textbf{Spotter:} \textcolor{SeaGreen}{\checkmark} \textbf{Yes}}}
+  \vspace{0.3cm}
+  {\bfseries\textcolor{HonoluluBlue}{World Model}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.16\colwidth}
+  \vspace{0pt}% force top alignment
+  % EIG values only
+  \begin{tcolorbox}[colback=AirBlue!10, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+  {\small $\operatorname{EIG}(x_1)$}\\{\small $= \mathbf{0.48}$}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+  {\small $\operatorname{EIG}(x_2)$}\\{\small $= 0.36$}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt]
+  {\small $\operatorname{EIG}(x_3)$}\\{\small $= 0.00$}
+  \end{tcolorbox}
 \end{minipage}
 
 \end{block}
