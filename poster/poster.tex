@@ -237,6 +237,27 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 
 \end{block}
 
+\begin{block}{Human Study: BattleshipQA Dataset}
+
+How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
+
+\begin{minipage}[b]{0.28\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[0.3ex]
+  {\small \textbf{(a)} Questions predict performance}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.68\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[0.3ex]
+  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
+\end{minipage}
+
+\smallskip
+
+Humans are \emph{resource-rational}: they ask \emph{enough} questions to play well ($\rho = 0.684$, $p < 0.002$), but vary widely in \emph{when} and \emph{what} they ask.
+
+\end{block}
+
 \end{column}
 
 % ====================
@@ -276,7 +297,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   \captainavatar\;\textbf{Captain:} Shoot at C6
   \end{captainbubble}
   \vfill
-  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple}}
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple ship}}
   \vfill
   \begin{captainbubble}
   \captainavatar\;\textbf{Captain:} ``Is the purple ship horizontal?''
@@ -297,14 +318,14 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   \end{captainbubble}
   \end{minipage}
   \end{tcolorbox}
-  \smallskip
+  % \smallskip
   \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.47\colwidth}
   \centering
   \includegraphics[width=0.75\linewidth]{figures/board_example_spotter.png}
-  \smallskip
-  \begin{center}{\small\textcolor{BattleshipGray}{Board state (Spotter's view)}}\end{center}
+  % \smallskip
+  \begin{center}{\small\textcolor{BattleshipGray}{Board state}}\end{center}
 \end{minipage}
 
 \vspace{1cm}
@@ -462,6 +483,41 @@ def answer(board, obs):
   \end{tcolorbox}
   \end{pipelinecol}
 \end{minipage}
+
+\end{block}
+
+\begin{block}{SpotterQA: Question Answering}
+
+Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
+
+\begin{center}
+  \begin{minipage}[t]{0.18\colwidth}
+    \vspace{0.5cm}
+    \begin{resultbox}
+      \textbf{Code generation boosts accuracy by +14.7\%}
+    \end{resultbox}
+    \vspace{0.5ex}
+    {\small
+    \textcolor{SetTwoOne}{\rule{0.8em}{0.8em}}\; Base LM\\
+    \textcolor{SetTwoTwo}{\rule{0.8em}{0.8em}}\; CoT\\
+    \textcolor{SetTwoThree}{\rule{0.8em}{0.8em}}\; Code\\
+    \textcolor{SetTwoFour}{\rule{0.8em}{0.8em}}\; CoT+Code\\
+    \textcolor{SetTwoFive}{\rule{0.8em}{0.8em}}\; Human
+    }
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\colwidth}\centering
+    {\small \textbf{(a)} By LM}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_by_model.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.33\colwidth}\centering
+    {\small \textbf{(b)} By Spotter Strategy}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_overall.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.15\colwidth}\centering
+    {\small \textbf{(c)} By Complexity}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
+  \end{minipage}
+\end{center}
 
 \end{block}
 
