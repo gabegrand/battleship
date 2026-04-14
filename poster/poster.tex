@@ -331,7 +331,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 % Pipeline column container style
 \newtcolorbox{pipelinecol}{colback=BattleshipGray!6, colframe=BattleshipGray!20,
   boxrule=0.5pt, arc=6pt, left=6pt, right=6pt, top=16pt, bottom=16pt,
-  equal height group=pipeline}
+  equal height group=pipeline, valign=center}
 % Widths: 0.18 + 0.34 + 0.28 + 0.08 = 0.88 (rest is \hfill gaps)
 \begin{minipage}[t]{0.18\colwidth}
   \vspace{0pt}
@@ -358,7 +358,8 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 \begin{minipage}[t]{0.34\colwidth}
   \vspace{0pt}
   \begin{tcolorbox}[colback=MonokaiBG, colframe=BattleshipGray!20, boxrule=0.5pt, arc=6pt,
-                    left=6pt, right=6pt, top=4pt, bottom=4pt]
+                    left=6pt, right=6pt, top=16pt, bottom=16pt,
+                    equal height group=pipeline]
   \begin{lstlisting}[style=pythondark]
 def answer(board, partial):
   found = set(partial[partial > 0])   # already sunk
