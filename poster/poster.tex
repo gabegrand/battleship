@@ -47,7 +47,7 @@
 % Python code style
 \lstdefinestyle{pythondark}{
   language=Python,
-  basicstyle=\SourceCodePro\small\color{MonokaiFG},
+  basicstyle=\SourceCodePro\footnotesize\color{MonokaiFG},
   keywordstyle=\color{MonokaiPink},
   keywordstyle=[2]\color{MonokaiBlue},
   keywordstyle=[3]\color{MonokaiGreen},
@@ -285,19 +285,19 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 \vspace{1cm}
 
 % --- COLUMN HEADERS with math ---
-\begin{minipage}[b]{0.20\colwidth}\centering
+\begin{minipage}[b]{0.18\colwidth}\centering
   {\small\bfseries\textcolor{Charcoal}{\faLightbulb\enspace PROPOSE}}\\[4pt]
   {\small $x \sim p_{\mathrm{LM}}(x)$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.36\colwidth}\centering
+\begin{minipage}[b]{0.30\colwidth}\centering
   {\small\bfseries\textcolor{Charcoal}{\faCode\enspace TRANSLATE}}\\[4pt]
   {\small $x \mapsto f_x$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.16\colwidth}\centering
+\begin{minipage}[b]{0.26\colwidth}\centering
   {\small\bfseries\textcolor{Charcoal}{\faPlay\enspace SIMULATE}}\\[4pt]
-  {\small $y_i = f_x(s_i)$}
+  {\small $y_i = f_x(s_i),\; s_i \sim p(S)$}
 \end{minipage}\hfill
-\begin{minipage}[b]{0.16\colwidth}\centering
+\begin{minipage}[b]{0.14\colwidth}\centering
   {\small\bfseries\textcolor{Charcoal}{\faChartBar\enspace SCORE}}\\[4pt]
   {\small $\arg\max_x \operatorname{EIG}$}
 \end{minipage}
@@ -305,72 +305,111 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 \vspace{0.5cm}
 
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
-% Widths: 0.20 + 0.38 + 0.16 + 0.14 = 0.88 (rest is \hfill gaps)
-\begin{minipage}[t]{0.20\colwidth}
+% Widths: 0.18 + 0.30 + 0.26 + 0.14 = 0.88 (rest is \hfill gaps)
+\begin{minipage}[t]{0.18\colwidth}
   \vspace{0pt}% force top alignment
-  % x1 - highlighted
+  % xA - highlighted
   \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
-  {\small\textcolor{HonoluluBlue}{\bfseries $x_1$:} \textit{``Is there another ship near yellow?''}}
+  {\small\textcolor{HonoluluBlue}{\bfseries $x_A$:} \textit{``Is there another ship near yellow?''}}
   \end{tcolorbox}
   \vspace{4pt}
-  % x2
+  % xB
   \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
-  {\small $x_2$: \textit{``Do any ships lie along the edges?''}}
+  {\small $x_B$: \textit{``Do any ships lie along the edges?''}}
   \end{tcolorbox}
   \vspace{4pt}
-  % x3
+  % xC
   \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
-  {\small $x_3$: \textit{``Is the green ship longer than 3 tiles?''}}
+  {\small $x_C$: \textit{``Is the green ship longer than 3 tiles?''}}
   \end{tcolorbox}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.36\colwidth}
+\begin{minipage}[t]{0.30\colwidth}
   \vspace{0pt}% force top alignment
   \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=4pt,
                     left=6pt, right=6pt, top=4pt, bottom=4pt]
   \begin{lstlisting}[style=pythondark]
 def answer(board, partial):
-  found = set(partial[partial > 0])          # already sunk
-  yellow = np.argwhere(board == 4)           # "yellow" ship
+  found = set(partial[partial > 0])   # already sunk
+  yellow = np.argwhere(board == 4)    # "yellow" ship
   for x, y in yellow:
-    for dx, dy in neighbors(x, y):           # within 1 tile
+    for dx, dy in neighbors(x, y):    # within 1 tile
       ship = board[dx, dy]
-      if ship > 0 and ship not in found:     # "another"
+      if ship > 0 and ship not in found: # "another"
         return True
   return False
   \end{lstlisting}
   \end{tcolorbox}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.16\colwidth}
+\begin{minipage}[t]{0.26\colwidth}
   \vspace{0pt}% force top alignment
   \centering
+  % Simulated answers
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1pt, arc=3pt,
+                      left=2pt, right=2pt, top=2pt, bottom=2pt]
+    \centering{\small\bfseries\textcolor{SeaGreen}{Y}}
+    \end{tcolorbox}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=AlertRed!10, colframe=AlertRed!40, boxrule=1pt, arc=3pt,
+                      left=2pt, right=2pt, top=2pt, bottom=2pt]
+    \centering{\small\bfseries\textcolor{AlertRed}{N}}
+    \end{tcolorbox}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1pt, arc=3pt,
+                      left=2pt, right=2pt, top=2pt, bottom=2pt]
+    \centering{\small\bfseries\textcolor{SeaGreen}{Y}}
+    \end{tcolorbox}
+  \end{minipage}
+
+  \vspace{4pt}
+
+  % Conditional samples (board thumbnails)
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s1.png}\\[-2pt]
+    {\scriptsize $s_1$}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s2.png}\\[-2pt]
+    {\scriptsize $s_2$}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s3.png}\\[-2pt]
+    {\scriptsize $s_3$}
+  \end{minipage}
+
+  \vspace{6pt}
+
+  % World Model icon
   \begin{tikzpicture}
-    \node[circle, minimum size=3.5cm, inner sep=0pt,
+    \node[circle, minimum size=2.5cm, inner sep=0pt,
           top color=HonoluluBlue!90, bottom color=SeaGreen!85,
-          text=white, font=\fontsize{36}{40}\selectfont] {\faGlobeAmericas};
+          text=white, font=\fontsize{28}{32}\selectfont] {\faGlobeAmericas};
   \end{tikzpicture}
 
-  \vspace{0.3cm}
+  \vspace{0.2cm}
   {\bfseries\textcolor{HonoluluBlue}{World Model}}
 \end{minipage}\hfill
-\begin{minipage}[t]{0.16\colwidth}
+\begin{minipage}[t]{0.14\colwidth}
   \vspace{0pt}% force top alignment
   % EIG values only
   \begin{tcolorbox}[colback=AirBlue!10, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
-  {\small $\operatorname{EIG}(x_1)$}\\{\small $= \mathbf{0.48}$}
+  {\small $\operatorname{EIG}(x_A)$}\\{\small $= \mathbf{0.48}$}
   \end{tcolorbox}
   \vspace{4pt}
   \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
-  {\small $\operatorname{EIG}(x_2)$}\\{\small $= 0.36$}
+  {\small $\operatorname{EIG}(x_B)$}\\{\small $= 0.36$}
   \end{tcolorbox}
   \vspace{4pt}
   \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
-  {\small $\operatorname{EIG}(x_3)$}\\{\small $= 0.00$}
+  {\small $\operatorname{EIG}(x_C)$}\\{\small $= 0.00$}
   \end{tcolorbox}
 \end{minipage}
 
