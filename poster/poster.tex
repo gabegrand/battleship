@@ -327,12 +327,15 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   {\small $\arg\max_x \operatorname{EIG}$}
 \end{minipage}
 
-\vspace{0.5cm}
-
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
+% Pipeline column container style
+\newtcolorbox{pipelinecol}{colback=BattleshipGray!6, colframe=BattleshipGray!20,
+  boxrule=0.5pt, arc=6pt, left=6pt, right=6pt, top=16pt, bottom=16pt,
+  equal height group=pipeline}
 % Widths: 0.18 + 0.34 + 0.28 + 0.08 = 0.88 (rest is \hfill gaps)
 \begin{minipage}[t]{0.18\colwidth}
   \vspace{0pt}
+  \begin{pipelinecol}
   % xA - highlighted
   \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
@@ -350,10 +353,11 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
                     left=5pt, right=5pt, top=4pt, bottom=4pt]
   {\small $x_C$: \textit{``Is the green ship longer than 3 tiles?''}}
   \end{tcolorbox}
+  \end{pipelinecol}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.34\colwidth}
   \vspace{0pt}
-  \begin{tcolorbox}[colback=MonokaiBG, colframe=MonokaiBG, boxrule=0pt, arc=4pt,
+  \begin{tcolorbox}[colback=MonokaiBG, colframe=BattleshipGray!20, boxrule=0.5pt, arc=6pt,
                     left=6pt, right=6pt, top=4pt, bottom=4pt]
   \begin{lstlisting}[style=pythondark]
 def answer(board, partial):
@@ -370,6 +374,7 @@ def answer(board, partial):
 \end{minipage}\hfill
 \begin{minipage}[t]{0.28\colwidth}
   \vspace{0pt}
+  \begin{pipelinecol}
   \centering
   % Simulated answers
   \begin{minipage}[t]{0.30\linewidth}\centering
@@ -418,24 +423,27 @@ def answer(board, partial):
 
   \vspace{0.2cm}
   {\bfseries\textcolor{HonoluluBlue}{World Model}}
+  \end{pipelinecol}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.08\colwidth}
   \vspace{0pt}
+  \begin{pipelinecol}
   % EIG values only
-  \begin{tcolorbox}[colback=AirBlue!10, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
+  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
   {\small $\operatorname{EIG}(x_A)$}\\{\small $= \mathbf{0.48}$}
   \end{tcolorbox}
   \vspace{4pt}
-  \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
   {\small $\operatorname{EIG}(x_B)$}\\{\small $= 0.36$}
   \end{tcolorbox}
   \vspace{4pt}
-  \begin{tcolorbox}[colback=BattleshipGray!8, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt]
   {\small $\operatorname{EIG}(x_C)$}\\{\small $= 0.00$}
   \end{tcolorbox}
+  \end{pipelinecol}
 \end{minipage}
 
 \end{block}
