@@ -180,20 +180,65 @@ In settings like \textbf{scientific discovery} and \textbf{medical diagnosis}, A
 
 \end{block}
 
-% HIDDEN: Collaborative Battleship
-% \begin{block}{Collaborative Battleship}
+\begin{block}{Collaborative Battleship}
+
+% Circle avatar commands
+\newcommand{\captainavatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=HonoluluBlue!80, bottom color=HonoluluBlue, text=white, font=\scriptsize]{\faAnchor};}}
+\newcommand{\spotteravatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=SeaGreen!80, bottom color=SeaGreen, text=white, font=\scriptsize]{\faBinoculars};}}
+% Chat bubble styles
+\newtcolorbox{captainbubble}[1][]{enhanced, colback=HonoluluBlue!12, colframe=HonoluluBlue!25,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt, #1}
+\newtcolorbox{spotterbubble}{colback=SeaGreen!10, colframe=SeaGreen!30,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt}
 %
-% \begin{center}
-%   \includegraphics[width=0.95\colwidth]{figures/battleship-splash-2.png}
-% \end{center}
+% Measure board image height to match dialogue box
+\newlength{\boardht}
+\settoheight{\boardht}{\includegraphics[width=0.3525\colwidth]{figures/board_example_spotter.png}}
+\newlength{\msgwidth}
 %
-% \begin{itemize}
-%   \item \textbf{Captain}: asks yes/no questions, then fires at tiles
-%   \item \textbf{Spotter}: sees full board, provides grounded answers
-%   \item 8$\times$8 board, 4 ships, budget of 15 questions + 40 shots
-% \end{itemize}
-%
-% \end{block}
+\begin{minipage}[c]{0.47\colwidth}
+  \centering
+  \includegraphics[width=0.75\linewidth]{figures/board_example_spotter.png}
+  \begin{center}{\small\textcolor{BattleshipGray}{Board state}}\end{center}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.47\colwidth}
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
+                    left=8pt, right=8pt, top=8pt, bottom=8pt, height=\boardht,
+                    remember as=dialoguebox]
+  \begin{minipage}[t][\dimexpr\boardht-19pt\relax][t]{\dimexpr\linewidth\relax}
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at C6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple ship}}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} ``Is the purple ship horizontal?''
+  \end{captainbubble}
+  \vfill
+  \begin{spotterbubble}
+  \spotteravatar\;\textbf{Spotter:} ``No''
+  \end{spotterbubble}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at B6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit --- purple ship is sunk}}
+  \vfill
+  \begin{captainbubble}[remember as=lastbubble]
+  \captainavatar\;\textbf{Captain:} \ldots
+  \end{captainbubble}
+  \end{minipage}
+  \end{tcolorbox}
+  \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
+\end{minipage}
+
+\end{block}
 
 \begin{block}{Method: Bayesian Experimental Design}
 
@@ -237,27 +282,6 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
 
 \end{block}
 
-\begin{block}{Human Study: BattleshipQA Dataset}
-
-How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
-
-\begin{minipage}[b]{0.28\colwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[0.3ex]
-  {\small \textbf{(a)} Questions predict performance}
-\end{minipage}\hfill
-\begin{minipage}[b]{0.68\colwidth}
-  \centering
-  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[0.3ex]
-  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
-\end{minipage}
-
-\smallskip
-
-Humans are \emph{resource-rational}: they ask \emph{enough} questions to play well ($\rho = 0.684$, $p < 0.002$), but vary widely in \emph{when} and \emph{what} they ask.
-
-\end{block}
-
 \end{column}
 
 % ====================
@@ -267,68 +291,7 @@ Humans are \emph{resource-rational}: they ask \emph{enough} questions to play we
 \begin{column}{\sepwidth}\end{column}
 \begin{column}{\colwidth}
 
-\begin{block}{Collaborative Battleship}
-
-% --- TOP ROW: Dialogue + Board ---
-\newlength{\msgwidth}
-
-% Circle avatar commands
-\newcommand{\captainavatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
-  top color=HonoluluBlue!80, bottom color=HonoluluBlue, text=white, font=\scriptsize]{\faAnchor};}}
-\newcommand{\spotteravatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
-  top color=SeaGreen!80, bottom color=SeaGreen, text=white, font=\scriptsize]{\faBinoculars};}}
-% Chat bubble styles
-\newtcolorbox{captainbubble}{colback=HonoluluBlue!12, colframe=HonoluluBlue!25,
-  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
-  before skip=10pt, after skip=0pt}
-\newtcolorbox{spotterbubble}{colback=SeaGreen!10, colframe=SeaGreen!30,
-  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
-  before skip=10pt, after skip=0pt}
-%
-% Measure board image height to match dialogue box
-\newlength{\boardht}
-\settoheight{\boardht}{\includegraphics[width=0.3525\colwidth]{figures/board_example_spotter.png}}
-%
-\begin{minipage}[c]{0.47\colwidth}
-  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
-                    left=8pt, right=8pt, top=8pt, bottom=8pt, height=\boardht]
-  \begin{minipage}[t][\dimexpr\boardht-19pt\relax][t]{\dimexpr\linewidth\relax}
-  \begin{captainbubble}
-  \captainavatar\;\textbf{Captain:} Shoot at C6
-  \end{captainbubble}
-  \vfill
-  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple ship}}
-  \vfill
-  \begin{captainbubble}
-  \captainavatar\;\textbf{Captain:} ``Is the purple ship horizontal?''
-  \end{captainbubble}
-  \vfill
-  \begin{spotterbubble}
-  \spotteravatar\;\textbf{Spotter:} ``No''
-  \end{spotterbubble}
-  \vfill
-  \begin{captainbubble}
-  \captainavatar\;\textbf{Captain:} Shoot at B6
-  \end{captainbubble}
-  \vfill
-  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit --- purple ship is sunk}}
-  \vfill
-  \begin{captainbubble}
-  \captainavatar\;\textbf{Captain:} \ldots
-  \end{captainbubble}
-  \end{minipage}
-  \end{tcolorbox}
-  % \smallskip
-  \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
-\end{minipage}\hfill
-\begin{minipage}[c]{0.47\colwidth}
-  \centering
-  \includegraphics[width=0.75\linewidth]{figures/board_example_spotter.png}
-  % \smallskip
-  \begin{center}{\small\textcolor{BattleshipGray}{Board state}}\end{center}
-\end{minipage}
-
-\vspace{1cm}
+\begin{block}{Inference-Time Question Scoring via $Q_{\mathrm{Bayes}}$}
 
 % --- COLUMN HEADERS with math ---
 \begin{minipage}[b]{0.18\colwidth}\centering
@@ -352,16 +315,16 @@ Humans are \emph{resource-rational}: they ask \emph{enough} questions to play we
 
 % --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
 % Pipeline column container style
-\newtcolorbox{pipelinecol}{colback=BattleshipGray!6, colframe=BattleshipGray!20,
+\newtcolorbox{pipelinecol}[1][]{enhanced, colback=BattleshipGray!6, colframe=BattleshipGray!20,
   boxrule=0.5pt, arc=6pt, left=6pt, right=6pt, top=16pt, bottom=16pt,
-  equal height group=pipeline, valign=center}
+  equal height group=pipeline, valign=center, #1}
 % Widths: 0.18 + 0.34 + 0.28 + 0.12 = 0.92 (rest is \hfill gaps)
 \begin{minipage}[t]{0.18\colwidth}
   \vspace{0pt}
-  \begin{pipelinecol}
+  \begin{pipelinecol}[remember as=proposebox]
   % xA - highlighted
-  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=1.5pt, arc=4pt,
-                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  \begin{tcolorbox}[enhanced, colback=white, colframe=HonoluluBlue, boxrule=3pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt, remember as=xAbox]
   {\small\textcolor{HonoluluBlue}{\bfseries $x_A$:} \textit{``Is there another ship near orange?''}}
   \end{tcolorbox}
   \vspace{4pt}
@@ -467,7 +430,7 @@ def answer(board, obs):
   \vspace{0pt}
   \begin{pipelinecol}
   % EIG values only
-  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=2pt, arc=4pt,
+  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=3pt, arc=4pt,
                     left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
   {\small $\operatorname{EIG}(x_A)$}\\{\small $= \mathbf{0.48}$}
   \end{tcolorbox}
@@ -483,6 +446,27 @@ def answer(board, obs):
   \end{tcolorbox}
   \end{pipelinecol}
 \end{minipage}
+
+\end{block}
+
+\begin{block}{Human Study: BattleshipQA Dataset}
+
+How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
+
+\begin{minipage}[b]{0.28\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[-0.5ex]
+  {\small \textbf{(a)} Questions predict performance}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.68\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[-0.5ex]
+  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
+\end{minipage}
+
+\smallskip
+
+Humans are \emph{resource-rational}: they pose informative questions, but vary in \emph{what} and \emph{when} they ask.
 
 \end{block}
 
@@ -622,6 +606,13 @@ Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Wh
 
 \end{column}
 \begin{column}{\sepwidth}\end{column}
+
+% --- Elbow connector: dialogue box → propose box ---
+\begin{tikzpicture}[remember picture, overlay]
+  \coordinate (elbowmid) at ($(lastbubble.east)!0.5!(xAbox.west)$);
+  \draw[-{Stealth[length=16pt]}, line width=6pt, HonoluluBlue, rounded corners=12pt]
+    (lastbubble.east) -- (elbowmid |- lastbubble.east) -- (elbowmid |- xAbox.west) -- (xAbox.west);
+\end{tikzpicture}
 
 \end{columns}
 \end{frame}
