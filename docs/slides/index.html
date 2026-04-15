@@ -736,7 +736,377 @@
       </section>
 
 
-      <section id="bed" data-auto-animate>
+      <section id="sandbox">
+        <div class="section-label">Motivation</div>
+        <h3>Building a sandbox for discovery</h3>
+
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-cube"></i></span>
+                <span class="kp-text"><span class="kp-label">Minimal but complete.</span> Simple state representation and dynamics, yet instantiates the full BED loop.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-users"></i></span>
+                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI agents can play, enabling direct behavioral comparison. No domain expertise required.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
+                <span class="kp-text"><span class="kp-label">Simulatable.</span> Outcomes can be generated automatically. Experiments take seconds, not days.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="3">
+                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+                <span class="kp-text"><span class="kp-label">Measurable.</span> We can quantify not just outcomes, but intermediate decisions: explore vs.&nbsp;exploit, and the value of information (EIG).</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col" style="flex: 0 0 42%; text-align: center;">
+            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): Inspiration for a challenging domain with a minimal state representation</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <p>We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging. For evaluating BED specifically, we wanted a task that was:</p>
+          <ul>
+            <li>Lightweight, yet complete;</li>
+            <li>Easy for both humans and agents to pick up and play;</li>
+            <li>Directly simulatable;</li>
+            <li>and rich with signals about decision-making.</li>
+          </ul>
+          <p>We turned to the cognitive science literature, where there's a long tradition of using simple games to study human behavior. Specifically, we looked Battleship...</p>
+        </aside>
+      </section>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           TASK
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section id="battleship" data-auto-animate>
+        <div class="section-label" data-id="c-label">Task</div>
+        <h3 data-id="c-title">Battleship</h3>
+
+        <div class="two-col" style="align-items: start; gap: 36px;">
+          <div class="col" data-id="c-bullets">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-ship"></i></span>
+                <span class="kp-text"><span class="kp-label">Ships on a board.</span> Four ships of length 2-5 on an 8&times;8 grid, either horizontally or vertically.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-eye-slash"></i></span>
+                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board &mdash; most tiles are unknown.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-crosshairs"></i></span>
+                <span class="kp-text"><span class="kp-label">Goal:</span> Uncover all ships in as few moves as possible.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
+            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
+              <div style="position: relative;">
+                <!-- Full board (fades out on fragment 1) -->
+                <div id="c0-full-board" class="mini-board" style="transition: opacity 0.6s;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                </div>
+                <!-- Partial board (fades in on fragment 1, stacked behind) -->
+                <div id="c0-partial-board" class="mini-board" style="position: absolute; top: 0; left: 0; right: 0; opacity: 0; transition: opacity 0.6s;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
+                  <div class="b-cell water"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
+                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                  <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
+                  <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <p>a classic board game built around information-seeking.</p>
+          <ul>
+            <li>In Battleship, colored tiles represent hidden ships, which can range in length and orientation.</li>
+            <li>The player only sees a partial view — most tiles are unknown.</li>
+            <li>The goal is to uncover all ships in as few moves as possible.</li>
+          </ul>
+          <p>The original game is pretty simple; here, we consider an *extension* where in addition to shooting at tiles...</p>
+        </aside>
+      </section>
+
+      <section id="battleship-qa" data-auto-animate>
+        <div class="section-label" data-id="c-label">Task</div>
+        <h3 data-id="c-title">Battleship as a QA task</h3>
+
+        <div class="two-col" style="align-items: start; gap: 32px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-comments"></i></span>
+                <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-flask"></i></span>
+                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question $x$ probes the hidden board state $S$ and produces an observation $y$ &mdash; exactly the BED setup.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-brain"></i></span>
+                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
+                  <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right: board shrinks into eig-diagram -->
+          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; display: flex; justify-content: center;">
+            <div class="eig-diagram eig-labeled" style="padding: 14px; gap: 8px;">
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$S$</span>
+                <div data-id="c-board" class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                  <div class="mini-board" style="font-size: 0.55em;">
+                    <div class="b-label"></div>
+                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                    <div class="b-label">7</div><div class="b-label">8</div>
+                    <div class="b-label">A</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">B</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
+                    <div class="b-cell water"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">C</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">D</div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">E</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">F</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">G</div>
+                    <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                    <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">H</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
+                    <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="fragment fade-in" data-fragment-index="1">
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label"></span>
+                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label">$x$</span>
+                  <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label"></span>
+                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+                </div>
+                <div class="eig-dia-row">
+                  <span class="eig-dia-label">$y$</span>
+                  <div class="eig-dia-answer">
+                    <span class="eig-dia-yes">Yes</span>
+                    <span class="eig-dia-no">No</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <p>...an extension where players *also* can ask yes/no questions about the board state.</p>
+          <ul>
+            <li>Each question probes the hidden board state and produces an observation.</li>
+            <li>Prior work used a version of this task to study human question-asking; here, we expand the paradigm to evaluate both humans and agents.</li>
+          </ul>
+          <p>To do that, we designed a two-player version of the game...</p>
+        </aside>
+      </section>
+
+      <section id="collab-battleship" data-auto-animate>
+        <div class="section-label" data-id="c-label">Task</div>
+        <h3 data-id="c-title">Collaborative Battleship</h3>
+        <p style="text-align: center; font-size: 0.55em; color: #304ed8; font-weight: 500; margin-bottom: 12px;">
+          Our contribution: a two-player synchronous task
+        </p>
+
+        <div style="display: flex; gap: 28px; align-items: start; justify-content: center; margin-top: 8px;">
+          <!-- Captain -->
+          <div class="fragment fade-in" data-fragment-index="0" style="flex: 0 0 240px; text-align: center;">
+            <div class="game-action-board-wrap">
+              <h4><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+              <div class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell"></div><div class="b-cell ship-3"></div><div class="b-cell"></div>
+                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+              </div>
+            </div>
+            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees partial board<br/>Asks questions &amp; shoots</p>
+          </div>
+
+          <!-- Arrow + Yes/No channel -->
+          <div class="fragment fade-in" data-fragment-index="2" style="flex: 0 0 auto; text-align: center; align-self: center;">
+            <div style="font-size: 0.5em; color: #304ed8; font-weight: 600; margin-bottom: 6px;">Questions</div>
+            <div style="font-size: 1.4em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></div>
+            <div style="font-size: 0.5em; color: #04af70; font-weight: 600; margin-top: 6px;">Yes / No</div>
+          </div>
+
+          <!-- Spotter -->
+          <div class="fragment fade-in" data-fragment-index="1" style="flex: 0 0 240px; text-align: center;">
+            <div class="game-action-board-wrap">
+              <h4 style="color: #04af70;"><i class="fas fa-binoculars"></i> &nbsp;Spotter</h4>
+              <div class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+              </div>
+            </div>
+            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees full board<br/>Answers Yes or No</p>
+          </div>
+        </div>
+
+        <div class="callout fragment fade-in" data-fragment-index="3" style="margin-top: 12px;">
+          <p><span class="callout-label">Key idea:</span> The Spotter acts as an <strong>experiment oracle</strong> &mdash; providing instant, automated feedback about experiment outcomes.</p>
+        </div>
+
+        <aside class="notes">
+          <p>We call our version Collaborative Battleship.</p>
+          <ul>
+            <li>The Captain sees a partial board and has to decide what to do on each turn.</li>
+            <li>The Spotter sees the full board with all the ships visible, but can only answer yes or no.</li>
+            <li>This information bottleneck puts a strict limit on the amount of information the Captain can get from any one question.</li>
+            <li>The Spotter acts as an experiment oracle, providing instant automated feedback about experiment outcomes. Now let me show you how we compute EIG in this setting.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           BAYESIAN EXPERIMENTAL DESIGN
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section id="bed" data-auto-animate data-auto-animate-restart>
         <div class="section-label" data-id="bed-label">Motivation</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
@@ -1026,10 +1396,10 @@
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════
-           SECTION B: APPROACH
+           APPROACH
            ═══════════════════════════════════════════════════════════════ -->
 
-      <section id="approach" data-auto-animate>
+      <section id="approach" data-auto-animate data-auto-animate-restart>
         <div class="section-label" data-id="approach-label">Approach</div>
         <h3>Grounding reasoning in a world model</h3>
 
@@ -1107,693 +1477,15 @@
         </aside>
       </section>
 
-      <section id="approach-hypotheses" data-auto-animate>
-        <div class="section-label" data-id="approach-label">Approach</div>
-        <h3>Grounding reasoning in a world model</h3>
-
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
-
-          <!-- Agent ↔ World Model (shrunk) -->
-          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
-            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
-              <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
-              <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
-            </div>
-            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
-              <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
-              <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
-              <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
-            </div>
-          </div>
-
-          <!-- ① Sample: Hypothesis Space — large, prominent -->
-          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 18px 24px; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 20px;">
-              <div style="font-size: 0.44em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
-                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
-              </div>
-              <div style="display: flex; gap: 10px; align-items: flex-end;">
-                <!-- s1: fused bicyclic (red) -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="48" height="36" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
-                  </div>
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_1$</div>
-                </div>
-                <!-- s2: ketone chain (green) -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="48" height="38" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
-                  </div>
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_2$</div>
-                </div>
-                <!-- s3: branched chain (purple) -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="50" height="36" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
-                  </div>
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_3$</div>
-                </div>
-                <!-- s4: macrocycle (orange) -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="40" height="40" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
-                  </div>
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_4$</div>
-                </div>
-                <!-- s5: benzene+branches (blue) -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="46" height="42" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
-                  </div>
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_5$</div>
-                </div>
-                <!-- ellipsis -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <div style="width: 40px; height: 52px; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 0.5em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p style="margin-top: 12px; font-size: 0.48em; color: #666; text-align: center; line-height: 1.5;">
-            Sample candidates to form a hypothesis space $\mathcal{S}$.
-          </p>
-        </div>
-
-        <aside class="notes">
-          <p>The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far.</p>
-        </aside>
-      </section>
-
-      <section id="approach-process" data-auto-animate>
-        <div class="section-label" data-id="approach-label">Approach</div>
-        <h3>Grounding reasoning in a world model</h3>
-
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
-
-          <!-- Agent ↔ World Model (same size as #approach-hypotheses) -->
-          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
-            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
-              <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
-              <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
-            </div>
-            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
-              <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
-              <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
-              <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
-            </div>
-          </div>
-
-          <!-- ① Sample: Hypothesis Space — shrunk from D2 -->
-          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 22px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
-                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
-              </div>
-              <div style="display: flex; gap: 6px; align-items: flex-end;">
-                <!-- s1 -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="34" height="26" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
-                  </div>
-                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_1$</div>
-                </div>
-                <!-- s2 -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="34" height="28" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
-                  </div>
-                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_2$</div>
-                </div>
-                <!-- s3 -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="36" height="26" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
-                  </div>
-                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_3$</div>
-                </div>
-                <!-- s4 -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="30" height="30" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
-                  </div>
-                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_4$</div>
-                </div>
-                <!-- s5 -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="34" height="32" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
-                  </div>
-                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_5$</div>
-                </div>
-                <!-- ellipsis -->
-                <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 36px;">
-                  <span style="font-size: 0.4em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ② Column headers: Propose | Translate | Simulate & Score -->
-          <div style="display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 10px;">
-            <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
-              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose
-            </div>
-            <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
-              <i class="fas fa-code" style="margin-right: 4px;"></i> Translate
-            </div>
-            <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
-              <i class="fas fa-play" style="margin-right: 4px;"></i> Simulate &amp; Score
-            </div>
-          </div>
-
-          <!-- ③ Experiment rows: each row = [Propose box] → [Simulate box] -->
-          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-
-            <!-- Row 1: Water-soluble -->
-            <div style="position: relative;">
-            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 6px;">
-              <!-- Propose -->
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$</div>
-                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
-              </div>
-              <!-- Translate -->
-              <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_1}$</div>
-                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span>
-                </div>
-              </div>
-              <!-- Simulate -->
-              <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_1}(s_i)$</div>
-                  <div style="display: flex; gap: 4px; align-items: center;">
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_2$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
-                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
-                  </div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
-                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.73</div>
-                </div>
-              </div>
-            </div>
-            <!-- Highlight overlay: appears with argmax -->
-            <div class="fragment fade-in" data-fragment-index="6" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 11px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
-            </div>
-
-            <!-- Row 2: Acid/base -->
-            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
-              <!-- Propose -->
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$</div>
-                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it an acid or a base?&rdquo;</div>
-              </div>
-              <!-- Translate -->
-              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_2}$</div>
-                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_pH</span><span style="color: #a9dc76;">(s):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.pH() &lt; </span><span style="color: #ab9df2;">7</span>
-                </div>
-              </div>
-              <!-- Simulate -->
-              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_2}(s_i)$</div>
-                  <div style="display: flex; gap: 4px; align-items: center;">
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_4$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
-                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
-                  </div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
-                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.41</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Row 3: Oxidation -->
-            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
-              <!-- Propose -->
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$</div>
-                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Does it undergo oxidation?&rdquo;</div>
-              </div>
-              <!-- Translate -->
-              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_3}$</div>
-                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_oxidation</span><span style="color: #a9dc76;">(s):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.reacts_with(</span><span style="color: #ffd866;">"O2"</span><span style="color: #a9dc76;">)</span>
-                </div>
-              </div>
-              <!-- Simulate -->
-              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_3}(s_i)$</div>
-                  <div style="display: flex; gap: 4px; align-items: center;">
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_1$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_3$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
-                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
-                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
-                  </div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
-                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.58</div>
-                </div>
-              </div>
-            </div>
-
-          </div><!-- /experiment rows -->
-
-          <!-- F6: Highlight x1 as argmax -->
-          <div class="fragment fade-in" data-fragment-index="6" style="width: 100%; margin-top: 22px;">
-            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600;">
-              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 10px;">&ldquo;Is it water-soluble?&rdquo; &nbsp; (EIG = 0.73)</span>
-            </div>
-          </div>
-          <!-- F7: Key insight -->
-          <div class="fragment fade-in" data-fragment-index="7" style="width: 100%; margin-top: 16px;">
-            <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
-              <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
-                <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
-                <strong>Inference-scaling for experiment design:</strong> scaling compute leads to more informative experiments.
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <aside class="notes">
-          <p>To figure out whether to run an experiment, the agent first translates it into executable code. Then, it calls the world model to run that code on each sampled hypothesis, yielding the EIG.</p>
-          <ul>
-            <li>The agent can repeat this process to evaluate multiple experiments.</li>
-            <li>It picks the experiment with the highest EIG — the one that best splits the hypothesis space.</li>
-            <li>This gives us an inference-scaling recipe: investing more compute leads to better experiments and more efficient discovery.</li>
-          </ul>
-          <p>So we have a general framework — now we need a good domain to test it in.</p>
-        </aside>
-      </section>
-
-      <section id="sandbox">
-        <div class="section-label" data-id="approach-label">Approach</div>
-        <h3>Building a sandbox for discovery</h3>
-
-        <div class="two-col" style="align-items: center; gap: 36px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-cube"></i></span>
-                <span class="kp-text"><span class="kp-label">Minimal but complete.</span> Simple state representation and dynamics, yet instantiates the full BED loop.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-users"></i></span>
-                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI agents can play, enabling direct behavioral comparison. No domain expertise required.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
-                <span class="kp-text"><span class="kp-label">Simulatable.</span> Outcomes can be generated automatically. Experiments take seconds, not days.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="3">
-                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
-                <span class="kp-text"><span class="kp-label">Measurable.</span> We can quantify not just outcomes, but intermediate decisions: explore vs.&nbsp;exploit, and the value of information (EIG).</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col" style="flex: 0 0 42%; text-align: center;">
-            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
-                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): Inspiration for a challenging domain with a minimal state representation</p>
-          </div>
-        </div>
-
-        <aside class="notes">
-          <p>We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging. For evaluating BED specifically, we wanted a task that was:</p>
-          <ul>
-            <li>Lightweight, yet complete;</li>
-            <li>Easy for both humans and agents to pick up and play;</li>
-            <li>Directly simulatable;</li>
-            <li>and rich with signals about decision-making.</li>
-          </ul>
-          <p>We turned to the cognitive science literature, where there's a long tradition of using simple games to study human behavior. Specifically, we looked Battleship...</p>
-        </aside>
-      </section>
-
-
-      <!-- ═══════════════════════════════════════════════════════════════
-           SECTION C: TASK
-           ═══════════════════════════════════════════════════════════════ -->
-
-      <section id="battleship" data-auto-animate>
-        <div class="section-label" data-id="c-label">Task</div>
-        <h3 data-id="c-title">Battleship</h3>
-
-        <div class="two-col" style="align-items: start; gap: 36px;">
-          <div class="col" data-id="c-bullets">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-ship"></i></span>
-                <span class="kp-text"><span class="kp-label">Ships on a board.</span> Four ships of length 2-5 on an 8&times;8 grid, either horizontally or vertically.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-eye-slash"></i></span>
-                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board &mdash; most tiles are unknown.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-crosshairs"></i></span>
-                <span class="kp-text"><span class="kp-label">Goal:</span> Uncover all ships in as few moves as possible.</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
-            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
-              <div style="position: relative;">
-                <!-- Full board (fades out on fragment 1) -->
-                <div id="c0-full-board" class="mini-board" style="transition: opacity 0.6s;">
-                  <div class="b-label"></div>
-                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                  <div class="b-label">7</div><div class="b-label">8</div>
-                  <div class="b-label">A</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">B</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">C</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <div class="b-label">D</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <div class="b-label">E</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <div class="b-label">F</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <div class="b-label">G</div>
-                  <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                  <div class="b-label">H</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                </div>
-                <!-- Partial board (fades in on fragment 1, stacked behind) -->
-                <div id="c0-partial-board" class="mini-board" style="position: absolute; top: 0; left: 0; right: 0; opacity: 0; transition: opacity 0.6s;">
-                  <div class="b-label"></div>
-                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                  <div class="b-label">7</div><div class="b-label">8</div>
-                  <div class="b-label">A</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">B</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
-                  <div class="b-cell water"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">C</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <div class="b-label">D</div>
-                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <div class="b-label">E</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <div class="b-label">F</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <div class="b-label">G</div>
-                  <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
-                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell"></div>
-                  <div class="b-label">H</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
-                  <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          <p>a classic board game built around information-seeking.</p>
-          <ul>
-            <li>In Battleship, colored tiles represent hidden ships, which can range in length and orientation.</li>
-            <li>The player only sees a partial view — most tiles are unknown.</li>
-            <li>The goal is to uncover all ships in as few moves as possible.</li>
-          </ul>
-          <p>The original game is pretty simple; here, we consider an *extension* where in addition to shooting at tiles...</p>
-        </aside>
-      </section>
-
-      <section id="battleship-qa" data-auto-animate>
-        <div class="section-label" data-id="c-label">Task</div>
-        <h3 data-id="c-title">Battleship as a QA task</h3>
-
-        <div class="two-col" style="align-items: start; gap: 32px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-comments"></i></span>
-                <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question $x$ probes the hidden board state $S$ and produces an observation $y$ &mdash; exactly the BED setup.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-brain"></i></span>
-                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
-                  <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Right: board shrinks into eig-diagram -->
-          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; display: flex; justify-content: center;">
-            <div class="eig-diagram eig-labeled" style="padding: 14px; gap: 8px;">
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$S$</span>
-                <div data-id="c-board" class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                  <div class="mini-board" style="font-size: 0.55em;">
-                    <div class="b-label"></div>
-                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                    <div class="b-label">7</div><div class="b-label">8</div>
-                    <div class="b-label">A</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">B</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div>
-                    <div class="b-cell water"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">C</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                    <div class="b-label">D</div>
-                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell" style="background: rgba(4,175,112,0.25);"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                    <div class="b-label">E</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                    <div class="b-label">F</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                    <div class="b-label">G</div>
-                    <div class="b-cell" style="background: rgba(109,70,123,0.25);"></div><div class="b-cell ship-3"></div><div class="b-cell" style="background: rgba(109,70,123,0.25);"></div>
-                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                    <div class="b-cell ship-4"></div><div class="b-cell"></div>
-                    <div class="b-label">H</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell" style="background: rgba(172,32,40,0.25);"></div><div class="b-cell" style="background: rgba(172,32,40,0.25);"></div>
-                    <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="fragment fade-in" data-fragment-index="1">
-                <div class="eig-dia-row">
-                  <span class="eig-dia-label"></span>
-                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-                </div>
-                <div class="eig-dia-row">
-                  <span class="eig-dia-label">$x$</span>
-                  <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
-                </div>
-                <div class="eig-dia-row">
-                  <span class="eig-dia-label"></span>
-                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-                </div>
-                <div class="eig-dia-row">
-                  <span class="eig-dia-label">$y$</span>
-                  <div class="eig-dia-answer">
-                    <span class="eig-dia-yes">Yes</span>
-                    <span class="eig-dia-no">No</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="notes">
-          <p>...an extension where players *also* can ask yes/no questions about the board state.</p>
-          <ul>
-            <li>Each question probes the hidden board state and produces an observation.</li>
-            <li>Prior work used a version of this task to study human question-asking; here, we expand the paradigm to evaluate both humans and agents.</li>
-          </ul>
-          <p>To do that, we designed a two-player version of the game...</p>
-        </aside>
-      </section>
-
-      <section id="collab-battleship" data-auto-animate>
-        <div class="section-label" data-id="cd-label">Task</div>
-        <h3 data-id="cd-title">Collaborative Battleship</h3>
-        <p style="text-align: center; font-size: 0.55em; color: #304ed8; font-weight: 500; margin-bottom: 12px;">
-          Our contribution: a two-player synchronous task
-        </p>
-
-        <div style="display: flex; gap: 28px; align-items: start; justify-content: center; margin-top: 8px;">
-          <!-- Captain -->
-          <div class="fragment fade-in" data-fragment-index="0" style="flex: 0 0 240px; text-align: center;">
-            <div data-id="d-captain-board" class="game-action-board-wrap">
-              <h4><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
-              <div class="mini-board">
-                <div class="b-label"></div>
-                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                <div class="b-label">7</div><div class="b-label">8</div>
-                <div class="b-label">A</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">B</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell water"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">C</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <div class="b-label">D</div>
-                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <div class="b-label">E</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <div class="b-label">F</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <div class="b-label">G</div>
-                <div class="b-cell"></div><div class="b-cell ship-3"></div><div class="b-cell"></div>
-                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell"></div>
-                <div class="b-label">H</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-              </div>
-            </div>
-            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees partial board<br/>Asks questions &amp; shoots</p>
-          </div>
-
-          <!-- Arrow + Yes/No channel -->
-          <div class="fragment fade-in" data-fragment-index="2" style="flex: 0 0 auto; text-align: center; align-self: center;">
-            <div style="font-size: 0.5em; color: #304ed8; font-weight: 600; margin-bottom: 6px;">Questions</div>
-            <div style="font-size: 1.4em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></div>
-            <div style="font-size: 0.5em; color: #04af70; font-weight: 600; margin-top: 6px;">Yes / No</div>
-          </div>
-
-          <!-- Spotter -->
-          <div class="fragment fade-in" data-fragment-index="1" style="flex: 0 0 240px; text-align: center;">
-            <div class="game-action-board-wrap">
-              <h4 style="color: #04af70;"><i class="fas fa-binoculars"></i> &nbsp;Spotter</h4>
-              <div class="mini-board">
-                <div class="b-label"></div>
-                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                <div class="b-label">7</div><div class="b-label">8</div>
-                <div class="b-label">A</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-label">B</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-label">C</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <div class="b-label">D</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <div class="b-label">E</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <div class="b-label">F</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <div class="b-label">G</div>
-                <div class="b-cell ship-3"></div><div class="b-cell ship-3"></div><div class="b-cell ship-3"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div>
-                <div class="b-label">H</div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
-                <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-              </div>
-            </div>
-            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees full board<br/>Answers Yes or No</p>
-          </div>
-        </div>
-
-        <div class="callout fragment fade-in" data-fragment-index="3" style="margin-top: 12px;">
-          <p><span class="callout-label">Key idea:</span> The Spotter acts as an <strong>experiment oracle</strong> &mdash; providing instant, automated feedback about experiment outcomes.</p>
-        </div>
-
-        <aside class="notes">
-          <p>We call our version Collaborative Battleship.</p>
-          <ul>
-            <li>The Captain sees a partial board and has to decide what to do on each turn.</li>
-            <li>The Spotter sees the full board with all the ships visible, but can only answer yes or no.</li>
-            <li>This information bottleneck puts a strict limit on the amount of information the Captain can get from any one question.</li>
-            <li>The Spotter acts as an experiment oracle, providing instant automated feedback about experiment outcomes. Now let me show you how we compute EIG in this setting.</li>
-          </ul>
-        </aside>
-      </section>
-
-      <!-- ═══════════════════════════════════════════════════════════════
-           SECTION D: FRAMEWORK
-           ═══════════════════════════════════════════════════════════════ -->
-
       <section id="eig-computation" data-auto-animate>
-        <div class="section-label" data-id="cd-label">Framework</div>
-        <h3 data-id="cd-title">Computing EIG in Battleship</h3>
+        <div class="section-label" data-id="approach-label">Approach</div>
+        <h3>Computing EIG in Battleship</h3>
 
         <div style="display: flex; gap: 18px; align-items: start; margin-top: 4px;">
 
           <!-- Left column: Captain board + World Model + Samples -->
           <div style="flex: 0 0 200px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-            <div data-id="d-captain-board" class="game-action-board-wrap" style="padding: 8px;">
+            <div class="game-action-board-wrap" style="padding: 8px;">
               <h4 style="font-size: 0.5em;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
               <div class="mini-board" style="font-size: 0.45em;">
                 <div class="b-label"></div>
@@ -1996,9 +1688,8 @@
       </section>
 
 
-
       <section id="research-questions">
-        <div class="section-label">Framework</div>
+        <div class="section-label">Approach</div>
         <h3>What can we study with this framework?</h3>
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
           EIG lets us formalize key behavioral questions about humans and AI agents
@@ -2028,7 +1719,6 @@
           </ul>
         </aside>
       </section>
-
 
       <!-- ═══════════════════════════════════════════════════════════════
            SECTION E: EXPERIMENTS
@@ -2425,6 +2115,317 @@
            HIDDEN SLIDES (kept for reference, not shown in presentation)
            ═══════════════════════════════════════════════════════════════ -->
 
+
+      <!-- [Hidden] Approach — Hypothesis space (pre-simplification) -->
+
+      <section id="approach-hypotheses" data-visibility="hidden">
+        <div class="section-label" data-id="approach-label">Approach</div>
+        <h3>Grounding reasoning in a world model</h3>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
+
+          <!-- Agent ↔ World Model (shrunk) -->
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
+            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
+            </div>
+            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
+              <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
+            </div>
+          </div>
+
+          <!-- ① Sample: Hypothesis Space — large, prominent -->
+          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 18px 24px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <div style="font-size: 0.44em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <!-- s1: fused bicyclic (red) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="36" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_1$</div>
+                </div>
+                <!-- s2: ketone chain (green) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="38" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_2$</div>
+                </div>
+                <!-- s3: branched chain (purple) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="50" height="36" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_3$</div>
+                </div>
+                <!-- s4: macrocycle (orange) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="40" height="40" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_4$</div>
+                </div>
+                <!-- s5: benzene+branches (blue) -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 64px; height: 52px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="46" height="42" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
+                  </div>
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600;">$s_5$</div>
+                </div>
+                <!-- ellipsis -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <div style="width: 40px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 0.5em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p style="margin-top: 12px; font-size: 0.48em; color: #666; text-align: center; line-height: 1.5;">
+            Sample candidates to form a hypothesis space $\mathcal{S}$.
+          </p>
+        </div>
+
+        <aside class="notes">
+          <p>The world model defines a generative process over the hidden state S, and the agent uses it to sample candidate hypotheses that are consistent with whatever evidence it has observed so far.</p>
+        </aside>
+      </section>
+
+      <!-- [Hidden] Approach — Full process diagram (pre-simplification) -->
+      <section id="approach-process" data-visibility="hidden">
+        <div class="section-label" data-id="approach-label">Approach</div>
+        <h3>Grounding reasoning in a world model</h3>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 4px;">
+
+          <!-- Agent ↔ World Model (same size as #approach-hypotheses) -->
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+            <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(75,90,120,0.08); border: 1.5px solid rgba(75,90,120,0.2); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-robot" style="color: #4a5770; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #4a5770;">Agent</span>
+            </div>
+            <span data-id="wm-arrows" style="font-size: 0.55em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+            <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 6px 12px;">
+              <i class="fas fa-globe" style="color: #304ed8; font-size: 0.6em;"></i>
+              <span style="font-size: 0.4em; font-weight: 600; color: #304ed8;">World Model</span>
+              <i class="fas fa-code" style="color: #304ed8; font-size: 0.42em; opacity: 0.6;"></i>
+            </div>
+          </div>
+
+          <!-- ① Sample: Hypothesis Space — shrunk from D2 -->
+          <div data-id="hyp-space-box" style="align-self: center; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 8px 16px; margin-bottom: 22px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">
+                <i class="fas fa-random" style="margin-right: 4px;"></i> Sample
+              </div>
+              <div style="display: flex; gap: 6px; align-items: flex-end;">
+                <!-- s1 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="26" viewBox="0 0 56 38"><polygon points="16,4 26,10 26,22 16,28 6,22 6,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="16" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><polygon points="36,4 46,10 46,22 36,28 26,22 26,10" fill="none" stroke="#ac2028" stroke-width="2.2" stroke-linejoin="round"/><circle cx="36" cy="16" r="5" fill="none" stroke="#ac2028" stroke-width="1.4" opacity="0.4"/><line x1="46" y1="10" x2="53" y2="4" stroke="#ac2028" stroke-width="2.2" stroke-linecap="round"/><circle cx="53" cy="4" r="2.2" fill="#ac2028"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_1$</div>
+                </div>
+                <!-- s2 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="28" viewBox="0 0 56 44"><line x1="4" y1="30" x2="14" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="12" x2="28" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="28" y1="30" x2="42" y2="12" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="42" y1="12" x2="52" y2="30" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="4" cy="30" r="2.2" fill="#04af70"/><circle cx="52" cy="30" r="2.2" fill="#04af70"/><line x1="26" y1="31" x2="26" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><line x1="30" y1="31" x2="30" y2="42" stroke="#04af70" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="43" r="2.2" fill="#04af70"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_2$</div>
+                </div>
+                <!-- s3 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="36" height="26" viewBox="0 0 60 42"><line x1="3" y1="28" x2="12" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="12" y1="12" x2="23" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="28" x2="34" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="34" y1="12" x2="45" y2="28" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><line x1="45" y1="28" x2="56" y2="12" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="3" cy="28" r="2.2" fill="#6d467b"/><circle cx="56" cy="12" r="2.2" fill="#6d467b"/><line x1="34" y1="12" x2="34" y2="3" stroke="#6d467b" stroke-width="2.2" stroke-linecap="round"/><circle cx="34" cy="3" r="2.2" fill="#6d467b"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_3$</div>
+                </div>
+                <!-- s4 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="30" height="30" viewBox="0 0 48 48"><polygon points="24,5 37,10 42,24 37,37 24,42 11,37 6,24 11,10" fill="none" stroke="#ffa500" stroke-width="2.2" stroke-linejoin="round"/><line x1="24" y1="5" x2="24" y2="0" stroke="#ffa500" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="0" r="2.2" fill="#ffa500"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_4$</div>
+                </div>
+                <!-- s5 -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <div style="width: 44px; height: 36px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="34" height="32" viewBox="0 0 56 52"><polygon points="26,5 38,12 38,26 26,33 14,26 14,12" fill="none" stroke="#304ed8" stroke-width="2.2" stroke-linejoin="round"/><circle cx="26" cy="19" r="6" fill="none" stroke="#304ed8" stroke-width="1.4" opacity="0.4"/><line x1="38" y1="12" x2="47" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="47" cy="5" r="2.2" fill="#304ed8"/><line x1="26" y1="33" x2="26" y2="45" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="45" r="2.2" fill="#304ed8"/><line x1="14" y1="12" x2="5" y2="5" stroke="#304ed8" stroke-width="2.2" stroke-linecap="round"/><circle cx="5" cy="5" r="2.2" fill="#304ed8"/></svg>
+                  </div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 600;">$s_5$</div>
+                </div>
+                <!-- ellipsis -->
+                <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 36px;">
+                  <span style="font-size: 0.4em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ② Column headers: Propose | Translate | Simulate & Score -->
+          <div style="display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 10px;">
+            <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-lightbulb" style="margin-right: 4px;"></i> Propose
+            </div>
+            <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-code" style="margin-right: 4px;"></i> Translate
+            </div>
+            <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; font-size: 0.38em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;">
+              <i class="fas fa-play" style="margin-right: 4px;"></i> Simulate &amp; Score
+            </div>
+          </div>
+
+          <!-- ③ Experiment rows: each row = [Propose box] → [Simulate box] -->
+          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+
+            <!-- Row 1: Water-soluble -->
+            <div style="position: relative;">
+            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 6px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_1$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it water-soluble?&rdquo;</div>
+              </div>
+              <!-- Translate -->
+              <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_1}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_solubility</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.dissolves_in(</span><span style="color: #ffd866;">"water"</span><span style="color: #a9dc76;">)</span>
+                </div>
+              </div>
+              <!-- Simulate -->
+              <div class="fragment fade-in" data-fragment-index="3" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_1}(s_i)$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.73</div>
+                </div>
+              </div>
+            </div>
+            <!-- Highlight overlay: appears with argmax -->
+            <div class="fragment fade-in" data-fragment-index="6" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 11px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
+            </div>
+
+            <!-- Row 2: Acid/base -->
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_2$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Is it an acid or a base?&rdquo;</div>
+              </div>
+              <!-- Translate -->
+              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_2}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_pH</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.pH() &lt; </span><span style="color: #ab9df2;">7</span>
+                </div>
+              </div>
+              <!-- Simulate -->
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_2}(s_i)$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.41</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Oxidation -->
+            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
+              <!-- Propose -->
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.34em; color: #888; font-weight: 600;">$x_3$</div>
+                <div style="font-size: 0.36em; color: #333; font-style: italic;">&ldquo;Does it undergo oxidation?&rdquo;</div>
+              </div>
+              <!-- Translate -->
+              <div style="flex: 1; background: #1e1e2e; border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.26em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_3}$</div>
+                <div style="font-size: 0.28em; font-family: 'Fira Code', monospace; line-height: 1.4;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">test_oxidation</span><span style="color: #a9dc76;">(s):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">s.reacts_with(</span><span style="color: #ffd866;">"O2"</span><span style="color: #a9dc76;">)</span>
+                </div>
+              </div>
+              <!-- Simulate -->
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.3em; color: #888; font-weight: 600; margin-bottom: 3px;">$y_i = f_{x_3}(s_i)$</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_1$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_2$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_3$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(4,175,112,0.12); color: #04af70;">$y_4$</span>
+                    <span style="padding: 1px 5px; border-radius: 4px; font-size: 0.32em; font-weight: 600; background: rgba(231,76,60,0.10); color: #e74c3c;">$y_5$</span>
+                    <span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span>
+                  </div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 6px; padding: 5px 10px; text-align: center; white-space: nowrap;">
+                  <div style="font-size: 0.28em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.4em; font-weight: 700; color: #888;">0.58</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /experiment rows -->
+
+          <!-- F6: Highlight x1 as argmax -->
+          <div class="fragment fade-in" data-fragment-index="6" style="width: 100%; margin-top: 22px;">
+            <div style="text-align: center; font-size: 0.44em; color: #304ed8; font-weight: 600;">
+              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 10px;">&ldquo;Is it water-soluble?&rdquo; &nbsp; (EIG = 0.73)</span>
+            </div>
+          </div>
+          <!-- F7: Key insight -->
+          <div class="fragment fade-in" data-fragment-index="7" style="width: 100%; margin-top: 16px;">
+            <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
+              <div style="font-size: 0.42em; color: #304ed8; line-height: 1.5;">
+                <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
+                <strong>Inference-scaling for experiment design:</strong> scaling compute leads to more informative experiments.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <aside class="notes">
+          <p>To figure out whether to run an experiment, the agent first translates it into executable code. Then, it calls the world model to run that code on each sampled hypothesis, yielding the EIG.</p>
+          <ul>
+            <li>The agent can repeat this process to evaluate multiple experiments.</li>
+            <li>It picks the experiment with the highest EIG — the one that best splits the hypothesis space.</li>
+            <li>This gives us an inference-scaling recipe: investing more compute leads to better experiments and more efficient discovery.</li>
+          </ul>
+          <p>So we have a general framework — now we need a good domain to test it in.</p>
+        </aside>
+      </section>
       <!-- [Hidden] Computing EIG in Battleship (old version) -->
       <section data-visibility="hidden">
         <div class="section-label">Framework</div>
