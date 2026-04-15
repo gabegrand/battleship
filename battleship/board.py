@@ -723,6 +723,8 @@ class Board(object):
             np.arange(1, len(board_array) + 1, 1),
             fontsize=14,
             fontweight="bold",
+            fontfamily="monospace",
+            ha="center",
             color="#9b9c97",
         )
         ax.set_yticklabels(
