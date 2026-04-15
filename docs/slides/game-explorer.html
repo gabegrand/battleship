@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game Explorer — Slide Frame</title>
+  <!-- base tag makes ./static/... resolve to ../static/... (the docs root) -->
+  <base href="../" />
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="./static/css/index.css" />
+
+  <style>
+    /* ── Slide-iframe fit strategy ──
+       The iframe is ~960×656px (reveal.js 1200×700 scaled).  We render at
+       1/0.65 ≈ 154% width so the layout engine sees ~1477px — above the
+       1200px media-query breakpoint.  Then transform: scale(0.65) shrinks
+       the visual output back into the iframe viewport. */
+
+    html, body {
+      margin: 0; padding: 0;
+      overflow: hidden;
+      background: #f6f8ff;
+    }
+    body {
+      width: 153.85%;            /* 1 / 0.65 */
+      transform: scale(0.65);
+      transform-origin: top left;
+    }
+    .section { padding: 0.4rem 0.6rem !important; }
+    .container { max-width: 100% !important; padding: 0 !important; }
+
+    /* Force two-column grid — overrides @media (max-width:1200px)
+       Use 2fr:3fr so the side panel (chat) gets MORE space than the board. */
+    .viewer-content {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) !important;
+      gap: 0.75rem !important;
+    }
+    /* Force side-panel back to column (media query switches it to row) */
+    .side-panel {
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+      gap: 0.5rem !important;
+    }
+    .side-card {
+      flex: unset !important;
+    }
+
+    .trajectory-explorer {
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      gap: 0.4rem !important;
+    }
+    .trajectory-layout { gap: 0.4rem !important; }
+
+    /* ── Board: cap width so cells stay small with aspect-ratio: 1/1 ── */
+    .board-card {
+      padding: 0.5rem !important;
+      border-radius: 10px !important;
+      max-width: 560px !important;       /* caps cell size to ~60px */
+    }
+    .board-grid {
+      font-size: 0.75rem !important;
+      gap: 2px !important;
+      padding: 3px !important;
+    }
+    .board-cell {
+      min-height: 0 !important;
+      font-size: 0.8rem !important;
+    }
+    .board-label-cell {
+      min-height: 0 !important;
+      font-size: 0.75rem !important;
+    }
+    .board-card-header { margin-bottom: 0.2rem !important; }
+    .board-card-header .title { font-size: 1rem !important; }
+    .side-card { padding: 0.5rem !important; border-radius: 10px !important; }
+
+    /* Hide elements not needed in presentation */
+    .demo-intro { display: none; }
+    .selection-panel { display: none !important; }
+    h2.title.is-3 { display: none !important; }
+
+    /* ── Event card / chat log: expand to fill available height ── */
+    .event-card {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+    }
+    .event-details {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      padding: 0.8rem !important;
+    }
+    .event-chat-log {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      gap: 0.6rem !important;
+    }
+
+    /* Ship tracker & progress — keep compact */
+    .ship-tracker { font-size: 0.9rem !important; }
+    .progress-details { font-size: 0.85rem !important; }
+
+    /* Compact timeline */
+    .trajectory-timeline { gap: 0.25rem !important; }
+    .timeline-list { max-height: 60px !important; }
+    .timeline-header { gap: 0.4rem !important; }
+    .timeline-slider { margin-bottom: 0 !important; }
+    .timeline-meta { font-size: 0.85rem !important; }
+
+    /* Compact viewer panel gap */
+    .viewer-panel { gap: 0.4rem !important; }
+
+    /* Hide the status bar when loaded */
+    .trajectory-status:not(.has-error) { display: none !important; }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+  <section class="section" id="demo">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column">
+          <h2 class="title is-3 is-spaced">Game Explorer</h2>
+          <div class="demo-intro mb-5">
+            <p>Press Play to get started.</p>
+          </div>
+          <div id="trajectory-explorer" class="trajectory-explorer">
+            <div class="trajectory-layout">
+              <div class="viewer-panel">
+                <div class="viewer-content">
+                  <div class="board-card">
+                    <div class="board-card-header">
+                      <h3 class="title is-5 mb-1">Board State</h3>
+                      <div class="trajectory-view-toggle" role="group" aria-label="Board perspective">
+                        <button type="button" class="view-toggle-button is-active" id="view-captain" data-view="captain">
+                          <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                          <span class="label">Captain View</span>
+                        </button>
+                        <button type="button" class="view-toggle-button" id="view-spotter" data-view="spotter">
+                          <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                          <span class="label">Spotter View</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="board-grid" id="trajectory-board" role="grid" aria-label="Battleship board"></div>
+                  </div>
+                  <div class="side-panel">
+                    <div class="side-card event-card">
+                      <div id="event-details" class="event-details" role="log" aria-live="polite" aria-atomic="false"></div>
+                    </div>
+                    <div class="side-card">
+                      <div id="ship-tracker" class="ship-tracker"></div>
+                    </div>
+                    <div class="side-card">
+                      <div id="progress-details" class="progress-details"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="trajectory-status" id="trajectory-status" role="status">Loading games…</div>
+              </div>
+              <div class="trajectory-timeline">
+                <div class="timeline-slider">
+                  <input class="is-fullwidth is-info" id="trajectory-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Timeline position" />
+                </div>
+                <div class="timeline-header">
+                  <div class="timeline-primary-controls" role="group" aria-label="Playback controls">
+                    <button type="button" class="timeline-control-button" id="timeline-reset" aria-label="Reset"><i class="fas fa-undo-alt"></i></button>
+                    <button type="button" class="timeline-control-button" id="timeline-play" aria-label="Play" aria-pressed="false"><i class="fas fa-play playback-icon"></i></button>
+                    <button type="button" class="timeline-control-button" id="timeline-skip" aria-label="Skip to end"><i class="fas fa-fast-forward"></i></button>
+                  </div>
+                  <div class="timeline-speed-select">
+                    <label class="sr-only" for="playback-speed">Playback speed</label>
+                    <div class="select is-small is-rounded">
+                      <select id="playback-speed" aria-label="Select playback speed">
+                        <option value="0.25">0.25&times;</option>
+                        <option value="0.5">0.5&times;</option>
+                        <option value="1" selected>1&times;</option>
+                        <option value="2">2&times;</option>
+                        <option value="4">4&times;</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="timeline-meta">
+                  <span id="frame-label" class="timeline-frame"></span>
+                  <span id="event-label" class="timeline-event"></span>
+                </div>
+                <div id="trajectory-event-list" class="timeline-list" aria-label="Event timeline"></div>
+              </div>
+              <div class="selection-panel" aria-label="Game selector">
+                <div class="game-browser-header">
+                  <h3 class="title is-5">Game Browser</h3>
+                  <div class="game-browser-toolbar" role="group" aria-label="Game navigation">
+                    <button type="button" class="timeline-nav-button" id="prev-game" aria-label="Previous game" disabled><i class="fas fa-chevron-left"></i></button>
+                    <button type="button" class="timeline-nav-button" id="next-game" aria-label="Next game" disabled><i class="fas fa-chevron-right"></i></button>
+                  </div>
+                </div>
+                <div class="selection-grid">
+                  <div class="filter-group">
+                    <label class="label is-small" for="filter-type">Captain Strategy</label>
+                    <div class="select is-fullwidth"><select id="filter-type"></select></div>
+                  </div>
+                  <div class="filter-group">
+                    <label class="label is-small" for="filter-llm">Captain LLM</label>
+                    <div class="select is-fullwidth"><select id="filter-llm"></select></div>
+                  </div>
+                </div>
+                <div class="game-list" id="trajectory-game-list" role="listbox" aria-label="Available games"></div>
+                <div class="trajectory-metrics" id="trajectory-metrics"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

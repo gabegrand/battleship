@@ -1,0 +1,35 @@
+{
+  "source_board": "B11",
+  "question": "Is there another ship near yellow?",
+  "sunk_ships": {
+    "P": 2,
+    "O": 4
+  },
+  "remaining_ship_lengths": [
+    4,
+    5
+  ],
+  "samples": [
+    {
+      "name": "s1",
+      "seed": 67,
+      "answer": true,
+      "red_length": 5,
+      "green_length": 4
+    },
+    {
+      "name": "s2",
+      "seed": 6,
+      "answer": false,
+      "red_length": 4,
+      "green_length": 5
+    },
+    {
+      "name": "s3",
+      "seed": 87,
+      "answer": true,
+      "red_length": 5,
+      "green_length": 4
+    }
+  ]
+}

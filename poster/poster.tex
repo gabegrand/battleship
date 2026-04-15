@@ -1,0 +1,653 @@
+% Gemini theme --- https://github.com/anishathalye/gemini
+% Poster for ICLR 2026
+
+\documentclass[final]{beamer}
+
+% ====================
+% Packages
+% ====================
+
+\usepackage[T1]{fontenc}
+\usepackage[size=custom,width=194,height=95,scale=1.55]{beamerposter}
+\usetheme{gemini}
+\usecolortheme{gemini}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, decorations.pathmorphing}
+\usepackage{fontawesome5}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{dsfont}
+\usepackage{newtxmath}
+% Fix mathrm/operatorname to use Times (fontspec overrides it to Lato)
+\SetSymbolFont{operators}{normal}{OT1}{ntxtlf}{m}{n}
+\SetSymbolFont{operators}{bold}{OT1}{ntxtlf}{b}{n}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\usepackage{qrcode}
+\usepackage{listings}
+
+% Code font
+\newfontfamily\SourceCodePro{Source Code Pro}[
+  UprightFont=*-Regular,
+  BoldFont=*-Bold,
+  ItalicFont=*-It,
+]
+
+% Monokai-inspired colors
+\definecolor{MonokaiGreen}{HTML}{a6e22e}
+\definecolor{MonokaiOrange}{HTML}{fd971f}
+\definecolor{MonokaiPink}{HTML}{f92672}
+\definecolor{MonokaiBlue}{HTML}{66d9ef}
+\definecolor{MonokaiYellow}{HTML}{e6db74}
+\definecolor{MonokaiComment}{HTML}{75715e}
+\definecolor{MonokaiBG}{HTML}{272822}
+\definecolor{MonokaiFG}{HTML}{f8f8f2}
+
+% Python code style
+\lstdefinestyle{pythondark}{
+  language=Python,
+  basicstyle=\SourceCodePro\footnotesize\color{MonokaiFG},
+  keywordstyle=\color{MonokaiPink},
+  keywordstyle=[2]\color{MonokaiBlue},
+  keywordstyle=[3]\color{MonokaiGreen},
+  stringstyle=\color{MonokaiYellow},
+  commentstyle=\color{MonokaiComment}\itshape,
+  morekeywords={True, False, None, self},
+  morekeywords=[2]{set, np, range, max, min, any, bool},
+  morekeywords=[3]{answer, neighbors, argwhere},
+  backgroundcolor={},
+  frame=none,
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+  aboveskip=0pt,
+  belowskip=0pt,
+  showstringspaces=false,
+  breaklines=true,
+  basewidth=0.55em,
+  literate={>}{{\textcolor{MonokaiPink}{>}}}1
+           {<}{{\textcolor{MonokaiPink}{<}}}1
+           {=}{{\textcolor{MonokaiPink}{=}}}1
+           {0}{{\textcolor{MonokaiBlue}{0}}}1
+           {4}{{\textcolor{MonokaiBlue}{4}}}1,
+}
+\tcbuselibrary{skins}
+
+% ====================
+% Custom Colors (project branding)
+% ====================
+
+% Color palette
+\definecolor{SeaGreen}{HTML}{008f69}
+\definecolor{BattleshipGray}{HTML}{848482}
+\definecolor{AirBlue}{HTML}{71a0c1}
+\definecolor{HonoluluBlue}{HTML}{0e79b2}
+\definecolor{NavyBlue}{HTML}{000080}
+\definecolor{Charcoal}{HTML}{2c3e50}
+\definecolor{AlertRed}{HTML}{e74c3c}
+\definecolor{LightLavender}{HTML}{f0f4ff}
+% Spotter strategy colors (Set2 palette)
+\definecolor{SetTwoOne}{HTML}{66C2A5}   % Base LM
+\definecolor{SetTwoTwo}{HTML}{FC8D62}   % CoT
+\definecolor{SetTwoThree}{HTML}{8DA0CB} % Code
+\definecolor{SetTwoFour}{HTML}{E78AC3}  % CoT + Code
+\definecolor{SetTwoFive}{HTML}{A6D854}  % Human
+% Ship tracker colors
+\definecolor{ShipPurple}{HTML}{6d467b}
+\definecolor{ShipOrange}{HTML}{ffa500}
+\definecolor{ShipUnknown}{HTML}{d0d4dc}
+
+% Override Gemini colors — neutral header, accent blue details
+\setbeamercolor{headline}{fg=white,bg=HonoluluBlue}
+\setbeamercolor{headline title}{fg=white}
+\setbeamercolor{headline author}{fg=white}
+\setbeamercolor{headline institute}{fg=white}
+\setbeamercolor{headline rule}{bg=HonoluluBlue}
+\setbeamercolor{block title}{fg=NavyBlue,bg=white}
+\setbeamercolor{block separator}{bg=AirBlue}
+\setbeamercolor{block body}{fg=Charcoal,bg=white}
+\setbeamercolor{block title alerted}{fg=white,bg=HonoluluBlue}
+\setbeamercolor{block separator alerted}{bg=AirBlue}
+\setbeamercolor{block body alerted}{fg=Charcoal,bg=LightLavender}
+\setbeamercolor{item}{fg=HonoluluBlue}
+\setbeamercolor{heading}{fg=HonoluluBlue}
+\setbeamercolor{footline}{fg=white,bg=HonoluluBlue}
+
+% ====================
+% Callout box style
+% ====================
+
+\newtcolorbox{resultbox}[1][]{
+  colback=AirBlue!15,
+  colframe=AirBlue!15,
+  boxrule=0pt,
+  arc=3pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  #1
+}
+
+% ====================
+% Lengths
+% ====================
+
+\newlength{\sepwidth}
+\newlength{\colwidth}
+\setlength{\sepwidth}{0.02\paperwidth}
+\setlength{\colwidth}{0.3067\paperwidth}
+
+% ====================
+% Title
+% ====================
+
+\title{Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People}
+
+\author{Gabriel Grand\textsuperscript{1,2\footnotesize\faAnchor} \quad Valerio Pepe\textsuperscript{3\footnotesize\faAnchor} \quad Joshua B.\ Tenenbaum\textsuperscript{1,2} \quad Jacob Andreas\textsuperscript{1}}
+
+\institute{\textsuperscript{1}MIT CSAIL \quad \textsuperscript{2}MIT Brain and Cognitive Sciences \quad \textsuperscript{3}Harvard SEAS \qquad {\normalsize{\footnotesize\faAnchor}\,Equal contribution}}
+
+\logoleft{%
+  \begin{minipage}{12cm}
+    \includegraphics[width=\textwidth]{logos/CSAIL_Primary_Regular_Monochrome.pdf}\\[0.5cm]
+    \includegraphics[width=\textwidth]{logos/MIT_Schwarzman_College_of_Computing_logo.pdf}
+  \end{minipage}
+}
+% \logoright{}
+
+% ====================
+% Footer
+% ====================
+
+\footercontent{
+  arxiv.org/abs/2510.20886 \hfill
+  ICLR 2026 --- Oral Presentation \hfill
+  \textbf{gabegrand.github.io/battleship}
+}
+
+% ====================
+% Document
+% ====================
+
+\begin{document}
+\begin{frame}[t,fragile]
+\begin{columns}[t]
+
+% ====================
+% Column 1: Motivation + Task + BED Framework
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{Motivation}
+
+In \textbf{high-stakes settings} like scientific discovery and medical diagnosis, AI agents must \textbf{ask smart questions} before acting. People are remarkably efficient information-seekers, balancing \textbf{exploration} and \textbf{action} under uncertainty. Can we build LM agents that do the same?
+
+\end{block}
+
+\begin{block}{Collaborative Battleship}
+
+We adapt a classic task paradigm from cognitive science [1--4] into an evaluation harness for AI agents. The \textbf{Captain} must balance \emph{exploration} (asking questions) and \emph{action} (taking shots), while the \textbf{Spotter} must supply accurate, contextually-grounded answers.
+
+% Circle avatar commands
+\newcommand{\captainavatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=HonoluluBlue!80, bottom color=HonoluluBlue, text=white, font=\scriptsize]{\faAnchor};}}
+\newcommand{\spotteravatar}{\tikz[baseline=-0.3em]{\node[circle, minimum size=1.2em, inner sep=0pt,
+  top color=SeaGreen!80, bottom color=SeaGreen, text=white, font=\scriptsize]{\faBinoculars};}}
+% Chat bubble styles
+\newtcolorbox{captainbubble}[1][]{enhanced, colback=HonoluluBlue!12, colframe=HonoluluBlue!25,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt, #1}
+\newtcolorbox{spotterbubble}{colback=SeaGreen!10, colframe=SeaGreen!30,
+  boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
+  before skip=10pt, after skip=0pt}
+%
+% Ship segment command for tracker
+\newcommand{\shipseg}[1]{%
+  \tikz[baseline=-0.15em]{\node[rectangle, rounded corners=2pt, minimum size=0.8em, fill=#1, draw=white, line width=0.5pt] {};}\kern1.5pt}
+%
+% Measure board image height to match dialogue box
+\newlength{\boardht}
+\settoheight{\boardht}{\includegraphics[width=0.3525\colwidth]{figures/board_example_spotter.png}}
+\newlength{\msgwidth}
+%
+\begin{minipage}[b]{0.15\colwidth}
+  % --- Ship Tracker ---
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=6pt,
+                    left=6pt, right=6pt, top=6pt, bottom=6pt]
+  {\small\bfseries\textcolor{Charcoal}{\faShip\enspace Ships}}\\[6pt]
+  %
+  \shipseg{ShipPurple}\shipseg{ShipPurple}\hfill{\scriptsize\textcolor{SeaGreen}{Sunk\,\faCheck}}\\[4pt]
+  \shipseg{ShipOrange}\shipseg{ShipOrange}\shipseg{ShipOrange}\shipseg{ShipOrange}\hfill{\scriptsize\textcolor{SeaGreen}{Sunk\,\faCheck}}\\[4pt]
+  \shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\\[4pt]
+  \shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}
+  \end{tcolorbox}
+  %
+  \vspace{4pt}
+  %
+  % --- Progress Counters ---
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=6pt,
+                    left=6pt, right=6pt, top=6pt, bottom=6pt]
+  {\small\bfseries\textcolor{Charcoal}{\faChartBar\enspace Progress}}\\[10pt]
+  {\scriptsize
+  \begin{tabular}{@{}l@{\quad}r@{}}
+  \textcolor{HonoluluBlue}{\faComment}\enspace Questions & \textbf{12}/15 \\[5pt]
+  \textcolor{Charcoal}{\faCrosshairs}\enspace Moves & \textbf{26}/40 \\[5pt]
+  \textcolor{SeaGreen}{\faCheck}\enspace Hits & \textbf{6} \\[5pt]
+  \textcolor{AlertRed}{\faTimes}\enspace Misses & \textbf{8}
+  \end{tabular}}
+  \end{tcolorbox}
+  %
+  \begin{center}{\small\textcolor{BattleshipGray}{Game status}}\end{center}
+\end{minipage}\hfill
+%
+\begin{minipage}[b]{0.38\colwidth}
+  \centering
+  \includegraphics[width=0.93\linewidth]{figures/board_example_spotter.png}
+  \vspace{-12pt}
+  \begin{center}{\small\textcolor{BattleshipGray}{Board state}}\end{center}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.43\colwidth}
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
+                    left=8pt, right=8pt, top=8pt, bottom=8pt, height=\boardht,
+                    remember as=dialoguebox]
+  \begin{minipage}[t][\dimexpr\boardht-19pt\relax][t]{\dimexpr\linewidth\relax}
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at C6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit purple ship}}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} ``Is the purple ship horizontal?''
+  \end{captainbubble}
+  \vfill
+  \begin{spotterbubble}
+  \spotteravatar\;\textbf{Spotter:} ``No''
+  \end{spotterbubble}
+  \vfill
+  \begin{captainbubble}
+  \captainavatar\;\textbf{Captain:} Shoot at B6
+  \end{captainbubble}
+  \vfill
+  \textit{\textcolor{BattleshipGray}{\quad$\hookrightarrow$\enspace Hit --- purple ship is sunk}}
+  \vfill
+  \begin{captainbubble}[remember as=lastbubble]
+  \captainavatar\;\textbf{Captain:} \ldots
+  \end{captainbubble}
+  \end{minipage}
+  \end{tcolorbox}
+  \begin{center}{\small\textcolor{BattleshipGray}{Game dialogue}}\end{center}
+\end{minipage}
+
+\end{block}
+
+\begin{block}{Method: Bayesian Experimental Design}
+
+We formalize question selection as BED [5--7]. Given hidden state $S$, we compute the utility of question $x$ as the expected information gain (EIG) after observing answer $y$:
+%
+\begin{center}
+\begin{minipage}[c]{0.38\colwidth}
+\centering
+$\displaystyle p(S \mid x, y) \;\propto\; p(y \mid S, x) \;\; p(S)$
+\end{minipage}\hfill
+\begin{minipage}[c]{0.58\colwidth}
+\colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = H\big[p(S)\big] - \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S \mid x, y)\big]\Big]$\;\;}
+\end{minipage}
+\end{center}
+
+{\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypotheses $s \in \mathcal{S}$ and experiments $x \in \mathcal{X}$ is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and questions.
+
+At each turn $t$, the Captain maintains a belief $p_t(s)$. Let $p^{\mathrm{hit}}_t(u) = \sum_{s} \mathds{1}[\text{ship at } u \text{ in } s]\, p_t(s)$.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular*}{\colwidth}{l@{\extracolsep{\fill}}lll}
+  \toprule
+  \textbf{Strategy} & \textbf{Action} & \textbf{Rule} & \textbf{Intuition} \\
+  \midrule
+  $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
+  $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) action \\
+  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, p^{\mathrm{hit}}_{t+1}(u_{t+1}^{\star} \mid x_t^{\star}) > p^{\mathrm{hit}}_t(u_t^{\star})$ & One-step lookahead with discount $\gamma$ \\
+  \bottomrule
+\end{tabular*}
+\end{center}
+
+\end{block}
+
+\end{column}
+
+% ====================
+% Column 2: Architecture Diagram
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{Inference-Time Question Scoring via $Q_{\mathrm{Bayes}}$}
+
+% --- COLUMN HEADERS with math ---
+\begin{minipage}[b]{0.18\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faLightbulb\enspace Propose}}\\[4pt]
+  {\small $x \sim p_{\mathrm{LM}}(x)$}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.34\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faCode\enspace Translate}}\\[4pt]
+  {\small $x \mapsto f_x$}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.28\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faPlay\enspace Simulate}}\\[4pt]
+  {\small $y_i = f_x(s_i),\; s_i \sim p(S)$}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.12\colwidth}\centering
+  {\bfseries\textcolor{Charcoal}{\faChartBar\enspace Score}}\\[4pt]
+  {\small $\arg\max_x \operatorname{EIG}(x)$}
+\end{minipage}
+
+\vspace{-2ex}
+
+% --- BOTTOM ROW: Questions -> Code -> World Model -> EIG ---
+% Pipeline column container style
+\newtcolorbox{pipelinecol}[1][]{enhanced, colback=BattleshipGray!6, colframe=BattleshipGray!20,
+  boxrule=0.5pt, arc=6pt, left=6pt, right=6pt, top=16pt, bottom=16pt,
+  equal height group=pipeline, valign=center, #1}
+% Widths: 0.18 + 0.34 + 0.28 + 0.12 = 0.92 (rest is \hfill gaps)
+\begin{minipage}[t]{0.18\colwidth}
+  \vspace{0pt}
+  \begin{pipelinecol}[remember as=proposebox]
+  % xA - highlighted
+  \begin{tcolorbox}[enhanced, colback=white, colframe=HonoluluBlue, boxrule=3pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt, remember as=xAbox]
+  {\small\textcolor{HonoluluBlue}{\bfseries $x_A$:} \textit{``Is there another ship near orange?''}}
+  \end{tcolorbox}
+  \vspace{4pt}
+  % xB
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  {\small $x_B$: \textit{``Do any ships lie along the edges?''}}
+  \end{tcolorbox}
+  \vspace{4pt}
+  % xC
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=5pt, right=5pt, top=4pt, bottom=4pt]
+  {\small $x_C$: \textit{``Is the green ship longer than 3 tiles?''}}
+  \end{tcolorbox}
+  \end{pipelinecol}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.34\colwidth}
+  \vspace{0pt}
+  \begin{tcolorbox}[colback=MonokaiBG, colframe=BattleshipGray!20, boxrule=0.5pt, arc=6pt,
+                    left=6pt, right=6pt, top=16pt, bottom=16pt,
+                    equal height group=pipeline]
+  \begin{lstlisting}[style=pythondark]
+def answer(board, obs):
+  # Find orange ship
+  orange = np.argwhere(board == 4)
+  # What does the captain see?
+  found = set(obs[obs > 0])
+  # Check neighbors for another ship
+  for x, y in orange:
+    for dx, dy in neighbors(x, y):
+      ship = board[dx, dy]
+      if (ship > 0 and
+          ship not in found):
+        return True
+  return False
+  \end{lstlisting}
+  \end{tcolorbox}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.28\colwidth}
+  \vspace{0pt}
+  \begin{pipelinecol}
+  \centering
+  % Simulated answers
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{SeaGreen}{Y}}
+    \end{tcolorbox}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=AlertRed!10, colframe=AlertRed!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{AlertRed}{N}}
+    \end{tcolorbox}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \begin{tcolorbox}[colback=SeaGreen!15, colframe=SeaGreen!40, boxrule=1.5pt, arc=4pt,
+                      left=4pt, right=4pt, top=3pt, bottom=3pt]
+    \centering{\bfseries\textcolor{SeaGreen}{Y}}
+    \end{tcolorbox}
+  \end{minipage}
+
+  \vspace{2pt}
+
+  % Conditional samples (board thumbnails)
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s1.png}\\[-6pt]
+    {\small $s_1$}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s2.png}\\[-6pt]
+    {\small $s_2$}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{figures/sample_s3.png}\\[-6pt]
+    {\small $s_3$}
+  \end{minipage}
+
+  \vspace{16pt}
+
+  % Squiggly arrow: samples drawn from world model
+  \begin{tikzpicture}
+    \draw[decorate, decoration={snake, amplitude=3pt, segment length=18pt},
+          line width=5pt, HonoluluBlue]
+          (0,0) -- (0,1.2cm);
+    \fill[HonoluluBlue] (-0.35,1.1) -- (0.35,1.1) -- (0,1.7) -- cycle;
+  \end{tikzpicture}
+
+  \vspace{2pt}
+
+  % World Model icon
+  \begin{tikzpicture}
+    \node[circle, minimum size=3cm, inner sep=0pt,
+          top color=HonoluluBlue!90, bottom color=SeaGreen!85,
+          text=white, font=\fontsize{32}{36}\selectfont] {\faGlobeAmericas};
+  \end{tikzpicture}
+
+  \vspace{0.2cm}
+  {\bfseries\textcolor{HonoluluBlue}{World Model}}
+  \end{pipelinecol}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.12\colwidth}
+  \vspace{0pt}
+  \begin{pipelinecol}
+  % EIG values only
+  \begin{tcolorbox}[colback=white, colframe=HonoluluBlue, boxrule=3pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
+  {\small $\operatorname{EIG}(x_A)$}\\{\small $= \mathbf{0.48}$}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
+  {\small $\operatorname{EIG}(x_B)$}\\{\small $= 0.36$}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=4pt,
+                    left=4pt, right=4pt, top=3pt, bottom=3pt, halign=center]
+  {\small $\operatorname{EIG}(x_C)$}\\{\small $= 0.00$}
+  \end{tcolorbox}
+  \end{pipelinecol}
+\end{minipage}
+
+\end{block}
+
+\begin{block}{Human Study: BattleshipQA Dataset}
+
+How do humans (N=42) balance \textbf{asking questions} and \textbf{taking actions}?
+
+\begin{minipage}[b]{0.28\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/f1_score_vs_question_count.pdf}\\[-0.5ex]
+  {\small \textbf{(a)} Questions predict performance}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.68\colwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/board_timeline_B02.pdf}\\[-0.5ex]
+  {\small \textbf{(b)} Players show widely varying explore/exploit strategies}
+\end{minipage}
+
+\smallskip
+
+Humans are \emph{resource-rational}: they pose informative questions, but vary in \emph{what} and \emph{when} they ask.
+
+\vspace{-1ex}
+
+\end{block}
+
+\begin{block}{SpotterQA: Question Answering}
+
+Can agents provide \textbf{accurate, grounded answers} to natural language questions about board state?
+
+\begin{center}
+  \begin{minipage}[t]{0.18\colwidth}
+    \vspace{0.5cm}
+    \begin{resultbox}
+      \textbf{Code generation boosts accuracy by +14.7\%}
+    \end{resultbox}
+    \vspace{0.5ex}
+    {\small
+    \textcolor{SetTwoOne}{\rule{0.8em}{0.8em}}\; Base LM\\
+    \textcolor{SetTwoTwo}{\rule{0.8em}{0.8em}}\; CoT\\
+    \textcolor{SetTwoThree}{\rule{0.8em}{0.8em}}\; Code\\
+    \textcolor{SetTwoFour}{\rule{0.8em}{0.8em}}\; CoT+Code\\
+    \textcolor{SetTwoFive}{\rule{0.8em}{0.8em}}\; Human
+    }
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.30\colwidth}\centering
+    {\small \textbf{(a)} By LM}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_by_model.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.33\colwidth}\centering
+    {\small \textbf{(b)} By Spotter Strategy}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_overall.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.15\colwidth}\centering
+    {\small \textbf{(c)} By Complexity}\\[0.3ex]
+    \includegraphics[height=15cm]{figures/spotter_accuracy_simple_vs_complex.pdf}
+  \end{minipage}
+\end{center}
+
+\end{block}
+
+\end{column}
+
+% ====================
+% Column 3: CaptainQA + Generalization + References
+% ====================
+
+\begin{column}{\sepwidth}\end{column}
+\begin{column}{\colwidth}
+
+\begin{block}{CaptainQA: Full Game Performance}
+
+Do agents ask \textbf{informative questions} and make \textbf{targeted guesses}? Do they make \textbf{effective use} of a limited question budget?
+
+\begin{center}
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small \textbf{(a)} Targeting scores (F1)}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/captain_f1_boxplot.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small \textbf{(b)} Maximizing EIG with $Q_{\mathrm{Bayes}}$}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/eig_max_vs_k.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.32\colwidth}\centering
+    {\small \textbf{(c)} Question timing}\\[0.3ex]
+    \includegraphics[width=\linewidth]{figures/question_timing.pdf}
+  \end{minipage}\\[0.5ex]
+  {\small
+  \textcolor{SeaGreen}{\rule{1em}{1em}}\;\,Human \enspace
+  \textcolor{BattleshipGray}{\rule{1em}{1em}}\;\,Baseline \enspace
+  \textcolor{AirBlue}{\rule{1em}{1em}}\;\,Llama-4-Scout \enspace
+  \textcolor{HonoluluBlue}{\rule{1em}{1em}}\;\,GPT-4o \enspace
+  \textcolor{NavyBlue}{\rule{1em}{1em}}\;\,GPT-5
+  }
+\end{center}
+
+\begin{resultbox}
+  With Bayesian strategies, our approach boosts \textbf{Llama-4-Scout} from random chance to expert-level:
+  \begin{itemize}
+    \item[\textbullet] \textbf{Better guessing:} Targeting improves from \textbf{0.37 F1} $\rightarrow$ \textbf{0.76 F1}
+    \item[\textbullet] \textbf{Super-human:} Win rate vs. humans \textbf{8\%} $\rightarrow$ \textbf{82\%}
+    \item[\textbullet] \textbf{Surpasses frontier:} Win rate vs. GPT-5 \textbf{0\%} $\rightarrow$ \textbf{67\%}, at \textbf{100$\times$} lower cost
+  \end{itemize}
+\end{resultbox}
+
+\end{block}
+
+\begin{block}{Generalization: Guess Who?}
+
+Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Who?'' from \textbf{TextArena} [8], a game with richer object-relational semantics.
+\vspace{-1ex}
+
+\begin{minipage}[t]{0.48\colwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[height=14cm]{figures/guess-who-results.pdf}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\colwidth}
+  \vspace{0pt}
+  \textbf{GPT-4o}: 61.7\% $\rightarrow$ \textbf{90.0\%}\\
+  \textbf{Llama-4-Scout}: 30.0\% $\rightarrow$ \textbf{72.4\%}
+
+  \medskip
+
+  \begin{resultbox}
+    \raggedright
+    \textbf{Not Battleship-specific:} Our approach generalizes to info-seeking tasks with combinatorial hypothesis spaces.
+  \end{resultbox}
+\end{minipage}
+\vspace{-2ex}
+
+\end{block}
+
+\begin{block}{References}
+
+{%
+\footnotesize
+\begin{minipage}[t]{0.85\colwidth}
+\begin{tabular}{@{}r@{\;\;}p{0.92\linewidth}@{}}
+{[1]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Question asking as program generation. \textit{NeurIPS}, 2017. \\
+{[2]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Do people ask good questions? \textit{CBB}, 2018. \\
+{[3]} & A.~Rothe, B.M.~Lake, T.M.~Gureckis. Asking goal-oriented questions and learning from answers. \textit{CogSci}, 2019. \\
+{[4]} & G.~Grand, V.~Pepe, J.~Andreas, J.B.~Tenenbaum. Loose LIPS sink ships. \textit{CogSci}, 2024. \\
+{[5]} & C.E.~Shannon. A mathematical theory of communication. \textit{Bell Syst.\ Tech.\ J.}, 1948. \\
+{[6]} & D.V.~Lindley. On a measure of the information provided by an experiment. \textit{Ann.\ Math.\ Stat.}, 1956. \\
+{[7]} & T.~Rainforth, A.~Foster, D.R.~Ivanova, F.B.~Smith. Modern Bayesian experimental design. \textit{arXiv}, 2023. \\
+{[8]} & L.~Guertler, B.~Cheng, S.~Yu, B.~Liu, L.~Choshen, C.~Tan. TextArena. \textit{arXiv}, 2025. \\
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.12\colwidth}
+  \centering
+  \qrcode[height=\linewidth]{https://gabegrand.github.io/battleship}
+  \par\vspace{0.5ex}
+  {\sffamily\scriptsize\textbf{Paper \& Code}}
+\end{minipage}%
+}
+
+\end{block}
+
+\end{column}
+\begin{column}{\sepwidth}\end{column}
+
+% --- Elbow connector: dialogue box → propose box ---
+\begin{tikzpicture}[remember picture, overlay]
+  \coordinate (elbowmid) at ($(lastbubble.east)!0.5!(xAbox.west)$);
+  \draw[-{Stealth[length=16pt]}, line width=6pt, HonoluluBlue, rounded corners=12pt]
+    (lastbubble.east) -- (elbowmid |- lastbubble.east) -- (elbowmid |- xAbox.west) -- (xAbox.west);
+\end{tikzpicture}
+
+\end{columns}
+\end{frame}
+\end{document}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Code Generation — Slide Frame</title>
+  <base href="../" />
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:300,400,500,700|Castoro" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="./static/css/index.css" />
+
+  <style>
+    html, body { margin: 0; padding: 0; overflow: auto; background: #f6f8ff; }
+    .section { padding: 0.75rem 1.25rem !important; }
+    .container { max-width: 100% !important; }
+    .section-heading h2 { font-size: 1.3rem !important; }
+    .section-heading .subtitle { font-size: 0.9rem !important; }
+    .codegen-layout { gap: 1rem !important; }
+    .codegen-metrics { display: none; }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+  <section class="section section-codegen" id="code-generation">
+    <div class="container is-max-widescreen">
+      <div class="section-heading has-text-centered">
+        <h2 class="title is-3 is-spaced">Grounding questions by generating code</h2>
+        <p class="subtitle is-5">Translating questions into Python enables the Spotter to reason more effectively about the board state.</p>
+      </div>
+      <div class="codegen-controls">
+        <div class="codegen-example-label">Explore examples:</div>
+        <div class="codegen-example-switch" data-role="codegen-example-switch" role="tablist" aria-label="Code grounding examples"></div>
+      </div>
+      <div class="codegen-layout">
+        <div class="codegen-chat-panel">
+          <div class="codegen-chat" data-role="codegen-chat" aria-live="polite">
+            <div class="event-details codegen-chat-box" data-role="codegen-chat-box">
+              <div class="event-chat-log" data-role="codegen-chat-log">
+                <div class="empty-state">Select an example to replay the conversation.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="codegen-board-panel">
+          <div class="board-card codegen-board-card">
+            <div class="board-card-header">
+              <h3 class="title is-5 mb-1">Board State</h3>
+              <div class="trajectory-view-toggle" data-role="codegen-view-toggle" role="group" aria-label="Board perspective">
+                <button type="button" class="view-toggle-button" data-view="captain">
+                  <span class="icon" aria-hidden="true"><i class="fas fa-anchor"></i></span>
+                  <span class="label">Captain View</span>
+                </button>
+                <button type="button" class="view-toggle-button is-active" data-view="spotter">
+                  <span class="icon" aria-hidden="true"><i class="fas fa-binoculars"></i></span>
+                  <span class="label">Spotter View</span>
+                </button>
+              </div>
+            </div>
+            <p class="board-caption codegen-board-caption" data-role="codegen-board-caption">True board known to the Spotter</p>
+            <div class="board-grid" data-role="codegen-board-grid" role="grid" aria-label="Spotter board"></div>
+          </div>
+        </div>
+      </div>
+      <div class="codegen-metrics mt-6"></div>
+    </div>
+  </section>
+</body>
+</html>

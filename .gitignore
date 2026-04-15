@@ -181,3 +181,6 @@ experiments/collaborative/question_embeddings_cache.pkl
 experiments/collaborative/human_eig_df.csv
 
 cache/
+
+# Claude Code
+CLAUDE.md
