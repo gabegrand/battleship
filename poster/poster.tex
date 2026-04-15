@@ -93,6 +93,10 @@
 \definecolor{SetTwoThree}{HTML}{8DA0CB} % Code
 \definecolor{SetTwoFour}{HTML}{E78AC3}  % CoT + Code
 \definecolor{SetTwoFive}{HTML}{A6D854}  % Human
+% Ship tracker colors
+\definecolor{ShipPurple}{HTML}{6d467b}
+\definecolor{ShipOrange}{HTML}{ffa500}
+\definecolor{ShipUnknown}{HTML}{d0d4dc}
 
 % Override Gemini colors — neutral header, accent blue details
 \setbeamercolor{headline}{fg=white,bg=HonoluluBlue}
@@ -138,9 +142,9 @@
 
 \title{Shoot First, Ask Questions Later? Building Rational Agents that Explore and Act Like People}
 
-\author{Gabriel Grand\textsuperscript{*1,2} \quad Valerio Pepe\textsuperscript{*3} \quad Joshua B.\ Tenenbaum\textsuperscript{1,2} \quad Jacob Andreas\textsuperscript{1}}
+\author{Gabriel Grand\textsuperscript{1,2\footnotesize\faAnchor} \quad Valerio Pepe\textsuperscript{3\footnotesize\faAnchor} \quad Joshua B.\ Tenenbaum\textsuperscript{1,2} \quad Jacob Andreas\textsuperscript{1}}
 
-\institute{\textsuperscript{1}MIT CSAIL \quad \textsuperscript{2}MIT Brain and Cognitive Sciences \quad \textsuperscript{3}Harvard SEAS \qquad {\normalsize\textsuperscript{*}Equal contribution}}
+\institute{\textsuperscript{1}MIT CSAIL \quad \textsuperscript{2}MIT Brain and Cognitive Sciences \quad \textsuperscript{3}Harvard SEAS \qquad {\normalsize{\footnotesize\faAnchor}\,Equal contribution}}
 
 \logoleft{%
   \begin{minipage}{12cm}
@@ -198,17 +202,52 @@ We adapt a classic task paradigm from cognitive science [1--4] into an evaluatio
   boxrule=0.5pt, arc=8pt, left=6pt, right=6pt, top=6pt, bottom=6pt,
   before skip=10pt, after skip=0pt}
 %
+% Ship segment command for tracker
+\newcommand{\shipseg}[1]{%
+  \tikz[baseline=-0.15em]{\node[rectangle, rounded corners=2pt, minimum size=0.8em, fill=#1, draw=white, line width=0.5pt] {};}\kern1.5pt}
+%
 % Measure board image height to match dialogue box
 \newlength{\boardht}
 \settoheight{\boardht}{\includegraphics[width=0.3525\colwidth]{figures/board_example_spotter.png}}
 \newlength{\msgwidth}
 %
-\begin{minipage}[c]{0.47\colwidth}
+\begin{minipage}[b]{0.15\colwidth}
+  % --- Ship Tracker ---
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=6pt,
+                    left=6pt, right=6pt, top=6pt, bottom=6pt]
+  {\small\bfseries\textcolor{Charcoal}{\faShip\enspace Ships}}\\[6pt]
+  %
+  \shipseg{ShipPurple}\shipseg{ShipPurple}\hfill{\scriptsize\textcolor{SeaGreen}{Sunk\,\faCheck}}\\[4pt]
+  \shipseg{ShipOrange}\shipseg{ShipOrange}\shipseg{ShipOrange}\shipseg{ShipOrange}\hfill{\scriptsize\textcolor{SeaGreen}{Sunk\,\faCheck}}\\[4pt]
+  \shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\\[4pt]
+  \shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}\shipseg{ShipUnknown}
+  \end{tcolorbox}
+  %
+  \vspace{4pt}
+  %
+  % --- Progress Counters ---
+  \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!30, boxrule=1pt, arc=6pt,
+                    left=6pt, right=6pt, top=6pt, bottom=6pt]
+  {\small\bfseries\textcolor{Charcoal}{\faChartBar\enspace Progress}}\\[10pt]
+  {\scriptsize
+  \begin{tabular}{@{}l@{\quad}r@{}}
+  \textcolor{HonoluluBlue}{\faComment}\enspace Questions & \textbf{12}/15 \\[5pt]
+  \textcolor{Charcoal}{\faCrosshairs}\enspace Moves & \textbf{26}/40 \\[5pt]
+  \textcolor{SeaGreen}{\faCheck}\enspace Hits & \textbf{6} \\[5pt]
+  \textcolor{AlertRed}{\faTimes}\enspace Misses & \textbf{8}
+  \end{tabular}}
+  \end{tcolorbox}
+  %
+  \begin{center}{\small\textcolor{BattleshipGray}{Game status}}\end{center}
+\end{minipage}\hfill
+%
+\begin{minipage}[b]{0.38\colwidth}
   \centering
-  \includegraphics[width=0.75\linewidth]{figures/board_example_spotter.png}
+  \includegraphics[width=0.93\linewidth]{figures/board_example_spotter.png}
+  \vspace{-12pt}
   \begin{center}{\small\textcolor{BattleshipGray}{Board state}}\end{center}
 \end{minipage}\hfill
-\begin{minipage}[c]{0.47\colwidth}
+\begin{minipage}[b]{0.43\colwidth}
   \begin{tcolorbox}[enhanced, colback=white, colframe=BattleshipGray!40, boxrule=1.5pt, arc=6pt,
                     left=8pt, right=8pt, top=8pt, bottom=8pt, height=\boardht,
                     remember as=dialoguebox]
@@ -259,7 +298,7 @@ $\displaystyle p(S \mid x, y) \;\propto\; p(y \mid S, x) \;\; p(S)$
 
 {\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypotheses $s \in \mathcal{S}$ and experiments $x \in \mathcal{X}$ is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and questions.
 
-At each turn $t$, the Captain maintains a belief $p_t(s)$ over hidden boards $s \in \mathcal{S}$. Let $p^{\mathrm{hit}}_t(u) = \sum_{s} \mathds{1}[\text{ship at } u \text{ in } s]\, p_t(s)$.
+At each turn $t$, the Captain maintains a belief $p_t(s)$. Let $p^{\mathrm{hit}}_t(u) = \sum_{s} \mathds{1}[\text{ship at } u \text{ in } s]\, p_t(s)$.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.4}
@@ -302,7 +341,7 @@ At each turn $t$, the Captain maintains a belief $p_t(s)$ over hidden boards $s 
 \end{minipage}\hfill
 \begin{minipage}[b]{0.12\colwidth}\centering
   {\bfseries\textcolor{Charcoal}{\faChartBar\enspace Score}}\\[4pt]
-  {\small $\arg\max_x \operatorname{EIG}$}
+  {\small $\arg\max_x \operatorname{EIG}(x)$}
 \end{minipage}
 
 \vspace{-2ex}
@@ -565,6 +604,7 @@ Do these strategies \textbf{generalize} beyond Battleship? We test on ``Guess Wh
   \medskip
 
   \begin{resultbox}
+    \raggedright
     \textbf{Not Battleship-specific:} Our approach generalizes to info-seeking tasks with combinatorial hypothesis spaces.
   \end{resultbox}
 \end{minipage}
