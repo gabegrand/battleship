@@ -646,21 +646,27 @@
         </aside>
       </section>
 
-      <section id="motivation">
+      <section id="motivation" data-background-color="#1a1a2e" data-auto-animate>
         <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
-          <img src="images/discovery3.png" alt="AI agents for discovery: Science, Medicine, Engineering"
-               style="width: 90%; max-height: 85%; object-fit: contain; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.22);">
+          <img data-id="discovery-img" src="images/discovery3.png" alt="AI agents for discovery: Science, Medicine, Engineering"
+               style="max-width: 85%; height: auto; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.22);">
         </div>
 
         <aside class="notes">
-          <p>Many of the most exciting applications of AI require agents to ask smart questions before acting.</p>
-          <p>People are remarkably good at seeking information to resolve uncertainty. Meanwhile, language models are really good at answering complex queries, but do they learn to ask good questions for themselves? And how do we even evaluate that capability?</p>
+          <ul>
+            <li>From science to medicine to engineering, some of the most important applications of AI involve seeking information under uncertainty.</li>
+            <li>People are remarkably good at this — we naturally form hypotheses, ask targeted questions.</li>
+            <li>Language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
+            <li>To study this, we first need to define what kind of behavior we'd want from a rational agent in a discovery setting.</li>
+          </ul>
         </aside>
       </section>
 
-      <section id="discovery-domains">
+      <section id="discovery-domains" data-auto-animate>
         <div class="section-label">Motivation</div>
         <h3>The structure of discovery</h3>
+        <img data-id="discovery-img" src="images/discovery3.png" alt=""
+             style="position: absolute; top: 0; left: 0; width: 180px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); opacity: 0.5;">
 
         <div style="display: grid; grid-template-columns: 18% 1fr 1fr 1fr; gap: 0; font-size: 0.52em; margin-top: 20px;">
           <!-- Header row -->
@@ -683,7 +689,7 @@
           <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-cubes" style="margin-right: 6px; color: #aaa;"></i>State space</div>
           <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Drug-like molecules<br><span style="color: #888;">($\approx 10^{60}$)</span></div>
           <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Possible conditions<br><span style="color: #888;">($\approx 10^{4}$ ICD codes)</span></div>
-          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Configurations of code &amp; data<br><span style="color: #888;">($\approx \infty$)</span></div>
+          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Configurations of code &amp; data <span style="color: #888;">($\approx 10^{??}$)</span></div>
           <!-- Experiments row -->
           <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-vials" style="margin-right: 6px; color: #aaa;"></i>Experiments</div>
           <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Synthesize compounds, test properties</div>
@@ -697,14 +703,14 @@
         </div>
 
         <aside class="notes">
-          <p>Across domains — from science to medicine to engineering — these kinds of information-seeking problems all share a similar structure.</p>
+          <p>It turns out that discovery problems across domains share a common structure.</p>
           <ul>
-            <li>We start with some high-level goal around discovery, diagnosis, or debugging.</li>
-            <li>The main challenge is the state space: there's a combinatorial explosion of possibilities, and we're looking for a needle in a haystack.</li>
-            <li>To narrow things down, we can run experiments — but experiments are costly, so we need to choose them wisely.</li>
-            <li>And ultimately, we need to take actions based on what we've learned.</li>
+            <li>In each case, we start with a high-level goal — but the goal alone doesn't tell us what to do next.</li>
+            <li>The real challenge is the state space. There are astronomically many possibilities, and we're searching for a needle in a haystack.</li>
+            <li>To narrow things down, we run experiments. But the space of possible experiments is vast, and each one costs time and resources — so we need to choose wisely.</li>
+            <li>Finally, at some point we have to commit: file the patent, prescribe the treatment, push the fix. The question is whether we've gathered enough information to act confidently.</li>
           </ul>
-          <p>[TRANSITION PLACEHOLDER]</p>
+          <p>In this work, we build a framework for studying exactly this kind of behavior.</p>
         </aside>
       </section>
 
@@ -745,12 +751,14 @@
         </div>
 
         <aside class="notes">
-          <p>To study this question, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. We make two contributions:</p>
+          <p>Our approach is grounded in Bayesian Experimental Design — a principled framework for choosing experiments to reduce uncertainty. In this talk, I'll walk you through three parts:</p>
           <ul>
-            <li>A sandbox environment for evaluating information-seeking;</li>
-            <li>And a family of inference techniques that pair agents with a code-based world model.</li>
+            <li>First, I'll introduce a sandbox environment that lets us study information-seeking behavior in a controlled setting — for both humans and AI agents.</li>
+            <li>Second, I'll describe a family of inference techniques that pair language model agents with a code-based world model.</li>
+            <li>Finally, I'll show some results.</li>
+            <li>We find that agents equipped with a world model go from random chance to superhuman performance.</li>
+            <li>And that these agents outperform frontier models like GPT-5, at a fraction of the cost.</li>
           </ul>
-          <p>Putting these together, we find that we can boost agents from random chance up to super-human performance. And we can make weaker LLMs outperform frontier models at a fraction of the cost.</p>
         </aside>
       </section>
 
