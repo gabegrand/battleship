@@ -905,7 +905,7 @@
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question $x$ probes the hidden board state $S$ and produces an observation $y$ &mdash; exactly the BED setup.</span>
+                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question probes the hidden board state and produces an observation.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-brain"></i></span>
@@ -1107,142 +1107,69 @@
            ═══════════════════════════════════════════════════════════════ -->
 
       <section id="bed" data-auto-animate data-auto-animate-restart>
-        <div class="section-label" data-id="bed-label">Motivation</div>
+        <div class="section-label" data-id="bed-label">Formalism</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
-        <div class="two-col">
+        <div class="two-col" style="align-items: start; gap: 36px;">
           <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">Scenario:</span> We encounter an unknown compound in the lab. Goal: identify its molecular structure $S$.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="1" data-id="bed-kp-exp">
-                <span class="kp-icon"><i class="fas fa-vials"></i></span>
-                <span class="kp-text">
-                  <span class="kp-label">Experiments</span> $x \in X$ probe properties of $S$:
-                  <div class="chem-experiments">
-                    <span class="chip">Acid or base?</span>
-                    <span class="chip">Oxidation?</span>
-                    <span class="chip">Water-soluble?</span>
-                    <span class="chip">Melting point?</span>
-                  </div>
-                </span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-sync-alt"></i></span>
-                <span class="kp-text"><span class="kp-label">Update:</span> Each observation $y$ narrows the hypothesis space via Bayes&rsquo; rule.</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="col">
-            <div class="eig-diagram eig-labeled fragment fade-in" data-fragment-index="0" data-id="bed-diagram">
-              <div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$S$</span>
-                <!-- Unknown molecule: benzene ring + branches, grayed out with ? -->
-                <svg width="76" height="72" viewBox="0 0 68 64" style="vertical-align: middle;">
-                  <!-- Benzene ring -->
-                  <polygon points="32,6 47,14.5 47,31.5 32,40 17,31.5 17,14.5"
-                           fill="none" stroke="#ccc" stroke-width="2.2" stroke-linejoin="round"/>
-                  <!-- Aromatic circle -->
-                  <circle cx="32" cy="23" r="7.5" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.5"/>
-                  <!-- Branch: upper-right -->
-                  <line x1="47" y1="14.5" x2="57" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="57" cy="6" r="2.8" fill="#ccc"/>
-                  <!-- Branch: bottom -->
-                  <line x1="32" y1="40" x2="32" y2="54" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="32" cy="54" r="2.8" fill="#ccc"/>
-                  <!-- Branch: upper-left -->
-                  <line x1="17" y1="14.5" x2="7" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="7" cy="6" r="2.8" fill="#ccc"/>
-                  <!-- Question mark overlay -->
-                  <text x="32" y="60" text-anchor="middle" font-size="22" font-weight="700" fill="#304ed8" font-family="sans-serif">?</text>
-                </svg>
+            <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 16px;">
+              What the Captain does on each turn is an instance of <strong>Bayesian Experimental Design</strong> &mdash; choosing experiments to reduce uncertainty about a hidden state.
+            </p>
+            <div class="bed-mapping" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$S$</span>
+                <span style="font-size: 0.5em; color: #4a5770;">Hidden board configuration (unknown to Captain)</span>
               </div>
-              </div><!-- /fragment 0: S -->
-              <div class="fragment fade-in" data-fragment-index="1">
-              <div class="eig-dia-row">
-                <span class="eig-dia-label"></span>
-                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$x$</span>
+                <span style="font-size: 0.5em; color: #4a5770;">Question asked by the Captain</span>
               </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$x$</span>
-                <div class="eig-dia-bubble">&ldquo;Is it water-soluble?&rdquo;</div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$y$</span>
+                <span style="font-size: 0.5em; color: #4a5770;">Answer from the Spotter (Yes / No)</span>
               </div>
-              </div><!-- /fragment 1: x -->
-              <div class="fragment fade-in" data-fragment-index="2">
-              <div class="eig-dia-row">
-                <span class="eig-dia-label"></span>
-                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-              </div>
-              <div class="eig-dia-row">
-                <span class="eig-dia-label">$y$</span>
-                <div class="eig-dia-answer">
-                  <span class="eig-dia-yes">Yes</span>
-                  <span class="eig-dia-no">No</span>
-                </div>
-              </div>
-              </div><!-- /fragment 2: y -->
             </div>
           </div>
-        </div>
 
-        <div class="eq-box fragment fade-in" data-fragment-index="3" style="margin-top: 20px;">
-          $\underbrace{p(S \mid x, y)}_{\text{posterior}} \;\propto\; \underbrace{p(y \mid S,\, x)}_{\text{likelihood}} \;\; \underbrace{p(S)}_{\text{prior}}$
-        </div>
-
-        <aside class="notes">
-          <p>Our approach is based on Bayesian Experimental Design, which I'll introduce with a concrete example.</p>
-          <ul>
-            <li>Imagine we're working in a chemistry lab and we encounter an unknown compound. We want to identify its molecular structure.</li>
-            <li>We have a set of experiments we can run, each of which probes a different property of the compound.</li>
-            <li>Each experiment produces an observation, which we can use to narrow down the space of possible structures via Bayes' rule.</li>
-          </ul>
-        </aside>
-      </section>
-
-      <section id="bed-eig" data-auto-animate>
-        <div class="section-label" data-id="bed-label">Motivation</div>
-        <h3 data-id="bed-title">Bayesian Experimental Design</h3>
-
-        <div class="two-col" style="align-items: start; margin-top: 16px;">
-          <!-- Left: preserved elements from Slide A -->
-          <div class="col" style="flex: 1;">
-            <!-- Experiments key-point (auto-animated from Slide A fragment-index 1) -->
-            <ul class="key-points" data-id="bed-kp" style="margin: 0 0 16px 0;">
-              <li data-id="bed-kp-exp">
-                <span class="kp-icon"><i class="fas fa-vials"></i></span>
-                <span class="kp-text">
-                  <span class="kp-label">Experiments</span> $x \in X$ probe properties of $S$:
-                  <div class="chem-experiments">
-                    <span class="chip">Acid or base?</span>
-                    <span class="chip">Oxidation?</span>
-                    <span class="chip">Water-soluble?</span>
-                    <span class="chip">Melting point?</span>
-                  </div>
-                </span>
-              </li>
-            </ul>
-
-            <!-- S → x → y diagram (auto-animated from Slide A) -->
+          <div class="col">
             <div class="eig-diagram eig-labeled" data-id="bed-diagram">
               <div>
               <div class="eig-dia-row">
                 <span class="eig-dia-label">$S$</span>
-                <svg width="76" height="72" viewBox="0 0 68 64" style="vertical-align: middle;">
-                  <polygon points="32,6 47,14.5 47,31.5 32,40 17,31.5 17,14.5"
-                           fill="none" stroke="#ccc" stroke-width="2.2" stroke-linejoin="round"/>
-                  <circle cx="32" cy="23" r="7.5" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.5"/>
-                  <line x1="47" y1="14.5" x2="57" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="57" cy="6" r="2.8" fill="#ccc"/>
-                  <line x1="32" y1="40" x2="32" y2="54" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="32" cy="54" r="2.8" fill="#ccc"/>
-                  <line x1="17" y1="14.5" x2="7" y2="6" stroke="#ccc" stroke-width="2.2" stroke-linecap="round"/>
-                  <circle cx="7" cy="6" r="2.8" fill="#ccc"/>
-                  <text x="32" y="60" text-anchor="middle" font-size="22" font-weight="700" fill="#304ed8" font-family="sans-serif">?</text>
-                </svg>
+                <div class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                  <div class="mini-board" style="font-size: 0.35em;">
+                    <div class="b-label"></div>
+                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                    <div class="b-label">7</div><div class="b-label">8</div>
+                    <div class="b-label">A</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">B</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell water"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">C</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">D</div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">E</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">F</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">G</div>
+                    <div class="b-cell"></div><div class="b-cell ship-3"></div><div class="b-cell"></div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                    <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">H</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                  </div>
+                </div>
               </div>
               </div>
               <div>
@@ -1252,7 +1179,91 @@
               </div>
               <div class="eig-dia-row">
                 <span class="eig-dia-label">$x$</span>
-                <div class="eig-dia-bubble">&ldquo;Is it water-soluble?&rdquo;</div>
+                <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
+              </div>
+              </div>
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$y$</span>
+                <div class="eig-dia-answer">
+                  <span class="eig-dia-yes">Yes</span>
+                  <span class="eig-dia-no">No</span>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="eq-box fragment fade-in" data-fragment-index="0" style="margin-top: 20px;">
+          $\underbrace{p(S \mid x, y)}_{\text{posterior}} \;\propto\; \underbrace{p(y \mid S,\, x)}_{\text{likelihood}} \;\; \underbrace{p(S)}_{\text{prior}}$
+        </div>
+
+        <aside class="notes">
+          <p>Let's now formalize what the Captain is doing. Each turn is an instance of Bayesian Experimental Design. The hidden board state is S, the Captain's question is an experiment x, and the Spotter's answer is the observation y.</p>
+          <p>Each answer updates the Captain's beliefs via Bayes' rule: the posterior over board states is proportional to the likelihood of observing that answer, times the prior.</p>
+        </aside>
+      </section>
+
+      <section id="bed-eig" data-auto-animate>
+        <div class="section-label" data-id="bed-label">Formalism</div>
+        <h3 data-id="bed-title">Bayesian Experimental Design</h3>
+
+        <div class="two-col" style="align-items: start; margin-top: 16px;">
+          <!-- Left: S → x → y diagram (auto-animated from #bed) -->
+          <div class="col" style="flex: 1;">
+            <div class="eig-diagram eig-labeled" data-id="bed-diagram">
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$S$</span>
+                <div class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                  <div class="mini-board" style="font-size: 0.35em;">
+                    <div class="b-label"></div>
+                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                    <div class="b-label">7</div><div class="b-label">8</div>
+                    <div class="b-label">A</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">B</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell water"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-label">C</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">D</div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">E</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">F</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">G</div>
+                    <div class="b-cell"></div><div class="b-cell ship-3"></div><div class="b-cell"></div>
+                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell water"></div>
+                    <div class="b-cell ship-4"></div><div class="b-cell"></div>
+                    <div class="b-label">H</div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+                  </div>
+                </div>
+              </div>
+              </div>
+              <div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label"></span>
+                <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
+              </div>
+              <div class="eig-dia-row">
+                <span class="eig-dia-label">$x$</span>
+                <div class="eig-dia-bubble">&ldquo;Is the purple ship vertical?&rdquo;</div>
               </div>
               </div>
               <div>
@@ -1271,14 +1282,14 @@
             </div>
           </div>
 
-          <!-- Right: EIG derivation (new content) -->
+          <!-- Right: EIG derivation -->
           <div class="col" style="flex: 1;">
             <div class="eig-deriv-steps" data-id="eig-steps" style="margin-top: 0; max-width: 100%;">
               <div class="fragment fade-in" data-fragment-index="0" style="background: #f0f4ff; border: 1px solid #dde3f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
                 <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
                   <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
                 </div>
-                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose questions that let the Captain learn about $S$ as efficiently as possible.</div>
               </div>
               <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start;">
                 <div class="eig-eq">$\text{IG}(x,\, y) \;=\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big]$</div>
@@ -1286,11 +1297,11 @@
               </div>
               <div class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start;">
                 <div class="eig-eq">$\text{EIG}(x) \;=\; \mathbb{E}_{y \,\sim\, p(y \mid x)}\!\big[\text{IG}(x,\, y)\big]$</div>
-                <div class="eig-annot">Expectation over possible outcomes</div>
+                <div class="eig-annot">Expectation over possible answers</div>
               </div>
               <div class="eig-step eig-highlight fragment fade-in" data-fragment-index="3" style="flex-direction: column; align-items: flex-start;">
                 <div class="eig-eq">$x^{\star} \;=\; \arg\max_{x \,\in\, X}\; \text{EIG}(x)$</div>
-                <div class="eig-annot">Most informative experiment</div>
+                <div class="eig-annot">Most informative question</div>
               </div>
             </div>
           </div>
@@ -1307,18 +1318,18 @@
       </section>
 
       <section id="bed-challenges" data-auto-animate>
-        <div class="section-label" data-id="bed-label">Motivation</div>
+        <div class="section-label" data-id="bed-label">Formalism</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; margin-top: 16px;">
-          <!-- Left: EIG derivation (auto-animated from Slide B right col) -->
+          <!-- Left: EIG derivation (auto-animated from #bed-eig) -->
           <div class="col" style="flex: 1;">
             <div class="eig-deriv-steps" data-id="eig-steps" style="margin-top: 0; max-width: 100%;">
               <div style="background: #f0f4ff; border: 1px solid #dde3f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
                 <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
                   <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
                 </div>
-                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose questions that let the Captain learn about $S$ as efficiently as possible.</div>
               </div>
               <!-- IG: red highlight on H[p(S|x,y)] appears with fragment 0 -->
               <div class="eig-step" style="flex-direction: column; align-items: flex-start; position: relative;">
@@ -1334,7 +1345,7 @@
                   <span class="fragment fade-out" data-fragment-index="1">$\text{EIG}(x) \;=\; \color{#172642}{\mathbb{E}_{y \,\sim\, p(y \mid x)}}\color{#172642}{\!\big[\text{IG}(x,\, y)\big]}$</span>
                   <span class="fragment fade-in" data-fragment-index="1" style="position: absolute; left: 0; top: 0;">$\text{EIG}(x) \;=\; \color{#ac2028}{\mathbb{E}_{y \,\sim\, p(y \mid x)}}\color{#172642}{\!\big[\text{IG}(x,\, y)\big]}$</span>
                 </div>
-                <div class="eig-annot">Expectation over possible outcomes</div>
+                <div class="eig-annot">Expectation over possible answers</div>
               </div>
               <!-- x*: red highlight on argmax appears with fragment 2 -->
               <div class="eig-step eig-highlight" style="flex-direction: column; align-items: flex-start; position: relative;">
@@ -1342,12 +1353,12 @@
                   <span class="fragment fade-out" data-fragment-index="2">$x^{\star} \;=\; \color{#172642}{\arg\max_{x \,\in\, X}}\;\color{#172642}{\text{EIG}(x)}$</span>
                   <span class="fragment fade-in" data-fragment-index="2" style="position: absolute; left: 0; top: 0;">$x^{\star} \;=\; \color{#ac2028}{\arg\max_{x \,\in\, X}}\;\color{#172642}{\text{EIG}(x)}$</span>
                 </div>
-                <div class="eig-annot">Most informative experiment</div>
+                <div class="eig-annot">Most informative question</div>
               </div>
             </div>
           </div>
 
-          <!-- Right: Challenges (new content, 1:1 with left) -->
+          <!-- Right: Challenges (1:1 with left equations) -->
           <div class="col" style="flex: 1;">
             <div class="eig-deriv-steps" style="margin-top: 0; max-width: 100%;">
               <!-- Challenges header (maps to Goal) -->
@@ -1387,9 +1398,9 @@
 
         <aside class="notes">
           <ul>
-            <li>First, computing the entropy requires summing over a combinatorial space of possible structures.</li>
+            <li>First, computing the entropy requires summing over a combinatorial space of possible states.</li>
             <li>Second, estimating the likelihood of each outcome requires actually running the experiment, or at least having a good simulator.</li>
-            <li>Finally, the space of possible experiments may be vast, so we can't just enumerate them all.</li>
+            <li>And third, the space of possible experiments may be vast, so we can't just enumerate them all.</li>
           </ul>
           <p>To address these challenges...</p>
         </aside>
