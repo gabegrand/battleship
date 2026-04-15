@@ -646,52 +646,71 @@
         </aside>
       </section>
 
-      <section id="motivation" data-auto-animate>
-        <div class="section-label" data-id="a1-label">Motivation</div>
-        <h3 data-id="a1-title">AI agents for discovery</h3>
-
-        <div class="two-col" style="align-items: center; gap: 36px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-microscope"></i></span>
-                <span class="kp-text"><span class="kp-label">The promise:</span> Many high-stakes applications of AI require seeking information.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-exclamation-triangle"></i></span>
-                <span class="kp-text"><span class="kp-label">The evaluation gap:</span> Real-world discovery is hard to benchmark.
-                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
-                    <li class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-clock" style="color: #888;"></i> Running experiments is time-consuming and expensive.</li>
-                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-brain" style="color: #888;"></i> LMs already have strong priors about many domains.</li>
-                  </ul>
-                </span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="4">
-                <span class="kp-icon"><i class="fas fa-question-circle"></i></span>
-                <span class="kp-text"><span class="kp-label">Asking vs. answering:</span> Post-training optimizes models to answer questions, but does it teach them to <strong>ask</strong> good questions?</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col fragment fade-in" data-fragment-index="0" style="flex: 0 0 42%; text-align: center;">
-            <img src="images/discovery3.png" alt="LM agent: Observe → Hypothesize → Test → Update"
-                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-          </div>
+      <section id="motivation">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+          <img src="images/discovery3.png" alt="AI agents for discovery: Science, Medicine, Engineering"
+               style="width: 90%; max-height: 85%; object-fit: contain; border-radius: 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.22);">
         </div>
 
         <aside class="notes">
-          <ul>
-            <li>From science to medicine to engineering, many of the most exciting applications of AI require agents to form data-driven hypotheses and seek information strategically.</li>
-            <li>But evaluating these capabilities is surprisingly difficult, for a couple reasons:</li>
-            <li>Running real experiments is time-consuming and expensive, so high-profile discoveries can be hard to reproduce.</li>
-            <li>Moreover, language models already have strong priors about many domains, so they're really good at answering complex queries.</li>
-            <li>What's less clear, though, is whether they can ask good questions for themselves. That's what we aim to investigate.</li>
-          </ul>
+          <p>Many of the most exciting applications of AI require agents to ask smart questions before acting.</p>
+          <p>People are remarkably good at seeking information to resolve uncertainty. Meanwhile, language models are really good at answering complex queries, but do they learn to ask good questions for themselves? And how do we even evaluate that capability?</p>
         </aside>
       </section>
 
-      <section id="this-work" data-auto-animate>
-        <div class="section-label" data-id="a1-label">Motivation</div>
-        <h3 data-id="a1-title">AI agents for discovery</h3>
+      <section id="discovery-domains">
+        <div class="section-label">Motivation</div>
+        <h3>The structure of discovery</h3>
+
+        <div style="display: grid; grid-template-columns: 18% 1fr 1fr 1fr; gap: 0; font-size: 0.52em; margin-top: 20px;">
+          <!-- Header row -->
+          <div style="padding: 10px 12px;"></div>
+          <div style="padding: 10px 12px; text-align: center; color: #304ed8; font-weight: 700; border-bottom: 2px solid #e0e0e0;">
+            <i class="fas fa-flask" style="margin-right: 6px;"></i>Science
+          </div>
+          <div style="padding: 10px 12px; text-align: center; color: #304ed8; font-weight: 700; border-bottom: 2px solid #e0e0e0;">
+            <i class="fas fa-stethoscope" style="margin-right: 6px;"></i>Medicine
+          </div>
+          <div style="padding: 10px 12px; text-align: center; color: #304ed8; font-weight: 700; border-bottom: 2px solid #e0e0e0;">
+            <i class="fas fa-laptop-code" style="margin-right: 6px;"></i>Engineering
+          </div>
+          <!-- Goal row (no top border — sits right below header rule) -->
+          <div class="fragment fade-in" data-fragment-index="0" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-bullseye" style="margin-right: 6px; color: #aaa;"></i>Goal</div>
+          <div class="fragment fade-in" data-fragment-index="0" style="padding: 12px; text-align: center;">Discover a new drug</div>
+          <div class="fragment fade-in" data-fragment-index="0" style="padding: 12px; text-align: center;">Diagnose a patient</div>
+          <div class="fragment fade-in" data-fragment-index="0" style="padding: 12px; text-align: center;">Debug a software system</div>
+          <!-- State space row -->
+          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-cubes" style="margin-right: 6px; color: #aaa;"></i>State space</div>
+          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Drug-like molecules<br><span style="color: #888;">($\approx 10^{60}$)</span></div>
+          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Possible conditions<br><span style="color: #888;">($\approx 10^{4}$ ICD codes)</span></div>
+          <div class="fragment fade-in" data-fragment-index="1" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Configurations of code &amp; data<br><span style="color: #888;">($\approx \infty$)</span></div>
+          <!-- Experiments row -->
+          <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-vials" style="margin-right: 6px; color: #aaa;"></i>Experiments</div>
+          <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Synthesize compounds, test properties</div>
+          <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Physical exam, lab tests, patient interview</div>
+          <div class="fragment fade-in" data-fragment-index="2" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Run unit tests, check logs, inspect state</div>
+          <!-- Actions row -->
+          <div class="fragment fade-in" data-fragment-index="3" style="padding: 12px; font-weight: 700; color: #4a5770;"><i class="fas fa-play-circle" style="margin-right: 6px; color: #aaa;"></i>Actions</div>
+          <div class="fragment fade-in" data-fragment-index="3" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">File patents, advance to clinic</div>
+          <div class="fragment fade-in" data-fragment-index="3" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Prescribe treatment</div>
+          <div class="fragment fade-in" data-fragment-index="3" style="padding: 12px; text-align: center; border-top: 1px solid #e8e8e8;">Push fixes</div>
+        </div>
+
+        <aside class="notes">
+          <p>Across domains — from science to medicine to engineering — these kinds of information-seeking problems all share a similar structure.</p>
+          <ul>
+            <li>We start with some high-level goal around discovery, diagnosis, or debugging.</li>
+            <li>The main challenge is the state space: there's a combinatorial explosion of possibilities, and we're looking for a needle in a haystack.</li>
+            <li>To narrow things down, we can run experiments — but experiments are costly, so we need to choose them wisely.</li>
+            <li>And ultimately, we need to take actions based on what we've learned.</li>
+          </ul>
+          <p>[TRANSITION PLACEHOLDER]</p>
+        </aside>
+      </section>
+
+      <section id="this-work">
+        <div class="section-label">Motivation</div>
+        <h3>This work</h3>
 
         <div class="two-col" style="align-items: center; gap: 36px;">
           <div class="col">
