@@ -708,7 +708,7 @@
             <li>In each case, we start with a high-level goal — but the goal alone doesn't tell us what to do next.</li>
             <li>The real challenge is the state space. There are astronomically many possibilities, and we're searching for a needle in a haystack.</li>
             <li>To narrow things down, we run experiments. But the space of possible experiments is vast, and each one costs time and resources — so we need to choose wisely.</li>
-            <li>Finally, at some point we have to commit: file the patent, prescribe the treatment, push the fix. The question is whether we've gathered enough information to act confidently.</li>
+            <li>Once we've gathered enough information, we can commit to an action. There might still be some uncertainty, but if we've asked the right questions, we can act with confidence.</li>
           </ul>
           <p>In this work, we build a framework for studying exactly this kind of behavior.</p>
         </aside>
@@ -753,10 +753,10 @@
         <aside class="notes">
           <p>Our approach is grounded in Bayesian Experimental Design — a principled framework for choosing experiments to reduce uncertainty. In this talk, I'll walk you through three parts:</p>
           <ul>
-            <li>First, I'll introduce a sandbox environment that lets us study information-seeking behavior in a controlled setting — for both humans and AI agents.</li>
-            <li>Second, I'll describe a family of inference techniques that pair language model agents with a code-based world model.</li>
-            <li>Finally, I'll show some results.</li>
-            <li>We find that agents equipped with a world model go from random chance to superhuman performance.</li>
+            <li>First, I'll introduce a sandbox environment that lets us study info-seeking behavior in a controlled setting — for both humans and AI agents.</li>
+            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model.</li>
+            <li>Finally, I'll highlight some key results.</li>
+            <li>For instance, we find that agents equipped with a world model go from random chance to superhuman performance.</li>
             <li>And that these agents outperform frontier models like GPT-5, at a fraction of the cost.</li>
           </ul>
         </aside>
@@ -767,43 +767,35 @@
         <div class="section-label">Motivation</div>
         <h3>Building a sandbox for discovery</h3>
 
-        <div class="two-col" style="align-items: center; gap: 36px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-cube"></i></span>
-                <span class="kp-text"><span class="kp-label">Minimal but complete.</span> Simple state representation and dynamics, yet instantiates the full BED loop.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-users"></i></span>
-                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI agents can play, enabling direct behavioral comparison. No domain expertise required.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
-                <span class="kp-text"><span class="kp-label">Simulatable.</span> Outcomes can be generated automatically. Experiments take seconds, not days.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="3">
-                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
-                <span class="kp-text"><span class="kp-label">Measurable.</span> We can quantify not just outcomes, but intermediate decisions: explore vs.&nbsp;exploit, and the value of information (EIG).</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col" style="flex: 0 0 42%; text-align: center;">
-            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
-                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025): Inspiration for a challenging domain with a minimal state representation</p>
-          </div>
+        <ul class="key-points" style="margin: 0; max-width: 75%;">
+          <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+            <span class="kp-icon"><i class="fas fa-bolt"></i></span>
+            <span class="kp-text"><span class="kp-label">Fast and scalable.</span> Experiments can be run quickly at low cost.</span>
+          </li>
+          <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+            <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+            <span class="kp-text"><span class="kp-label">Measurable.</span> A principled way to quantify the value of each experiment.</span>
+          </li>
+          <li class="fragment fade-in" data-fragment-index="2">
+            <span class="kp-icon"><i class="fas fa-users"></i></span>
+            <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI can play without domain expertise.</span>
+          </li>
+        </ul>
+
+        <div class="fragment fade-in" data-fragment-index="2" style="position: absolute; bottom: 12px; right: 16px; text-align: center;">
+          <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+               style="width: 140px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.15);">
+          <p style="font-size: 0.3em; color: #999; margin: 4px 0 0 0;">ARC-AGI 2 (Chollet et al., 2025)</p>
         </div>
 
         <aside class="notes">
-          <p>We drew inspiration from ARC-AGI, which shows that minimal domains can still be deeply challenging. For evaluating BED specifically, we wanted a task that was:</p>
+          <p>So what would an ideal sandbox look like?</p>
           <ul>
-            <li>Lightweight, yet complete;</li>
-            <li>Easy for both humans and agents to pick up and play;</li>
-            <li>Directly simulatable;</li>
-            <li>and rich with signals about decision-making.</li>
+            <li>First, real-world experiments take months and cost millions — we need a domain where we can iterate in seconds.</li>
+            <li>Second, we need some way of quantifying the utility of an experiment — not just whether the agent succeeded, but whether the questions it asked along the way were good ones.</li>
+            <li>Third, we want to directly compare humans and AI agents, which means the task has to be simple enough that anyone can pick it up — no domain expertise required. That doesn't mean the task has to be trivial — ARC-AGI is a good example of a minimal domain that's still extremely hard.</li>
           </ul>
-          <p>We turned to the cognitive science literature, where there's a long tradition of using simple games to study human behavior. Specifically, we looked Battleship...</p>
+          <p>In our case, we turned to the cognitive science literature, where there's a long tradition of using game-like environments to study human reasoning and decision-making.</p>
         </aside>
       </section>
 
