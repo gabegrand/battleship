@@ -17,6 +17,7 @@
 \usetikzlibrary{arrows.meta, calc, decorations.pathmorphing}
 \usepackage{fontawesome5}
 \usepackage{amsmath,amssymb,mathtools}
+\usepackage{dsfont}
 \usepackage{newtxmath}
 % Fix mathrm/operatorname to use Times (fontspec overrides it to Lato)
 \SetSymbolFont{operators}{normal}{OT1}{ntxtlf}{m}{n}
@@ -154,9 +155,9 @@
 % ====================
 
 \footercontent{
-  \textbf{gabegrand.github.io/battleship} \hfill
+  arxiv.org/abs/2510.20886 \hfill
   ICLR 2026 --- Oral Presentation \hfill
-  github.com/gabegrand/battleship
+  \textbf{gabegrand.github.io/battleship}
 }
 
 % ====================
@@ -252,13 +253,13 @@ We formalize question selection as BED [5--7]. Given hidden state $S$, we comput
 $\displaystyle p(S \mid x, y) \;\propto\; p(y \mid S, x) \;\; p(S)$
 \end{minipage}\hfill
 \begin{minipage}[c]{0.58\colwidth}
-\colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S)\big] - H\big[p(S \mid x, y)\big]\Big]$\;\;}
+\colorbox{AirBlue!15}{\;\;$\displaystyle\operatorname{EIG}(x) = H\big[p(S)\big] - \mathbb{E}_{y \sim p(y \mid x)}\!\Big[H\big[p(S \mid x, y)\big]\Big]$\;\;}
 \end{minipage}
 \end{center}
 
 {\bfseries\textcolor{HonoluluBlue}{Three inference-time strategies.}}\enspace Computing EIG over combinatorial hypotheses $s \in \mathcal{S}$ and experiments $x \in \mathcal{X}$ is intractable; we approximate via \emph{Monte Carlo sampling} of both world states and questions.
 
-At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Let $p^{\mathrm{hit}}_t(u) = \Pr(\text{ship at } u \mid p_t)$.
+At each turn $t$, the Captain maintains a belief $p_t(s)$ over hidden boards $s \in \mathcal{S}$. Let $p^{\mathrm{hit}}_t(u) = \sum_{s} \mathds{1}[\text{ship at } u \text{ in } s]\, p_t(s)$.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.4}
@@ -268,7 +269,7 @@ At each turn $t$, the Captain maintains a belief $p_t(S)$ over hidden boards. Le
   \midrule
   $Q_{\mathrm{Bayes}}$ & Ask & $x_t^{\star} = \arg\max_{x} \operatorname{EIG}(x);\; x \sim p_{\text{LM}}(x)$ & Sample and score questions by EIG \\
   $M_{\mathrm{Bayes}}$ & Shoot & $u_t^{\star} = \arg\max_{u}\, p^{\mathrm{hit}}_t(u)$ & Highest-probability (MAP) action \\
-  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, p^{\mathrm{hit}}_{t+1}(u_{t+1}^{\star} \mid x_t^{\star}) > p^{\mathrm{hit}}_t(u_t^{\star})$ & One-step lookahead \\
+  $D_{\mathrm{Bayes}}$ & Decide & Ask if $\gamma\, p^{\mathrm{hit}}_{t+1}(u_{t+1}^{\star} \mid x_t^{\star}) > p^{\mathrm{hit}}_t(u_t^{\star})$ & One-step lookahead with discount $\gamma$ \\
   \bottomrule
 \end{tabular*}
 \end{center}
