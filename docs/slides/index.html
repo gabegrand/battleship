@@ -767,25 +767,28 @@
         <div class="section-label">Motivation</div>
         <h3>Building a sandbox for discovery</h3>
 
-        <ul class="key-points" style="margin: 0; max-width: 75%;">
-          <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-            <span class="kp-icon"><i class="fas fa-bolt"></i></span>
-            <span class="kp-text"><span class="kp-label">Fast and scalable.</span> Experiments can be run quickly at low cost.</span>
-          </li>
-          <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-            <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
-            <span class="kp-text"><span class="kp-label">Measurable.</span> A principled way to quantify the value of each experiment.</span>
-          </li>
-          <li class="fragment fade-in" data-fragment-index="2">
-            <span class="kp-icon"><i class="fas fa-users"></i></span>
-            <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI can play without domain expertise.</span>
-          </li>
-        </ul>
-
-        <div class="fragment fade-in" data-fragment-index="2" style="position: absolute; bottom: 12px; right: 16px; text-align: center;">
-          <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
-               style="width: 140px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.15);">
-          <p style="font-size: 0.3em; color: #999; margin: 4px 0 0 0;">ARC-AGI 2 (Chollet et al., 2025)</p>
+        <div class="two-col" style="align-items: center; gap: 36px;">
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
+                <span class="kp-text"><span class="kp-label">Fast and scalable.</span> Experiments can be run quickly at low cost.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+                <span class="kp-text"><span class="kp-label">Measurable.</span> A principled way to quantify the value of each experiment.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-users"></i></span>
+                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI can play without domain expertise.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col fragment fade-in" data-fragment-index="2" style="flex: 0 0 38%; text-align: center;">
+            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
+            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025)</p>
+          </div>
         </div>
 
         <aside class="notes">
@@ -817,7 +820,7 @@
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-eye-slash"></i></span>
-                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board &mdash; most tiles are unknown.</span>
+                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board. Most tiles are unknown.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-crosshairs"></i></span>
@@ -1102,7 +1105,7 @@
         </div>
 
         <div class="callout fragment fade-in" data-fragment-index="3" style="margin-top: 12px;">
-          <p><span class="callout-label">Key idea:</span> The Spotter acts as an <strong>experiment oracle</strong> &mdash; providing instant, automated feedback about experiment outcomes.</p>
+          <p><span class="callout-label">Key idea:</span> The Spotter acts as an <strong>experiment oracle</strong>, providing instant, automated feedback about experiment outcomes.</p>
         </div>
 
         <aside class="notes">
@@ -1127,7 +1130,7 @@
         <div class="two-col" style="align-items: start; gap: 36px;">
           <div class="col">
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 16px;">
-              What the Captain does on each turn is an instance of <strong>Bayesian Experimental Design</strong> &mdash; choosing experiments to reduce uncertainty about a hidden state.
+              What the Captain does on each turn is an instance of <strong>Bayesian Experimental Design</strong>: choosing experiments to reduce uncertainty about a hidden state.
             </p>
             <div class="bed-mapping" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px;">
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -1303,7 +1306,7 @@
                 <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
                   <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
                 </div>
-                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose questions that let the Captain learn about $S$ as efficiently as possible.</div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
               </div>
               <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start;">
                 <div class="eig-eq">$\text{IG}(x,\, y) \;=\; H\!\big[p(S)\big] \;-\; H\!\big[p(S \mid x, y)\big]$</div>
@@ -1343,7 +1346,7 @@
                 <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
                   <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Goal
                 </div>
-                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose questions that let the Captain learn about $S$ as efficiently as possible.</div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Choose experiments that let us learn about $S$ as efficiently as possible.</div>
               </div>
               <!-- IG: red highlight on H[p(S|x,y)] appears with fragment 0 -->
               <div class="eig-step" style="flex-direction: column; align-items: flex-start; position: relative;">
@@ -1380,7 +1383,7 @@
                 <div style="font-size: 0.55em; font-weight: 600; color: #ac2028;">
                   <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Challenges
                 </div>
-                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Computing EIG exactly is intractable &mdash; three key difficulties:</div>
+                <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Computing EIG exactly is intractable in general. Three key difficulties:</div>
               </div>
               <!-- Challenge 1: Marginalization (maps to IG) -->
               <div class="eig-step fragment fade-in" data-fragment-index="0" style="flex-direction: column; align-items: flex-start; width: 100%;">
