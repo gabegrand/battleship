@@ -454,7 +454,7 @@
       font-size: 0.52em; font-weight: 600; color: #fff;
       border-radius: 4px; aspect-ratio: 1/1;
       background: #eaeae4;  /* unknown */
-      transition: background 0.4s ease, box-shadow 0.4s ease;
+      transition: background 0.4s ease, box-shadow 0.4s ease, opacity 0.5s ease;
     }
     .mini-board .b-cell.water   { background: #9b9c97; }
     .mini-board .b-cell.ship-1  { background: #ac2028; }
@@ -462,8 +462,16 @@
     .mini-board .b-cell.ship-3  { background: #6d467b; }
     .mini-board .b-cell.ship-4  { background: #ffa500; }
     .mini-board .b-cell.current { box-shadow: 0 0 0 2px rgba(23,38,66,0.9), 0 0 0 4px rgba(255,255,255,0.6); z-index: 1; }
+    .mini-board.captain-view .b-cell.hidden { opacity: 0.25; }
 
-
+    /* #battleship-qa: staggered fade for example questions,
+       with reverse stagger on fade-out (going backwards). */
+    .qa-examples .fragment.qa-q1 { transition-delay: 0.3s; }
+    .qa-examples .fragment.qa-q1.visible { transition-delay: 0s; }
+    .qa-examples .fragment.qa-q2 { transition-delay: 0.15s; }
+    .qa-examples .fragment.qa-q2.visible { transition-delay: 0.15s; }
+    .qa-examples .fragment.qa-q3 { transition-delay: 0s; }
+    .qa-examples .fragment.qa-q3.visible { transition-delay: 0.3s; }
 
     /* ── Board flip animation (Spotter POV reveal) ── */
     .game-action-board-wrap.board-flipper {
@@ -840,69 +848,35 @@
           </div>
           <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
             <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
-              <div style="position: relative;">
-                <!-- Full board (fades out on fragment 1) -->
-                <div id="c0-full-board" class="mini-board" style="transition: opacity 0.6s;">
-                  <div class="b-label"></div>
-                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                  <div class="b-label">7</div><div class="b-label">8</div>
-                  <div class="b-label">A</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">B</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">C</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">D</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">E</div>
-                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">F</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">G</div>
-                  <div class="b-cell water"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div>
-                  <div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-label">H</div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
-                </div>
-                <!-- Partial board (fades in on fragment 1, stacked behind) -->
-                <div id="c0-partial-board" class="mini-board" style="position: absolute; top: 0; left: 0; right: 0; opacity: 0; transition: opacity 0.6s;">
-                  <div class="b-label"></div>
-                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                  <div class="b-label">7</div><div class="b-label">8</div>
-                  <div class="b-label">A</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">B</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">C</div>
-                  <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">D</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">E</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">F</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">G</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  <div class="b-label">H</div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                  <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                </div>
+              <div id="c0-board" class="mini-board">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div>
+                <div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell water hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div>
+                <div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
               </div>
             </div>
           </div>
@@ -930,71 +904,65 @@
                 <span class="kp-icon"><i class="fas fa-comments"></i></span>
                 <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
               </li>
+            </ul>
+
+            <div class="qa-examples" style="margin: 6px 0 28px;">
+              <div class="fragment fade-in qa-q1" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Is there another ship near orange?&rdquo;
+              </div>
+              <div class="fragment fade-in qa-q2" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Do any ships lie along the edges?&rdquo;
+              </div>
+              <div class="fragment fade-in qa-q3" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Is the purple ship horizontal?&rdquo;
+              </div>
+            </div>
+
+            <ul class="key-points" style="margin: 0;">
               <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-flask"></i></span>
                 <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question probes the hidden board state and produces an observation.</span>
               </li>
-              <li class="fragment fade-in" data-fragment-index="2">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-brain"></i></span>
-                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
+                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build on prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
                   <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
               </li>
             </ul>
           </div>
 
-          <!-- Right: board with question/answer example -->
-          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; display: flex; justify-content: center;">
-            <div class="eig-diagram" style="padding: 14px; gap: 8px;">
-              <div>
-                <div data-id="c-board" class="game-action-board-wrap" style="padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                  <div class="mini-board" style="font-size: 0.55em;">
-                    <div class="b-label"></div>
-                    <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                    <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                    <div class="b-label">7</div><div class="b-label">8</div>
-                    <div class="b-label">A</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                    <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">B</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">C</div>
-                    <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">D</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                    <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">E</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">F</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">G</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                    <div class="b-label">H</div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                    <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="fragment fade-in" data-fragment-index="1">
-                <div class="eig-dia-row">
-                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-                </div>
-                <div class="eig-dia-row">
-                  <div class="eig-dia-bubble">&ldquo;Is there another ship near orange?&rdquo;</div>
-                </div>
-                <div class="eig-dia-row">
-                  <span class="eig-dia-arrow"><i class="fas fa-arrow-down"></i></span>
-                </div>
-                <div class="eig-dia-row">
-                  <div class="eig-dia-answer">
-                    <span class="eig-dia-yes">Yes</span>
-                    <span class="eig-dia-no">No</span>
-                  </div>
-                </div>
+          <!-- Right: Spotter view with captain-hidden cells translucent -->
+          <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
+            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
+              <div class="mini-board captain-view">
+                <div class="b-label"></div>
+                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                <div class="b-label">7</div><div class="b-label">8</div>
+                <div class="b-label">A</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">B</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">C</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">D</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">E</div>
+                <div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div>
+                <div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">F</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">G</div>
+                <div class="b-cell water hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div>
+                <div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-label">H</div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
               </div>
             </div>
           </div>
@@ -1135,12 +1103,12 @@
         <div class="two-col" style="align-items: start; gap: 36px;">
           <div class="col">
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 16px;">
-              What the Captain does on each turn is an instance of <strong>Bayesian Experimental Design</strong>: choosing experiments to reduce uncertainty about a hidden state.
+              Collaborative Battleship centers on <strong>Bayesian Experimental Design</strong>: choosing experiments to reduce uncertainty about a hidden state.
             </p>
             <div class="bed-mapping" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px;">
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$S$</span>
-                <span style="font-size: 0.5em; color: #4a5770;">Hidden board configuration (unknown to Captain)</span>
+                <span style="font-size: 0.5em; color: #4a5770;">Hidden board state</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$x$</span>
@@ -1148,7 +1116,7 @@
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 0.7em; font-weight: 700; color: #304ed8; width: 30px; text-align: right;">$y$</span>
-                <span style="font-size: 0.5em; color: #4a5770;">Answer from the Spotter (Yes / No)</span>
+                <span style="font-size: 0.5em; color: #4a5770;">Answer from the Spotter</span>
               </div>
             </div>
           </div>
@@ -4108,20 +4076,17 @@ def answer(true_board, partial_board) -> bool:
       }
     })();
 
-    // ── #battleship: board cross-fade on fragment 1 ──
+    // ── #battleship: captain-view fade on fragment 1 ──
     function c0BoardSwap(show) {
-      var full = document.getElementById('c0-full-board');
-      var partial = document.getElementById('c0-partial-board');
-      if (full) full.style.opacity = show ? '0' : '1';
-      if (partial) partial.style.opacity = show ? '1' : '0';
+      var board = document.getElementById('c0-board');
+      if (board) board.classList.toggle('captain-view', show);
     }
 
-    // ── #battleship: board cross-fade fragment handler ──
     Reveal.on('fragmentshown', function(event) {
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
       var slide = event.fragment.closest('section');
-      if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
+      if (slide && slide.querySelector('#c0-board') && idx === '1') {
         c0BoardSwap(true);
       }
     });
@@ -4130,17 +4095,17 @@ def answer(true_board, partial_board) -> bool:
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
       var slide = event.fragment.closest('section');
-      if (slide && slide.querySelector('#c0-full-board') && idx === '1') {
+      if (slide && slide.querySelector('#c0-board') && idx === '1') {
         c0BoardSwap(false);
       }
     });
 
     // Sync #battleship board state when entering the slide
     Reveal.on('slidechanged', function(event) {
-      if (event.currentSlide.querySelector('#c0-full-board')) {
+      if (event.currentSlide.querySelector('#c0-board')) {
         var frag1 = event.currentSlide.querySelector('[data-fragment-index="1"]');
-        var showPartial = frag1 && frag1.classList.contains('visible');
-        c0BoardSwap(showPartial);
+        var showCaptain = frag1 && frag1.classList.contains('visible');
+        c0BoardSwap(showCaptain);
       }
     });
 
