@@ -720,26 +720,25 @@
 
         <div class="two-col" style="align-items: center; gap: 36px;">
           <div class="col">
+            <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 16px;">
+              A framework based on Bayesian Experimental Design (BED) for <strong>building</strong> and <strong>evaluating</strong> agents in discovery settings.
+            </p>
             <ul class="key-points" style="margin: 0;">
-              <li>
-                <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">This work:</span> A framework based on Bayesian Experimental Design (BED) for <strong>building</strong> and <strong>evaluating</strong> agents in discovery settings:
-                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
-                    <li class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-crosshairs" style="color: #888;"></i> A sandbox environment for controlled evaluation of information-seeking.</li>
-                    <li class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-globe" style="color: #888;"></i> Inference techniques that combine agents with a code-based world model.</li>
-                  </ul>
-                </span>
+              <li class="fragment fade-in" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-crosshairs" style="color: #fff;"></i></span>
+                <span class="kp-text"><span class="kp-label">Part I: Task Design.</span> A sandbox environment for controlled evaluation of information-seeking.</span>
+              </li>
+              <li class="fragment fade-in" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-globe" style="color: #fff;"></i></span>
+                <span class="kp-text"><span class="kp-label">Part II: Modeling Framework.</span> Inference techniques that equip agents with a code-based world model.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-rocket"></i></span>
-                <span class="kp-text"><span class="kp-label">Accelerating discovery:</span>
-                  <ul style="list-style: none; padding-left: 0; margin: 0.3em 0 0 0;">
-                    <li class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-rocket" style="color: #888;"></i> Agents that initially perform no better than random achieve super-human performance.</li>
-                    <li class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: center; gap: 12px;"><i class="fas fa-chart-line" style="color: #888;"></i> These agents outperform frontier models (e.g., GPT-5) at orders of magnitude lower cost.</li>
-                  </ul>
-                </span>
+                <span class="kp-icon"><i class="fas fa-chart-bar" style="color: #fff;"></i></span>
+                <span class="kp-text"><span class="kp-label" style="color: #1e3270;">Part III: Experiments &amp; Results.</span> Agents go from random chance to superhuman, outperforming frontier models at a fraction of the cost.</span>
               </li>
             </ul>
+            <!-- Final click: dim Parts II and III, leaving Part I highlighted -->
+            <span class="fragment semi-fade-out-list" data-fragment-index="3" style="display:none;"></span>
           </div>
           <div class="col img-crossfade" style="flex: 0 0 42%; display: grid;">
             <img src="images/agent-battleship-a.png" alt="Agent confused, random exploration"
@@ -763,8 +762,19 @@
       </section>
 
 
+      <!-- ═══════════════════════════════════════════════════════════════
+           PART I: TASK DESIGN
+           ═══════════════════════════════════════════════════════════════ -->
+
+      <section id="task-divider" data-background-color="#1e3270">
+        <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Part I: Task Design</h2>
+        <aside class="notes">
+          <p>Let's start with the task.</p>
+        </aside>
+      </section>
+
       <section id="sandbox">
-        <div class="section-label">Motivation</div>
+        <div class="section-label">Part I: Task Design</div>
         <h3>Building a sandbox for discovery</h3>
 
         <div class="two-col" style="align-items: center; gap: 36px;">
@@ -808,7 +818,7 @@
            ═══════════════════════════════════════════════════════════════ -->
 
       <section id="battleship" data-auto-animate>
-        <div class="section-label" data-id="c-label">Task</div>
+        <div class="section-label" data-id="c-label">Part I: Task Design</div>
         <h3 data-id="c-title">Battleship</h3>
 
         <div class="two-col" style="align-items: start; gap: 36px;">
@@ -915,7 +925,7 @@
       </section>
 
       <section id="battleship-qa" data-auto-animate>
-        <div class="section-label" data-id="c-label">Task</div>
+        <div class="section-label" data-id="c-label">Part I: Task Design</div>
         <h3 data-id="c-title">Battleship as a QA task</h3>
 
         <div class="two-col" style="align-items: start; gap: 32px;">
@@ -1009,7 +1019,7 @@
       </section>
 
       <section id="collab-battleship" data-auto-animate>
-        <div class="section-label" data-id="c-label">Task</div>
+        <div class="section-label" data-id="c-label">Part I: Task Design</div>
         <h3 data-id="c-title">Collaborative Battleship</h3>
         <p style="text-align: center; font-size: 0.55em; color: #304ed8; font-weight: 500; margin-bottom: 12px;">
           Our contribution: a two-player synchronous task
@@ -1120,11 +1130,18 @@
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════
-           BAYESIAN EXPERIMENTAL DESIGN
+           PART II: MODELING FRAMEWORK
            ═══════════════════════════════════════════════════════════════ -->
 
+      <section id="framework-divider" data-background-color="#1e3270">
+        <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Part II: Modeling Framework</h2>
+        <aside class="notes">
+          <p>Now that we have our task, let's formalize the problem.</p>
+        </aside>
+      </section>
+
       <section id="bed" data-auto-animate data-auto-animate-restart>
-        <div class="section-label" data-id="bed-label">Formalism</div>
+        <div class="section-label" data-id="bed-label">Part II: Modeling Framework</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; gap: 36px;">
@@ -1227,7 +1244,7 @@
       </section>
 
       <section id="bed-eig" data-auto-animate>
-        <div class="section-label" data-id="bed-label">Formalism</div>
+        <div class="section-label" data-id="bed-label">Part II: Modeling Framework</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; margin-top: 16px;">
@@ -1335,7 +1352,7 @@
       </section>
 
       <section id="bed-challenges" data-auto-animate>
-        <div class="section-label" data-id="bed-label">Formalism</div>
+        <div class="section-label" data-id="bed-label">Part II: Modeling Framework</div>
         <h3 data-id="bed-title">Bayesian Experimental Design</h3>
 
         <div class="two-col" style="align-items: start; margin-top: 16px;">
@@ -1428,7 +1445,7 @@
            ═══════════════════════════════════════════════════════════════ -->
 
       <section id="approach" data-auto-animate data-auto-animate-restart>
-        <div class="section-label" data-id="approach-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
         <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: grid; grid-template-columns: auto auto auto; align-items: center; justify-content: center; column-gap: 24px; row-gap: 12px; margin-top: 80px;">
@@ -1459,7 +1476,7 @@
       </section>
 
       <section id="approach-affordances" data-auto-animate>
-        <div class="section-label" data-id="approach-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
         <h3>Grounding reasoning in a world model</h3>
 
         <div style="display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 80px;">
@@ -1506,7 +1523,7 @@
       </section>
 
       <section id="eig-computation" data-auto-animate>
-        <div class="section-label" data-id="approach-label">Approach</div>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
         <h3>Computing EIG in Battleship</h3>
 
         <div style="display: flex; gap: 18px; align-items: start; margin-top: 4px;">
@@ -1717,7 +1734,7 @@
 
 
       <section id="research-questions">
-        <div class="section-label">Approach</div>
+        <div class="section-label">Part II: Modeling Framework</div>
         <h3>What can we study with this framework?</h3>
         <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
           EIG lets us formalize key behavioral questions about humans and AI agents
@@ -1749,14 +1766,14 @@
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════
-           SECTION E: EXPERIMENTS
+           PART III: EXPERIMENTS & RESULTS
            ═══════════════════════════════════════════════════════════════ -->
 
       <section id="experiments-divider" data-background-color="#1e3270">
-        <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Experiments and Results</h2>
+        <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Part III: Experiments &amp; Results</h2>
       </section>
 
-      <section id="roadmap-v1" data-auto-animate data-auto-animate-id="roadmap">
+      <section id="overview-v1" data-auto-animate data-auto-animate-id="roadmap">
         <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
         <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
           <!-- Left: Humans -->
@@ -1831,7 +1848,7 @@
            SECTION G: AGENTS — Results 1 (grounded simulation)
            ═══════════════════════════════════════════════════════════════ -->
 
-      <section id="roadmap-v2" data-auto-animate data-auto-animate-id="roadmap">
+      <section id="overview-v2" data-auto-animate data-auto-animate-id="roadmap">
         <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
         <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
           <!-- Left: Humans — filled in, starts highlighted -->
@@ -1986,7 +2003,7 @@
         </aside>
       </section>
 
-      <section id="roadmap-v3" data-auto-animate data-auto-animate-id="roadmap">
+      <section id="overview-v3" data-auto-animate data-auto-animate-id="roadmap">
         <h3 data-id="roadmap-title">Experiments &amp; Results</h3>
         <div data-id="roadmap-cards" style="display: flex; gap: 32px; margin-top: 36px; align-items: stretch;">
           <!-- Left: Humans — filled in, dimmed -->
@@ -4201,6 +4218,28 @@ def answer(true_board, partial_board) -> bool:
       });
       Reveal.on('slidechanged', function(e) {
         if (e.currentSlide.querySelector('[data-roadmap]')) syncRoadmap(e.currentSlide);
+      });
+    })();
+
+    // ── #this-work: dim Parts II & III on final fragment ──
+    (function() {
+      var slideId = 'this-work';
+      function sync(slide) {
+        var trigger = slide.querySelector('.semi-fade-out-list');
+        var items = slide.querySelectorAll('.key-points > li');
+        if (!trigger || items.length < 3) return;
+        var dimmed = trigger.classList.contains('visible');
+        items[1].style.opacity = dimmed ? '0.3' : '';
+        items[2].style.opacity = dimmed ? '0.3' : '';
+      }
+      Reveal.on('fragmentshown', function(e) {
+        if (e.fragment.closest('section').id === slideId) sync(e.fragment.closest('section'));
+      });
+      Reveal.on('fragmenthidden', function(e) {
+        if (e.fragment.closest('section').id === slideId) sync(e.fragment.closest('section'));
+      });
+      Reveal.on('slidechanged', function(e) {
+        if (e.currentSlide.id === slideId) sync(e.currentSlide);
       });
     })();
   </script>
