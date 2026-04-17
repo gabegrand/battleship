@@ -654,10 +654,10 @@
 
         <aside class="notes">
           <ul>
-            <li>From science to medicine to engineering, some of the most important applications of AI involve seeking information under uncertainty.</li>
-            <li>People are remarkably good at this — we naturally form hypotheses, ask targeted questions.</li>
-            <li>Language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
-            <li>To study this, we first need to define what kind of behavior we'd want from a rational agent in a discovery setting.</li>
+            <li>From science to medicine to engineering, many high-stakes applications of AI require seeking information strategically.</li>
+            <li>People are remarkably good at this — we naturally form hypotheses and ask questions to resolve uncertainty.</li>
+            <li>Modern language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
+            <li>To study this, we first need a common understanding of what rational exploration looks like.</li>
           </ul>
         </aside>
       </section>
@@ -703,14 +703,14 @@
         </div>
 
         <aside class="notes">
-          <p>It turns out that discovery problems across domains share a common structure.</p>
+          <p>It turns out that across domains, many discovery problems share a common structure.</p>
           <ul>
-            <li>In each case, we start with a high-level goal — but the goal alone doesn't tell us what to do next.</li>
-            <li>The real challenge is the state space. There are astronomically many possibilities, and we're searching for a needle in a haystack.</li>
-            <li>To narrow things down, we run experiments. But the space of possible experiments is vast, and each one costs time and resources — so we need to choose wisely.</li>
-            <li>Once we've gathered enough information, we can commit to an action. There might still be some uncertainty, but if we've asked the right questions, we can act with confidence.</li>
+            <li>In each case, we start with a high-level goal that we want to accomplish both accurately and efficiently.</li>
+            <li>The real challenge is the state space. There are combinatorially many possibilities, and we're searching for a needle in a haystack.</li>
+            <li>To narrow things down, we run experiments. But the space of possible experiments is also vast, and each one costs time and resources — so we need to choose wisely.</li>
+            <li>Finally, once we've gathered enough information, we can take action. Too much caution here will lead to inefficiency, but overeager behavior could produce disastrous consequences.</li>
           </ul>
-          <p>In this work, we build a framework for studying exactly this kind of behavior.</p>
+          <p>This tension -- between exploration and action -- is the central focus of our work.</p>
         </aside>
       </section>
 
@@ -751,13 +751,13 @@
         </div>
 
         <aside class="notes">
-          <p>Our approach is grounded in Bayesian Experimental Design — a principled framework for choosing experiments to reduce uncertainty. In this talk, I'll walk you through three parts:</p>
+          <p>To study this problem, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. In this talk, I'll walk you through three parts:</p>
           <ul>
             <li>First, I'll introduce a sandbox environment that lets us study info-seeking behavior in a controlled setting — for both humans and AI agents.</li>
-            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model.</li>
-            <li>Finally, I'll highlight some key results.</li>
-            <li>For instance, we find that agents equipped with a world model go from random chance to superhuman performance.</li>
-            <li>And that these agents outperform frontier models like GPT-5, at a fraction of the cost.</li>
+            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model. </li>
+            <li>This is a very powerful combination, and in the final part of the talk, I'll highlight some of our key results: for instance...</li>
+            <li>We find that our approach can boost agents from random chance to superhuman performance; and</li>
+            <li>that these agents can outperform frontier models at a fraction of the cost.</li>
           </ul>
         </aside>
       </section>
