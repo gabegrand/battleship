@@ -761,8 +761,7 @@
           <p>To study this problem, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. In this talk, I'll walk you through three parts:</p>
           <ul>
             <li>First, I'll introduce a sandbox environment that lets us study info-seeking behavior in a controlled setting — for both humans and AI agents.</li>
-            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model. </li>
-            <li>This is a very powerful combination, and in the final part of the talk, I'll highlight some of our key results: for instance...</li>
+            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model. This is a powerful combo, and in the final part of the talk, I'll highlight some of our key results: for instance...</li>
             <li>We find that our approach can boost agents from random chance to superhuman performance; and</li>
             <li>that these agents can outperform frontier models at a fraction of the cost.</li>
           </ul>
@@ -785,38 +784,48 @@
         <div class="section-label">Part I: Task Design</div>
         <h3>Building a sandbox for discovery</h3>
 
-        <div class="two-col" style="align-items: center; gap: 36px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-bolt"></i></span>
-                <span class="kp-text"><span class="kp-label">Fast and scalable.</span> Experiments can be run quickly at low cost.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
-                <span class="kp-text"><span class="kp-label">Measurable.</span> A principled way to quantify the value of each experiment.</span>
-              </li>
-              <li class="fragment fade-in" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-users"></i></span>
-                <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI can play without domain expertise.</span>
-              </li>
-            </ul>
-          </div>
-          <div class="col fragment fade-in" data-fragment-index="2" style="flex: 0 0 38%; text-align: center;">
-            <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
-                 style="width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18);">
-            <p style="font-size: 0.38em; color: #888; margin-top: 6px;">ARC-AGI 2 (Chollet et al., 2025)</p>
+        <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 8px;">
+          <ul class="key-points" style="margin: 0;">
+            <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+              <span class="kp-icon"><i class="fas fa-bolt"></i></span>
+              <span class="kp-text"><span class="kp-label">Fast and scalable.</span> Experiments can be run quickly at low cost.</span>
+            </li>
+            <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+              <span class="kp-icon"><i class="fas fa-chart-line"></i></span>
+              <span class="kp-text"><span class="kp-label">Measurable.</span> A principled way to quantify the value of each experiment.</span>
+            </li>
+            <li class="fragment fade-in" data-fragment-index="2">
+              <span class="kp-icon"><i class="fas fa-users"></i></span>
+              <span class="kp-text"><span class="kp-label">Human-interactive.</span> Both humans and AI can play without domain expertise.</span>
+            </li>
+          </ul>
+
+          <div style="display: flex; gap: 32px; justify-content: center; align-items: flex-start;">
+            <div class="fragment fade-in" data-fragment-index="3" style="text-align: center;">
+              <img src="images/newell_simon.jpg" alt="Newell and Simon playing chess"
+                   style="height: 220px; width: auto; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); display: block;">
+              <p style="font-size: 0.38em; color: #888; margin: 4px 0 0;">Newell &amp; Simon (1958)</p>
+            </div>
+            <div class="fragment fade-in" data-fragment-index="4" style="text-align: center;">
+              <img src="images/arc-agi-2.png" alt="ARC-AGI-2 example"
+                   style="height: 220px; width: auto; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); display: block;">
+              <p style="font-size: 0.38em; color: #888; margin: 4px 0 0;">ARC-AGI 2 (Chollet et al., 2025)</p>
+            </div>
           </div>
         </div>
 
         <aside class="notes">
           <p>So what would an ideal sandbox look like?</p>
           <ul>
-            <li>First, real-world experiments take months and cost millions — we need a domain where we can iterate in seconds.</li>
+            <li>Well first, real-world experiments are time-consuming and expensive — we need a domain where we can iterate in seconds.</li>
             <li>Second, we need some way of quantifying the utility of an experiment — not just whether the agent succeeded, but whether the questions it asked along the way were good ones.</li>
-            <li>Third, we want to directly compare humans and AI agents, which means the task has to be simple enough that anyone can pick it up — no domain expertise required. That doesn't mean the task has to be trivial — ARC-AGI is a good example of a minimal domain that's still extremely hard.</li>
+            <li>Third, we want to directly compare humans and AI agents, which means the task has to be simple enough that anyone can pick it up.</li>
+            <li>In both computer science and cognitive science, there's a long tradition of using game environments to study reasoning
+            and decision-making.</li>
+            <li>This tradition extends through present-day research; evals like ARC-AGI show that grid-worlds can still capture complex
+            reasoning tasks.</li>
           </ul>
-          <p>In our case, we turned to the cognitive science literature, where there's a long tradition of using game-like environments to study human reasoning and decision-making.</p>
+          <p>With these criteria in mind, we designed a task based on Battleship...</p>
         </aside>
       </section>
 
@@ -883,7 +892,7 @@
         </div>
 
         <aside class="notes">
-          <p>a classic board game built around information-seeking.</p>
+          <p>...a classic board game built around information-seeking.</p>
           <ul>
             <li>In Battleship, colored tiles represent hidden ships, which can range in length and orientation.</li>
             <li>The player only sees a partial view — most tiles are unknown.</li>
@@ -1526,12 +1535,10 @@
             <div style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.12); border-radius: 6px; padding: 4px 6px;">
               <div style="font-size: 0.28em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 3px;">Hypothesis space $\mathcal{S}$</div>
               <div style="display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_0.png" alt="s0" style="height: 30px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_0$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_1.png" alt="s1" style="height: 30px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_1$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_2.png" alt="s2" style="height: 30px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_2$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_3.png" alt="s3" style="height: 30px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_3$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_4.png" alt="s4" style="height: 30px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_4$</div></div>
-                <div style="display: flex; align-items: center; justify-content: center; height: 30px;"><span style="font-size: 0.3em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span></div>
+                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s1.png" alt="s1" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_1$</div></div>
+                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s2.png" alt="s2" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_2$</div></div>
+                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s3.png" alt="s3" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_3$</div></div>
+                <div style="display: flex; align-items: center; justify-content: center; height: 42px;"><span style="font-size: 0.3em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span></div>
               </div>
             </div>
           </div>
@@ -1539,27 +1546,88 @@
           <!-- Right column: Question rows (Question | Code | Simulate) -->
           <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
 
-            <!-- Column headers -->
+            <!-- Column headers (each paired with its Row 1 stage) -->
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
               <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-lightbulb" style="margin-right: 3px;"></i> Propose
               </div>
-              <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #4a5770; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-code" style="margin-right: 3px;"></i> Translate
               </div>
-              <div class="fragment fade-in" data-fragment-index="0" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; font-size: 0.32em; font-weight: 700; color: #304ed8; text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fas fa-play" style="margin-right: 3px;"></i> Simulate
               </div>
             </div>
 
-            <!-- Row 1: "More than 2 purple tiles?" -->
+            <!-- Row 1: "Is there another ship near orange?" — dissected across fragments 0, 1, 2; argmax winner -->
+            <div style="position: relative;">
             <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: stretch; gap: 6px;">
+              <!-- Propose (with outer row, fragment 0) -->
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_1$</div>
-                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;More than 2 purple tiles left?&rdquo;</div>
+                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_A$</div>
+                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Is there another ship near orange?&rdquo;</div>
+              </div>
+              <!-- Translate (fragment 1) -->
+              <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_A}$</div>
+                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #ab9df2;">4</span><span style="color: #a9dc76;">)</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">any(board[n] </span><span style="color: #ff6188;">not in</span> <span style="color: #a9dc76;">(</span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">, </span><span style="color: #ab9df2;">3</span><span style="color: #a9dc76;">, </span><span style="color: #ab9df2;">4</span><span style="color: #a9dc76;">)</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">o </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">orange </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">n </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(o))</span>
+                </div>
+              </div>
+              <!-- Simulate (fragment 2) -->
+              <div class="fragment fade-in" data-fragment-index="2" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_A}(s_i)$</div>
+                  <div style="display: flex; gap: 3px; align-items: center;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span></div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.51</div>
+                </div>
+              </div>
+            </div>
+            <!-- Highlight overlay: appears with argmax (fragment 6) -->
+            <div class="fragment fade-in" data-fragment-index="6" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 9px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
+            </div>
+
+            <!-- Row 2: "Do any ships lie along the edges?" (fragment 3) -->
+            <div class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: stretch; gap: 6px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_B$</div>
+                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Do any ships lie along the edges?&rdquo;</div>
               </div>
               <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_1}$</div>
+                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_B}$</div>
+                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
+                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; edges = np.concatenate([</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; board[</span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">,:], board[</span><span style="color: #ab9df2;">-1</span><span style="color: #a9dc76;">,:], </span><span style="color: #ffd866;">...</span><span style="color: #a9dc76;">])</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(edges > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
+                </div>
+              </div>
+              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
+                <div style="flex: 1;">
+                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_B}(s_i)$</div>
+                  <div style="display: flex; gap: 3px; align-items: center;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span></div>
+                </div>
+                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
+                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.26</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: "Any purple tiles left?" (fragment 4) -->
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
+              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_C$</div>
+                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Any purple tiles left?&rdquo;</div>
+              </div>
+              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_C}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
                   <span style="color: #a9dc76;">&nbsp; purple = </span><span style="color: #ab9df2;">3</span><br/>
@@ -1568,8 +1636,8 @@
               </div>
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
-                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_1}(s_i)$</div>
-                  <div style="display: flex; gap: 3px;"><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_C}(s_i)$</div>
+                  <div style="display: flex; gap: 3px; align-items: center;"><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span></div>
                 </div>
                 <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
                   <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
@@ -1578,106 +1646,61 @@
               </div>
             </div>
 
-            <!-- Row 2: "Red ship near purple?" -->
-            <div style="position: relative;">
-            <div class="fragment fade-in" data-fragment-index="1" style="display: flex; align-items: stretch; gap: 6px;">
+            <!-- Row 4: "Do columns 7-8 have any ships?" (fragment 5) -->
+            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_2$</div>
-                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Is the red ship near the purple ship?&rdquo;</div>
+                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_D$</div>
+                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Do columns 7-8 have any ships?&rdquo;</div>
               </div>
               <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_2}$</div>
+                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_D}$</div>
                 <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; red = np.argwhere(board == </span><span style="color: #ab9df2;">1</span><span style="color: #a9dc76;">)</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; purp = np.argwhere(board == </span><span style="color: #ab9df2;">3</span><span style="color: #a9dc76;">)</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">min_dist(red, purp) &lt; </span><span style="color: #ab9df2;">3</span>
+                  <span style="color: #a9dc76;">&nbsp; cols = board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">:]</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(cols > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
                 </div>
               </div>
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
                 <div style="flex: 1;">
-                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_2}(s_i)$</div>
-                  <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
+                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_D}(s_i)$</div>
+                  <div style="display: flex; gap: 3px; align-items: center;"><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span></div>
                 </div>
                 <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
                   <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.97</div>
-                </div>
-              </div>
-            </div>
-            <!-- Highlight overlay: appears with argmax -->
-            <div class="fragment fade-in" data-fragment-index="4" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 9px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
-            </div>
-
-            <!-- Row 3: "Ships in column 7?" -->
-            <div class="fragment fade-in" data-fragment-index="2" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_3$</div>
-                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Any more ships in column 7?&rdquo;</div>
-              </div>
-              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_3}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; col7 = board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">]</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(col7 > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
-                </div>
-              </div>
-              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_3}(s_i)$</div>
-                  <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.72</div>
+                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.38</div>
                 </div>
               </div>
             </div>
 
-            <!-- Row 4: "Ships along the edge?" -->
-            <div class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_4$</div>
-                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Are any ships along the edge?&rdquo;</div>
-              </div>
-              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_4}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; edges = np.concatenate([</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; board[</span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">,:]</span>, <span style="color: #a9dc76;">board[</span><span style="color: #ab9df2;">-1</span><span style="color: #a9dc76;">,:]</span>, <span style="color: #ffd866;">...</span><span style="color: #a9dc76;">])</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(edges > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
-                </div>
-              </div>
-              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_4}(s_i)$</div>
-                  <div style="display: flex; gap: 3px;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span><span class="exec-pill exec-no" style="font-size: 0.38em; padding: 1px 4px;">N</span></div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.65</div>
-                </div>
-              </div>
+            <!-- Argmax line (fragment 6, with row-1 highlight) -->
+            <div class="fragment fade-in" data-fragment-index="6" style="margin-top: 12px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
+              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 8px;">&ldquo;Is there another ship near orange?&rdquo;</span>
             </div>
 
-            <!-- Argmax line -->
-            <div class="fragment fade-in" data-fragment-index="4" style="margin-top: 12px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
-              $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 8px;">&ldquo;Is the red ship near the purple ship?&rdquo;</span>
+            <!-- Insight banner (fragment 7) -->
+            <div class="fragment fade-in" data-fragment-index="7" style="margin-top: 10px;">
+              <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
+                <div style="font-size: 0.4em; color: #304ed8; line-height: 1.5;">
+                  <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
+                  <strong>Inference-scaling for experiment design:</strong> scaling compute leads to more informative experiments.
+                </div>
+              </div>
             </div>
 
           </div><!-- /right column -->
         </div>
 
         <aside class="notes">
-          <p>First, the Captain observes a partial board and samples hypotheses from the world model.</p>
+          <p>The agent observes a partial board and samples full-board hypotheses from the world model. To decide what to ask next, it runs a three-stage pipeline.</p>
           <ul>
-            <li>Then, the Captain proposes questions, translates them to code, and simulates each one against the hypothesis space,
-            repeating this process multiple times.</li>
-            <li>Some questions are redundant — the answer is the same in all cases, so EIG is zero.</li>
-            <li>Others produce a nice split across the hypothesis space, yielding high EIG.</li>
-            <!-- <li>The agent picks the question with the highest EIG and asks the Spotter.</li> -->
+            <li>First, the agent agent proposes a candidate question in natural language.</li>
+            <li>Next, it translates the question into Python code &mdash; a function that takes a hypothetical board and returns True or False.</li>
+            <li>Finally, it runs that code against each sampled hypothesis and collects the distribution of answers, from which we compute the EIG.</li>
+            <li>The agent repeats the pipeline for additional candidates, which vary in how informative they are.</li>
+            <li>Some are redundant &mdash; every hypothesis returns the same answer, so the EIG is zero.</li>
+            <li>Others partition the hypothesis space more evenly, yielding higher EIG.</li>
+            <li>The agent then takes the argmax: the highest-EIG question is the one it actually asks the Spotter.</li>
+            <li>This gives us an inference-time scaling recipe: the more candidates the agent proposes and simulates, the more informative the question it ends up asking.</li>
           </ul>
         </aside>
       </section>
@@ -1754,10 +1777,10 @@
 
       <section id="human-results">
         <div class="section-label" style="color: #04af70;"><i class="fas fa-users"></i> &nbsp;Humans</div>
-        <h3>People are not optimal, but resource-rational</h3>
-        <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 12px;">
+        <h3>Human Information-Seeking Behavior</h3>
+        <!-- <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 12px;">
           42 participants &middot; 126 games &middot; 931 gold-labeled questions (BattleshipQA dataset)
-        </p>
+        </p> -->
         <div class="two-col" style="align-items: flex-start;">
           <div class="col" style="text-align: center; position: relative; min-height: 280px;">
             <!-- Chart container: each chart fades in/out with fragments -->
