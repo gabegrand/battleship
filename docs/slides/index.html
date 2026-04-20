@@ -715,7 +715,7 @@
           <ul>
             <li>In each case, we start with a high-level goal that we want to accomplish both accurately and efficiently.</li>
             <li>The real challenge is the state space. There are combinatorially many possibilities, and we're searching for a needle in a haystack.</li>
-            <li>To narrow things down, we run experiments. But the space of possible experiments is also vast, and each one costs time and resources — so we need to choose wisely.</li>
+            <li>To narrow things down, we run experiments. But there are also many possible experiments — so we need to choose wisely.</li>
             <li>Finally, once we've gathered enough information, we can take action. Too much caution here will lead to inefficiency, but overeager behavior could produce disastrous consequences.</li>
           </ul>
           <p>This tension -- between exploration and action -- is the central focus of our work.</p>
@@ -760,10 +760,9 @@
         <aside class="notes">
           <p>To study this problem, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. In this talk, I'll walk you through three parts:</p>
           <ul>
-            <li>First, I'll introduce a sandbox environment that lets us study info-seeking behavior in a controlled setting — for both humans and AI agents.</li>
-            <li>Second, I'll describe a family of inference techniques that equip agents with a code-based world model. This is a powerful combo, and in the final part of the talk, I'll highlight some of our key results: for instance...</li>
-            <li>We find that our approach can boost agents from random chance to superhuman performance; and</li>
-            <li>that these agents can outperform frontier models at a fraction of the cost.</li>
+            <li>First, I'll introduce a controlled sandbox environment that allows us to study info-seeking in both humans and AI agents.</li>
+            <li>Second, I'll describe techniques to improve agents' ability to both ask and answer questions by equipping them with a code-based world model.</li>
+            <li>Finally, I'll highlight some key results: for instance, we find that our approach can boost agents from random chance to superhuman performance; and even outperform frontier models.</li>
           </ul>
         </aside>
       </section>
@@ -817,15 +816,14 @@
         <aside class="notes">
           <p>So what would an ideal sandbox look like?</p>
           <ul>
-            <li>Well first, real-world experiments are time-consuming and expensive — we need a domain where we can iterate in seconds.</li>
-            <li>Second, we need some way of quantifying the utility of an experiment — not just whether the agent succeeded, but whether the questions it asked along the way were good ones.</li>
-            <li>Third, we want to directly compare humans and AI agents, which means the task has to be simple enough that anyone can pick it up.</li>
-            <li>In both computer science and cognitive science, there's a long tradition of using game environments to study reasoning
-            and decision-making.</li>
+            <li>Well first, real-world experiments are time-consuming and costly — we need a domain where we can iterate in seconds.</li>
+            <li>Second, we want some way to quantify the utility of an experiment — not just whether the agent succeeded, but whether the questions it asked along the way were good ones.</li>
+            <li>Third, we want to directly compare agents and humans, which means the task has to be simple enough that anyone can pick it up.</li>
+            <li>In both AI and cognitive science, there's a long tradition of using game environments to study decision-making.</li>
             <li>This tradition extends through present-day research; evals like ARC-AGI show that grid-worlds can still capture complex
             reasoning tasks.</li>
           </ul>
-          <p>With these criteria in mind, we designed a task based on Battleship...</p>
+          <p>With these criteria in mind, we turned to a classic board game built around information-seeking...</p>
         </aside>
       </section>
 
@@ -892,9 +890,8 @@
         </div>
 
         <aside class="notes">
-          <p>...a classic board game built around information-seeking.</p>
           <ul>
-            <li>In Battleship, colored tiles represent hidden ships, which can range in length and orientation.</li>
+            <li>In *Battleship*, colored tiles represent hidden ships, which can range in length and orientation.</li>
             <li>The player only sees a partial view — most tiles are unknown.</li>
             <li>The goal is to uncover all ships in as few moves as possible.</li>
           </ul>
@@ -978,12 +975,12 @@
         </div>
 
         <aside class="notes">
-          <p>...an extension where players *also* can ask yes/no questions about the board state.</p>
+          <p>...players *also* can ask natural language questions about the board.</p>
           <ul>
             <li>Each question probes the hidden board state and produces an observation.</li>
             <li>Prior work used a version of this task to study human question-asking; here, we expand the paradigm to evaluate both humans and agents.</li>
           </ul>
-          <p>To do that, we designed a two-player version of the game...</p>
+          <p>To do that, we designed a two-player version of the game that we call... Collaborative Battleship.</p>
         </aside>
       </section>
 
@@ -1084,12 +1081,12 @@
         </div>
 
         <aside class="notes">
-          <p>We call our version Collaborative Battleship.</p>
+          <p>As the name suggests, our task is cooperative:</p>
           <ul>
-            <li>The Captain sees a partial board and has to decide what to do on each turn.</li>
-            <li>The Spotter sees the full board with all the ships visible, but can only answer yes or no.</li>
-            <li>This information bottleneck puts a strict limit on the amount of information the Captain can get from any one question.</li>
-            <li>The Spotter acts as an experiment oracle, providing instant automated feedback about experiment outcomes. Now let me show you how we compute EIG in this setting.</li>
+            <li>The Captain sees a partial board and has to decide what to do on each turn: ask a question or shoot.</li>
+            <li>Meanwhile, the Spotter sees the full board with all the ships visible, but can only answer yes or no.</li>
+            <li>This bottleneck puts a limit on the amount of information the Captain can get from any one question.</li>
+            <li>The Spotter acts as an experiment oracle, providing instant automated feedback about experiment outcomes.</li>
           </ul>
         </aside>
       </section>
@@ -1201,8 +1198,8 @@
         </div>
 
         <aside class="notes">
-          <p>Let's now formalize what the Captain is doing. Each turn is an instance of Bayesian Experimental Design. The hidden board state is S, the Captain's question is an experiment x, and the Spotter's answer is the observation y.</p>
-          <p>Each answer updates the Captain's beliefs via Bayes' rule: the posterior over board states is proportional to the likelihood of observing that answer, times the prior.</p>
+          <p>Collaborative Battleship tests the ability of a player to do Bayesian Experimental Design: the Captain needs to maintain a belief over the hidden board state.</p>
+          <p>After each question, a rational Captain should update their prior belief via Bayes' rule based on the likelihood of the observed answer.</p>
         </aside>
       </section>
 
@@ -1303,12 +1300,13 @@
         </div>
 
         <aside class="notes">
-          <p>Our goal, then, is to choose experiments that let us learn as efficiently as possible.</p>
+          <p>The Captain's goal, then, is to choose experiments that let them learn as efficiently as possible.</p>
           <ul>
             <li>We can formalize this with Information Gain, which measures how much the experiment reduces our uncertainty. But we don't know the result in advance...</li>
             <li>...so we take the expectation over possible outcomes. That gives us Expected Information Gain, or EIG.</li>
-            <li>Then, the best experiment is then simply the one that maximizes EIG. While this gives us a clean objective, optimizing it in practice faces several challenges...</li>
+            <li>Then, the best experiment is then simply the one that maximizes EIG.</li>
           </ul>
+          <p>While this gives us a clean objective, optimizing it in practice faces several challenges...</p>
         </aside>
       </section>
 
@@ -1393,9 +1391,9 @@
 
         <aside class="notes">
           <ul>
-            <li>First, computing the entropy requires summing over a combinatorial space of possible states.</li>
-            <li>Second, estimating the likelihood of each outcome requires actually running the experiment, or at least having a good simulator.</li>
-            <li>And third, the space of possible experiments may be vast, so we can't just enumerate them all.</li>
+            <li>First, computing this entropy term on the left requires summing over a *huge* space of possible states.</li>
+            <li>Second, estimating the likelihood of each outcome requires some way to simulate the outcome of an experiment.</li>
+            <li>And third, the space of possible experiments may be vast, so we typically can't just enumerate them all.</li>
           </ul>
           <p>To address these challenges...</p>
         </aside>
@@ -1479,7 +1477,7 @@
         </div>
 
         <aside class="notes">
-          <p>The world model gives the agent two key affordances: sampling hypothetical world states from the evidence-conditioned posterior, and simulating experiments on those sampled worlds to predict outcomes. Let me show you what that looks like in practice.</p>
+          <p>The world model gives the agent two key affordances: sampling hypothetical world states, and simulating experiments on those sampled worlds to predict outcomes. Let me show you what that looks like in practice.</p>
         </aside>
       </section>
 
@@ -1691,16 +1689,15 @@
         </div>
 
         <aside class="notes">
-          <p>The agent observes a partial board and samples full-board hypotheses from the world model. To decide what to ask next, it runs a three-stage pipeline.</p>
+          <p>The Captain observes a partial board and samples full-board hypotheses from the world model. To decide what to ask next, it runs a three-stage pipeline.</p>
           <ul>
-            <li>First, the agent agent proposes a candidate question in natural language.</li>
-            <li>Next, it translates the question into Python code &mdash; a function that takes a hypothetical board and returns True or False.</li>
-            <li>Finally, it runs that code against each sampled hypothesis and collects the distribution of answers, from which we compute the EIG.</li>
-            <li>The agent repeats the pipeline for additional candidates, which vary in how informative they are.</li>
-            <li>Some are redundant &mdash; every hypothesis returns the same answer, so the EIG is zero.</li>
-            <li>Others partition the hypothesis space more evenly, yielding higher EIG.</li>
-            <li>The agent then takes the argmax: the highest-EIG question is the one it actually asks the Spotter.</li>
-            <li>This gives us an inference-time scaling recipe: the more candidates the agent proposes and simulates, the more informative the question it ends up asking.</li>
+            <li>First, the Captain poses a candidate question in natural language.</li>
+            <li>Next, it translates the question into a Python function that takes a board and returns True or False.</li>
+            <li>The Captain can use the world model to simulate that code against each sampled hypothesis. By collecting the distribution of answers, the Captain can then compute the EIG of the question.</li>
+            <li>By repeating this process, the Captain can determine which of multiple candidate questions is worth asking.</li>
+            <li>Some candidates are redundant &mdash; every hypothesis returns the same answer, so the EIG is zero.</li>
+            <li>Others partition the hypothesis space more evenly, yielding higher EIG; these are the ones the Captain should pick.</li>
+            <li>This gives us an inference-time scaling recipe: sampling more questions leads to higher EIG and ideally, better performance.</li>
           </ul>
         </aside>
       </section>
@@ -1733,8 +1730,9 @@
           <ul>
             <li>First: do they ask informative questions, and do they give accurate answers?</li>
             <li>Second: do they make targeted guesses that integrate the information they've gathered?</li>
-            <li>Third: do they make effective use of their limited question budget? These are the questions we set out to investigate.</li>
+            <li>Third: do they make effective use of their limited question budget?</li>
           </ul>
+          <p>These are the key research questions we ask in our experiments.</p>
         </aside>
       </section>
 
@@ -1764,10 +1762,7 @@
 
         <aside class="notes">
           <p>I'm going to highlight the key findings from two sets of experiments:</p>
-          <ul>
-            <li>A human study.</li>
-            <li>and experiments with agents.</li>
-          </ul>
+          <p>A human study; and experiments with agents.</p>
         </aside>
       </section>
 
@@ -1807,7 +1802,7 @@
         </div>
 
         <aside class="notes">
-          <p>We collected data from 42 human participants to form what we call the BattleshipQA dataset. Here's what we found.</p>
+          <p>We first collected data from human participants to form what we call the BattleshipQA dataset. Here's what we found.</p>
           <ul>
             <li>Human Spotters were very accurate, providing answers that nearly always agreed with our expert labels.</li>
             <li>Humans asked good questions, but not optimal ones.</li>
@@ -1874,7 +1869,7 @@
         </div>
 
         <aside class="notes">
-          <p>Before looking at question-asking, we first benchmarked *answering*. We evaluated 15 language models from all major providers on the gold-labeled questions from the human study.</p>
+          <p>Before looking at question-asking, we first benchmarked *answering*. We evaluated 15 LLMs on the gold-labeled questions from the human study.</p>
           <ul>
             <li>Base performance varied widely across models, but averaged significantly below humans.</li>
             <li>Adding chain-of-thought reasoning helped somewhat.</li>
