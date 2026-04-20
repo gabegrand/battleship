@@ -1711,42 +1711,8 @@
             <li>By repeating this process, the Captain can determine which of multiple candidate questions is worth asking.</li>
             <li>Some candidates are redundant &mdash; every hypothesis returns the same answer, so the EIG is zero.</li>
             <li>Others partition the hypothesis space more evenly, yielding higher EIG; these are the ones the Captain should pick.</li>
-            <li>This gives us an inference-time scaling recipe: sampling more questions leads to higher EIG and ideally, better performance.</li>
+            <li>This gives us an inference scaling recipe: sampling more questions leads to higher EIG -- but does this lead to better performance? That's one of the key questions we explore in our experiments.</li>
           </ul>
-        </aside>
-      </section>
-
-
-      <section id="research-questions">
-        <div class="section-label">Part II: Modeling Framework</div>
-        <h3>What can we study with this framework?</h3>
-        <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
-          EIG lets us formalize key behavioral questions about humans and AI agents
-        </p>
-
-        <div class="strategy-grid">
-          <div class="strat-card fragment" style="--card-accent: #3273dc;">
-            <h4><i class="fas fa-comments" style="color: #3273dc;"></i> &nbsp;Asking &amp; Answering</h4>
-            <p>Do agents and humans ask <strong>informative</strong> questions? Do they provide <strong>accurate</strong> answers?</p>
-          </div>
-          <div class="strat-card fragment" style="--card-accent: #e74c3c;">
-            <h4><i class="fas fa-crosshairs" style="color: #e74c3c;"></i> &nbsp;Targeted Guessing</h4>
-            <p>Do they make <strong>targeted guesses</strong> under uncertainty, integrating information from answers?</p>
-          </div>
-          <div class="strat-card fragment" style="--card-accent: #f0a020;">
-            <h4><i class="fas fa-balance-scale" style="color: #f0a020;"></i> &nbsp;Resource Rationality</h4>
-            <p>Do they make <strong>effective use</strong> of available questions under a limited resource budget?</p>
-          </div>
-        </div>
-
-        <aside class="notes">
-          <p>With this framework in place, we can formalize several behavioral questions about both humans and AI agents.</p>
-          <ul>
-            <li>First: do they ask informative questions, and do they give accurate answers?</li>
-            <li>Second: do they make targeted guesses that integrate the information they've gathered?</li>
-            <li>Third: do they make effective use of their limited question budget?</li>
-          </ul>
-          <p>These are the key research questions we ask in our experiments.</p>
         </aside>
       </section>
 
@@ -1776,7 +1742,7 @@
 
         <aside class="notes">
           <p>I'm going to highlight the key findings from two sets of experiments:</p>
-          <p>A human study; and experiments with agents.</p>
+          <p>A human study; and some experiments with agents.</p>
         </aside>
       </section>
 
@@ -1902,7 +1868,7 @@
             <div id="eig-max-vs-k" style="width: 520px; height: 340px;"></div>
             <div style="margin-top: 4px;">
               <div style="display: inline-grid; grid-template-columns: auto auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-                <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4</span>
                 <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
                 <span><span style="display: inline-block; width: 14px; height: 3px; border-radius: 1px; background-color: #000080; vertical-align: middle; margin-right: 4px;"></span> GPT-5</span>
               </div>
@@ -1948,7 +1914,7 @@
               <div style="display: inline-grid; grid-template-columns: auto auto auto auto auto; gap: 6px 16px; font-size: 0.48em; padding: 6px 14px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #848482; vertical-align: middle; margin-right: 4px;"></span> Baseline</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #008f69; vertical-align: middle; margin-right: 4px;"></span> Human</span>
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #000080; vertical-align: middle; margin-right: 4px;"></span> GPT-5</span>
               </div>
@@ -1956,25 +1922,24 @@
           </div>
           <div class="col">
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does using a world model improve downstream performance?</p>
-            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
+            <p style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;"><i class="fas fa-info-circle" style="margin-right: 5px; opacity: 0.75;"></i>Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
 
-            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to guide behavior:</p>
-            <ul style="font-size: 0.5em; line-height: 1.6; margin: 0;">
-              <li class="fragment fade-in" data-fragment-index="5">Better targeting (<strong>+0.303&ndash;0.374</strong> F1)</li>
-              <li class="fragment fade-in" data-fragment-index="6">Superhuman (<strong>82%</strong> win rate for <strong style="color: #71a0c1;">Llama-4-Scout</strong> vs.&nbsp;<strong style="color: #008f69;">humans</strong>)</li>
-              <li class="fragment fade-in" data-fragment-index="7">Surpass frontier (<strong>67%</strong> win rate vs.&nbsp;<strong style="color: #000080;">GPT-5</strong>, <strong>100&times;</strong> inference cost savings)</li>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to guide behavior:</p>
+            <ul style="font-size: 0.5em; line-height: 1.6; margin: 0; list-style: none; padding-left: 0;">
+              <li class="fragment fade-in" data-fragment-index="4">&rarr; Better targeting (<strong>+0.303&ndash;0.374</strong> F1)</li>
+              <li class="fragment fade-in" data-fragment-index="5">&rarr; Superhuman (<strong>82%</strong> win rate for <strong style="color: #71a0c1;">Llama-4</strong> vs.&nbsp;<strong style="color: #008f69;">humans</strong>)</li>
+              <li class="fragment fade-in" data-fragment-index="6">&rarr; Surpass frontier (<strong>67%</strong> win rate vs.&nbsp;<strong style="color: #000080;">GPT-5</strong>, <strong>100&times;</strong> inference cost savings)</li>
             </ul>
           </div>
         </div>
 
         <aside class="notes">
-          <p>We can measure targeting performance using F1 score, which treats hits versus misses as a binary classification task.</p>
           <ul>
             <li>As expected, random shooting gives a low baseline.</li>
             <li>Humans did much better, with a wide spread across players.</li>
             <li>Out-of-the-box, agents also showed a lot of variation: whereas GPT-5 was already competitive with humans, Llama-4 and GPT-4o were barely above chance. Can we get these weaker models to behave more rationally without explicitly training them?</li>
             <li>Yes -- when we gave agents access to a world model, we saw dramatic gains:</li>
-            <li>For instance, Llama-4-Scout went from random chance to superhuman performance.</li>
+            <li>For instance, Llama-4 went from random chance to superhuman performance.</li>
             <li>And it even outperformed GPT-5 -- this last result is especially notable given the huge cost difference between models.</li>
           </ul>
         </aside>
@@ -2022,7 +1987,7 @@
             <div id="guess-who-barplot" style="width: 380px; height: 320px; margin: 0 auto;"></div>
             <div style="margin-top: 4px;">
               <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4-Scout</span>
+                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
               </div>
             </div>
@@ -2034,7 +1999,7 @@
             <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Same strategies work:</p>
             <ul style="font-size: 0.42em; color: #888; margin: 0 0 10px 0; line-height: 1.6;">
               <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #0e79b2;">GPT-4o</strong>: 61.7% &rarr; 90.0% success rate</li>
-              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #71a0c1;">Llama-4-Scout</strong>: 30.0% &rarr; 72.4%</li>
+              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #71a0c1;">Llama-4</strong>: 30.0% &rarr; 72.4%</li>
             </ul>
 
             <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 0;"><strong>Not Battleship-specific</strong></p>
@@ -2446,6 +2411,41 @@
             <li>This gives us an inference-scaling recipe: investing more compute leads to better experiments and more efficient discovery.</li>
           </ul>
           <p>So we have a general framework — now we need a good domain to test it in.</p>
+        </aside>
+      </section>
+
+      <!-- [Hidden] Research questions — What can we study with this framework? -->
+
+      <section id="research-questions" data-visibility="hidden">
+        <div class="section-label">Part II: Modeling Framework</div>
+        <h3>What can we study with this framework?</h3>
+        <p style="text-align: center; font-size: 0.58em; color: #4a5770; margin-bottom: 8px;">
+          EIG lets us formalize key behavioral questions about humans and AI agents
+        </p>
+
+        <div class="strategy-grid">
+          <div class="strat-card fragment" style="--card-accent: #3273dc;">
+            <h4><i class="fas fa-comments" style="color: #3273dc;"></i> &nbsp;Asking &amp; Answering</h4>
+            <p>Do agents and humans ask <strong>informative</strong> questions? Do they provide <strong>accurate</strong> answers?</p>
+          </div>
+          <div class="strat-card fragment" style="--card-accent: #e74c3c;">
+            <h4><i class="fas fa-crosshairs" style="color: #e74c3c;"></i> &nbsp;Targeted Guessing</h4>
+            <p>Do they make <strong>targeted guesses</strong> under uncertainty, integrating information from answers?</p>
+          </div>
+          <div class="strat-card fragment" style="--card-accent: #f0a020;">
+            <h4><i class="fas fa-balance-scale" style="color: #f0a020;"></i> &nbsp;Resource Rationality</h4>
+            <p>Do they make <strong>effective use</strong> of available questions under a limited resource budget?</p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <p>With this framework in place, we can formalize several behavioral questions about both humans and AI agents.</p>
+          <ul>
+            <li>First: do they ask informative questions, and do they give accurate answers?</li>
+            <li>Second: do they make targeted guesses that integrate the information they've gathered?</li>
+            <li>Third: do they make effective use of their limited question budget?</li>
+          </ul>
+          <p>These are the key research questions we ask in our experiments.</p>
         </aside>
       </section>
       <!-- [Hidden] Computing EIG in Battleship (old version) -->
@@ -3436,8 +3436,8 @@ def answer(true_board, partial_board) -> bool:
       // Data from guess_who_table.tex (Success Rate)
       var conditions = ['Agent-only', '+ World Model\n(InfoMax)', '+ World Model\n(Full)'];
       var condKeys = ['LM', '+Bayes-Q', '+Bayes-QM'];
-      var llms = ['Llama-4-Scout', 'GPT-4o'];
-      var llmColors = { 'Llama-4-Scout': '#71a0c1', 'GPT-4o': '#0e79b2' };
+      var llms = ['Llama-4', 'GPT-4o'];
+      var llmColors = { 'Llama-4': '#71a0c1', 'GPT-4o': '#0e79b2' };
 
       function lighten(hex, amt) {
         var c = d3.color(hex);
@@ -3445,9 +3445,9 @@ def answer(true_board, partial_board) -> bool:
       }
 
       var data = {
-        'LM':        { 'Llama-4-Scout': 0.300, 'GPT-4o': 0.617 },
-        '+Bayes-Q':  { 'Llama-4-Scout': 0.450, 'GPT-4o': 0.729 },
-        '+Bayes-QM': { 'Llama-4-Scout': 0.724, 'GPT-4o': 0.900 },
+        'LM':        { 'Llama-4': 0.300, 'GPT-4o': 0.617 },
+        '+Bayes-Q':  { 'Llama-4': 0.450, 'GPT-4o': 0.729 },
+        '+Bayes-QM': { 'Llama-4': 0.724, 'GPT-4o': 0.900 },
       };
 
       // Scales
@@ -3594,7 +3594,7 @@ def answer(true_board, partial_board) -> bool:
 
       var llmColors = {
         'Human': '#008f69', 'Baseline': '#848482',
-        'Llama-4-Scout': '#71a0c1', 'GPT-4o': '#0e79b2', 'GPT-5': '#000080',
+        'Llama-4': '#71a0c1', 'GPT-4o': '#0e79b2', 'GPT-5': '#000080',
       };
 
       var ctOrderFull = ['Human', 'Random', 'Greedy', 'LM', '+Bayes-Q', '+Bayes-M', '+Bayes-QM', '+Bayes-QMD'];
@@ -3603,27 +3603,27 @@ def answer(true_board, partial_board) -> bool:
         'Random': 'Random', 'Human': 'Human', 'LM': 'Agent-only',
         '+Bayes-QM': '+ World Model',
       };
-      var llmOrder = ['Human', 'Baseline', 'Llama-4-Scout', 'GPT-4o', 'GPT-5'];
+      var llmOrder = ['Human', 'Baseline', 'Llama-4', 'GPT-4o', 'GPT-5'];
 
       // Boxplot stats from captain_summary_data.csv
       var boxes = [
         {ct:'Human',llm:'Human',q1:0.5095,med:0.6316,q3:0.75,lo:0.1905,hi:0.9091,outliers:[]},
         {ct:'Random',llm:'Baseline',q1:0.2745,med:0.3169,q3:0.3636,lo:0.1569,hi:0.4828,outliers:[]},
         {ct:'Greedy',llm:'Baseline',q1:0.4938,med:0.6383,q3:0.7317,lo:0.2857,hi:0.8125,outliers:[]},
-        {ct:'LM',llm:'Llama-4-Scout',q1:0.3064,med:0.3652,q3:0.4348,lo:0.15,hi:0.5556,outliers:[]},
+        {ct:'LM',llm:'Llama-4',q1:0.3064,med:0.3652,q3:0.4348,lo:0.15,hi:0.5556,outliers:[]},
         {ct:'LM',llm:'GPT-4o',q1:0.3846,med:0.4441,q3:0.5162,lo:0.2041,hi:0.6977,outliers:[0.1633]},
         {ct:'LM',llm:'GPT-5',q1:0.6532,med:0.7333,q3:0.7793,lo:0.4865,hi:0.9231,outliers:[0.4186,0.45]},
-        {ct:'+Bayes-Q',llm:'Llama-4-Scout',q1:0.306,med:0.375,q3:0.4843,lo:0.1333,hi:0.7143,outliers:[]},
+        {ct:'+Bayes-Q',llm:'Llama-4',q1:0.306,med:0.375,q3:0.4843,lo:0.1333,hi:0.7143,outliers:[]},
         {ct:'+Bayes-Q',llm:'GPT-4o',q1:0.3922,med:0.4605,q3:0.5262,lo:0.2692,hi:0.6667,outliers:[0.7407,0.75,0.7317]},
         {ct:'+Bayes-Q',llm:'GPT-5',q1:0.6486,med:0.6886,q3:0.7681,lo:0.4737,hi:0.9167,outliers:[0.3913,0.439]},
-        {ct:'+Bayes-M',llm:'Llama-4-Scout',q1:0.5813,med:0.7317,q3:0.7692,lo:0.4091,hi:0.9474,outliers:[]},
+        {ct:'+Bayes-M',llm:'Llama-4',q1:0.5813,med:0.7317,q3:0.7692,lo:0.4091,hi:0.9474,outliers:[]},
         {ct:'+Bayes-M',llm:'GPT-4o',q1:0.6667,med:0.75,q3:0.8125,lo:0.4583,hi:0.9474,outliers:[0.4186]},
         {ct:'+Bayes-M',llm:'GPT-5',q1:0.649,med:0.727,q3:0.8,lo:0.4615,hi:0.9,outliers:[0.4091,0.4186]},
-        // For "Full" condition: use +Bayes-QMD for Llama-4-Scout and GPT-4o, +Bayes-QM for GPT-5 (no QMD data)
-        {ct:'+Bayes-QM',llm:'Llama-4-Scout',q1:0.6978,med:0.8,q3:0.8696,lo:0.45,hi:0.9524,outliers:[0.4186,0.439]},
+        // For "Full" condition: use +Bayes-QMD for Llama-4 and GPT-4o, +Bayes-QM for GPT-5 (no QMD data)
+        {ct:'+Bayes-QM',llm:'Llama-4',q1:0.6978,med:0.8,q3:0.8696,lo:0.45,hi:0.9524,outliers:[0.4186,0.439]},
         {ct:'+Bayes-QM',llm:'GPT-4o',q1:0.7186,med:0.8117,q3:0.8824,lo:0.5294,hi:0.96,outliers:[0.4091,0.449]},
         {ct:'+Bayes-QM',llm:'GPT-5',q1:0.6711,med:0.7317,q3:0.8,lo:0.4865,hi:0.8824,outliers:[0.45]},
-        {ct:'+Bayes-QMD',llm:'Llama-4-Scout',q1:0.6978,med:0.8,q3:0.8696,lo:0.45,hi:0.9524,outliers:[0.4186,0.439]},
+        {ct:'+Bayes-QMD',llm:'Llama-4',q1:0.6978,med:0.8,q3:0.8696,lo:0.45,hi:0.9524,outliers:[0.4186,0.439]},
         {ct:'+Bayes-QMD',llm:'GPT-4o',q1:0.7186,med:0.8117,q3:0.8824,lo:0.5294,hi:0.96,outliers:[0.4091,0.449]},
       ];
 
@@ -3682,10 +3682,10 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Draw boxes (hidden initially) ──
-      // Animation groups: chart-only reveals at 1=Random, 2=Human, 3=LM; +Bayes-QM reveals at 4 (visible text fragment)
+      // Animation groups: chart-only reveals at 0=Random, 1=Human, 2=LM; +Bayes-QM reveals at 3 (visible text fragment)
       var animGroups = {
-        'Random': 1, 'Human': 2, 'LM': 3,
-        '+Bayes-QM': 4,
+        'Random': 0, 'Human': 1, 'LM': 2,
+        '+Bayes-QM': 3,
       };
 
       // Lighten a hex color by mixing with white
@@ -3745,8 +3745,8 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Declarative animation driven by fragment index ──
-      // animGroup values: Random=1, Human=2, LM=3, +Bayes-QM=4
-      // Hidden fragments at indices 1,2,3; visible text fragments cover 0,4,5,6,7
+      // animGroup values: Random=0, Human=1, LM=2, +Bayes-QM=3
+      // Hidden fragments at indices 0,1,2; visible text fragments cover 3,4,5,6
 
       function syncChart() {
         var slide = container.closest('section');
@@ -3771,11 +3771,11 @@ def answer(true_board, partial_board) -> bool:
         boxElems.forEach(function(be) { be.grp.attr('opacity', 0); });
       }
 
-      // Inject hidden fragments for chart-only steps (indices 1,2,3)
-      // Index 4 is covered by the visible "Using the world model..." text fragment (+Bayes-QM)
+      // Inject hidden fragments for chart-only steps (indices 0,1,2)
+      // Index 3 is covered by the visible "Using the world model..." text fragment (+Bayes-QM)
       var slide = container.closest('section');
       if (slide) {
-        [1, 2, 3].forEach(function(i) {
+        [0, 1, 2].forEach(function(i) {
           var frag = document.createElement('span');
           frag.className = 'fragment';
           frag.setAttribute('data-fragment-index', String(i));
@@ -3815,7 +3815,7 @@ def answer(true_board, partial_board) -> bool:
 
       // Data from eig_max_vs_k_data.csv
       var models = [
-        { name: 'Llama-4-Scout', color: '#71a0c1', data: [
+        { name: 'Llama-4', color: '#71a0c1', data: [
           {k:1, mean:0.2636, se:0.00713}, {k:2, mean:0.3516, se:0.00636},
           {k:3, mean:0.3856, se:0.00591}, {k:4, mean:0.4133, se:0.00532},
           {k:5, mean:0.4262, se:0.00508}, {k:6, mean:0.4396, se:0.00466},
