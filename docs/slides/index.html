@@ -1862,19 +1862,19 @@
           <div class="col" style="text-align: center;">
             <div id="spotter-accuracy-overall" style="width: 480px; height: 380px;"></div>
             <div style="margin-top: 4px;">
-              <div style="display: inline-grid; grid-template-columns: auto auto auto auto; gap: 8px 32px; font-size: 0.6em; padding: 6px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; vertical-align: middle; margin-right: 4px;"></span> Base LM</span>
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; vertical-align: middle; margin-right: 4px;"></span> CoT</span>
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; vertical-align: middle; margin-right: 4px;"></span> Code</span>
-                <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; vertical-align: middle; margin-right: 4px;"></span> CoT + Code</span>
+              <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 28px; font-size: 0.6em; padding: 8px 20px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 14px; border-radius: 3px; background-color: #66C2A5; flex: none;"></span>Base LM</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 14px; border-radius: 3px; background-color: #8DA0CB; flex: none;"></span>World Model</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 14px; border-radius: 3px; background-color: #FC8D62; flex: none;"></span>CoT</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 14px; border-radius: 3px; background-color: #E78AC3; flex: none;"></span>World Model + CoT</span>
               </div>
             </div>
           </div>
           <div class="col">
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does the world model improve answer accuracy?</p>
-            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 15 LMs &times; 931 questions &middot; 2&times;2: language vs.&nbsp;code &times; direct vs.&nbsp;CoT</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Tested 15 LMs on human questions from BattleshipQA</p>
 
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Code-based reasoning: <strong>+14.7pp</strong> average accuracy boost</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">World Model: <strong>+14.7pp</strong> accuracy boost</p>
             <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Most consistent factor across all 15 models</p>
 
             <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Grounding matters more than chain-of-thought</p>
@@ -1887,7 +1887,7 @@
           <ul>
             <li>Base performance varied widely across models, but averaged significantly below humans.</li>
             <li>Adding chain-of-thought reasoning helped somewhat.</li>
-            <li>But the biggest gains came from code-based reasoning: Using the world model gave an average boost of 14.7 percentage points.</li>
+            <li>But the biggest gains came from the world model: translating questions into code gave Spotter agents a significant accuracy boost.</li>
           </ul>
           <p>So the world model helped with answering questions. But did it also help with asking better ones?</p>
         </aside>
@@ -3227,7 +3227,7 @@ def answer(true_board, partial_board) -> bool:
       if (!container || typeof d3 === 'undefined') return;
 
       var W = 480, H = 380;
-      var margin = { top: 28, right: 24, bottom: 44, left: 56 };
+      var margin = { top: 28, right: 24, bottom: 60, left: 56 };
       var width = W - margin.left - margin.right;
       var height = H - margin.top - margin.bottom;
 
@@ -3240,25 +3240,25 @@ def answer(true_board, partial_board) -> bool:
 
       // Data: per-model overall accuracy from spotter_master_table.tex
       var perModel = {
-        'Base':       [0.868, 0.834, 0.231, 0.701, 0.622, 0.690, 0.622, 0.752, 0.686, 0.589, 0.677, 0.525, 0.924, 0.928, 0.927],
-        'CoT':        [0.906, 0.904, 0.516, 0.711, 0.608, 0.789, 0.690, 0.750, 0.783, 0.690, 0.808, 0.591, 0.926, 0.924, 0.925],
-        'Code':       [0.937, 0.939, 0.440, 0.814, 0.778, 0.797, 0.767, 0.904, 0.899, 0.808, 0.878, 0.799, 0.939, 0.925, 0.930],
-        'CoT + Code': [0.944, 0.937, 0.497, 0.823, 0.795, 0.845, 0.784, 0.909, 0.896, 0.851, 0.888, 0.828, 0.940, 0.914, 0.930],
+        'Base':              [0.868, 0.834, 0.231, 0.701, 0.622, 0.690, 0.622, 0.752, 0.686, 0.589, 0.677, 0.525, 0.924, 0.928, 0.927],
+        'CoT':               [0.906, 0.904, 0.516, 0.711, 0.608, 0.789, 0.690, 0.750, 0.783, 0.690, 0.808, 0.591, 0.926, 0.924, 0.925],
+        'World Model':       [0.937, 0.939, 0.440, 0.814, 0.778, 0.797, 0.767, 0.904, 0.899, 0.808, 0.878, 0.799, 0.939, 0.925, 0.930],
+        'World Model + CoT': [0.944, 0.937, 0.497, 0.823, 0.795, 0.845, 0.784, 0.909, 0.896, 0.851, 0.888, 0.828, 0.940, 0.914, 0.930],
       };
       var humanAccuracy = 0.925;
 
       var colors = {
         'Base': '#66C2A5', 'CoT': '#FC8D62',
-        'Code': '#8DA0CB', 'CoT + Code': '#E78AC3',
+        'World Model': '#8DA0CB', 'World Model + CoT': '#E78AC3',
       };
-      var categories = ['Base', 'CoT', 'Code', 'CoT + Code'];
+      var categories = ['Base', 'CoT', 'World Model', 'World Model + CoT'];
 
       // Bootstrapped 95% CIs (10k resamples, matching seaborn's errorbar=("ci", 95))
       var bootstrapCI = {
-        'Base':       { ciLo: 0.6092, ciHi: 0.7917 },
-        'CoT':        { ciLo: 0.7013, ciHi: 0.8310 },
-        'Code':       { ciLo: 0.7675, ciHi: 0.8893 },
-        'CoT + Code': { ciLo: 0.7903, ciHi: 0.8978 },
+        'Base':              { ciLo: 0.6092, ciHi: 0.7917 },
+        'CoT':                { ciLo: 0.7013, ciHi: 0.8310 },
+        'World Model':       { ciLo: 0.7675, ciHi: 0.8893 },
+        'World Model + CoT': { ciLo: 0.7903, ciHi: 0.8978 },
       };
 
       var data = categories.map(function(cat) {
@@ -3298,6 +3298,15 @@ def answer(true_board, partial_board) -> bool:
         .select('.domain').attr('stroke', '#999');
       g.selectAll('.tick text')
         .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
+
+      // Wrap the last category's tick label onto two lines
+      g.selectAll('.tick text').filter(function(d) { return d === 'World Model + CoT'; })
+        .each(function() {
+          var t = d3.select(this);
+          t.text(null).attr('dy', null);
+          t.append('tspan').attr('x', 0).attr('dy', '0.71em').text('World Model');
+          t.append('tspan').attr('x', 0).attr('dy', '1.2em').text('+ CoT');
+        });
 
       // ── Animated elements (all start hidden) ──
 
