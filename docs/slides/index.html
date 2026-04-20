@@ -1958,14 +1958,11 @@
             <p style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Does using a world model improve downstream performance?</p>
             <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Targeting Score (F1) measures hits vs.&nbsp;misses as a binary classification task</p>
 
-            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Just optimizing EIG (<strong>InfoMax</strong>) does not help</p>
-            <p class="fragment fade-in" data-fragment-index="5" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 8px;">&rarr; Weaker models (Llama&nbsp;4, GPT-4o) don&rsquo;t know <em>how to act</em> on information gained</p>
-
-            <p class="fragment fade-in" data-fragment-index="6" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to select <em>when and where to shoot</em>:</p>
+            <p class="fragment fade-in" data-fragment-index="4" style="font-size: 0.58em; color: #4a5770; margin-bottom: 4px;">Using the world model to guide behavior:</p>
             <ul style="font-size: 0.5em; line-height: 1.6; margin: 0;">
-              <li class="fragment fade-in" data-fragment-index="7">Better targeting (<strong>+0.303&ndash;0.374</strong> F1)</li>
-              <li class="fragment fade-in" data-fragment-index="8">Superhuman (<strong>82%</strong> win rate for <strong style="color: #71a0c1;">Llama-4-Scout</strong> vs.&nbsp;<strong style="color: #008f69;">humans</strong>)</li>
-              <li class="fragment fade-in" data-fragment-index="9">Surpass frontier (<strong>67%</strong> win rate vs.&nbsp;<strong style="color: #000080;">GPT-5</strong>, <strong>100&times;</strong> cheaper)</li>
+              <li class="fragment fade-in" data-fragment-index="5">Better targeting (<strong>+0.303&ndash;0.374</strong> F1)</li>
+              <li class="fragment fade-in" data-fragment-index="6">Superhuman (<strong>82%</strong> win rate for <strong style="color: #71a0c1;">Llama-4-Scout</strong> vs.&nbsp;<strong style="color: #008f69;">humans</strong>)</li>
+              <li class="fragment fade-in" data-fragment-index="7">Surpass frontier (<strong>67%</strong> win rate vs.&nbsp;<strong style="color: #000080;">GPT-5</strong>, <strong>100&times;</strong> inference cost savings)</li>
             </ul>
           </div>
         </div>
@@ -1974,13 +1971,11 @@
           <p>We can measure targeting performance using F1 score, which treats hits versus misses as a binary classification task.</p>
           <ul>
             <li>As expected, random shooting gives a low baseline.</li>
-            <li>Humans do much better, with a wide spread across players.</li>
-            <li>Out-of-the-box LMs are in a similar range: GPT-5 is already competitive with humans, whereas Llama-4 and GPT-4o barely above chance.</li>
-            <li>Surprisingly, we found that just optimizing EIG (InfoMax) did not actually improve F1 on its own.</li>
-            <li>The intuition is that forcing LLMs to ask informative questions isn't enough if they can't use the answers effectively. Luckily, the world model can also be used to guide actions.</li>
-            <li>This delivered dramatic gains:</li>
-            <li>Even Llama-4-Scout, a relatively modest model, went from random chance to superhuman performance.</li>
-            <li>And it even outperformed GPT-5 -- at roughly a hundred times lower cost.</li>
+            <li>Humans did much better, with a wide spread across players.</li>
+            <li>Out-of-the-box, agents also showed a lot of variation: whereas GPT-5 was already competitive with humans, Llama-4 and GPT-4o were barely above chance. Can we get these weaker models to behave more rationally without explicitly training them?</li>
+            <li>Yes -- when we gave agents access to a world model, we saw dramatic gains:</li>
+            <li>For instance, Llama-4-Scout went from random chance to superhuman performance.</li>
+            <li>And it even outperformed GPT-5 -- this last result is especially notable given the huge cost difference between models.</li>
           </ul>
         </aside>
       </section>
@@ -3603,11 +3598,10 @@ def answer(true_board, partial_board) -> bool:
       };
 
       var ctOrderFull = ['Human', 'Random', 'Greedy', 'LM', '+Bayes-Q', '+Bayes-M', '+Bayes-QM', '+Bayes-QMD'];
-      var ctOrder = ['Random', 'Human', 'LM', '+Bayes-Q', '+Bayes-QM'];
+      var ctOrder = ['Random', 'Human', 'LM', '+Bayes-QM'];
       var ctLabels = {
         'Random': 'Random', 'Human': 'Human', 'LM': 'Agent-only',
-        '+Bayes-Q': '+ World Model\n(InfoMax)',
-        '+Bayes-QM': '+ World Model\n(Full)',
+        '+Bayes-QM': '+ World Model',
       };
       var llmOrder = ['Human', 'Baseline', 'Llama-4-Scout', 'GPT-4o', 'GPT-5'];
 
@@ -3676,9 +3670,9 @@ def answer(true_board, partial_board) -> bool:
         var lines = label.split('\n');
         var tick = xAxisG.append('text')
           .attr('x', x0(ct) + x0.bandwidth() / 2)
-          .attr('y', 10)
+          .attr('y', 14)
           .attr('text-anchor', 'middle')
-          .style('font-size', '11px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
+          .style('font-size', '13px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
         lines.forEach(function(line, i) {
           tick.append('tspan')
             .attr('x', x0(ct) + x0.bandwidth() / 2)
@@ -3688,10 +3682,10 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Draw boxes (hidden initially) ──
-      // Animation groups: 0=Human+Baselines, 1=LM, 2=+Bayes-Q, 3=+Bayes-M, 4=+Bayes-QM, 5=+Bayes-QMD
+      // Animation groups: chart-only reveals at 1=Random, 2=Human, 3=LM; +Bayes-QM reveals at 4 (visible text fragment)
       var animGroups = {
         'Random': 1, 'Human': 2, 'LM': 3,
-        '+Bayes-Q': 4, '+Bayes-QM': 6,
+        '+Bayes-QM': 4,
       };
 
       // Lighten a hex color by mixing with white
@@ -3751,8 +3745,8 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Declarative animation driven by fragment index ──
-      // animGroup values: Random=1, Human=2, LM=3, +Bayes-Q=4, +Bayes-QM=6
-      // Hidden fragments at indices 1,2,3; visible text fragments cover 0,4,5,6,7,8,9
+      // animGroup values: Random=1, Human=2, LM=3, +Bayes-QM=4
+      // Hidden fragments at indices 1,2,3; visible text fragments cover 0,4,5,6,7
 
       function syncChart() {
         var slide = container.closest('section');
@@ -3778,7 +3772,7 @@ def answer(true_board, partial_board) -> bool:
       }
 
       // Inject hidden fragments for chart-only steps (indices 1,2,3)
-      // Indices 4,6 are covered by visible text fragments (+Bayes-Q, +Bayes-QM)
+      // Index 4 is covered by the visible "Using the world model..." text fragment (+Bayes-QM)
       var slide = container.closest('section');
       if (slide) {
         [1, 2, 3].forEach(function(i) {
