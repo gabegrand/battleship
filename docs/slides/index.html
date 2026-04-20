@@ -1794,34 +1794,34 @@
           <div class="col" style="text-align: center; position: relative; min-height: 280px;">
             <!-- Chart container: each chart fades in/out with fragments -->
             <div id="human-chart-container" style="width: 400px; height: 280px; margin: 0 auto; position: relative;">
-              <div id="human-chart-accuracy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
               <div id="human-chart-eig" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
               <div id="human-chart-redundant" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
               <div id="human-chart-scatter" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
+              <div id="human-chart-accuracy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.4s;"></div>
             </div>
           </div>
           <div class="col">
-            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Human answers are very <strong>accurate &amp; consistent</strong></p>
-            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 92.5% agreement with gold labels</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans ask <strong>good, but not optimal</strong> questions</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Mean EIG = 0.351 bits (theoretical max w/ noise = 0.531)</p>
 
-            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans ask <strong>good, but not optimal</strong> questions</p>
-            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Mean EIG = 0.351 bits (theoretical max = 0.531)</p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans very <strong>rarely ask redundant</strong> questions</p>
+            <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Only 2.8% of human questions have EIG = 0</p>
 
-            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Humans very <strong>rarely ask redundant</strong> questions</p>
-            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; Only 2.8% of human questions have EIG = 0</p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Performance <strong>correlates with question frequency</strong></p>
+            <p class="fragment fade-in" data-fragment-index="2" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $\rho = 0.684$, $p &lt; 0.002$</p>
 
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Performance <strong>correlates with QA frequency</strong></p>
-            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; $\rho = 0.684$, $p &lt; 0.002$</p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Human answers are very <strong>accurate &amp; consistent</strong></p>
+            <p class="fragment fade-in" data-fragment-index="3" style="font-size: 0.42em; color: #888; margin-top: 2px; margin-bottom: 10px;">&rarr; 92.5% agreement with gold labels</p>
           </div>
         </div>
 
         <aside class="notes">
           <p>We first collected data from human participants to form what we call the BattleshipQA dataset. Here's what we found.</p>
           <ul>
-            <li>Human Spotters were very accurate, providing answers that nearly always agreed with our expert labels.</li>
-            <li>Humans asked good questions, but not optimal ones.</li>
-            <li>Importantly, though, humans almost never asked redundant questions.</li>
-            <li>And we found a strong correlation between how many questions a player asked and how well they performed at sinking ships.</li>
+            <li>Human Captains asked questions that were reliably informative, but not necessarily optimal.</li>
+            <li>Importantly, though, humans rarely asked redundant questions - this is in contrast to many of the LLMs we tested.</li>
+            <li>We also found a strong correlation between how many questions players asked and how well they performed at sinking ships.</li>
+            <li>Finally, on the spotter side, human *answers* were very accurate, nearly always agreeing with our expert labels.</li>
           </ul>
         </aside>
       </section>
@@ -2829,11 +2829,19 @@ def answer(true_board, partial_board) -> bool:
         g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
           .selectAll('text').attr('font-size', '11px');
         g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -40)
-          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555').text('Accuracy');
+          .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555').text('SpotterQA Accuracy');
 
         // X axis
         g.append('g').attr('transform', 'translate(0,' + h + ')')
           .call(d3.axisBottom(x)).selectAll('text').attr('font-size', '13px');
+
+        // Gold labels reference line at 100%
+        var gold = '#d4a017';
+        g.append('line').attr('x1', 0).attr('x2', w)
+          .attr('y1', y(1)).attr('y2', y(1))
+          .attr('stroke', gold).attr('stroke-dasharray', '6,4').attr('stroke-width', 1.5);
+        g.append('text').attr('x', w - 8).attr('y', y(1) - 6)
+          .attr('font-size', '10px').attr('fill', gold).attr('text-anchor', 'end').text('Gold labels');
 
         // Bar (starts at baseline)
         var bar = g.append('rect').attr('x', x('Human')).attr('y', y(0))
@@ -2848,14 +2856,15 @@ def answer(true_board, partial_board) -> bool:
           .attr('text-anchor', 'end').attr('font-size', '10px').attr('fill', green)
           .text('Human baseline').attr('opacity', 0);
 
-        // Value label (hidden initially)
-        var label = g.append('text').attr('x', x('Human') + x.bandwidth() / 2).attr('y', y(val) - 8)
+        // Value label (hidden initially) — placed inside the bar, just below the top
+        var accLabelOffset = 20;
+        var label = g.append('text').attr('x', x('Human') + x.bandwidth() / 2).attr('y', y(val) + accLabelOffset)
           .attr('text-anchor', 'middle').attr('font-size', '15px').attr('font-weight', '600').attr('fill', '#333')
           .text('92.5%').attr('opacity', 0);
 
         animBars.accuracy = {
           bar: bar, label: label, val: val, y: y, h: h,
-          baseline: baseline, baseLabel: baseLabel
+          baseline: baseline, baseLabel: baseLabel, labelOffset: accLabelOffset
         };
       })();
 
@@ -3056,7 +3065,7 @@ def answer(true_board, partial_board) -> bool:
         // Axis labels
         g.append('text').attr('x', w / 2).attr('y', h + 32)
           .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555')
-          .text('Questions Asked');
+          .text('Questions Asked Per Game');
         g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -38)
           .attr('text-anchor', 'middle').attr('font-size', '12px').attr('fill', '#555')
           .text('Targeting Score (F1)');
@@ -3104,8 +3113,8 @@ def answer(true_board, partial_board) -> bool:
       })();
 
       // ── Chart visibility sync ──
-      var chartIds = ['human-chart-accuracy', 'human-chart-eig', 'human-chart-redundant', 'human-chart-scatter'];
-      var animKeys = ['accuracy', 'eig', 'donut', 'scatter']; // map chart index to animBars key
+      var chartIds = ['human-chart-eig', 'human-chart-redundant', 'human-chart-scatter', 'human-chart-accuracy'];
+      var animKeys = ['eig', 'donut', 'scatter', 'accuracy']; // map chart index to animBars key
       var prevActiveChart = -1;
 
       function syncHumanCharts(slide) {
@@ -3123,6 +3132,7 @@ def answer(true_board, partial_board) -> bool:
           var key = animKeys[i];
           if (key && animBars[key]) {
             var ab = animBars[key];
+            var lo = (typeof ab.labelOffset === 'number') ? ab.labelOffset : -8;
             if (isActive && prevActiveChart !== i) {
               if (ab.animateIn) {
                 ab.animateIn();
@@ -3132,9 +3142,9 @@ def answer(true_board, partial_board) -> bool:
                   .attr('y', ab.y(ab.val))
                   .attr('height', ab.h - ab.y(ab.val));
                 // Label counts up and travels with bar
-                ab.label.attr('opacity', 1).attr('y', ab.y(0) - 8);
+                ab.label.attr('opacity', 1).attr('y', ab.y(0) + lo);
                 ab.label.transition().duration(1000).ease(d3.easeCubicOut)
-                  .attr('y', ab.y(ab.val) - 8)
+                  .attr('y', ab.y(ab.val) + lo)
                   .tween('text', function() {
                     var node = this;
                     var fmt = ab.fmt || function(v) { return (v * 100).toFixed(1) + '%'; };
@@ -3155,7 +3165,7 @@ def answer(true_board, partial_board) -> bool:
                 ab.reset();
               } else {
                 ab.bar.interrupt().attr('y', ab.y(0)).attr('height', 0);
-                ab.label.interrupt().attr('opacity', 0).attr('y', ab.y(0) - 8);
+                ab.label.interrupt().attr('opacity', 0).attr('y', ab.y(0) + lo);
                 if (ab.baseline) {
                   ab.baseline.interrupt().attr('y1', ab.y(0)).attr('y2', ab.y(0)).attr('opacity', 0);
                   ab.baseLabel.interrupt().attr('y', ab.y(0) - 6).attr('opacity', 0);
