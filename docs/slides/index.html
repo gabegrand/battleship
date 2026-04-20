@@ -128,6 +128,16 @@
     .key-points .kp-text { font-size: 0.68em; line-height: 1.5; }
     .key-points .kp-label { font-weight: 700; color: #172642; }
 
+    /* #battleship: the first bullet is static (no fragment), but should still
+       semi-fade when a later fragment becomes visible — matches the look of
+       the .fragment.fade-in-then-semi-out bullets around it. */
+    #battleship .key-points > li:first-child {
+      transition: opacity 0.4s ease;
+    }
+    #battleship .key-points > li:first-child:has(~ .fragment.visible) {
+      opacity: 0.5;
+    }
+
     /* ── EIG derivation ── */
     .eig-deriv-layout { display: grid; grid-template-columns: 3fr 2fr; gap: 32px; align-items: start; margin-top: 8px; }
     .eig-deriv-steps { display: flex; flex-direction: column; gap: 14px; }
@@ -839,22 +849,22 @@
         <div class="two-col" style="align-items: start; gap: 36px;">
           <div class="col" data-id="c-bullets">
             <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+              <li>
                 <span class="kp-icon"><i class="fas fa-ship"></i></span>
-                <span class="kp-text"><span class="kp-label">Ships on a board.</span> Four ships of length 2-5 on an 8&times;8 grid, either horizontally or vertically.</span>
+                <span class="kp-text"><span class="kp-label">Hidden state.</span> Four ships of length 2-5 on an 8&times;8 grid, either horizontally or vertically.</span>
               </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
                 <span class="kp-icon"><i class="fas fa-eye-slash"></i></span>
-                <span class="kp-text"><span class="kp-label">Hidden information.</span> The player sees only a partial board. Most tiles are unknown.</span>
+                <span class="kp-text"><span class="kp-label">Partial observation.</span> The player sees only a partial board. Most tiles are unknown.</span>
               </li>
-              <li class="fragment fade-in" data-fragment-index="2">
+              <li class="fragment fade-in" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-crosshairs"></i></span>
                 <span class="kp-text"><span class="kp-label">Goal:</span> Uncover all ships in as few moves as possible.</span>
               </li>
             </ul>
           </div>
           <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
-            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
+            <div class="game-action-board-wrap" style="position: relative;">
               <div id="c0-board" class="mini-board">
                 <div class="b-label"></div>
                 <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -904,42 +914,9 @@
         <h3 data-id="c-title">Battleship as a QA task</h3>
 
         <div class="two-col" style="align-items: start; gap: 32px;">
-          <div class="col">
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
-                <span class="kp-icon"><i class="fas fa-comments"></i></span>
-                <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
-              </li>
-            </ul>
-
-            <div class="qa-examples" style="margin: 6px 0 28px;">
-              <div class="fragment fade-in qa-q1" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                &ldquo;Is there another ship near orange?&rdquo;
-              </div>
-              <div class="fragment fade-in qa-q2" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                &ldquo;Do any ships lie along the edges?&rdquo;
-              </div>
-              <div class="fragment fade-in qa-q3" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                &ldquo;Is the purple ship horizontal?&rdquo;
-              </div>
-            </div>
-
-            <ul class="key-points" style="margin: 0;">
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
-                <span class="kp-icon"><i class="fas fa-flask"></i></span>
-                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question probes the hidden board state and produces an observation.</span>
-              </li>
-              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
-                <span class="kp-icon"><i class="fas fa-brain"></i></span>
-                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build on prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
-                  <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Right: Spotter view with captain-hidden cells translucent -->
+          <!-- Left: Spotter view with captain-hidden cells translucent -->
           <div class="col" data-id="c-board-col" style="flex: 0 0 42%; text-align: center;">
-            <div data-id="c-board" class="game-action-board-wrap" style="position: relative;">
+            <div class="game-action-board-wrap" style="position: relative;">
               <div class="mini-board captain-view">
                 <div class="b-label"></div>
                 <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -971,6 +948,39 @@
                 <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
               </div>
             </div>
+          </div>
+
+          <div class="col">
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
+                <span class="kp-icon"><i class="fas fa-comments"></i></span>
+                <span class="kp-text"><span class="kp-label">Beyond shooting:</span> The player can also ask <strong>natural-language questions</strong> about the board.</span>
+              </li>
+            </ul>
+
+            <div class="qa-examples" style="margin: 6px 0 28px;">
+              <div class="fragment fade-in qa-q1" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Is there another ship near orange?&rdquo;
+              </div>
+              <div class="fragment fade-in qa-q2" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Do any ships lie along the edges?&rdquo;
+              </div>
+              <div class="fragment fade-in qa-q3" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                &ldquo;Is the purple ship horizontal?&rdquo;
+              </div>
+            </div>
+
+            <ul class="key-points" style="margin: 0;">
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
+                <span class="kp-icon"><i class="fas fa-flask"></i></span>
+                <span class="kp-text"><span class="kp-label">Questions as experiments.</span> Each question probes the hidden board state and produces an observation.</span>
+              </li>
+              <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
+                <span class="kp-icon"><i class="fas fa-brain"></i></span>
+                <span class="kp-text"><span class="kp-label">Studying information-seeking.</span> We build on prior cognitive science work that used Battleship to study humans in a single-player, single-turn setting.
+                  <span style="color: #aaa;">(Rothe, Lake &amp; Gureckis, 2017; 2018; 2019)</span></span>
+              </li>
+            </ul>
           </div>
         </div>
 
@@ -4094,7 +4104,7 @@ def answer(true_board, partial_board) -> bool:
       }
     })();
 
-    // ── #battleship: captain-view fade on fragment 1 ──
+    // ── #battleship: captain-view fade on the "Partial observation" fragment ──
     function c0BoardSwap(show) {
       var board = document.getElementById('c0-board');
       if (board) board.classList.toggle('captain-view', show);
@@ -4104,7 +4114,7 @@ def answer(true_board, partial_board) -> bool:
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
       var slide = event.fragment.closest('section');
-      if (slide && slide.querySelector('#c0-board') && idx === '1') {
+      if (slide && slide.querySelector('#c0-board') && idx === '0') {
         c0BoardSwap(true);
       }
     });
@@ -4113,7 +4123,7 @@ def answer(true_board, partial_board) -> bool:
       var idx = event.fragment.getAttribute('data-fragment-index');
       if (idx === null) return;
       var slide = event.fragment.closest('section');
-      if (slide && slide.querySelector('#c0-board') && idx === '1') {
+      if (slide && slide.querySelector('#c0-board') && idx === '0') {
         c0BoardSwap(false);
       }
     });
@@ -4121,8 +4131,8 @@ def answer(true_board, partial_board) -> bool:
     // Sync #battleship board state when entering the slide
     Reveal.on('slidechanged', function(event) {
       if (event.currentSlide.querySelector('#c0-board')) {
-        var frag1 = event.currentSlide.querySelector('[data-fragment-index="1"]');
-        var showCaptain = frag1 && frag1.classList.contains('visible');
+        var frag0 = event.currentSlide.querySelector('[data-fragment-index="0"]');
+        var showCaptain = frag0 && frag0.classList.contains('visible');
         c0BoardSwap(showCaptain);
       }
     });
