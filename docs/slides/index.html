@@ -483,6 +483,17 @@
     .qa-examples .fragment.qa-q3 { transition-delay: 0s; }
     .qa-examples .fragment.qa-q3.visible { transition-delay: 0.3s; }
 
+    /* #hypothesis-space: samples cascade in when the box appears (all share the
+       box's fragment-index; different transition-delays produce a stagger). */
+    .fragment.hs-stagger-1        { transition-delay: 0.15s; }
+    .fragment.hs-stagger-1.visible { transition-delay: 0.15s; }
+    .fragment.hs-stagger-2        { transition-delay: 0.35s; }
+    .fragment.hs-stagger-2.visible { transition-delay: 0.35s; }
+    .fragment.hs-stagger-3        { transition-delay: 0.55s; }
+    .fragment.hs-stagger-3.visible { transition-delay: 0.55s; }
+    .fragment.hs-stagger-ellipsis        { transition-delay: 0.75s; }
+    .fragment.hs-stagger-ellipsis.visible { transition-delay: 0.75s; }
+
     /* ── Board flip animation (Spotter POV reveal) ── */
     .game-action-board-wrap.board-flipper {
       background: transparent; box-shadow: none; padding: 0;
@@ -647,6 +658,12 @@
       <section id="title" class="title-slide">
         <h1>Shoot First,<br/>Ask Questions Later?</h1>
         <h2>Building Rational Agents That Explore and Act Like People</h2>
+        <div style="display: flex; justify-content: center; gap: 36px; margin: 0.6em 0 0.4em 0;">
+          <img src="images/headshot_grand.png" alt="Gabriel Grand" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+          <img src="images/headshot_pepe.png" alt="Valerio Pepe" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+          <img src="images/headshot_tenenbaum.jpeg" alt="Joshua B. Tenenbaum" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+          <img src="images/headshot_andreas.jpg" alt="Jacob Andreas" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+        </div>
         <div class="authors">
           <a href="https://gabegrand.com">Gabriel Grand</a><sup>1,2*</sup> &middot;
           <a href="https://vpepe.github.io/">Valerio Pepe</a><sup>3*</sup> &middot;
@@ -1369,14 +1386,14 @@
           <div class="col" style="flex: 1;">
             <div class="eig-deriv-steps" style="margin-top: 0; max-width: 100%;">
               <!-- Challenges header (maps to Goal) -->
-              <div style="background: #fff4f0; border: 1px solid #f0ddd8; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+              <div data-id="challenges-header" style="background: #fff4f0; border: 1px solid #f0ddd8; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
                 <div style="font-size: 0.55em; font-weight: 600; color: #ac2028;">
                   <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Challenges
                 </div>
                 <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Computing EIG exactly is intractable in general. Three key difficulties:</div>
               </div>
               <!-- Challenge 1: Marginalization (maps to IG) -->
-              <div class="eig-step fragment fade-in" data-fragment-index="0" style="flex-direction: column; align-items: flex-start; width: 100%;">
+              <div data-id="challenge-marg" class="eig-step fragment fade-in" data-fragment-index="0" style="flex-direction: column; align-items: flex-start; width: 100%;">
                 <div style="font-weight: 600; color: #ac2028;">
                   <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
                   <i class="fas fa-cubes" style="margin-right: 4px;"></i> Marginalization
@@ -1384,7 +1401,7 @@
                 <div class="eig-annot">Entropy requires marginalizing over combinatorial $s \in \mathcal{S}$.</div>
               </div>
               <!-- Challenge 2: Simulation (maps to EIG) -->
-              <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start; width: 100%;">
+              <div data-id="challenge-sim" class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start; width: 100%;">
                 <div style="font-weight: 600; color: #ac2028;">
                   <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
                   <i class="fas fa-cogs" style="margin-right: 4px;"></i> Simulation
@@ -1392,7 +1409,7 @@
                 <div class="eig-annot">Estimating likelihood of outcome $y$ requires simulating experiment $x$.</div>
               </div>
               <!-- Challenge 3: Proposing experiments (maps to x*) -->
-              <div class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start; width: 100%;">
+              <div data-id="challenge-prop" class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start; width: 100%;">
                 <div style="font-weight: 600; color: #ac2028;">
                   <i class="fas fa-long-arrow-alt-left" style="margin-right: 4px; color: #ccc;"></i>
                   <i class="fas fa-search" style="margin-right: 4px;"></i> Proposing experiments
@@ -1414,149 +1431,443 @@
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════
-           APPROACH
+           APPROACH: Challenges → Solutions
            ═══════════════════════════════════════════════════════════════ -->
 
-      <section id="approach" data-auto-animate data-auto-animate-restart>
-        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
+      <section id="our-approach" data-auto-animate>
+        <div class="section-label" data-id="bed-label">Part II: Modeling Framework</div>
         <h3>Grounding reasoning in a world model</h3>
 
-        <div style="display: grid; grid-template-columns: auto auto auto; align-items: center; justify-content: center; column-gap: 24px; row-gap: 12px; margin-top: 80px;">
-          <!-- Row 1: boxes + arrow -->
-          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
-            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
-            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+        <!-- 2-column grid: each row pairs a challenge with its approach for perfect 1:1 vertical alignment. -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; row-gap: 14px; align-items: start; margin-top: 16px;">
+          <!-- Row 1: Headers -->
+          <div data-id="challenges-header" style="background: #fff4f0; border: 1px solid #f0ddd8; border-radius: 10px; padding: 10px 14px;">
+            <div style="font-size: 0.55em; font-weight: 600; color: #ac2028;">
+              <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Challenges
+            </div>
+            <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">Computing EIG exactly is intractable in general. Three key difficulties:</div>
           </div>
-          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa; text-align: center;"><i class="fas fa-arrows-alt-h"></i></span>
-          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
-            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
-            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
-            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+          <div style="background: rgba(48,78,216,0.05); border: 1px solid rgba(48,78,216,0.2); border-radius: 10px; padding: 10px 14px;">
+            <div style="font-size: 0.55em; font-weight: 600; color: #304ed8;">
+              <i class="fas fa-check-circle" style="margin-right: 6px;"></i>Approach
+            </div>
+            <div style="font-size: 0.48em; color: #4a5770; margin-top: 4px;">We equip the <strong style="color: #4a5770;">Agent</strong> with a <strong style="color: #304ed8;">World Model</strong>: a code-based simulator that models the environment.</div>
           </div>
-          <!-- Row 2: subtitles -->
-          <p data-id="agent-sub" style="margin: 0; font-size: 0.45em; color: #4a5770; text-align: center; line-height: 1.4;">
-            LLM with code &amp; reasoning capabilities
-          </p>
-          <span></span>
-          <p data-id="wm-sub" style="margin: 0; font-size: 0.45em; color: #304ed8; text-align: center; line-height: 1.4;">
-            A code-based simulator that encodes domain knowledge
-          </p>
+
+          <!-- Row 2: Marginalization ↔ Sample hypotheses (top, appears FIRST) -->
+          <div data-id="challenge-marg" class="eig-step" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #ac2028;">
+              <i class="fas fa-cubes" style="margin-right: 4px;"></i> Marginalization
+            </div>
+            <div class="eig-annot">Entropy requires marginalizing over combinatorial $s \in \mathcal{S}$.</div>
+          </div>
+          <div class="eig-step fragment fade-in" data-fragment-index="0" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #304ed8;">
+              <i class="fas fa-globe" style="margin-right: 4px;"></i> Sample hypotheses
+            </div>
+            <div class="eig-annot">World model samples: $s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
+          </div>
+
+          <!-- Row 3: Simulation ↔ Simulate experiments (middle) -->
+          <div data-id="challenge-sim" class="eig-step" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #ac2028;">
+              <i class="fas fa-cogs" style="margin-right: 4px;"></i> Simulation
+            </div>
+            <div class="eig-annot">Estimating likelihood of outcome $y$ requires simulating experiment $x$.</div>
+          </div>
+          <div class="eig-step fragment fade-in" data-fragment-index="1" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #304ed8;">
+              <i class="fas fa-globe" style="margin-right: 4px;"></i> Simulate experiments
+            </div>
+            <div class="eig-annot">World model executes: $y = f_x(s)$</div>
+          </div>
+
+          <!-- Row 4: Proposing ↔ Sample candidates (bottom, appears LAST) -->
+          <div data-id="challenge-prop" class="eig-step" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #ac2028;">
+              <i class="fas fa-search" style="margin-right: 4px;"></i> Proposing experiments
+            </div>
+            <div class="eig-annot">Experiment space $X$ may be vast or open-ended.</div>
+          </div>
+          <div class="eig-step fragment fade-in" data-fragment-index="2" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <div style="font-weight: 600; color: #4a5770;">
+              <i class="fas fa-robot" style="margin-right: 4px;"></i> Sample candidates
+            </div>
+            <div class="eig-annot">Agent proposes: $x \sim \pi_{\text{LM}}(\cdot)$</div>
+          </div>
         </div>
 
         <aside class="notes">
-          <p>...our approach pairs an agent with a world model: a code-based simulator that encodes knowledge about the domain.</p>
+          <p>To address these challenges, our approach pairs an agent with a world model.</p>
+          <ul>
+            <li>First, the world model samples hypotheses, letting us approximate the entropy over the belief via Monte Carlo &mdash; addressing marginalization.</li>
+            <li>Second, the world model simulates each candidate experiment against those sampled boards &mdash; giving us the likelihoods we need.</li>
+            <li>Finally, the agent proposes candidate experiments by sampling from a language model &mdash; addressing the vast experiment space.</li>
+          </ul>
         </aside>
       </section>
 
-      <section id="approach-affordances" data-auto-animate>
-        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
-        <h3>Grounding reasoning in a world model</h3>
+      <!-- ═══════════════════════════════════════════════════════════════
+           HYPOTHESIS SPACE (sets up #eig-computation)
+           ═══════════════════════════════════════════════════════════════ -->
 
-        <div style="display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 80px;">
-          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
-            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
-            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+      <section id="hypothesis-space" data-auto-animate data-auto-animate-restart>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
+        <h3>Sampling the hypothesis space</h3>
+
+        <div data-id="hyp-row" style="display: flex; align-items: stretch; justify-content: center; gap: 12px; margin-top: 24px;">
+          <!-- Captain board (fragment 0) -->
+          <div data-id="captain-board" class="game-action-board-wrap fragment fade-in" data-fragment-index="0" style="padding: 12px; display: flex; flex-direction: column;">
+            <h4 data-id="captain-label" style="font-size: 0.5em;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+            <div class="mini-board" style="width: 180px; font-size: 0.55em; margin: auto 0;">
+              <div class="b-label"></div>
+              <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+              <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+              <div class="b-label">7</div><div class="b-label">8</div>
+              <div class="b-label">A</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">B</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">C</div>
+              <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">D</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">E</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">F</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">G</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">H</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+            </div>
           </div>
-          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
-          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
-            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
-            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
-            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+
+          <!-- World Model (fragment 1): arrows left/right, math below box -->
+          <div data-id="wm-arrow" class="fragment fade-in" data-fragment-index="1" style="display: flex; flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto;">
+            <i class="fas fa-arrow-right" style="font-size: 0.75em; color: #bbb;"></i>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+              <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 8px 14px;">
+                <i class="fas fa-globe" style="color: #304ed8; font-size: 0.85em;"></i>
+                <span style="font-size: 0.55em; font-weight: 700; color: #304ed8;">World Model</span>
+              </div>
+              <div style="font-size: 0.45em; color: #666; font-weight: 500;">$s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
+            </div>
+            <i class="fas fa-arrow-right" style="font-size: 0.75em; color: #bbb;"></i>
           </div>
-          <!-- Affordance sub-modules (unmatched — fades in) -->
-          <div style="display: flex; align-items: center; gap: 0; margin-left: -4px;">
-              <svg width="36" height="90" viewBox="0 0 36 90" style="flex-shrink: 0;">
-                <line x1="0" y1="45" x2="14" y2="45" stroke="rgba(48,78,216,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
-                <line x1="14" y1="16" x2="14" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
-                <line x1="14" y1="16" x2="36" y2="16" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
-                <line x1="14" y1="74" x2="36" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
-              </svg>
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
-                  <i class="fas fa-random" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
-                  <div>
-                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Sample</div>
-                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
-                  </div>
+
+          <!-- Hypothesis space (fragment 2 — container + s_1); s_2 at 3; s_3 at 4 -->
+          <div data-id="hypothesis-space" class="fragment fade-in" data-fragment-index="2" style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 12px 10px;">
+            <div style="font-size: 0.5em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 8px;">Hypothesis space $\mathcal{S}$</div>
+            <div style="display: flex; gap: 6px; flex-wrap: nowrap; justify-content: center; align-items: flex-start;">
+              <!-- s_1 (cascades in with hypothesis-space box) -->
+              <div data-id="sample-s1" class="fragment fade-in hs-stagger-1" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div class="mini-board" style="width: 180px; font-size: 0.55em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                  <div class="b-cell ship-1"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
-                  <i class="fas fa-play" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
-                  <div>
-                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Simulate</div>
-                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$y = f_x(s)$</div>
-                  </div>
+                <div style="font-size: 0.4em; color: #888;">$s_1$</div>
+              </div>
+
+              <!-- s_2 (cascades in with hypothesis-space box) -->
+              <div data-id="sample-s2" class="fragment fade-in hs-stagger-2" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div class="mini-board" style="width: 180px; font-size: 0.55em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
                 </div>
+                <div style="font-size: 0.4em; color: #888;">$s_2$</div>
+              </div>
+
+              <!-- s_3 (cascades in with hypothesis-space box) -->
+              <div data-id="sample-s3" class="fragment fade-in hs-stagger-3" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div class="mini-board" style="width: 180px; font-size: 0.55em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                </div>
+                <div style="font-size: 0.4em; color: #888;">$s_3$</div>
+              </div>
+
+              <!-- Ellipsis column (cascades in last with stagger): spacer matches board size; dots align on label row -->
+              <div class="fragment fade-in hs-stagger-ellipsis" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="width: 180px; aspect-ratio: 1/1;"></div>
+                <div style="font-size: 0.55em; color: #aaa; font-weight: 600; letter-spacing: 4px;">&hellip;</div>
               </div>
             </div>
+          </div>
         </div>
 
         <aside class="notes">
-          <p>The world model gives the agent two key affordances: sampling hypothetical world states, and simulating experiments on those sampled worlds to predict outcomes. Let me show you what that looks like in practice.</p>
+          <p>The Captain observes a partial board. To reason about what's hidden, it uses the world model to sample full-board hypotheses consistent with what it has seen.</p>
+          <p>Each sample is a plausible state of the world &mdash; together they approximate the Captain's belief.</p>
         </aside>
       </section>
 
       <section id="eig-computation" data-auto-animate>
         <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
-        <h3>Computing EIG in Battleship</h3>
+        <h3>Computing EIG</h3>
 
-        <div style="display: flex; gap: 18px; align-items: start; margin-top: 4px;">
+        <!-- Top row: 3 flex-1 columns matching pipeline (Propose / Translate / Simulate); auto-animated from #hypothesis-space. -->
+        <div data-id="hyp-row" style="display: flex; align-items: stretch; gap: 6px; margin-bottom: 10px;">
+          <!-- Col 1: Captain (aligned with Propose) -->
+          <div style="flex: 1; display: flex; justify-content: center; align-items: stretch;">
+          <div data-id="captain-board" class="game-action-board-wrap" style="padding: 4px; width: 140px;">
+            <h4 data-id="captain-label" style="font-size: 0.36em; margin: 0 0 3px 0;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+            <div class="mini-board" style="font-size: 0.38em;">
+              <div class="b-label"></div>
+              <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+              <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+              <div class="b-label">7</div><div class="b-label">8</div>
+              <div class="b-label">A</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">B</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">C</div>
+              <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">D</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
+              <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">E</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">F</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">G</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+              <div class="b-label">H</div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
+              <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+            </div>
+          </div>
+          </div>
 
-          <!-- Left column: Captain board + World Model + Samples -->
-          <div style="flex: 0 0 200px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-            <div class="game-action-board-wrap" style="padding: 8px;">
-              <h4 style="font-size: 0.5em;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
-              <div class="mini-board" style="font-size: 0.45em;">
-                <div class="b-label"></div>
-                <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
-                <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
-                <div class="b-label">7</div><div class="b-label">8</div>
-                <div class="b-label">A</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">B</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">C</div>
-                <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">D</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">E</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">F</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">G</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-label">H</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+          <!-- Col 2: WM (aligned with Translate) -->
+          <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+          <div data-id="wm-arrow" style="display: flex; flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto;">
+            <i class="fas fa-arrow-right" style="font-size: 0.55em; color: #bbb;"></i>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 8px; padding: 4px 10px;">
+                <i class="fas fa-globe" style="color: #304ed8; font-size: 0.55em;"></i>
+                <span style="font-size: 0.35em; font-weight: 700; color: #304ed8;">World Model</span>
               </div>
+              <div style="font-size: 0.3em; color: #888; font-weight: 500;">$s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
             </div>
-            <!-- World Model → Hypothesis Space -->
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 8px; padding: 4px 8px;">
-                <i class="fas fa-globe" style="color: #304ed8; font-size: 0.5em;"></i>
-                <span style="font-size: 0.32em; font-weight: 600; color: #304ed8;">World Model</span>
+            <i class="fas fa-arrow-right" style="font-size: 0.55em; color: #bbb;"></i>
+          </div>
+          </div>
+
+          <!-- Col 3: Hypothesis space (aligned with Simulate) -->
+          <div style="flex: 1; display: flex; justify-content: center; align-items: stretch;">
+          <div data-id="hypothesis-space" style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 0.3em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 3px;">Hypothesis space $\mathcal{S}$</div>
+            <div style="display: flex; gap: 4px; flex-wrap: nowrap; justify-content: center; align-items: flex-start;">
+              <!-- s_1 -->
+              <div data-id="sample-s1" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <div class="mini-board" style="width: 70px; font-size: 0.28em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                  <div class="b-cell ship-1"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                </div>
+                <div style="font-size: 0.26em; color: #888;">$s_1$</div>
               </div>
-              <i class="fas fa-arrow-down" style="font-size: 0.4em; color: #bbb;"></i>
-            </div>
-            <div style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.12); border-radius: 6px; padding: 4px 6px;">
-              <div style="font-size: 0.28em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 3px;">Hypothesis space $\mathcal{S}$</div>
-              <div style="display: flex; gap: 3px; flex-wrap: wrap; justify-content: center;">
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s1.png" alt="s1" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_1$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s2.png" alt="s2" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_2$</div></div>
-                <div style="text-align: center;"><img src="../static/images/world_model_samples/sample_s3.png" alt="s3" style="height: 42px; border-radius: 3px; border: 1px solid #e0e0e0;" /><div style="font-size: 0.22em; color: #888;">$s_3$</div></div>
-                <div style="display: flex; align-items: center; justify-content: center; height: 42px;"><span style="font-size: 0.3em; color: #aaa; font-weight: 600; letter-spacing: 2px;">&hellip;</span></div>
+
+              <!-- s_2 -->
+              <div data-id="sample-s2" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <div class="mini-board" style="width: 70px; font-size: 0.28em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div><div class="b-cell ship-1"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                </div>
+                <div style="font-size: 0.26em; color: #888;">$s_2$</div>
+              </div>
+
+              <!-- s_3 -->
+              <div data-id="sample-s3" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <div class="mini-board" style="width: 70px; font-size: 0.28em;">
+                  <div class="b-label"></div>
+                  <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
+                  <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
+                  <div class="b-label">7</div><div class="b-label">8</div>
+                  <div class="b-label">A</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">B</div>
+                  <div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div><div class="b-cell ship-2"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">C</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">D</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">E</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">F</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">G</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell ship-1"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-label">H</div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                  <div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div><div class="b-cell water"></div>
+                </div>
+                <div style="font-size: 0.26em; color: #888;">$s_3$</div>
+              </div>
+
+              <!-- Ellipsis column: spacer matches board, dots on label line -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                <div style="width: 70px; aspect-ratio: 1/1;"></div>
+                <div style="font-size: 0.4em; color: #aaa; font-weight: 600; letter-spacing: 3px;">&hellip;</div>
               </div>
             </div>
           </div>
+          </div>
+        </div>
 
-          <!-- Right column: Question rows (Question | Code | Simulate) -->
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+        <!-- Pipeline (full width, below hypothesis row) -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
 
             <!-- Column headers (each paired with its Row 1 stage) -->
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
@@ -1582,11 +1893,15 @@
               <!-- Translate (fragment 1) -->
               <div class="fragment fade-in" data-fragment-index="1" style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_A}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
+                <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #ab9df2;">4</span><span style="color: #a9dc76;">)</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">any(board[n] </span><span style="color: #ff6188;">not in</span> <span style="color: #a9dc76;">(</span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">, </span><span style="color: #ab9df2;">3</span><span style="color: #a9dc76;">, </span><span style="color: #ab9df2;">4</span><span style="color: #a9dc76;">)</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">o </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">orange </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">n </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(o))</span>
+                  <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">)</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">x, y </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">orange:</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">nx, ny </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(x, y):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; ship = board[nx, ny]</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; </span><span style="color: #ff6188;">if</span> <span style="color: #a9dc76;">ship > </span><span style="color: #ab9df2;">0</span> <span style="color: #ff6188;">and</span> <span style="color: #a9dc76;">ship != </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">:</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">True</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">False</span>
                 </div>
               </div>
               <!-- Simulate (fragment 2) -->
@@ -1602,48 +1917,20 @@
               </div>
             </div>
             <!-- Highlight overlay: appears with argmax (fragment 6) -->
-            <div class="fragment fade-in" data-fragment-index="6" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 9px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
+            <div class="fragment fade-in" data-fragment-index="5" style="position: absolute; inset: -3px; border: 2.5px solid #304ed8; border-radius: 9px; pointer-events: none; box-shadow: 0 0 12px rgba(48,78,216,0.25);"></div>
             </div>
 
-            <!-- Row 2: "Do any ships lie along the edges?" (fragment 3) -->
+            <!-- Row 2: "Any purple tiles left?" (fragment 3) -->
             <div class="fragment fade-in" data-fragment-index="3" style="display: flex; align-items: stretch; gap: 6px;">
-              <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_B$</div>
-                <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Do any ships lie along the edges?&rdquo;</div>
-              </div>
-              <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_B}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
-                  <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; edges = np.concatenate([</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; board[</span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">,:], board[</span><span style="color: #ab9df2;">-1</span><span style="color: #a9dc76;">,:], </span><span style="color: #ffd866;">...</span><span style="color: #a9dc76;">])</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(edges > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
-                </div>
-              </div>
-              <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
-                <div style="flex: 1;">
-                  <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 2px;">$y_i = f_{x_B}(s_i)$</div>
-                  <div style="display: flex; gap: 3px; align-items: center;"><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span class="exec-pill exec-yes" style="font-size: 0.38em; padding: 1px 4px;">Y</span><span style="font-size: 0.32em; color: #aaa; letter-spacing: 1px;">&hellip;</span></div>
-                </div>
-                <div style="background: #e8e8e8; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                  <div style="font-size: 0.24em; font-weight: 600; color: #888;">EIG</div>
-                  <div style="font-size: 0.34em; font-weight: 700; color: #888;">0.26</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Row 3: "Any purple tiles left?" (fragment 4) -->
-            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_C$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Any purple tiles left?&rdquo;</div>
               </div>
               <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_C}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
+                <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; purple = </span><span style="color: #ab9df2;">3</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.sum(board == purple) > </span><span style="color: #ab9df2;">2</span>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">PURPLE</span><span style="color: #a9dc76;">)</span>
                 </div>
               </div>
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
@@ -1658,18 +1945,17 @@
               </div>
             </div>
 
-            <!-- Row 4: "Do columns 7-8 have any ships?" (fragment 5) -->
-            <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
+            <!-- Row 3: "Do columns 7-8 have any ships?" (fragment 4) -->
+            <div class="fragment fade-in" data-fragment-index="4" style="display: flex; align-items: stretch; gap: 6px;">
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.28em; color: #888; font-weight: 600;">$x_D$</div>
                 <div style="font-size: 0.32em; color: #333; font-style: italic;">&ldquo;Do columns 7-8 have any ships?&rdquo;</div>
               </div>
               <div style="flex: 1; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; color: #888; font-weight: 500; margin-bottom: 1px;">$f_{x_D}$</div>
-                <div style="font-size: 0.26em; font-family: 'Fira Code', monospace; line-height: 1.3;">
+                <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; cols = board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">:]</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(cols > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">:] > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
                 </div>
               </div>
               <div style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; align-items: center; gap: 6px;">
@@ -1684,13 +1970,13 @@
               </div>
             </div>
 
-            <!-- Argmax line (fragment 6, with row-1 highlight) -->
-            <div class="fragment fade-in" data-fragment-index="6" style="margin-top: 12px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
+            <!-- Argmax line (fragment 5, with row-1 highlight) -->
+            <div class="fragment fade-in" data-fragment-index="5" style="margin-top: 12px; text-align: center; font-size: 0.4em; color: #304ed8; font-weight: 600;">
               $x^{\star} = \arg\max_{x}\; \text{EIG}(x)$ &nbsp; <i class="fas fa-arrow-right" style="font-size: 0.8em;"></i> &nbsp; <span style="background: rgba(48,78,216,0.1); border: 1.5px solid rgba(48,78,216,0.3); border-radius: 6px; padding: 2px 8px;">&ldquo;Is there another ship near orange?&rdquo;</span>
             </div>
 
-            <!-- Insight banner (fragment 7) -->
-            <div class="fragment fade-in" data-fragment-index="7" style="margin-top: 10px;">
+            <!-- Insight banner (fragment 6) -->
+            <div class="fragment fade-in" data-fragment-index="6" style="margin-top: 10px;">
               <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
                 <div style="font-size: 0.4em; color: #304ed8; line-height: 1.5;">
                   <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
@@ -1699,8 +1985,7 @@
               </div>
             </div>
 
-          </div><!-- /right column -->
-        </div>
+        </div><!-- /pipeline -->
 
         <aside class="notes">
           <p>The Captain observes a partial board and samples full-board hypotheses from the world model. To decide what to ask next, it runs a three-stage pipeline.</p>
@@ -2090,6 +2375,12 @@
           <div class="authors" style="font-size: 0.55em; margin-top: 4px;">
             <sup>1</sup>MIT CSAIL &nbsp; <sup>2</sup>MIT BCS &nbsp; <sup>3</sup>Harvard SEAS
           </div>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 48px; margin-top: 28px;">
+            <img src="images/logos/CSAIL_Primary_Regular_RGB.png" alt="MIT CSAIL" style="height: 50px; width: auto;">
+            <img src="images/logos/bcs-social-logo.jpg" alt="MIT BCS" style="height: 36px; width: auto;">
+            <img src="images/logos/mit-scc-logo-sm-cropped.png" alt="MIT Schwarzman College of Computing" style="height: 28px; width: auto;">
+            <img src="images/logos/H_SEAS_logo_RGB.png" alt="Harvard SEAS" style="height: 42px; width: auto;">
+          </div>
         </div>
 
         <aside class="notes">
@@ -2102,6 +2393,88 @@
            HIDDEN SLIDES (kept for reference, not shown in presentation)
            ═══════════════════════════════════════════════════════════════ -->
 
+
+      <!-- [Hidden] Approach — Agent + World Model intro (replaced by #our-approach) -->
+
+      <section id="approach" data-visibility="hidden" data-auto-animate data-auto-animate-restart>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
+        <h3>Grounding reasoning in a world model</h3>
+
+        <div style="display: grid; grid-template-columns: auto auto auto; align-items: center; justify-content: center; column-gap: 24px; row-gap: 12px; margin-top: 80px;">
+          <!-- Row 1: boxes + arrow -->
+          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+          </div>
+          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa; text-align: center;"><i class="fas fa-arrows-alt-h"></i></span>
+          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
+            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+          </div>
+          <!-- Row 2: subtitles -->
+          <p data-id="agent-sub" style="margin: 0; font-size: 0.45em; color: #4a5770; text-align: center; line-height: 1.4;">
+            LLM with code &amp; reasoning capabilities
+          </p>
+          <span></span>
+          <p data-id="wm-sub" style="margin: 0; font-size: 0.45em; color: #304ed8; text-align: center; line-height: 1.4;">
+            A code-based simulator that encodes domain knowledge
+          </p>
+        </div>
+
+        <aside class="notes">
+          <p>...our approach pairs an agent with a world model: a code-based simulator that encodes knowledge about the domain.</p>
+        </aside>
+      </section>
+
+      <!-- [Hidden] Approach — Affordances (replaced by #our-approach + #hypothesis-space) -->
+
+      <section id="approach-affordances" data-visibility="hidden" data-auto-animate>
+        <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
+        <h3>Grounding reasoning in a world model</h3>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 80px;">
+          <div data-id="agent-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(75,90,120,0.08); border: 2px solid rgba(75,90,120,0.25); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-robot" style="color: #4a5770; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #4a5770;">Agent</span>
+          </div>
+          <span data-id="wm-arrows" style="font-size: 1em; color: #aaa;"><i class="fas fa-arrows-alt-h"></i></span>
+          <div data-id="wm-box" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.08); border: 2px solid rgba(48,78,216,0.3); border-radius: 14px; padding: 16px 28px; width: 300px; justify-content: center;">
+            <i class="fas fa-globe" style="color: #304ed8; font-size: 1.2em;"></i>
+            <span style="font-size: 0.7em; font-weight: 700; color: #304ed8;">World Model</span>
+            <i class="fas fa-code" style="color: #304ed8; font-size: 0.7em; opacity: 0.6;"></i>
+          </div>
+          <!-- Affordance sub-modules (unmatched — fades in) -->
+          <div style="display: flex; align-items: center; gap: 0; margin-left: -4px;">
+              <svg width="36" height="90" viewBox="0 0 36 90" style="flex-shrink: 0;">
+                <line x1="0" y1="45" x2="14" y2="45" stroke="rgba(48,78,216,0.35)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                <line x1="14" y1="16" x2="14" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+                <line x1="14" y1="16" x2="36" y2="16" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+                <line x1="14" y1="74" x2="36" y2="74" stroke="rgba(48,78,216,0.35)" stroke-width="1.5"/>
+              </svg>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
+                  <i class="fas fa-random" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
+                  <div>
+                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Sample</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$s \sim p(S \mid x_{1:t},\, y_{1:t})$</div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(48,78,216,0.04); border: 1.5px solid rgba(48,78,216,0.18); border-radius: 10px; padding: 8px 16px;">
+                  <i class="fas fa-play" style="color: #304ed8; font-size: 0.6em; opacity: 0.7;"></i>
+                  <div>
+                    <div style="font-size: 0.45em; font-weight: 700; color: #304ed8; letter-spacing: 0.3px;">Simulate</div>
+                    <div style="font-size: 0.32em; color: #888; margin-top: 2px;">$y = f_x(s)$</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <aside class="notes">
+          <p>The world model gives the agent two key affordances: sampling hypothetical world states, and simulating experiments on those sampled worlds to predict outcomes. Let me show you what that looks like in practice.</p>
+        </aside>
+      </section>
 
       <!-- [Hidden] Approach — Hypothesis space (pre-simplification) -->
 
