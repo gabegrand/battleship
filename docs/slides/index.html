@@ -752,7 +752,7 @@
               </li>
               <li class="fragment fade-in" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-chart-bar" style="color: #fff;"></i></span>
-                <span class="kp-text"><span class="kp-label" style="color: #1e3270;">Part III: Experiments &amp; Results.</span> Agents go from random chance to superhuman, outperforming frontier models at a fraction of the cost.</span>
+                <span class="kp-text"><span class="kp-label">Part III: Experiments &amp; Results.</span> Agents go from random chance to superhuman, outperforming frontier models at a fraction of the cost.</span>
               </li>
             </ul>
             <!-- Final click: dim Parts II and III, leaving Part I highlighted -->
@@ -1002,42 +1002,44 @@
         </p>
 
         <div style="display: flex; gap: 28px; align-items: start; justify-content: center; margin-top: 8px;">
-          <!-- Captain -->
-          <div class="fragment fade-in" data-fragment-index="0" style="flex: 0 0 240px; text-align: center;">
+          <!-- Captain — board auto-animated from #battleship-qa; label + caption appear after -->
+          <div data-id="c-board-col" style="flex: 0 0 240px; text-align: center;">
+            <h4 class="fragment fade-in" data-fragment-index="0" style="font-size: 0.6em; font-weight: 600; color: #172642; margin: 0 0 8px 0; text-align: center;">
+              <i class="fas fa-anchor"></i> &nbsp;Captain
+            </h4>
             <div class="game-action-board-wrap">
-              <h4><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
-              <div class="mini-board">
+              <div class="mini-board captain-view">
                 <div class="b-label"></div>
                 <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
                 <div class="b-label">4</div><div class="b-label">5</div><div class="b-label">6</div>
                 <div class="b-label">7</div><div class="b-label">8</div>
                 <div class="b-label">A</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">B</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">C</div>
-                <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell ship-3"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">D</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell ship-4"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">E</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div><div class="b-cell ship-1 hidden"></div>
+                <div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">F</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell water"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">G</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div>
+                <div class="b-cell ship-2 hidden"></div><div class="b-cell ship-2 hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
                 <div class="b-label">H</div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell water"></div>
-                <div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div><div class="b-cell"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water"></div>
+                <div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div><div class="b-cell water hidden"></div>
               </div>
             </div>
-            <p style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees partial board<br/>Asks questions &amp; shoots</p>
+            <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.45em; color: #4a5770; margin-top: 8px;">Sees partial board<br/>Asks questions &amp; shoots</p>
           </div>
 
           <!-- Arrow + Yes/No channel -->
@@ -1049,8 +1051,10 @@
 
           <!-- Spotter -->
           <div class="fragment fade-in" data-fragment-index="1" style="flex: 0 0 240px; text-align: center;">
+            <h4 style="font-size: 0.6em; font-weight: 600; color: #04af70; margin: 0 0 8px 0; text-align: center;">
+              <i class="fas fa-binoculars"></i> &nbsp;Spotter
+            </h4>
             <div class="game-action-board-wrap">
-              <h4 style="color: #04af70;"><i class="fas fa-binoculars"></i> &nbsp;Spotter</h4>
               <div class="mini-board">
                 <div class="b-label"></div>
                 <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
