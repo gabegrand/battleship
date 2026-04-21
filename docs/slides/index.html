@@ -727,8 +727,8 @@
           <ul>
             <li>From science to medicine to engineering, many high-stakes applications of AI require seeking information strategically.</li>
             <li>People are remarkably good at this — we naturally form hypotheses and ask questions to resolve uncertainty.</li>
-            <li>Modern language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
-            <li>To study this, we first need a common understanding of what rational exploration looks like.</li>
+            <li>Language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
+            <li>To study this, we first need a working theory of what rational exploration looks like.</li>
           </ul>
         </aside>
       </section>
@@ -776,12 +776,12 @@
         <aside class="notes">
           <p>It turns out that across domains, many discovery problems share a common structure.</p>
           <ul>
-            <li>In each case, we start with a high-level goal that we want to accomplish both accurately and efficiently.</li>
-            <li>The real challenge is the state space. There are combinatorially many possibilities, and we're searching for a needle in a haystack.</li>
-            <li>To narrow things down, we run experiments. But there are also many possible experiments — so we need to choose wisely.</li>
-            <li>Finally, once we've gathered enough information, we can take action. Too much caution here will lead to inefficiency, but overeager behavior could produce disastrous consequences.</li>
+            <li>In each case, we start with a high-level goal.</li>
+            <li>The first challenge is the state space. There are combinatorially many possibilities, and we're searching for a needle in a haystack.</li>
+            <li>To narrow things down, we can run experiments. But there are also many possibilities — so we need to choose wisely.</li>
+            <li>Finally, we can take action, but we have to be careful: acting based on the wrong information could produce disastrous consequences.</li>
           </ul>
-          <p>This tension -- between exploration and action -- is the central focus of our work.</p>
+          <p>This tension -- between exploration and action -- is the focus of our work.</p>
         </aside>
       </section>
 
@@ -823,9 +823,9 @@
         <aside class="notes">
           <p>To study this problem, we propose a framework for building and evaluating discovery agents grounded in Bayesian Experimental Design. In this talk, I'll walk you through three parts:</p>
           <ul>
-            <li>First, I'll introduce a controlled sandbox environment that allows us to study info-seeking in both humans and AI agents.</li>
+            <li>First, I'll introduce a sandbox environment that allows us to study info-seeking in both humans and AI agents.</li>
             <li>Second, I'll describe techniques to improve agents' ability to both ask and answer questions by equipping them with a code-based world model.</li>
-            <li>Finally, I'll highlight some key results: for instance, we find that our approach can boost agents from random chance to superhuman performance; and even outperform frontier models.</li>
+            <li>Finally, I'll highlight some key results, showing how our approach can boost agents from random chance to superhuman performance, and even outperform frontier models.</li>
           </ul>
         </aside>
       </section>
@@ -879,11 +879,11 @@
         <aside class="notes">
           <p>So what would an ideal sandbox look like?</p>
           <ul>
-            <li>Well first, real-world experiments are time-consuming and costly — we need a domain where we can iterate in seconds.</li>
+            <li>Well first, real-world experiments are slow and expensive — we need a domain where we can iterate rapidly.</li>
             <li>Second, we want some way to quantify the utility of an experiment — not just whether the agent succeeded, but whether the questions it asked along the way were good ones.</li>
             <li>Third, we want to directly compare agents and humans, which means the task has to be simple enough that anyone can pick it up.</li>
             <li>In both AI and cognitive science, there's a long tradition of using game environments to study decision-making.</li>
-            <li>This tradition extends through present-day research; evals like ARC-AGI show that grid-worlds can still capture complex
+            <li>This extends through present-day research; evals like ARC-AGI show how simple grid-worlds can still capture complex
             reasoning tasks.</li>
           </ul>
           <p>With these criteria in mind, we turned to a classic board game built around information-seeking...</p>
@@ -1040,7 +1040,7 @@
         <aside class="notes">
           <p>...players *also* can ask natural language questions about the board.</p>
           <ul>
-            <li>Each question probes the hidden board state and produces an observation.</li>
+            <li>Each question probes the hidden state and produces an observation.</li>
             <li>Prior work used a version of this task to study human question-asking; here, we expand the paradigm to evaluate both humans and agents.</li>
           </ul>
           <p>To do that, we designed a two-player version of the game that we call... Collaborative Battleship.</p>
@@ -2267,6 +2267,7 @@
         </div>
 
         <aside class="notes">
+          <p>We measure overall performance with F1 score, which treats Battleship as a binary classification task.</p>
           <ul>
             <li>As expected, random shooting gives a low baseline.</li>
             <li>Humans did much better, with a wide spread across players.</li>
@@ -2343,7 +2344,7 @@
         <aside class="notes">
           <p>To test generalization, we replicated our approach on the Guess Who? game from the TextArena benchmark.</p>
           <p>The same strategies worked here too, producing significant improvements for the same models.</p>
-          <p>So the approach generalizes to information-seeking tasks with combinatorial hypothesis spaces.</p>
+          <p>So the approach generalizes well to other info-seeking tasks with combinatorial hypothesis spaces.</p>
           </ul>
         </aside>
       </section>
@@ -2360,19 +2361,19 @@
             <ul class="key-points" style="margin: 0;">
               <li class="fragment fade-in-then-semi-out" data-fragment-index="0">
                 <span class="kp-icon"><i class="fas fa-balance-scale"></i></span>
-                <span class="kp-text"><span class="kp-label">Formalizing rationality</span></span>
+                <span class="kp-text"><span class="kp-label">Formalizing rationality:</span> <em>Define and measure</em> rational exploration against human and Bayesian baselines.</span>
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="1">
                 <span class="kp-icon"><i class="fas fa-brain"></i></span>
-                <span class="kp-text"><span class="kp-label">World models as tools</span></span>
+                <span class="kp-text"><span class="kp-label">World models as tools:</span> An <em>interactive simulator</em> lets agents test hypotheses before acting.</span>
               </li>
               <li class="fragment fade-in-then-semi-out" data-fragment-index="2">
                 <span class="kp-icon"><i class="fas fa-check-circle"></i></span>
-                <span class="kp-text"><span class="kp-label">Necessary but not sufficient</span></span>
+                <span class="kp-text"><span class="kp-label">Necessary but not sufficient:</span> Controlled tasks are a <em>prerequisite</em> for trusting agents in real-world discovery.</span>
               </li>
               <li class="fragment fade-in" data-fragment-index="3">
                 <span class="kp-icon"><i class="fas fa-rocket"></i></span>
-                <span class="kp-text"><span class="kp-label">From games to the real world</span></span>
+                <span class="kp-text"><span class="kp-label">From games to the real world:</span> Same principles apply to <em>agentic coding</em>, <em>medical diagnosis</em>, and <em>scientific discovery</em>.</span>
               </li>
             </ul>
           </div>
