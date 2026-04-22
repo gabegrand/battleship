@@ -5,22 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shoot First, Ask Questions Later? — ICLR 2026 Slides</title>
 
-  <!-- reveal.js from CDN -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme" />
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@300;400;500;700&family=Castoro&display=swap" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <!-- reveal.js (vendored — see vendor/README.md) -->
+  <link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css" />
+  <link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css" id="theme" />
+  <link rel="stylesheet" href="vendor/fonts/google-fonts.css" />
+  <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css" />
 
   <!-- KaTeX for math rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+  <script src="vendor/d3/d3.min.js"></script>
+  <script defer src="vendor/katex/katex.min.js"></script>
+  <script defer src="vendor/katex/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false}]});"></script>
 
   <!-- reveal.js code highlighting -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="vendor/reveal.js/plugin/highlight/monokai.css" />
 
   <style>
     /* Slow crossfade for stacked slide images */
@@ -3197,9 +3196,9 @@ def answer(true_board, partial_board) -> bool:
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+  <script src="vendor/reveal.js/dist/reveal.js"></script>
+  <script src="vendor/reveal.js/plugin/notes/notes.js"></script>
+  <script src="vendor/reveal.js/plugin/highlight/highlight.js"></script>
   <script>
     Reveal.initialize({
       hash: true,
