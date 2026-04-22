@@ -1015,10 +1015,10 @@
                 &ldquo;Is there another ship near orange?&rdquo;
               </div>
               <div class="fragment fade-in qa-q2" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                &ldquo;Do any ships lie along the edges?&rdquo;
+                &ldquo;Any purple tiles left?&rdquo;
               </div>
               <div class="fragment fade-in qa-q3" data-fragment-index="0" style="background: #fff; border-left: 3px solid #304ed8; border-radius: 6px; padding: 8px 14px; font-style: italic; color: #2c3e50; font-size: 0.55em; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-                &ldquo;Is the purple ship horizontal?&rdquo;
+                &ldquo;Do the rightmost two columns have any ships?&rdquo;
               </div>
             </div>
 
@@ -1169,7 +1169,7 @@
 
       <section id="bed" data-auto-animate data-auto-animate-restart>
         <div class="section-label" data-id="bed-label">Part II: Modeling Framework</div>
-        <h3 data-id="bed-title">Belief Updating</h3>
+        <h3 data-id="bed-title">Bayesian Belief Updating</h3>
 
         <div class="two-col" style="align-items: start; gap: 36px;">
           <div class="col">
@@ -1945,11 +1945,11 @@
               <div class="fragment fade-in" data-fragment-index="1" style="flex: 2; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">)</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">)</span>&nbsp; <span style="color: #727072;"># find all orange tiles</span><br/>
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">x, y </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">orange:</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">nx, ny </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(x, y):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">nx, ny </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(x, y):</span>&nbsp; <span style="color: #727072;"># check each neighbor</span><br/>
                   <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; ship = board[nx, ny]</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; </span><span style="color: #ff6188;">if</span> <span style="color: #a9dc76;">ship > </span><span style="color: #ab9df2;">0</span> <span style="color: #ff6188;">and</span> <span style="color: #a9dc76;">ship != </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">:</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; </span><span style="color: #ff6188;">if</span> <span style="color: #a9dc76;">ship > </span><span style="color: #ab9df2;">0</span> <span style="color: #ff6188;">and</span> <span style="color: #a9dc76;">ship != </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">:</span>&nbsp; <span style="color: #727072;"># a different ship?</span><br/>
                   <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">True</span><br/>
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">False</span>
                 </div>
@@ -1981,7 +1981,8 @@
               <div style="flex: 2; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">PURPLE</span><span style="color: #a9dc76;">)</span>
+                  <span style="color: #a9dc76;">&nbsp; hidden = board[~observed]</span>&nbsp; <span style="color: #727072;"># tiles not yet revealed</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(hidden == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">PURPLE</span><span style="color: #a9dc76;">)</span>&nbsp; <span style="color: #727072;"># any purple left?</span>
                 </div>
               </div>
               <div class="sim-cell fragment fade-in" data-fragment-index="4" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
@@ -2001,12 +2002,13 @@
             <!-- Row 3: "Do columns 7-8 have any ships?" (fragment 5) -->
             <div class="fragment fade-in" data-fragment-index="5" style="display: flex; align-items: stretch; gap: 6px;">
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 0.42em; color: #333; font-style: italic;">&ldquo;Do columns 7-8 have any ships?&rdquo;</div>
+                <div style="font-size: 0.42em; color: #333; font-style: italic;">&ldquo;Do the rightmost two columns have any ships?&rdquo;</div>
               </div>
               <div style="flex: 2; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
                 <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">:] > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>
+                  <span style="color: #a9dc76;">&nbsp; right = board[:, </span><span style="color: #ab9df2;">6</span><span style="color: #a9dc76;">:]</span>&nbsp; <span style="color: #727072;"># slice cols 7-8 (0-indexed)</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #a9dc76;">np.any(right > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">)</span>&nbsp; <span style="color: #727072;"># any ship cell?</span>
                 </div>
               </div>
               <div class="sim-cell fragment fade-in" data-fragment-index="5" style="flex: 1; background: rgba(48,78,216,0.05); border: 1.5px solid rgba(48,78,216,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
@@ -2025,8 +2027,8 @@
 
             <!-- Insight banner (fragment 7; row-1 highlight fires at 6) -->
             <div class="fragment fade-in" data-fragment-index="7" style="margin-top: 10px;">
-              <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 8px 18px;">
-                <div style="font-size: 0.4em; color: #304ed8; line-height: 1.5;">
+              <div style="background: #f0f4ff; border: 1.5px solid #dde3f0; border-radius: 10px; padding: 10px 20px;">
+                <div style="font-size: 0.55em; color: #304ed8; line-height: 1.5;">
                   <i class="fas fa-lightbulb" style="margin-right: 6px;"></i>
                   <strong>Inference-scaling for experiment design:</strong> scaling compute leads to more informative experiments.
                 </div>
