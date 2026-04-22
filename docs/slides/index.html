@@ -1489,8 +1489,8 @@
         <aside class="notes">
           <ul>
             <li>First, computing this entropy term on the left requires summing over a *huge* space of possible states.</li>
-            <li>Second, estimating the likelihood of each outcome requires some way to simulate the outcome of an experiment.</li>
-            <li>And third, the space of possible experiments may be vast, so we typically can't just enumerate them all.</li>
+            <li>Second, estimating the likelihood of each <em>outcome</em> requires some way to simulate the possible results of an experiment.</li>
+            <li>And moreover, the space of possible experiments may be vast, so we can't typically just enumerate them all.</li>
           </ul>
           <p>To address these challenges...</p>
         </aside>
@@ -1567,7 +1567,7 @@
           <p>...our approach pairs an agent with a world model: a code-based simulator that captures the dynamics of the environment.</p>
           <ul>
             <li>The world model is going to let us draw conditional samples from the posterior.</li>
-            <li>And it's also going to let us simulate experiment outcomes via code execution.</li>
+            <li>And it's also going to let us simulate experiments via code execution.</li>
             <li>The last piece of the puzzle is proposing experiments, and for that we're actually going to rely on the agent itself.</li>
           </ul>
           <p>Let's see what this looks like in practice.</p>
@@ -2073,10 +2073,10 @@
             <li>and translates it into a Python function that takes a board and returns a Boolean.</li>
             <li>Executing against each sample in the hypothesis space yields a distribution of answers...</li>
             <li>and from that distribution, we can compute EIG.</li>
-            <li>The Captain can then repeat this process for multiple candidates:</li>
+            <li>The Captain can then repeat this process propose and score multiple candidates.</li>
             <li>Notice how some questions are redundant: the output is the same for every hypothesis, so the EIG is zero.</li>
             <li>Others partition the hypothesis space more evenly, yielding higher EIG &mdash; these are the questions the Captain should pick.</li>
-            <li>So we have an inference-scaling recipe: sampling more candidates leads to more informative questions. But does this actually translate to better performance in the game? That's one of the key questions we explore in our experiments.</li>
+            <li>We now have an inference-scaling recipe: sampling more candidates leads to more informative questions. But does this actually improve agents' performance? Let's take a look.</li>
           </ul>
         </aside>
       </section>
@@ -2087,6 +2087,9 @@
 
       <section id="experiments-divider" data-background-color="#1e3270">
         <h2 style="color: #fff; font-size: 2.2em; font-weight: 700;">Part III: Experiments &amp; Results</h2>
+        <aside class="notes">
+          <p>I'm going to highlight the key findings from two sets of experiments:</p>
+        </aside>
       </section>
 
       <section id="overview-v1" data-auto-animate data-auto-animate-id="roadmap">
@@ -2107,7 +2110,8 @@
 
         <aside class="notes">
           <p>I'm going to highlight the key findings from two sets of experiments:</p>
-          <p>A human study; and some experiments with agents.</p>
+          <p>A human study; and three experiments with agents.</p>
+          <p>On the human side...</p>
         </aside>
       </section>
 
@@ -2147,7 +2151,7 @@
         </div>
 
         <aside class="notes">
-          <p>We first collected data from human participants to form what we call the BattleshipQA dataset. Here's what we found.</p>
+          <p>We first collected data from participants to form what we call the BattleshipQA dataset. Here's what we found.</p>
           <ul>
             <li>Human Captains asked questions that were reliably informative, but not necessarily optimal.</li>
             <li>Importantly, though, humans rarely asked redundant questions - this is in contrast to many of the LLMs we tested.</li>
@@ -2220,7 +2224,7 @@
             <li>Adding chain-of-thought reasoning helped somewhat.</li>
             <li>But the biggest gains came from the world model: translating questions into code gave Spotter agents a significant accuracy boost.</li>
           </ul>
-          <p>So the world model helped with answering questions. But did it also help with asking better ones?</p>
+          <p>So the world model helped with answering questions. But did it also help with asking?</p>
         </aside>
       </section>
 
@@ -2259,7 +2263,7 @@
             <li>With just 10 candidates, agents reached 94% of the theoretical ceiling.</li>
             <li>This procedure also helped to eliminate the tendency of weaker models to ask redundant questions...</li>
             <!-- <li>Without this selection mechanism, weaker models generated many redundant questions — sampling and scoring by EIG reduced that to 1.2% or less.</li> -->
-            <li>...and it worked for both weak models and stronger ones like GPT-5.</li>
+            <li>...and also benefited stronger ones like GPT-5.</li>
           </ul>
           <p>So we have better answers and better questions — but do these actually translate to better performance in the game?</p>
         </aside>
@@ -2337,7 +2341,7 @@
 
         <aside class="notes">
           <p>To summarize, we found that combining agents with a world model produced more accurate answers, more informative questions, and more efficient discovery.</p>
-          <p>But do these results extend beyond Battleship?</p>
+          <p>But do these results generalize beyond Battleship?</p>
         </aside>
       </section>
 
@@ -2374,7 +2378,7 @@
         </div>
 
         <aside class="notes">
-          <p>To test generalization, we replicated our approach on the Guess Who? game from the TextArena benchmark.</p>
+          <p>To test this, we replicated our approach on the Guess Who? game from the TextArena benchmark.</p>
           <p>The same strategies worked here too, producing significant improvements for the same models.</p>
           <p>So the approach generalizes well to other info-seeking tasks with combinatorial hypothesis spaces.</p>
           </ul>
