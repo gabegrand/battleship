@@ -13,10 +13,12 @@ pnpm-debug.log*
 # Python HTTP server cache
 __pycache__/
 
-# Build outputs (if a bundler is introduced later)
-dist/
-build/
-public/
+# Build outputs (if a bundler is introduced later).
+# Anchored to this directory so they don't accidentally exclude nested
+# vendored paths like slides/vendor/reveal.js/dist/.
+/dist/
+/build/
+/public/
 
 # Local development
 .env
