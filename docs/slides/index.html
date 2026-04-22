@@ -1550,12 +1550,12 @@
 
       <section id="hypothesis-space" data-auto-animate data-auto-animate-restart>
         <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
-        <h3>Sampling the hypothesis space</h3>
+        <h3 data-id="slide-title">Sampling the hypothesis space</h3>
 
-        <div data-id="hyp-row" style="display: flex; align-items: stretch; justify-content: center; gap: 14px; margin-top: 24px; padding: 0 24px;">
+        <div style="display: flex; align-items: stretch; justify-content: center; gap: 14px; margin-top: 24px; padding: 0 24px;">
           <!-- Captain board (fragment 0) -->
-          <div data-id="captain-board" class="game-action-board-wrap fragment fade-in" data-fragment-index="0" style="padding: 12px; display: flex; flex-direction: column;">
-            <h4 data-id="captain-label" style="font-size: 0.5em;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+          <div class="game-action-board-wrap fragment fade-in" data-fragment-index="0" style="padding: 12px; display: flex; flex-direction: column;">
+            <div style="font-size: 0.5em; font-weight: 600; color: #172642; margin: 0 0 8px 0; text-align: left;"><i class="fas fa-anchor"></i> &nbsp;Captain</div>
             <div class="mini-board" style="width: 180px; font-size: 0.55em; margin: auto 0;">
               <div class="b-label"></div>
               <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1589,7 +1589,7 @@
           </div>
 
           <!-- World Model (fragment 1): arrows left/right, math below box -->
-          <div data-id="wm-arrow" class="fragment fade-in" data-fragment-index="1" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto;">
+          <div class="fragment fade-in" data-fragment-index="1" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto;">
             <div style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
               <i class="fas fa-arrow-right" style="font-size: 0.75em; color: #bbb;"></i>
               <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 8px 14px;">
@@ -1602,11 +1602,11 @@
           </div>
 
           <!-- Hypothesis space (fragment 2 — container + s_1); s_2 at 3; s_3 at 4 -->
-          <div data-id="hypothesis-space" class="fragment fade-in" data-fragment-index="2" style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 12px 10px;">
+          <div class="fragment fade-in" data-fragment-index="2" style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 10px; padding: 12px 10px;">
             <div style="font-size: 0.5em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 8px;">Hypothesis space $\mathcal{S}$</div>
             <div style="display: flex; gap: 6px; flex-wrap: nowrap; justify-content: center; align-items: flex-start;">
               <!-- s_1 (cascades in with hypothesis-space box) -->
-              <div data-id="sample-s1" class="fragment fade-in hs-stagger-1" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <div class="fragment fade-in hs-stagger-1" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div class="mini-board" style="width: 180px; font-size: 0.55em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1641,7 +1641,7 @@
               </div>
 
               <!-- s_2 (cascades in with hypothesis-space box) -->
-              <div data-id="sample-s2" class="fragment fade-in hs-stagger-2" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <div class="fragment fade-in hs-stagger-2" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div class="mini-board" style="width: 180px; font-size: 0.55em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1676,7 +1676,7 @@
               </div>
 
               <!-- s_3 (cascades in with hypothesis-space box) -->
-              <div data-id="sample-s3" class="fragment fade-in hs-stagger-3" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <div class="fragment fade-in hs-stagger-3" data-fragment-index="2" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div class="mini-board" style="width: 180px; font-size: 0.55em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1726,14 +1726,14 @@
 
       <section id="eig-computation" data-auto-animate>
         <div class="section-label" data-id="approach-label">Part II: Modeling Framework</div>
-        <h3>Computing EIG</h3>
+        <h3 data-id="slide-title">Computing EIG</h3>
 
-        <!-- Top row: 3 flex-1 columns matching pipeline (Propose / Translate / Simulate); auto-animated from #hypothesis-space. -->
-        <div data-id="hyp-row" style="display: flex; align-items: stretch; gap: 6px; margin-bottom: 28px;">
+        <!-- Top row: 3 flex-1 columns matching pipeline (Propose / Translate / Simulate). -->
+        <div style="display: flex; align-items: stretch; gap: 6px; margin-bottom: 28px;">
           <!-- Col 1: Captain (aligned with Propose) -->
           <div style="flex: 1; display: flex; justify-content: center; align-items: stretch;">
-          <div data-id="captain-board" class="game-action-board-wrap" style="padding: 4px; width: 100px;">
-            <h4 data-id="captain-label" style="font-size: 0.3em; margin: 0 0 2px 0;"><i class="fas fa-anchor"></i> &nbsp;Captain</h4>
+          <div class="game-action-board-wrap" style="padding: 4px; width: 100px;">
+            <div style="font-size: 0.3em; font-weight: 600; color: #172642; margin: 0 0 2px 0; text-align: left;"><i class="fas fa-anchor"></i> &nbsp;Captain</div>
             <div class="mini-board" style="font-size: 0.32em;">
               <div class="b-label"></div>
               <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1769,7 +1769,7 @@
 
           <!-- Col 2: WM (aligned with Translate) -->
           <div style="flex: 2; display: flex; justify-content: center; align-items: center;">
-          <div data-id="wm-arrow" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto;">
             <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
               <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #bbb;"></i>
               <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(48,78,216,0.08); border: 1.5px solid rgba(48,78,216,0.25); border-radius: 10px; padding: 8px 16px;">
@@ -1784,11 +1784,11 @@
 
           <!-- Col 3: Hypothesis space (aligned with Simulate) -->
           <div style="flex: 1; display: flex; justify-content: center; align-items: stretch;">
-          <div data-id="hypothesis-space" style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center;">
+          <div style="background: rgba(48,78,216,0.04); border: 1px solid rgba(48,78,216,0.15); border-radius: 8px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 0.3em; font-weight: 600; color: #304ed8; text-align: center; margin-bottom: 3px;">Hypothesis space $\mathcal{S}$</div>
             <div style="display: flex; gap: 4px; flex-wrap: nowrap; justify-content: center; align-items: flex-start;">
               <!-- s_1 -->
-              <div data-id="sample-s1" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
                 <div class="mini-board" style="width: 60px; font-size: 0.24em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1823,7 +1823,7 @@
               </div>
 
               <!-- s_2 -->
-              <div data-id="sample-s2" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
                 <div class="mini-board" style="width: 60px; font-size: 0.24em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
@@ -1858,7 +1858,7 @@
               </div>
 
               <!-- s_3 -->
-              <div data-id="sample-s3" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
                 <div class="mini-board" style="width: 60px; font-size: 0.24em;">
                   <div class="b-label"></div>
                   <div class="b-label">1</div><div class="b-label">2</div><div class="b-label">3</div>
