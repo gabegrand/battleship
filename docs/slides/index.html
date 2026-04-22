@@ -529,6 +529,36 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    /* Row 1 "big code" mode: Translate cell expands before Simulate appears (fragment 2),
+       then shrinks back when Simulate reveals. Toggled via #eig-computation.code-big-mode
+       by a fragment event listener (max visible fragment index === 1). */
+    /* Override flex's default min-width: auto so intrinsic content (e.g. the code text
+       at its growing font-size) can't force a cell wider than its flex share, which
+       would squeeze Propose during the transition. */
+    #eig-computation .eig-row1 > div { min-width: 0; }
+    #eig-computation .eig-row1-translate {
+      flex: 2;
+      transition: flex-grow 0.45s ease, flex-basis 0.45s ease;
+    }
+    #eig-computation .eig-row1-code {
+      font-size: 0.24em;
+      transition: font-size 0.45s ease;
+    }
+    #eig-computation .eig-row1 .sim-cell,
+    #eig-computation .eig-row1 .score-cell {
+      transition: flex-grow 0.45s ease, flex-basis 0.45s ease,
+                  padding 0.45s ease, border-width 0.45s ease;
+    }
+    #eig-computation.code-big-mode .eig-row1-translate { flex: 4; }
+    #eig-computation.code-big-mode .eig-row1-code      { font-size: 0.4em; }
+    #eig-computation.code-big-mode .eig-row1 .sim-cell,
+    #eig-computation.code-big-mode .eig-row1 .score-cell {
+      flex: 0 0 0 !important;
+      padding: 0 !important;
+      border-width: 0 !important;
+      overflow: hidden;
+    }
+
     /* ── Board flip animation (Spotter POV reveal) ── */
     .game-action-board-wrap.board-flipper {
       background: transparent; box-shadow: none; padding: 0;
@@ -1935,20 +1965,20 @@
 
             <!-- Row 1: "Is there another ship near orange?" — dissected across fragments 0, 1, 2; argmax winner -->
             <div style="position: relative;">
-            <div class="fragment fade-in" data-fragment-index="0" style="display: flex; align-items: stretch; gap: 6px;">
+            <div class="fragment fade-in eig-row1" data-fragment-index="0" style="display: flex; align-items: stretch; gap: 6px;">
               <!-- Propose (with outer row, fragment 0) -->
               <div style="flex: 1; background: rgba(75,90,120,0.05); border: 1.5px solid rgba(75,90,120,0.15); border-radius: 6px; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.42em; color: #333; font-style: italic;">&ldquo;Is there another ship near orange?&rdquo;</div>
               </div>
               <!-- Translate (fragment 1) -->
-              <div class="fragment fade-in" data-fragment-index="1" style="flex: 2; background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
-                <div style="font-size: 0.24em; font-family: 'Fira Code', monospace; line-height: 1.35;">
+              <div class="fragment fade-in eig-row1-translate" data-fragment-index="1" style="background: #1e1e2e; border-radius: 6px; padding: 4px 7px;">
+                <div class="eig-row1-code" style="font-family: 'Fira Code', monospace; line-height: 1.35;">
                   <span style="color: #ff6188;">def</span> <span style="color: #78dce8;">f</span><span style="color: #a9dc76;">(board):</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; hidden = np.where(observed, </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">, board)</span>&nbsp; <span style="color: #727072;"># ignore revealed cells</span><br/>
                   <span style="color: #a9dc76;">&nbsp; orange = np.argwhere(board == </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">)</span>&nbsp; <span style="color: #727072;"># find all orange tiles</span><br/>
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">x, y </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">orange:</span><br/>
                   <span style="color: #a9dc76;">&nbsp; &nbsp; </span><span style="color: #ff6188;">for</span> <span style="color: #a9dc76;">nx, ny </span><span style="color: #ff6188;">in</span> <span style="color: #a9dc76;">neighbors(x, y):</span>&nbsp; <span style="color: #727072;"># check each neighbor</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; ship = board[nx, ny]</span><br/>
-                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; </span><span style="color: #ff6188;">if</span> <span style="color: #a9dc76;">ship > </span><span style="color: #ab9df2;">0</span> <span style="color: #ff6188;">and</span> <span style="color: #a9dc76;">ship != </span><span style="color: #78dce8;">Ship</span><span style="color: #a9dc76;">.</span><span style="color: #ab9df2;">ORANGE</span><span style="color: #a9dc76;">:</span>&nbsp; <span style="color: #727072;"># a different ship?</span><br/>
+                  <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; </span><span style="color: #ff6188;">if</span> <span style="color: #a9dc76;">hidden[nx, ny] > </span><span style="color: #ab9df2;">0</span><span style="color: #a9dc76;">:</span>&nbsp; <span style="color: #727072;"># unobserved ship?</span><br/>
                   <span style="color: #a9dc76;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">True</span><br/>
                   <span style="color: #a9dc76;">&nbsp; </span><span style="color: #fc9867;">return</span> <span style="color: #ab9df2;">False</span>
                 </div>
@@ -4650,6 +4680,33 @@ def answer(true_board, partial_board) -> bool:
       });
       Reveal.on('slidechanged', function(e) {
         if (e.currentSlide.id === slideId) sync(e.currentSlide);
+      });
+    })();
+
+    // ── #eig-computation: Row 1 "big code" mode between Translate (f1) and Simulate (f2) ──
+    (function() {
+      var slideId = 'eig-computation';
+      function sync(slide) {
+        var maxVisible = -1;
+        slide.querySelectorAll('.fragment.visible').forEach(function(f) {
+          var idx = parseInt(f.getAttribute('data-fragment-index'), 10);
+          if (!isNaN(idx) && idx > maxVisible) maxVisible = idx;
+        });
+        slide.classList.toggle('code-big-mode', maxVisible === 1);
+      }
+      Reveal.on('fragmentshown', function(e) {
+        var s = e.fragment.closest('section');
+        if (s && s.id === slideId) sync(s);
+      });
+      Reveal.on('fragmenthidden', function(e) {
+        var s = e.fragment.closest('section');
+        if (s && s.id === slideId) sync(s);
+      });
+      Reveal.on('slidechanged', function(e) {
+        if (e.currentSlide.id === slideId) sync(e.currentSlide);
+        if (e.previousSlide && e.previousSlide.id === slideId) {
+          e.previousSlide.classList.remove('code-big-mode');
+        }
       });
     })();
   </script>
