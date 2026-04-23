@@ -757,7 +757,7 @@
             <li>From science to medicine to engineering, many high-stakes applications of AI require seeking information strategically.</li>
             <li>People are remarkably good at this — we naturally form hypotheses and ask questions to resolve uncertainty.</li>
             <li>Language models, on the other hand, are optimized to <em>answer</em> complex queries — but do they learn to ask good questions for themselves?</li>
-            <li>To study this, we first need a working theory of what rational exploration looks like.</li>
+            <li>To evaluate this, we first need a working theory of what rational exploration looks like.</li>
           </ul>
         </aside>
       </section>
@@ -4137,10 +4137,10 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Draw boxes (hidden initially) ──
-      // Animation groups: chart-only reveals at 0=Random, 1=Human, 2=LM; +Bayes-QM reveals at 3 (visible text fragment)
+      // Animation groups: chart-only reveals at 0=Random, 1=Human, 2=LM; +Bayes-QM reveals at 4 ("Better targeting")
       var animGroups = {
         'Random': 0, 'Human': 1, 'LM': 2,
-        '+Bayes-QM': 3,
+        '+Bayes-QM': 4,
       };
 
       // Lighten a hex color by mixing with white
@@ -4200,7 +4200,7 @@ def answer(true_board, partial_board) -> bool:
       });
 
       // ── Declarative animation driven by fragment index ──
-      // animGroup values: Random=0, Human=1, LM=2, +Bayes-QM=3
+      // animGroup values: Random=0, Human=1, LM=2, +Bayes-QM=4
       // Hidden fragments at indices 0,1,2; visible text fragments cover 3,4,5,6
 
       function syncChart() {
