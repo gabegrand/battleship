@@ -2352,14 +2352,14 @@
            SECTION I: GENERALIZATION
            ═══════════════════════════════════════════════════════════════ -->
 
-      <section id="guess-who">
+      <section id="s">
         <div class="section-label">Generalization</div>
         <h3>Beyond Battleship: Guess Who?</h3>
         <div class="two-col" style="align-items: flex-start;">
           <div class="col" style="text-align: center;">
             <div id="guess-who-barplot" style="width: 380px; height: 320px; margin: 0 auto;"></div>
             <div style="margin-top: 4px;">
-              <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 20px; font-size: 0.5em; padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
+              <div style="display: inline-grid; grid-template-columns: auto auto; gap: 6px 20px; font-size: 0.6em; padding: 8px 18px; border: 1px solid #ccc; border-radius: 8px; background: rgba(255,255,255,0.6);">
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #71a0c1; vertical-align: middle; margin-right: 4px;"></span> Llama-4</span>
                 <span><span style="display: inline-block; width: 14px; height: 14px; border-radius: 3px; background-color: #0e79b2; vertical-align: middle; margin-right: 4px;"></span> GPT-4o</span>
               </div>
@@ -2372,7 +2372,7 @@
             <p class="fragment fade-in" data-fragment-index="0" style="font-size: 0.58em; color: #4a5770; margin-bottom: 2px;">Same strategies work:</p>
             <ul style="font-size: 0.42em; color: #888; margin: 0 0 10px 0; line-height: 1.6;">
               <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #0e79b2;">GPT-4o</strong>: 61.7% &rarr; 90.0% success rate</li>
-              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #71a0c1;">Llama-4</strong>: 30.0% &rarr; 72.4%</li>
+              <li class="fragment fade-in" data-fragment-index="0"><strong style="color: #71a0c1;">Llama-4</strong>: 30.0% &rarr; 72.4% success rate</li>
             </ul>
 
             <p class="fragment fade-in" data-fragment-index="1" style="font-size: 0.58em; color: #4a5770; margin-bottom: 0;"><strong>Not Battleship-specific</strong></p>
@@ -3879,7 +3879,7 @@ def answer(true_board, partial_board) -> bool:
       if (!container || typeof d3 === 'undefined') return;
 
       var W = 380, H = 320;
-      var margin = { top: 20, right: 8, bottom: 48, left: 52 };
+      var margin = { top: 20, right: 8, bottom: 48, left: 62 };
       var width = W - margin.left - margin.right;
       var height = H - margin.top - margin.bottom;
 
@@ -3890,8 +3890,8 @@ def answer(true_board, partial_board) -> bool:
         .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
       // Data from guess_who_table.tex (Success Rate)
-      var conditions = ['Agent-only', '+ World Model\n(InfoMax)', '+ World Model\n(Full)'];
-      var condKeys = ['LM', '+Bayes-Q', '+Bayes-QM'];
+      var conditions = ['Agent-only', '+ World Model'];
+      var condKeys = ['LM', '+Bayes-QM'];
       var llms = ['Llama-4', 'GPT-4o'];
       var llmColors = { 'Llama-4': '#71a0c1', 'GPT-4o': '#0e79b2' };
 
@@ -3902,7 +3902,6 @@ def answer(true_board, partial_board) -> bool:
 
       var data = {
         'LM':        { 'Llama-4': 0.300, 'GPT-4o': 0.617 },
-        '+Bayes-Q':  { 'Llama-4': 0.450, 'GPT-4o': 0.729 },
         '+Bayes-QM': { 'Llama-4': 0.724, 'GPT-4o': 0.900 },
       };
 
@@ -3923,15 +3922,15 @@ def answer(true_board, partial_board) -> bool:
       g.append('g')
         .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
         .selectAll('text')
-        .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
+        .style('font-size', '13px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#555');
       g.select('.domain').attr('stroke', '#999');
 
       // Y axis label
       g.append('text')
         .attr('transform', 'rotate(-90)')
-        .attr('x', -height / 2).attr('y', -36)
+        .attr('x', -height / 2).attr('y', -46)
         .attr('text-anchor', 'middle')
-        .style('font-size', '12px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
+        .style('font-size', '15px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333')
         .text('Success Rate');
 
       // X axis (empty ticks, custom multi-line labels)
@@ -3942,9 +3941,9 @@ def answer(true_board, partial_board) -> bool:
         var lines = cond.split('\n');
         var tick = xAxisG.append('text')
           .attr('x', x0(cond) + x0.bandwidth() / 2)
-          .attr('y', 12)
+          .attr('y', 16)
           .attr('text-anchor', 'middle')
-          .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
+          .style('font-size', '14px').style('font-family', 'Noto Sans, sans-serif').style('fill', '#333');
         lines.forEach(function(line, i) {
           tick.append('tspan')
             .attr('x', x0(cond) + x0.bandwidth() / 2)
@@ -3972,7 +3971,7 @@ def answer(true_board, partial_board) -> bool:
             .attr('x', x0(cond) + x1(llm) + x1.bandwidth() / 2)
             .attr('y', y(val) - 5)
             .attr('text-anchor', 'middle')
-            .style('font-size', '10px').style('font-family', 'Noto Sans, sans-serif')
+            .style('font-size', '14px').style('font-family', 'Noto Sans, sans-serif')
             .style('fill', '#333').style('font-weight', '600')
             .text(d3.format('.0%')(val))
             .attr('opacity', 0);
